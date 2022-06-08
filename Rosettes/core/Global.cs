@@ -1,10 +1,4 @@
-﻿/*
- *  Global
- *  
- *  The Global class contains mainly references to other main classes.
- *  
- */
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using MySqlConnector;
 using System.Text;

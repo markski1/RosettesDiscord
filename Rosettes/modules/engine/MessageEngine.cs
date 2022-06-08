@@ -1,10 +1,4 @@
-﻿/*  
- *	MessageEngine
- *
- *	The MessageEngine class contains a method which processes non-command user messages.
- *	This allows for certain automated functions without the user necesarily providing them.
- */
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Newtonsoft.Json;
 using Rosettes.core;

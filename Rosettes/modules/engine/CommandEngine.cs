@@ -1,15 +1,4 @@
-﻿/*  
- *	CommandEngine
- *
- *	The CommandEngine class contains the base methods required for Rosettes to
- *	pick up the commands declared in other classes and add them to the command engine.
- *	Furthermore, it also handles invoking the execution of commands.
- *
- *		- Hooks the "HandleCommandAsync" method to the message handler.
- *		- Loads the commands from the rest of the bot's code.
- *		- Evaluates and runs the commands.
- */
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Rosettes.core;

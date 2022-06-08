@@ -1,14 +1,4 @@
-﻿/*
- *	RosettesMain
- *
- *	The RosettesMain class contains the base methods required for Rosettes to
- *	connect to Discord and remain alive.
- *
- *		- Declares the _client, _commands and _serviceProvider objects.
- *		- Contains MainAsync
- *		- Console output
- */
-using Discord;
+﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Rosettes.modules.engine;
