@@ -3,6 +3,7 @@ using Discord.Commands;
 using System.IO.Compression;
 using Rosettes.modules.engine;
 using Rosettes.core;
+using System.Text;
 
 namespace Rosettes.modules.commands
 {
@@ -88,6 +89,49 @@ namespace Rosettes.modules.commands
             text += $"==============```";
             if (guild.IconUrl != null) await ReplyAsync(guild.IconUrl);
             await ReplyAsync(text);
+        }
+
+        [Command("twtvid")]
+        [Summary("Get the videofile of the specified tweet.")]
+        public async Task TweetVideoAsync(string tweetUrl = "UNSPECIFIED")
+        {
+            if (tweetUrl == "UNSPECIFIED")
+            {
+                await ReplyAsync("Usage: '$twtvid [url]'");
+                return;
+            }
+            if (!tweetUrl.Contains("vxtwitter.com"))
+            {
+                if (!tweetUrl.Contains("twitter.com"))
+                {
+                    await ReplyAsync("That's not a valid tweet URL.");
+                }
+                tweetUrl = tweetUrl.Replace("twitter.com", "vxtwitter.com");
+            }
+            using HttpClient _client = new();
+            _client.DefaultRequestHeaders.UserAgent.Clear();
+            _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
+            var response = await _client.GetStringAsync(tweetUrl);
+
+            if (response is null)
+            {
+                await ReplyAsync("Could not fetch tweet data.");
+                return;
+            }
+
+            if (!response.Contains("twitter:player:stream"))
+            {
+                await ReplyAsync("Could not find a video in that tweet.");
+                return;
+            }
+
+            response = response.Substring(response.IndexOf("twitter:player:stream"), 200);
+
+            int begin = response.IndexOf("https");
+            int end = response.IndexOf(".mp4") + 4;
+            if (end == -1) return;
+            string videoLink = response[begin..end];
+            await ReplyAsync(videoLink);
         }
 
         [Command("exportallemoji")]
