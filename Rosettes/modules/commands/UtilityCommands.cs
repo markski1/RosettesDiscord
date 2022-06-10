@@ -7,34 +7,10 @@ using System.Text;
 
 namespace Rosettes.modules.commands
 {
+    [Remarks("Utility")]
+    [Summary("General purpose commands")]
     public class UtilityCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("arc")]
-        [Summary("Provide a quick archive.is link for a provided URL.\nExample usage: '$arc example.com'")]
-        public async Task ArchiveAsync(string url)
-        {
-            await ReplyAsync($"<https://archive.is/submit/?url={url}>");
-        }
-
-        [Command("alarm")]
-        [Summary("Set an alarm, to ring the user in the amount of minutes provided.\nExample usage: '$alarm 30 (Mentions you in 30 minutes)")]
-        public async Task AlarmAsync(int minutes)
-        {
-            if (minutes > 1)
-            {
-                await ReplyAsync($"OK, I'll tag you in {minutes} minutes.");
-            } else if (minutes <= 0)
-            {
-                await ReplyAsync("Time don't go in that direction.");
-                return;
-            } else
-            {
-                await ReplyAsync($"OK, I'll tag you in one minute.");
-            }
-            // the Alarm object takes care of creating and timing itself.
-            _ = new AlarmTimer(Context, minutes);
-        }
-
         [Command("myinfo")]
         [Summary("Provides information about yourself.")]
         public async Task MyInfo()
@@ -92,7 +68,7 @@ namespace Rosettes.modules.commands
         }
 
         [Command("twtvid")]
-        [Summary("Get the videofile of the specified tweet.")]
+        [Summary("Get the video file of the specified tweet.\nExample usage: '$twtvid <tweet url>'")]
         public async Task TweetVideoAsync(string tweetUrl = "UNSPECIFIED")
         {
             if (tweetUrl == "UNSPECIFIED")
@@ -107,7 +83,10 @@ namespace Rosettes.modules.commands
                     await ReplyAsync("That's not a valid tweet URL.");
                 }
                 tweetUrl = tweetUrl.Replace("twitter.com", "vxtwitter.com");
+
             }
+            tweetUrl = tweetUrl.Replace("<", string.Empty);
+            tweetUrl = tweetUrl.Replace(">", string.Empty);
             using HttpClient _client = new();
             _client.DefaultRequestHeaders.UserAgent.Clear();
             _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
@@ -129,7 +108,11 @@ namespace Rosettes.modules.commands
 
             int begin = response.IndexOf("https");
             int end = response.IndexOf(".mp4") + 4;
-            if (end == -1) return;
+            if (end == -1)
+            {
+                await ReplyAsync("A video was found in that tweet, but I could not extract it.");
+                return;
+            }
             string videoLink = response[begin..end];
             await ReplyAsync(videoLink);
         }
@@ -159,6 +142,34 @@ namespace Rosettes.modules.commands
                 await ReplyAsync("Retrieving emoji...");
                 _ = DownloadEmoji.DoTheThing(Context);
             }
+        }
+
+        [Command("arc")]
+        [Summary("Provide a quick archive.is link for a provided URL.\nExample usage: '$arc example.com'")]
+        public async Task ArchiveAsync(string url)
+        {
+            await ReplyAsync($"<https://archive.is/submit/?url={url}>");
+        }
+
+        [Command("alarm")]
+        [Summary("Set an alarm, to ring the user in the amount of minutes provided.\nExample usage: '$alarm 30 (Mentions you in 30 minutes)")]
+        public async Task AlarmAsync(int minutes)
+        {
+            if (minutes > 1)
+            {
+                await ReplyAsync($"OK, I'll tag you in {minutes} minutes.");
+            }
+            else if (minutes <= 0)
+            {
+                await ReplyAsync("Time don't go in that direction.");
+                return;
+            }
+            else
+            {
+                await ReplyAsync($"OK, I'll tag you in one minute.");
+            }
+            // the Alarm object takes care of creating and timing itself.
+            _ = new AlarmTimer(Context, minutes);
         }
     }
 

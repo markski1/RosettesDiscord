@@ -21,17 +21,6 @@ namespace Rosettes.modules.engine
             {
                 await context.Channel.SendMessageAsync("HISS!");
             }
-            if (messageText.Contains("media.discordapp.net"))
-            {
-                if (context.Guild.Id == 483127465183543296) return; // do not run in Faelica because LUU does this.
-                int begin = message.Content.IndexOf("https");
-                int end = message.Content.IndexOf("mp4");
-                if (end == -1) return;
-                string fixedLink = message.Content.Substring(begin, end - begin + 3);
-                fixedLink = fixedLink.Replace("media.discordapp.net", "cdn.discordapp.com");
-                await context.Channel.SendMessageAsync($"Fixed link: {fixedLink}");
-                return;
-            }
             if (messageText.Contains("snep"))
             {
                 int currentTime = Global.CurrentUnix();

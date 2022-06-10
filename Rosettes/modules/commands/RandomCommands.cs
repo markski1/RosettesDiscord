@@ -4,6 +4,8 @@ using Rosettes.core;
 
 namespace Rosettes.modules.commands
 {
+    [Remarks("Random")]
+    [Summary("Commands which simply return a random output based on what you provide it.")]
     public class RandomCommands : ModuleBase<SocketCommandContext>
     {
         [Command("dice")]
@@ -25,7 +27,7 @@ namespace Rosettes.modules.commands
         }
 
         [Command("ask")]
-        [Summary("Ask the virtual snep a question.\nExample usage: '$ask Should I evade taxes?'")]
+        [Summary("Ask the virtual snep a question.\nExample usage: '$ask Am I sus?'")]
         
         public async Task AskAsync()
         {
@@ -46,8 +48,8 @@ namespace Rosettes.modules.commands
         }
 
         [Command("coin")]
-        [Summary("Throw a coin! It'll fall on either paws or tails. Alternatively, you can provide two custom faces.\nExample usage: '$coin' or '$coin one two' for custom coin faces named one and two.")]
-        public async Task CoinAsync(string face1 = "Tails", string face2 = "Paws")
+        [Summary("Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.\nExample usage: '$coin' or '$coin one two' for custom coin faces named one and two.")]
+        public async Task CoinAsync(string face1 = "Tails", string face2 = "Face")
         {
             await Context.Channel.TriggerTypingAsync();
             IUserMessage messageID = await ReplyAsync($"*The virtual snep throws a coin in the air... {face1} on one side, {face2} on the other.*");

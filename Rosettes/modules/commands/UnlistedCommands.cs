@@ -84,26 +84,25 @@ namespace Rosettes.modules.commands
             // create a dm channel with the user.
             IDMChannel userDM;
             userDM = await Context.Message.Author.CreateDMChannelAsync();
-            await userDM.SendMessageAsync("All commands must be typed with a $ prefix.");
 
-            string currModule = "";
+            ModuleInfo? currModule = null;
             string text = "";
             var comms = ServiceManager.GetService<CommandService>();
             foreach (CommandInfo singleCommand in comms.Commands)
             {
                 // Every module has it's own list message to avoid surpasing the 2000char limit.
                 if (singleCommand.Module.Name == "UnlistedCommands") break;
-                if (currModule != singleCommand.Module.Name)
+                if (currModule == null || currModule.Name != singleCommand.Module.Name)
                 {
-                    if (currModule != "")
+                    if (currModule != null)
                     {
                         text += "```";
                         await userDM.SendMessageAsync(text);
                     }
-                    currModule = singleCommand.Module.Name;
-                    text = $"```\n{currModule}\n====================\n\n";
+                    currModule = singleCommand.Module;
+                    text = $"```\n{currModule.Remarks}\n> {currModule.Summary}\n====================\n\n";
                 }
-                text += $"{singleCommand.Name}";
+                text += $"{Settings.Prefix}{singleCommand.Name}";
                 if (singleCommand.Summary != null)
                 {
                     text += $":\n{singleCommand.Summary}\n\n";

@@ -11,18 +11,25 @@ namespace Rosettes.core
         public static readonly RosettesMain RosettesMain = new();
         public static readonly HttpClient HttpClient = new();
 
-        public static async void GenerateErrorMessage(string source, string error)
+        public static void GenerateErrorMessage(string source, string error)
         {
             // generate the error string
-            string _error = $"{DateTime.Now.Kind:es-AR} | mew wew! There was an error at \"{source}\".\n\n```{error}```\n\n";
+            string _error = $"{DateTime.Now.Kind:es-AR} | mew wew! There was an error at \"{source}\".\n\n```{error}```\n";
 
             // log it to a file
-            using var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            fileStream.Write(Encoding.UTF8.GetBytes($"{_error}\n"));
+            try
+            {
+                using var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                fileStream.Write(Encoding.UTF8.GetBytes($"{_error}\n"));
+            }
+            catch
+            {
+                // meh, just don't stop
+            }
 
-            // and send it to me on discord
+            // and send it to #impawtant-data
             var client = ServiceManager.GetService<DiscordSocketClient>();
-            var me = await client.GetUserAsync(93115098461110272);
+            if (client.GetChannel(984608927775854594) is not ITextChannel impawtantChannel) return;
 
             if (_error.Length > 1999)
             {
@@ -30,7 +37,7 @@ namespace Rosettes.core
                 _error += "```(truncated)";
             }
 
-            _ = me.SendMessageAsync(_error);
+            impawtantChannel.SendMessageAsync(_error);
         }
 
         public static decimal Truncate(decimal d, byte decimals)

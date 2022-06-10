@@ -41,6 +41,7 @@ namespace Rosettes.core
                 Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex}");
                 throw;
             }
+            CommandEngine.CreateCommandPage();
             Game game = new("$commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);
             Console.WriteLine($"{DateTime.Now} | [READY] - Rosettes is nyow loaded.");
@@ -52,6 +53,10 @@ namespace Rosettes.core
         {
             var message = arg as SocketUserMessage;
             var context = new SocketCommandContext(_client, message);
+
+#if !DEBUG
+            if (context.Channel.Id == 971467116165353485) return;
+#endif
 
             int argPos = 0;
 

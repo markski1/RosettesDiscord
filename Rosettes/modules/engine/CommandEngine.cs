@@ -32,5 +32,42 @@ namespace Rosettes.modules.engine
                 await context.Message.AddReactionAsync(new Emoji("⌚"));
             }
         }
+
+        public static void CreateCommandPage()
+        {
+            if (!Directory.Exists("/var/www/html/rosettes/"))
+            {
+                return;
+            }
+
+            string webContents = "";
+
+            ModuleInfo? currModule = null;
+            var comms = ServiceManager.GetService<CommandService>();
+            foreach (CommandInfo singleCommand in comms.Commands)
+            {
+                // Every module has it's own list message to avoid surpasing the 2000char limit.
+                if (singleCommand.Module.Name == "UnlistedCommands") break;
+                if (currModule == null || currModule.Name != singleCommand.Module.Name)
+                {
+                    currModule = singleCommand.Module;
+                    webContents += $"\n<h3>{currModule.Remarks}</h3> <p><b>{currModule.Summary}</b></p>";
+                }
+                webContents += $"<p><b>{Settings.Prefix}{singleCommand.Name}</b><br>";
+                if (singleCommand.Summary != null)
+                {
+                    webContents += $"{singleCommand.Summary}</p>\n";
+                }
+                else
+                {
+                    webContents += $"\n\n";
+                }
+            }
+            using var writer = File.CreateText("/var/www/html/rosettes/commands.html");
+
+            writer.Write(webContents);
+
+            writer.Close();
+        }
     }
 }
