@@ -97,10 +97,14 @@ namespace Rosettes.modules.commands
                     if (currModule != null)
                     {
                         text += "```";
-                        await userDM.SendMessageAsync(text);
+                        if (text.Length > 1000)
+                        {
+                            await userDM.SendMessageAsync(text);
+                            text = "";
+                        }
                     }
                     currModule = singleCommand.Module;
-                    text = $"```\n{currModule.Name}\n> {currModule.Summary}\n====================\n\n";
+                    text += $"```\n{currModule.Name}\n> {currModule.Summary}\n====================\n\n";
                 }
                 text += $"{Settings.Prefix}{singleCommand.Name}";
                 if (singleCommand.Summary != null)

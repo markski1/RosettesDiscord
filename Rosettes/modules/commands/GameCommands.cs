@@ -78,7 +78,7 @@ namespace Rosettes.modules.commands
             string serverText = "";
             if (checkServer == "NOTSPECIFIED")
             {
-                serverText = "For world status, please specify a datacenter name. ($ffxiv <name>)\n";
+                serverText = $"For world status, please specify a datacenter name. ({Settings.Prefix}ffxiv <name>)\n";
             }
             else
             {

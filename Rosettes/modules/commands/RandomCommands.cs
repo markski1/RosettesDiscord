@@ -9,8 +9,12 @@ namespace Rosettes.modules.commands
     {
         [Command("dice")]
         [Summary("Generates a number between 1 and the provided number.\nExample usage: '$dice 20' (rolls a d20)")]
-        public async Task DiceAsync(int num)
+        public async Task DiceAsync(int num = -69420)
         {
+            if (num == -69420)
+            {
+                await ReplyAsync($"Usage: `{Settings.Prefix}dice <amount>`");
+            }
             if (num < 1)
             {
                 await ReplyAsync("The number cannot be lower than 1.");

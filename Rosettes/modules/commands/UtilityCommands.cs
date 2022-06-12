@@ -72,7 +72,7 @@ namespace Rosettes.modules.commands
         {
             if (tweetUrl == "UNSPECIFIED")
             {
-                await ReplyAsync("Usage: '$twtvid [url]'");
+                await ReplyAsync($"Usage: `{Settings.Prefix}twtvid [tweet url]`");
                 return;
             }
             if (!tweetUrl.Contains("vxtwitter.com"))
@@ -145,17 +145,26 @@ namespace Rosettes.modules.commands
 
         [Command("arc")]
         [Summary("Provide a quick archive.is link for a provided URL.\nExample usage: '$arc example.com'")]
-        public async Task ArchiveAsync(string url)
+        public async Task ArchiveAsync(string url = "empty")
         {
+            if (url == "empty")
+            {
+                await ReplyAsync($"Usage: `{Settings.Prefix}arc <url>`");
+                return;
+            }
             await ReplyAsync($"<https://archive.is/submit/?url={url}>");
         }
 
         [Command("alarm")]
         [Summary("Sets an alarm to ring after a given period of time.\nExample usage: '$alarm 30 m' (Mentions you in 30 minutes) | h = hours, m = minutes, s = seconds")]
-        public async Task AlarmAsync(int amount, char time = 'n')
+        public async Task AlarmAsync(int amount = -69420, char time = 'n')
         {
             int seconds;
             string unit;
+            if (amount == -69420)
+            {
+                await ReplyAsync($"Usage: `{Settings.Prefix}alarm <amount> <time specifier>`\nwhere a time specifier can be h for hours, m for minutes or s for seconds.");
+            }
             if (amount <= 0)
             {
                 await ReplyAsync("Time don't go in that direction.");
@@ -176,7 +185,7 @@ namespace Rosettes.modules.commands
                     unit = "hour";
                     break;
                 default:
-                    await ReplyAsync($"Missing parameters. Correct usage: '{Settings.Prefix}alarm <amount> <s/m/h>'");
+                    await ReplyAsync($"Usage: `{Settings.Prefix}alarm <amount> <time specifier>`\nwhere a time specifier can be h for hours, m for minutes or s for seconds.");
                     return;
             }
 

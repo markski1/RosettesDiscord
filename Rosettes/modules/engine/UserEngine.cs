@@ -114,6 +114,7 @@ namespace Rosettes.modules.engine
         private ulong Exp;
         private ulong Currency;
         private int LastUsedCommand;
+        private int LastSentMessage;
 
         public User(ulong id)
         {
@@ -122,6 +123,7 @@ namespace Rosettes.modules.engine
             Currency = 100;
             SyncUpToDate = true;
             LastUsedCommand = 0;
+            LastSentMessage = 0;
         }
 
         // database fetch ctor. "0 references", but in reality dynamically referenced by the UserRepository interface.
@@ -132,6 +134,7 @@ namespace Rosettes.modules.engine
             Currency = currency;
             SyncUpToDate = true;
             LastUsedCommand = 0;
+            LastSentMessage = 0;
         }
 
         public ulong GetCurrency()
@@ -150,8 +153,12 @@ namespace Rosettes.modules.engine
         }
         public void AddExperience(ulong amount)
         {
-            Exp += amount;
-            SyncUpToDate = false;
+            if (Global.CurrentUnix() > LastSentMessage)
+            {
+                Exp += amount;
+                SyncUpToDate = false;
+                LastSentMessage = Global.CurrentUnix() + 9;
+            }
         }
 
         public bool IsValid()
@@ -182,11 +189,12 @@ namespace Rosettes.modules.engine
             return level;
         }
 
-        public bool CanUseCommand()
+        public bool CanUseCommand(SocketGuild? guild)
         {
+            int change = (guild is null) ? 10 : 3;
             if (Global.CurrentUnix() > LastUsedCommand)
             {
-                LastUsedCommand = Global.CurrentUnix() + 3;
+                LastUsedCommand = Global.CurrentUnix() + change;
                 return true;
             }
             return false;
@@ -201,6 +209,7 @@ namespace Rosettes.modules.engine
         public async Task<string> GetName()
         {
             var userReference = await GetDiscordReference();
+            if (userReference is null) return "Failed to get user name.";
             return userReference.Username + "#" + userReference.Discriminator;
         }
     }
