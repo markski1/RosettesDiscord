@@ -36,16 +36,18 @@ namespace Rosettes.modules.commands
         {
             string[] replies = new string[]
             {
-                "nyea",
-                "nyo",
-                "mew wew... `(the virtual snep is troubled by your question)`",
+                "yea",
+                "no",
+                "`(the virtual snep is troubled by your question)`",
                 "purrhaps",
                 "maybe you should CS:GO get some bitches instead",
                 "i think so",
                 "probably not",
                 "there's a strong chance",
                 "maybe!",
-                "no way"
+                "no way",
+                "consider morbing",
+                $"perhaps you should leave it to a {Settings.Prefix}coin flip"
             };
             await ReplyAsync(replies[Global.Random.Next(replies.Length - 1)]);
         }

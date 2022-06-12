@@ -5,7 +5,7 @@ using Rosettes.core;
 
 namespace Rosettes.modules.commands
 {
-    [Summary("Commands that can only be described as dumb.")]
+    [Summary("Commands which are dumb.")]
     public class DumbCommands : ModuleBase<SocketCommandContext>
     {
         [Command("fakecat")]
@@ -35,7 +35,7 @@ namespace Rosettes.modules.commands
         }
 
         [Command("fakeperson")]
-        [Summary("Returns an AI generated picture of a human being.")]
+        [Summary("Returns an AI generated picture of an arguably human being.")]
         public async Task FakePersonAsync()
         {
             try

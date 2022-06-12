@@ -5,7 +5,7 @@ using Rosettes.modules.engine;
 
 namespace Rosettes.modules.commands
 {
-    [Summary("Allow to control the bot playing music for you and your friends.")]
+    [Summary("Commands to control the bot's music playback.")]
     public class MusicCommands : ModuleBase<SocketCommandContext>
     {
         [Command("play")]
