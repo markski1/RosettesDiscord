@@ -4,7 +4,6 @@ using Rosettes.core;
 
 namespace Rosettes.modules.commands
 {
-    [Remarks("Random")]
     [Summary("Commands which simply return a random output based on what you provide it.")]
     public class RandomCommands : ModuleBase<SocketCommandContext>
     {

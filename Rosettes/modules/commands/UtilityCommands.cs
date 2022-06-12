@@ -7,7 +7,6 @@ using System.Text;
 
 namespace Rosettes.modules.commands
 {
-    [Remarks("Utility")]
     [Summary("General purpose commands")]
     public class UtilityCommands : ModuleBase<SocketCommandContext>
     {
@@ -152,24 +151,39 @@ namespace Rosettes.modules.commands
         }
 
         [Command("alarm")]
-        [Summary("Set an alarm, to ring the user in the amount of minutes provided.\nExample usage: '$alarm 30 (Mentions you in 30 minutes)")]
-        public async Task AlarmAsync(int minutes)
+        [Summary("Sets an alarm to ring after a given period of time.\nExample usage: '$alarm 30 m' (Mentions you in 30 minutes) | h = hours, m = minutes, s = seconds")]
+        public async Task AlarmAsync(int amount, char time = 'n')
         {
-            if (minutes > 1)
-            {
-                await ReplyAsync($"OK, I'll tag you in {minutes} minutes.");
-            }
-            else if (minutes <= 0)
+            int seconds;
+            string unit;
+            if (amount <= 0)
             {
                 await ReplyAsync("Time don't go in that direction.");
                 return;
             }
-            else
-            {
-                await ReplyAsync($"OK, I'll tag you in one minute.");
+            switch (time) {
+                case 's':
+                    seconds = amount;
+                    unit = "second";
+                    break;
+
+                case 'm':
+                    seconds = amount * 60;
+                    unit = "minute";
+                    break;
+                case 'h':
+                    seconds = amount * 3600;
+                    unit = "hour";
+                    break;
+                default:
+                    await ReplyAsync($"Missing parameters. Correct usage: '{Settings.Prefix}alarm <amount> <s/m/h>'");
+                    return;
             }
+
+            await ReplyAsync($"Okay! I will tag you in {amount} {unit}{((amount != 1) ? 's' : null)}");
+
             // the Alarm object takes care of creating and timing itself.
-            _ = new AlarmTimer(Context, minutes);
+            _ = new AlarmTimer(Context, seconds);
         }
     }
 
@@ -187,7 +201,7 @@ namespace Rosettes.modules.commands
 
         public void AlarmRing(Object? source, System.Timers.ElapsedEventArgs e)
         { 
-            _context.Channel.SendMessageAsync($"RIIIING! {_context.User.Mention}");
+            _context.Message.ReplyAsync($"Ring! {_context.User.Mention} !");
         }
     }
 

@@ -23,7 +23,7 @@ namespace Rosettes.modules.commands
             {
                 runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
             }
-            runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)},";
+            runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
             string text =
                 $"```I am using {(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb of mewmory, across {proc.Threads.Count} threads.\n" +
                 $"I've been running for {runtimeText}\n" +
@@ -100,7 +100,7 @@ namespace Rosettes.modules.commands
                         await userDM.SendMessageAsync(text);
                     }
                     currModule = singleCommand.Module;
-                    text = $"```\n{currModule.Remarks}\n> {currModule.Summary}\n====================\n\n";
+                    text = $"```\n{currModule.Name}\n> {currModule.Summary}\n====================\n\n";
                 }
                 text += $"{Settings.Prefix}{singleCommand.Name}";
                 if (singleCommand.Summary != null)

@@ -5,7 +5,6 @@ using Rosettes.core;
 
 namespace Rosettes.modules.commands
 {
-    [Remarks("Game")]
     [Summary("Commands related to games.")]
     public class GameCommands : ModuleBase<SocketCommandContext>
     {
