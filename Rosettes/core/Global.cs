@@ -14,7 +14,7 @@ namespace Rosettes.core
         public static void GenerateErrorMessage(string source, string error)
         {
             // generate the error string
-            string _error = $"{DateTime.Now.Kind:es-AR} | mew wew! There was an error at \"{source}\".\n\n```{error}```\n";
+            string _error = $"{DateTime.UtcNow} | mew wew! There was an error at \"{source}\".\n```{error}```\n";
 
             // log it to a file
             try

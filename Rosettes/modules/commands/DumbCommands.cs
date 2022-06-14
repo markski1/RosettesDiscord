@@ -17,8 +17,8 @@ namespace Rosettes.modules.commands
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thiscatdoesnotexist.com/");
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-                if (!Directory.Exists("./temp/cats/")) Directory.CreateDirectory("./temp/cats/");
-                string fileName = $"./temp/cats/{Global.Random.Next(20) + 1}.jpg";
+                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/cats/");
+                string fileName = $"./temp/pics/{Global.Random.Next(20) + 1}.jpg";
 
                 if (File.Exists(fileName)) File.Delete(fileName);
 
@@ -28,8 +28,9 @@ namespace Rosettes.modules.commands
 
                 await Context.Channel.SendFileAsync(fileName);
             }
-            catch
+            catch (Exception ex)
             {
+                Global.GenerateErrorMessage("fakecat", $"{ex.Message}");
                 await ReplyAsync($"Failed to fetch fake cat.");
             }
         }
@@ -43,8 +44,8 @@ namespace Rosettes.modules.commands
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thispersondoesnotexist.com/image");
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-                if (!Directory.Exists("./temp/peeps/")) Directory.CreateDirectory("./temp/peeps/");
-                string fileName = $"./temp/peeps/{Global.Random.Next(20) + 1}.jpg";
+                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/peeps/");
+                string fileName = $"./temp/pics/{Global.Random.Next(20) + 1}.jpg";
 
                 if (File.Exists(fileName)) File.Delete(fileName);
 
@@ -54,9 +55,10 @@ namespace Rosettes.modules.commands
 
                 await Context.Channel.SendFileAsync(fileName);
             }
-            catch
+            catch (Exception ex)
             {
-                await ReplyAsync($"Failed to fetch fake cat.");
+                Global.GenerateErrorMessage("fakeperson", $"{ex.Message}");
+                await ReplyAsync($"Failed to fetch fake person.");
             }
         }
     }

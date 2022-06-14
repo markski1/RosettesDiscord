@@ -25,7 +25,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-getallusers", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-getallusers", $"sqlException code {ex.Message}");
                 return new List<User>();
             }
         }
@@ -42,7 +42,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-checkuserexists", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-checkuserexists", $"sqlException code {ex.Message}");
                 return false;
             }
 }
@@ -59,7 +59,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-getuserdata", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-getuserdata", $"sqlException code {ex.Message}");
                 return new User(0);
             }
         }
@@ -77,7 +77,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-insertuser", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-insertuser", $"sqlException code {ex.Message}");
                 return false;
             }
         }
@@ -95,7 +95,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
                 return false;
             }
         }
@@ -112,7 +112,7 @@ namespace Rosettes.database
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("sql-deleteuser", $"sqlException code {ex}");
+                Global.GenerateErrorMessage("sql-deleteuser", $"sqlException code {ex.Message}");
                 return false;
             }
         }

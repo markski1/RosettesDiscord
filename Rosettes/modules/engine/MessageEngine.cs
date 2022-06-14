@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.core;
 
@@ -9,6 +10,7 @@ namespace Rosettes.modules.engine
     {
         private static int LastBlepUnix = 0;
         private static int LastPawUnix = 0;
+        private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         public static async Task HandleMessage(SocketCommandContext context)
         {
             if (!NoMessageChannel(context)) return;
@@ -20,6 +22,16 @@ namespace Rosettes.modules.engine
             if (message.MentionedEveryone)
             {
                 await context.Channel.SendMessageAsync("HISS!");
+            }
+            else if (message.MentionedUsers.Any())
+            {
+                foreach (var user in message.MentionedUsers)
+                {
+                    if (user.Username.ToLower().Contains("rosettes"))
+                    {
+                        await context.Channel.SendMessageAsync("mew wew");
+                    }
+                }
             }
             if (messageText.Contains("snep"))
             {
@@ -164,7 +176,7 @@ namespace Rosettes.modules.engine
                     // If substring results in an exception, the url wasn't valid
                     return;
                 }
-                var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key=BBE0DE47420F117F8470841379204F21&vanityurl={vanityURL}");
+                var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={Settings.SteamDevKey}&vanityurl={vanityURL}");
 
                 var DeserialziedObject = JsonConvert.DeserializeObject(data);
                 if (DeserialziedObject == null) return;

@@ -25,7 +25,7 @@ namespace Rosettes.modules.engine
                 }
                 catch (Exception ex)
                 {
-                    Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex}");
+                    Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex.Message}");
                     return "Error joining the channel.";
                 }
             }
@@ -61,7 +61,7 @@ namespace Rosettes.modules.engine
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex}");
+                Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
                 return "There was an error trying to fetch the song.";
             }
         }

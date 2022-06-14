@@ -73,8 +73,15 @@ namespace Rosettes.modules.commands
 
         [Command("commands")]
         [Summary("List of commands.")]
-        public async Task ListCommands()
+        public async Task ListCommands(string argument = "")
         {
+            if (argument.ToLower() != "dm")
+            {
+                await ReplyAsync("A full list of commands is available at https://snep.mrks.cf");
+                await ReplyAsync($"Alternatively, use `{Settings.Prefix}commands dm` to have them sent to your DM's. This is less convenient.");
+                return;
+            }
+
             var guild = Context.Guild;
             if (guild != null)
             {

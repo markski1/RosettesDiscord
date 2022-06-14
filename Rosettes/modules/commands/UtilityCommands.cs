@@ -284,8 +284,9 @@ namespace Rosettes.modules.commands
                 System.IO.File.Move(zipPath, $"/var/www/html/{serverName}.zip");
                 await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.mrks.cf/{serverName}.zip>.");
             }
-            catch
+            catch (Exception ex)
             {
+                Global.GenerateErrorMessage("exportemoji", $"Error allocation zip file for emoji\n{ex.Message}");
                 await ServerContext.Channel.SendMessageAsync($"Sorry! Emojis were exported, but there was an issue allocating the zip file.");
             }
             IsDownloading = false;

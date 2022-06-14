@@ -38,9 +38,9 @@ namespace Rosettes.core
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex}");
-                throw;
+                Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex.Message}");
             }
+            Global.GenerateErrorMessage("test", "amongus");
             CommandEngine.CreateCommandPage();
             Game game = new("$commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);
