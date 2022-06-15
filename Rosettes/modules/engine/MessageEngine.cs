@@ -102,7 +102,7 @@ namespace Rosettes.modules.engine
 
         public static async Task GetGameInfo(SocketCommandContext context)
         {
-            //extract gameID from url
+            // Grab the game's ID from the url itself. It's located after '/app/' and sometimes the name is after it.
             string extractID = context.Message.Content;
             int begin = extractID.IndexOf("/app/") + 5;
             int end = -1;
@@ -118,7 +118,17 @@ namespace Rosettes.modules.engine
             }
             if (end == -1) return;
             int gameID = int.Parse(extractID[begin..end]);
-            var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={gameID}");
+            string data;
+            try
+            {
+                data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={gameID}");
+            }
+            catch
+            {
+                // an exception will mean a 404 or steam being down, I think.
+                // nothing to handle here.
+                return;
+            }
 
             var DeserialziedObject = JsonConvert.DeserializeObject(data);
             if (DeserialziedObject == null) return;
