@@ -10,16 +10,18 @@ namespace Rosettes.core
     {
         public static readonly char Prefix = '$';
 #if DEBUG
-        public static readonly string Token = File.ReadAllText("Y:/token.txt");
-        public static readonly string SteamDevKey = File.ReadAllText("Y:/steam.txt");
-        public static readonly string FFXIVApiKey = File.ReadAllText("Y:/ffxiv.txt");
-        public static readonly dynamic LavaLinkData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/lavalink.txt"));
-        public static readonly dynamic MySQLData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/mysql.txt"));
+        public static readonly string Token = File.ReadAllText("Y:/rosetteskeys/token.txt");
+        public static readonly string SteamDevKey = File.ReadAllText("Y:/rosetteskeys/steam.txt");
+        public static readonly string FFXIVApiKey = File.ReadAllText("Y:/rosetteskeys/ffxiv.txt");
+        public static readonly string RapidAPIKey = File.ReadAllText("Y:/rosetteskeys/rapidapi.txt");
+        public static readonly dynamic LavaLinkData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/rosetteskeys/lavalink.txt"));
+        public static readonly dynamic MySQLData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/rosetteskeys/mysql.txt"));
         public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
 #else
         public static readonly string Token = File.ReadAllText("./keys/token.txt");
         public static readonly string SteamDevKey = File.ReadAllText("./keys/steam.txt");
         public static readonly string FFXIVApiKey = File.ReadAllText("./keys/ffxiv.txt");
+        public static readonly string RapidAPIKey = File.ReadAllText("./keys/rapidapi.txt");
         public static readonly dynamic LavaLinkData = JsonConvert.DeserializeObject(File.ReadAllText("./keys/lavalink.txt"));
         public static readonly dynamic MySQLData = JsonConvert.DeserializeObject(File.ReadAllText("./keys/mysql.txt"));
         public static readonly LogSeverity LogSeverity = LogSeverity.Info;

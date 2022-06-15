@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.core;
+using System.Text.RegularExpressions;
 
 namespace Rosettes.modules.commands
 {
@@ -60,6 +61,95 @@ namespace Rosettes.modules.commands
                 Global.GenerateErrorMessage("fakeperson", $"{ex.Message}");
                 await ReplyAsync($"Failed to fetch fake person.");
             }
+        }
+
+        [Command("urban")]
+        [Summary("Returns an UrbanDictionary definition for the provided word.")]
+        public async Task UrbanDefineAsync(string givenTerm = "")
+        {
+            if (givenTerm == "")
+            {
+                await ReplyAsync($"Usage: `{Settings.Prefix}urban <term>`");
+                return;
+            }
+            if (!Regex.IsMatch(givenTerm, "^[a-zA-Z0-9]*$"))
+            {
+                await ReplyAsync($"The term must only contain letters and numbers.");
+                return;
+            }
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
+                Headers =
+                    {
+                        { "X-RapidAPI-Key", Settings.RapidAPIKey },
+                        { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
+                    },
+            };
+
+            string message;
+            dynamic? definition = null;
+
+            try
+            {
+                using var response = await Global.HttpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                var data = await response.Content.ReadAsStringAsync();
+                // obtain the definition from the API and parse it. Use "first" because it's all contained in a response object.
+                var definitionList = JObject.Parse(data).First;
+                if (definitionList is null)
+                {
+                    await ReplyAsync("Failed to fetch definitions.");
+                    return;
+                }
+
+                // "first" again because the definitions are inside a list.
+                definitionList = definitionList.First;
+
+                // if the list is null, we have no results.
+                if (definitionList is null)
+                {
+                    await ReplyAsync("No definition found for that word.");
+                    return;
+                }
+
+                int bestScore = 0;
+                // go through every definition and choose the one with the highest score, put it in 'definition'
+                foreach (var aDefinition in definitionList)
+                {
+                    dynamic? temp = JsonConvert.DeserializeObject(aDefinition.ToString());
+                    if (temp is null) continue;
+                    if (temp.thumbs_up - temp.thumbs_down > bestScore)
+                    {
+                        bestScore = temp.thumbs_up - temp.thumbs_down;
+                        definition = temp;
+                    } 
+                }
+
+                // shouldn't be possible, but just in case and to make the compiler happy.
+                if (definition == null)
+                {
+                    await ReplyAsync("Failed to obtain definition.");
+                    return;
+                }
+
+                message =
+                    $"Definition for: {givenTerm}" +
+                    $"```" +
+                    definition.definition +
+                    $"```" +
+                    $"**Upvotes**: {definition.thumbs_up} | **Downvotes**: {definition.thumbs_down}\n" +
+                    $"**Permalink**: <{definition.permalink}>";
+            }
+            catch (Exception ex)
+            {
+                message = "There was an error fetching the definition.";
+                Global.GenerateErrorMessage("urbanDictionary", ex.Message);
+            }
+
+            await ReplyAsync(message);
         }
     }
 }
