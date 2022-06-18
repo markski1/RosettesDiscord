@@ -3,7 +3,6 @@ using Discord.Commands;
 using System.IO.Compression;
 using Rosettes.modules.engine;
 using Rosettes.core;
-using System.Text;
 
 namespace Rosettes.modules.commands
 {

@@ -34,13 +34,16 @@ namespace Rosettes.core
 
             collection.AddSingleton(Client);
             collection.AddSingleton(Commands);
-            collection.AddLavaNode(x =>
+            if (Settings.LavaLinkData is not null)
             {
-                x.SelfDeaf = true;
-                x.Hostname = Settings.LavaLinkData.Host;
-                x.Port = Settings.LavaLinkData.Port;
-                x.Authorization = Settings.LavaLinkData.Password;
-            });
+                collection.AddLavaNode(x =>
+                {
+                    x.SelfDeaf = true;
+                    x.Hostname = Settings.LavaLinkData.Host;
+                    x.Port = Settings.LavaLinkData.Port;
+                    x.Authorization = Settings.LavaLinkData.Password;
+                });
+            }
 
             ServiceManager.SetProvider(collection);
         }
@@ -54,7 +57,6 @@ namespace Rosettes.core
             // start thy stuff
             await CommandEngine.LoadCommands();
             await EventManager.LoadCommands();
-            UserEngine.LoadAllUsersFromDatabase();
 
             // call ConstantChecks every 15 seconds
 #if !DEBUG

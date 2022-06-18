@@ -77,23 +77,23 @@ namespace Rosettes.modules.commands
                 await ReplyAsync($"The term must only contain letters and numbers.");
                 return;
             }
-
-            var request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
-                Headers =
-                    {
-                        { "X-RapidAPI-Key", Settings.RapidAPIKey },
-                        { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
-                    },
-            };
-
+            
             string message;
             dynamic? definition = null;
 
             try
             {
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
+                    Headers =
+                    {
+                        { "X-RapidAPI-Key", Settings.RapidAPIKey },
+                        { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
+                    },
+                };
+
                 using var response = await Global.HttpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var data = await response.Content.ReadAsStringAsync();

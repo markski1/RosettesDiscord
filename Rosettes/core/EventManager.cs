@@ -40,6 +40,17 @@ namespace Rosettes.core
             {
                 Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex.Message}");
             }
+
+
+            if (Settings.ConnectToDatabase())
+            {
+                UserEngine.LoadAllUsersFromDatabase();
+            }
+            else
+            {
+                Global.GenerateErrorMessage("OnReady", "Failed to connect to database.");
+            }
+
             CommandEngine.CreateCommandPage();
             Game game = new("$commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);

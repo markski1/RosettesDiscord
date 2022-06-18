@@ -175,7 +175,7 @@ namespace Rosettes.modules.engine
 
             while (experienceLeftAccount > 0)
             {
-                if (levelUpThreshold >= experienceLeftAccount)
+                if (experienceLeftAccount >= levelUpThreshold)
                 {
                     experienceLeftAccount -= levelUpThreshold;
                     levelUpThreshold = (ulong)(levelUpThreshold * 1.1);

@@ -2,33 +2,56 @@
 using MySqlConnector;
 using Newtonsoft.Json;
 
-#pragma warning disable CS8602
-#pragma warning disable CS8601
+
 namespace Rosettes.core
 {
     public static class Settings
     {
         public static readonly char Prefix = '$';
-#if DEBUG
-        public static readonly string Token = File.ReadAllText("Y:/rosetteskeys/token.txt");
-        public static readonly string SteamDevKey = File.ReadAllText("Y:/rosetteskeys/steam.txt");
-        public static readonly string FFXIVApiKey = File.ReadAllText("Y:/rosetteskeys/ffxiv.txt");
-        public static readonly string RapidAPIKey = File.ReadAllText("Y:/rosetteskeys/rapidapi.txt");
-        public static readonly dynamic LavaLinkData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/rosetteskeys/lavalink.txt"));
-        public static readonly dynamic MySQLData = JsonConvert.DeserializeObject(File.ReadAllText("Y:/rosetteskeys/mysql.txt"));
-        public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
-#else
-        public static readonly string Token = File.ReadAllText("./keys/token.txt");
-        public static readonly string SteamDevKey = File.ReadAllText("./keys/steam.txt");
-        public static readonly string FFXIVApiKey = File.ReadAllText("./keys/ffxiv.txt");
-        public static readonly string RapidAPIKey = File.ReadAllText("./keys/rapidapi.txt");
-        public static readonly dynamic LavaLinkData = JsonConvert.DeserializeObject(File.ReadAllText("./keys/lavalink.txt"));
-        public static readonly dynamic MySQLData = JsonConvert.DeserializeObject(File.ReadAllText("./keys/mysql.txt"));
-        public static readonly LogSeverity LogSeverity = LogSeverity.Info;
-#endif
-        public static readonly MySqlConnectionStringBuilder Database = new() { Server = MySQLData.Server, UserID = MySQLData.UserID, Password = MySQLData.Password, Database = MySQLData.Database };
 
+        public static readonly string Token = LoadSetting("token");
+        public static readonly string SteamDevKey = LoadSetting("steam");
+        public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
+        public static readonly string RapidAPIKey = LoadSetting("rapidapi");
+        public static readonly dynamic? LavaLinkData = LoadJsonSetting("lavalink");
+        public static readonly MySqlConnectionStringBuilder Database = new();
+
+        #if DEBUG
+        public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
+        #else
+        public static readonly LogSeverity LogSeverity = LogSeverity.Info;
+        #endif
+        
+        public static bool ConnectToDatabase()
+        {
+            dynamic? MySQLData = LoadJsonSetting("mysql");
+            if (MySQLData is null)
+            {
+                return false;
+            }
+            Database.Server = MySQLData.Server;
+            Database.UserID = MySQLData.UserID;
+            Database.Password = MySQLData.Password;
+            Database.Database = MySQLData.Database;
+            return true;
+    }
+
+        public static string LoadSetting(string name)
+        {
+            #if DEBUG
+            return File.ReadAllText($"Y:/rosetteskeys/{name}.txt").Replace("\n", String.Empty);
+            #else
+            return File.ReadAllText($"./keys/{name}.txt").Replace("\n", String.Empty);
+            #endif
+        }
+
+        public static dynamic? LoadJsonSetting(string name)
+        {
+            #if DEBUG
+            return JsonConvert.DeserializeObject(File.ReadAllText($"Y:/rosetteskeys/{name}.txt"));
+            #else
+            return JsonConvert.DeserializeObject(File.ReadAllText($"./keys/{name}.txt"));
+            #endif
+        }
     }
 }
-#pragma warning restore CS8601
-#pragma warning restore CS8602
