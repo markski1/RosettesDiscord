@@ -2,9 +2,9 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using Rosettes.core;
+using Rosettes.Core;
 
-namespace Rosettes.modules.engine
+namespace Rosettes.Modules.Engine
 {
     public static class MessageEngine
     {

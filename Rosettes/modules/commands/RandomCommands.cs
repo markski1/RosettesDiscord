@@ -1,8 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
-using Rosettes.core;
+using Rosettes.Core;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     [Summary("Commands which simply return a random output based on what you provide it.")]
     public class RandomCommands : ModuleBase<SocketCommandContext>

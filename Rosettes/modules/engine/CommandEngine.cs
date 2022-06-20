@@ -1,10 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using Rosettes.core;
-using Rosettes.modules.commands;
+using Rosettes.Core;
+using Rosettes.Modules.Commands;
 
-namespace Rosettes.modules.engine
+namespace Rosettes.Modules.Engine
 {
     public static class CommandEngine
     {

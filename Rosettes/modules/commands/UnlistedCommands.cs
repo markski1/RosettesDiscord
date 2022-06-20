@@ -1,11 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Rosettes.core;
-using Rosettes.modules.engine;
+using Rosettes.Core;
+using Rosettes.Modules.Engine;
 using System.Diagnostics;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     public class UnlistedCommands : ModuleBase<SocketCommandContext>
     {

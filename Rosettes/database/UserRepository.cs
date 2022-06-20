@@ -1,10 +1,10 @@
 ﻿using Dapper;
 using Discord;
 using MySqlConnector;
-using Rosettes.core;
-using Rosettes.modules.engine;
+using Rosettes.Core;
+using Rosettes.Modules.Engine;
 
-namespace Rosettes.database
+namespace Rosettes.Database
 {
     public class UserRepository : IUserRepository
     {

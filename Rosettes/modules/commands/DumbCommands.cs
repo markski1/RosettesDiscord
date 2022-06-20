@@ -1,10 +1,10 @@
 ﻿using Discord.Commands;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Rosettes.core;
+using Rosettes.Core;
 using System.Text.RegularExpressions;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     [Summary("Commands which are dumb.")]
     public class DumbCommands : ModuleBase<SocketCommandContext>

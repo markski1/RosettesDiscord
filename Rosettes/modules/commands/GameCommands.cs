@@ -1,9 +1,9 @@
 ﻿using Discord.Commands;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Rosettes.core;
+using Rosettes.Core;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     [Summary("Commands related to games.")]
     public class GameCommands : ModuleBase<SocketCommandContext>

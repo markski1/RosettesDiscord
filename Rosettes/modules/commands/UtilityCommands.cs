@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
 using System.IO.Compression;
-using Rosettes.modules.engine;
-using Rosettes.core;
+using Rosettes.Modules.Engine;
+using Rosettes.Core;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     [Summary("General purpose commands")]
     public class UtilityCommands : ModuleBase<SocketCommandContext>
@@ -198,10 +198,10 @@ namespace Rosettes.modules.commands
     public class AlarmTimer
     {
         private readonly SocketCommandContext _context;
-        public AlarmTimer(SocketCommandContext context, int minutes)
+        public AlarmTimer(SocketCommandContext context, int seconds)
         {
             _context = context;
-            System.Timers.Timer Timer = new((minutes * 60) * 1000);
+            System.Timers.Timer Timer = new(seconds * 1000);
             Timer.Elapsed += AlarmRing;
             Timer.AutoReset = false;
             Timer.Enabled = true;

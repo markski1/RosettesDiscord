@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Rosettes.core
+namespace Rosettes.Core
 {
     public static class ServiceManager
     {

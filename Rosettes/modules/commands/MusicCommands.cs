@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Rosettes.modules.engine;
+using Rosettes.Modules.Engine;
 
-namespace Rosettes.modules.commands
+namespace Rosettes.Modules.Commands
 {
     [Summary("Commands to control the bot's music playback.")]
     public class MusicCommands : ModuleBase<SocketCommandContext>

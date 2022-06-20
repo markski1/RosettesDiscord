@@ -3,7 +3,7 @@ using Discord.WebSocket;
 using MySqlConnector;
 using System.Text;
 
-namespace Rosettes.core
+namespace Rosettes.Core
 {
     public static class Global
     {

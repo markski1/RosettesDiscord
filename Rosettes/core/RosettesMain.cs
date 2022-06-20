@@ -1,11 +1,11 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Rosettes.modules.engine;
+using Rosettes.Modules.Engine;
 using Microsoft.Extensions.DependencyInjection;
 using Victoria;
 
-namespace Rosettes.core
+namespace Rosettes.Core
 {
     public class RosettesMain
     {

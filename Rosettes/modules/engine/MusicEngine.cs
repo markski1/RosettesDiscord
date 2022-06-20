@@ -1,13 +1,13 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using Rosettes.core;
+using Rosettes.Core;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
 using Victoria.Responses.Search;
 
-namespace Rosettes.modules.engine
+namespace Rosettes.Modules.Engine
 {
     public static class MusicEngine
     {

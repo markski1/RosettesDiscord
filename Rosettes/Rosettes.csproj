@@ -37,4 +37,8 @@
     <PackageReference Include="Victoria" Version="5.2.8" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Modules\Commands\CommandClasses\" />
+  </ItemGroup>
+
 </Project>

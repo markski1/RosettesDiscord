@@ -1,7 +1,7 @@
 ﻿using Discord;
-using Rosettes.modules.engine;
+using Rosettes.Modules.Engine;
 
-namespace Rosettes.database
+namespace Rosettes.Database
 {
     public interface IUserRepository
     {

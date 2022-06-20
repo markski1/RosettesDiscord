@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using Rosettes.core;
-using Rosettes.database;
+using Rosettes.Core;
+using Rosettes.Database;
 
-namespace Rosettes.modules.engine
+namespace Rosettes.Modules.Engine
 {
     public static class UserEngine
     {

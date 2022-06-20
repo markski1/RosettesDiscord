@@ -2,10 +2,10 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using Rosettes.modules.engine;
+using Rosettes.Modules.Engine;
 using Victoria;
 
-namespace Rosettes.core
+namespace Rosettes.Core
 {
     public static class EventManager
     {
