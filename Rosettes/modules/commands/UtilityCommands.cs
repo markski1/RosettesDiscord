@@ -3,6 +3,8 @@ using Discord.Commands;
 using System.IO.Compression;
 using Rosettes.Modules.Engine;
 using Rosettes.Core;
+using Rosettes.Modules.Commands.Alarms;
+using Rosettes.Modules.Commands.Emoji;
 
 namespace Rosettes.Modules.Commands
 {
@@ -158,6 +160,12 @@ namespace Rosettes.Modules.Commands
         [Summary("Sets an alarm to ring after a given period of time.\nExample usage: '$alarm 30 m' (Mentions you in 30 minutes) | h = hours, m = minutes, s = seconds")]
         public async Task AlarmAsync(int amount = -69420, char time = 'n')
         {
+            if (AlarmManager.CheckUserHasAlarm(Context.User))
+            {
+                await ReplyAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with $cancelalarm.");
+                return;
+            }
+
             int seconds;
             string unit;
             if (amount == -69420)
@@ -190,110 +198,29 @@ namespace Rosettes.Modules.Commands
 
             await ReplyAsync($"Okay! I will tag you in {amount} {unit}{((amount != 1) ? 's' : null)}");
 
-            // the Alarm object takes care of creating and timing itself.
-            _ = new AlarmTimer(Context, seconds);
+            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(seconds)), await UserEngine.GetDBUser(Context.User), Context.Channel, seconds);
         }
-    }
 
-    public class AlarmTimer
-    {
-        private readonly SocketCommandContext _context;
-        public AlarmTimer(SocketCommandContext context, int seconds)
+        [Command("cancelalarm")]
+        [Summary("Cancels your current alarm.")]
+        public async Task CancelAlarmAsync()
         {
-            _context = context;
-            System.Timers.Timer Timer = new(seconds * 1000);
-            Timer.Elapsed += AlarmRing;
-            Timer.AutoReset = false;
-            Timer.Enabled = true;
-        }
-
-        public void AlarmRing(Object? source, System.Timers.ElapsedEventArgs e)
-        { 
-            _context.Message.ReplyAsync($"Ring! {_context.User.Mention} !");
-        }
-    }
-
-    public static class DownloadEmoji
-    {
-        private static IReadOnlyCollection<GuildEmote>? EmoteCollection;
-        private static SocketCommandContext? ServerContext;
-        private static bool IsDownloading = false;
-
-        public static async Task DoTheThing(SocketCommandContext serverContext)
-        {
-            ServerContext = serverContext;
-            EmoteCollection = await ServerContext.Guild.GetEmotesAsync();
-            string ServerName = ServerContext.Guild.Name;
-            int emoteAmount = EmoteCollection.Count;
-            int progress = 0;
-            IUserMessage messageId;
-            if (emoteAmount < 1)
+            if (!AlarmManager.CheckUserHasAlarm(Context.User))
             {
-                await ServerContext.Channel.SendMessageAsync("There are no custom emoji in this server, or I failed to retrieve them for some reason.");
+                await ReplyAsync("You don't have any alarm set.");
                 return;
+            }
+
+            Alarm? alarm = AlarmManager.GetUserAlarm(Context.User);
+            if (alarm != null)
+            {
+                AlarmManager.DeleteAlarm(alarm);
+                await ReplyAsync("Your alarm has been cancelled.");
             }
             else
             {
-                await ServerContext.Channel.SendMessageAsync("I'll now download every emoji in this server, and I'll send it over as a ZIP when I'm done.");
-                messageId = await ServerContext.Channel.SendMessageAsync($"Progress: `0/{emoteAmount}`");
+                await ReplyAsync("There was an error deleting your alarm.");
             }
-            IsDownloading = true;
-            string fileName = "";
-            string serverName = ServerContext.Guild.Name.Replace(" ", "");
-            if (!Directory.Exists("./temp/"))
-            {
-                Directory.CreateDirectory("./temp/");
-            }
-            if (!Directory.Exists($"./temp/{serverName}/"))
-            {
-                Directory.CreateDirectory($"./temp/{serverName}/");
-            }
-            foreach (GuildEmote emote in EmoteCollection)
-            {
-                using (var stream = await Global.HttpClient.GetStreamAsync(emote.Url))
-                {
-                    if (emote.Animated)
-                    {
-                        fileName = $"./temp/{serverName}/{emote.Name}.gif";
-                    }
-                    else
-                    {
-                        fileName = $"./temp/{serverName}/{emote.Name}.png";
-                    }
-                    using var fileStream = new FileStream(fileName, FileMode.Create);
-                    await stream.CopyToAsync(fileStream);
-                }
-                progress++;
-                // "store" the task nowhere, we don't care to await for this to finish.
-                if (progress % 3 == 0) await messageId.ModifyAsync(x => x.Content = $"Progress: `{progress}/{emoteAmount}`");
-            }
-            await messageId.ModifyAsync(x => x.Content = $"Progress: `Complete!`");
-            try
-            {
-                string zipPath = $"./temp/{serverName}.zip";
-                if (File.Exists(zipPath))
-                {
-                    File.Delete(zipPath);
-                }
-                ZipFile.CreateFromDirectory($"./temp/{serverName}", zipPath);
-                if (File.Exists($"/var/www/html/{serverName}.zip"))
-                {
-                    File.Delete($"/var/www/html/{serverName}.zip");
-                }
-                System.IO.File.Move(zipPath, $"/var/www/html/{serverName}.zip");
-                await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.mrks.cf/{serverName}.zip>.");
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("exportemoji", $"Error allocation zip file for emoji\n{ex.Message}");
-                await ServerContext.Channel.SendMessageAsync($"Sorry! Emojis were exported, but there was an issue allocating the zip file.");
-            }
-            IsDownloading = false;
-        }
-
-        public static bool CheckIsDownloading()
-        {
-            return IsDownloading;
         }
     }
 }

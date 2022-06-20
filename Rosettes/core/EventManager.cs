@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
 using Victoria;
 
@@ -44,7 +45,8 @@ namespace Rosettes.Core
 
             if (Settings.ConnectToDatabase())
             {
-                UserEngine.LoadAllUsersFromDatabase();
+                await UserEngine.LoadAllUsersFromDatabase();
+                AlarmManager.LoadAllAlarmsFromDatabase();
             }
             else
             {

@@ -8,7 +8,7 @@ namespace Rosettes.Modules.Engine
     public static class UserEngine
     {
         private static List<User> UserCache = new();
-        public static readonly UserRepository inter = new();
+        public static readonly UserRepository _interface = new();
 
         public static bool IsUserInCache(IUser user)
         {
@@ -22,7 +22,7 @@ namespace Rosettes.Modules.Engine
             foreach (User user in UserCache)
             {
                 if (user.SyncUpToDate) continue;
-                await inter.UpdateUser(user);
+                await _interface.UpdateUser(user);
                 user.SyncUpToDate = true;
             }
         }
@@ -30,24 +30,26 @@ namespace Rosettes.Modules.Engine
         public static async Task<User> LoadUserFromDatabase(IUser user)
         {
             User getUser;
-            if (await inter.CheckUserExists(user))
+            if (await _interface.CheckUserExists(user))
             {
-                getUser = await inter.GetUserData(user);
+                getUser = await _interface.GetUserData(user);
             }
             else
             {
                 getUser = new User(user.Id);
-                _ = inter.InsertUser(getUser);
+                _ = _interface.InsertUser(getUser);
             }
             if (getUser.IsValid()) UserCache.Add(getUser);
             return getUser;
         }
 
-        public static async void LoadAllUsersFromDatabase()
+        // return might seem useless but we need to AWAIT for all users to be loaded.
+        public static async Task<bool> LoadAllUsersFromDatabase()
         {
             IEnumerable<User> userCacheTemp;
-            userCacheTemp = await inter.GetAllUsersAsync();
+            userCacheTemp = await _interface.GetAllUsersAsync();
             UserCache = userCacheTemp.ToList();
+            return true;
         }
 
         public static async Task<User> GetDBUser(IUser user)
@@ -57,6 +59,11 @@ namespace Rosettes.Modules.Engine
                 return await LoadUserFromDatabase(user);
             }
             return UserCache.First(item => item.Id == user.Id);
+        }
+
+        public static User GetDBUserById(ulong user)
+        {
+            return UserCache.First(item => item.Id == user);
         }
 
         public static async Task<IEnumerable<User>> GetTopUsers(IGuild guild)
