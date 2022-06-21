@@ -1,6 +1,4 @@
-﻿using Discord;
-using Discord.Commands;
-using System.IO.Compression;
+﻿using Discord.Commands;
 using Rosettes.Modules.Engine;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;

@@ -61,6 +61,25 @@ namespace Rosettes.Modules.Commands
             // the object takes care of everything, this allows us to just spawn a theoretically infinite amount of coins for any server at once.
             _ = new Coin(messageID, face1, face2);
         }
+
+        [Command("checkem")]
+        [Summary("Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
+        public async Task CheckemAsync()
+        {
+            Random randomizer = new();
+            var File = Directory.GetFiles("./checkem/").OrderBy(x => randomizer.Next()).Take(1);
+
+            int number = randomizer.Next(99999999) + 1;
+            if (number < 10000000)
+            {
+                number += 10000000;
+            }
+
+            await ReplyAsync($"[{Context.User.Username}] Check'Em! : **{number}**");
+
+            if (File is null) return;
+            await Context.Channel.SendFileAsync(File.First());
+        }
     }
 
     public class Coin
