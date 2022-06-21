@@ -74,14 +74,15 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync($"Usage: `{Settings.Prefix}twtvid [tweet url]`");
                 return;
             }
-            if (!tweetUrl.Contains("vxtwitter.com"))
+            // grab off python thing running as a flask server
+            if (!tweetUrl.Contains("snep.mrks.cf:42069"))
             {
                 if (!tweetUrl.Contains("twitter.com"))
                 {
                     await ReplyAsync("That's not a valid tweet URL.");
                 }
-                tweetUrl = tweetUrl.Replace("twitter.com", "vxtwitter.com");
-
+                tweetUrl = tweetUrl.Replace("twitter.com", "snep.mrks.cf:42069");
+                tweetUrl = tweetUrl.Replace("https:/", "http:/");
             }
             tweetUrl = tweetUrl.Replace("<", string.Empty);
             tweetUrl = tweetUrl.Replace(">", string.Empty);
