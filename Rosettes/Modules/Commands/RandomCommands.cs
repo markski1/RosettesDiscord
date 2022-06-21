@@ -67,7 +67,7 @@ namespace Rosettes.Modules.Commands
         public async Task CheckEm()
         {
             Random randomizer = new();
-            var File = Directory.GetFiles("./checkem/").OrderBy(x => randomizer.Next()).Take(1);
+            var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
 
             int number = randomizer.Next(99999999) + 1;
             if (number < 10000000)
@@ -77,8 +77,7 @@ namespace Rosettes.Modules.Commands
 
             await ReplyAsync($"[{Context.User.Username}] Check'Em! : **{number}**");
 
-            if (File is null) return;
-            await Context.Channel.SendFileAsync(File.First());
+            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.mrks.cf/"));
         }
     }
 
