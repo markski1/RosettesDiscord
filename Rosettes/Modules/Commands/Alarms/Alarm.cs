@@ -27,7 +27,7 @@ namespace Rosettes.Modules.Commands.Alarms
 
         public static async void DeleteAlarm(Alarm alarm)
         {
-            alarm.StopTimer();
+            alarm.Timer.Stop();
             await _interface.DeleteAlarm(alarm);
             ActiveAlarms.Remove(alarm);
         }
@@ -49,12 +49,14 @@ namespace Rosettes.Modules.Commands.Alarms
 
     public class Alarm
     {
-        public DateTime DateTime;
-        public User User;
+        public readonly DateTime DateTime;
+        public readonly User User;
+        public readonly System.Timers.Timer Timer;
         public ISocketMessageChannel? Channel;
-        private readonly bool Success;
-        private readonly System.Timers.Timer Timer;
 
+        private readonly bool Success;
+
+        // constructor used by $alarm
         public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int seconds)
         {
             DateTime = dateTime;
@@ -69,12 +71,7 @@ namespace Rosettes.Modules.Commands.Alarms
             Success = true;
         }
 
-        public void StopTimer()
-        {
-            Timer.Stop();
-        }
-
-        // for mysql
+        // constructor used when loading from database
         public Alarm(DateTime dateTime, ulong user, ulong channel)
         {
             DateTime = dateTime;

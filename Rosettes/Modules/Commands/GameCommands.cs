@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Commands
     {
         [Command("csgo")]
         [Summary("Status of Steam and CSGO matchmaking.")]
-        public async Task CSGOStatusAsync()
+        public async Task CSGOStatus()
         {
             string text;
             try
@@ -54,7 +54,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("ffxiv")]
         [Summary("Status of FFXIV servers.")]
-        public async Task XIVSearchAsync(string checkServer = "NOTSPECIFIED")
+        public async Task XIVCheck(string checkServer = "NOTSPECIFIED")
         {
             string lobbyData;
             try
@@ -106,6 +106,9 @@ namespace Rosettes.Modules.Commands
                 string searchTerm = checkServer.ToLower();
                 List<string> serverNames = new();
 
+                // This gets ugly really fast. Because of how frontier's xiv api formats the status response, we have to iterate all this crap
+                // to figure out what servers we want to look at depending on the world given.
+                // In other words, here we grab the datacenter object, with all it's servers are children token.
                 foreach (var datacenter in datacenterObj.Cast<KeyValuePair<string, JToken>>().ToList())
                 {
                     if (datacenter.Key.ToLower() == searchTerm)
@@ -122,6 +125,8 @@ namespace Rosettes.Modules.Commands
                 }
                 else
                 {
+                    // now that we have the name of the servers we care about, we go through the entire list taken off xiv's api
+                    // we compare text names and put them in when we have a hit.
                     foreach (var world in worldObj.Cast<KeyValuePair<string, JToken>>().ToList())
                     {
                         if (serverNames.Contains(world.Key))

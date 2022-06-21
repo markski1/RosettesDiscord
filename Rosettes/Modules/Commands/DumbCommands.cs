@@ -11,7 +11,7 @@ namespace Rosettes.Modules.Commands
     {
         [Command("fakecat")]
         [Summary("Returns an AI generated picture of a cat.")]
-        public async Task FakeCatAsync()
+        public async Task FakeCat()
         {
             try
             {
@@ -38,7 +38,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("fakeperson")]
         [Summary("Returns an AI generated picture of an arguably human being.")]
-        public async Task FakePersonAsync()
+        public async Task FakePerson()
         {
             try
             {
@@ -65,7 +65,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("urban")]
         [Summary("Returns an UrbanDictionary definition for the provided word.")]
-        public async Task UrbanDefineAsync(string givenTerm = "")
+        public async Task UrbanDefine(string givenTerm = "")
         {
             if (givenTerm == "")
             {
@@ -79,21 +79,20 @@ namespace Rosettes.Modules.Commands
             }
             
             string message;
-            dynamic? definition = null;
 
-            try
+            var request = new HttpRequestMessage
             {
-                var request = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
-                    Headers =
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
+                Headers =
                     {
                         { "X-RapidAPI-Key", Settings.RapidAPIKey },
                         { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
                     },
-                };
+            };
 
+            try
+            {
                 using var response = await Global.HttpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var data = await response.Content.ReadAsStringAsync();
@@ -105,7 +104,7 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
 
-                // "first" again because the definitions are inside a list.
+                // "first" again because the definitions are inside a list (and as stated above, the list inside a response object. very stupid).
                 definitionList = definitionList.First;
 
                 // if the list is null, we have no results.
@@ -115,25 +114,15 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
 
-                int bestScore = 0;
-                // go through every definition and choose the one with the highest score, put it in 'definition'
+                List<dynamic> parsedDefinitionList = new();
                 foreach (var aDefinition in definitionList)
                 {
                     dynamic? temp = JsonConvert.DeserializeObject(aDefinition.ToString());
                     if (temp is null) continue;
-                    if (temp.thumbs_up - temp.thumbs_down > bestScore)
-                    {
-                        bestScore = temp.thumbs_up - temp.thumbs_down;
-                        definition = temp;
-                    } 
+                    parsedDefinitionList.Add(temp);
                 }
 
-                // shouldn't be possible, but just in case and to make the compiler happy.
-                if (definition == null)
-                {
-                    await ReplyAsync("Failed to obtain definition.");
-                    return;
-                }
+                dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
 
                 message =
                     $"Definition for: {givenTerm}" +

@@ -61,6 +61,7 @@ namespace Rosettes.Modules.Engine
             return UserCache.First(item => item.Id == user.Id);
         }
 
+        // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
         public static User GetDBUserById(ulong user)
         {
             return UserCache.First(item => item.Id == user);
@@ -123,6 +124,7 @@ namespace Rosettes.Modules.Engine
         private int LastUsedCommand;
         private int LastSentMessage;
 
+        // normal constructor
         public User(ulong id)
         {
             Id = id;
@@ -133,7 +135,7 @@ namespace Rosettes.Modules.Engine
             LastSentMessage = 0;
         }
 
-        // database fetch ctor. "0 references", but in reality dynamically referenced by the UserRepository interface.
+        // database constructor, used on loading users
         public User(ulong id, ulong exp, ulong currency)
         {
             Id = id;

@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Commands
     {
         [Command("play")]
         [Summary("Joins your VC, and begins playing the specified song. If a song is already playing, it'll be queued.")]
-        public async Task PlayCommand([Remainder] string search)
+        public async Task PlayMusic([Remainder] string search)
         {
             if (Context.Guild == null)
             {
@@ -29,7 +29,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("stop")]
         [Summary("Stops playing music.")]
-        public async Task StopCommand()
+        public async Task StopMusic()
         {
             if (Context.Guild == null)
             {
@@ -43,7 +43,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("skip")]
         [Summary("Skip to the next song in the queue.")]
-        public async Task SkipCommand()
+        public async Task SkipMusic()
         {
             if (Context.Guild == null)
             {
@@ -57,7 +57,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("toggle")]
         [Summary("Pauses and resumes the currently playing song.")]
-        public async Task PauseCommand()
+        public async Task ToggleMusic()
         {
             if (Context.Guild == null)
             {
@@ -71,7 +71,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("leave")]
         [Summary("Make the bot leave VC.")]
-        public async Task LeaveCommand()
+        public async Task LeaveMusic()
         {
             if (Context.Guild == null)
             {

@@ -9,7 +9,7 @@ namespace Rosettes.Modules.Commands
     {
         [Command("dice")]
         [Summary("Generates a number between 1 and the provided number.\nExample usage: '$dice 20' (rolls a d20)")]
-        public async Task DiceAsync(int num = -69420)
+        public async Task Dice(int num = -69420)
         {
             if (num == -69420)
             {
@@ -32,13 +32,13 @@ namespace Rosettes.Modules.Commands
         [Command("ask")]
         [Summary("Ask the virtual snep a question.\nExample usage: '$ask Am I sus?'")]
         
-        public async Task AskAsync()
+        public async Task Ask()
         {
             string[] replies = new string[]
             {
                 "yea",
                 "no",
-                "`(the virtual snep is troubled by your question)`",
+                "`(Rosettes is troubled by your question)`",
                 "purrhaps",
                 "maybe you should CS:GO get some bitches instead",
                 "i think so",
@@ -54,17 +54,17 @@ namespace Rosettes.Modules.Commands
 
         [Command("coin")]
         [Summary("Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.\nExample usage: '$coin' or '$coin one two' for custom coin faces named one and two.")]
-        public async Task CoinAsync(string face1 = "Tails", string face2 = "Face")
+        public async Task CoinCommand(string face1 = "Tails", string face2 = "Face")
         {
             await Context.Channel.TriggerTypingAsync();
-            IUserMessage messageID = await ReplyAsync($"*The virtual snep throws a coin in the air... {face1} on one side, {face2} on the other.*");
+            IUserMessage messageID = await ReplyAsync($"*A coin is thrown into the air... {face1} on one side, {face2} on the other.*");
             // the object takes care of everything, this allows us to just spawn a theoretically infinite amount of coins for any server at once.
             _ = new Coin(messageID, face1, face2);
         }
 
         [Command("checkem")]
         [Summary("Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-        public async Task CheckemAsync()
+        public async Task CheckEm()
         {
             Random randomizer = new();
             var File = Directory.GetFiles("./checkem/").OrderBy(x => randomizer.Next()).Take(1);
@@ -84,8 +84,7 @@ namespace Rosettes.Modules.Commands
 
     public class Coin
     {
-        private readonly System.Timers.Timer Timer = new(3000);
-        private bool coinLanded = false;
+        private readonly System.Timers.Timer Timer = new(2500);
         private readonly IUserMessage message;
         private readonly string[] coinSides = new String[2];
 
@@ -100,16 +99,9 @@ namespace Rosettes.Modules.Commands
 
         public void CoinStateUpdate(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            if (!coinLanded)
-            {
-                message.ModifyAsync(x => x.Content = "*The coin lands, and begins tumbling about...*");
-                coinLanded = true;
-                Timer.Enabled = true;
-            } else
-            {
-                message.ModifyAsync(x => x.Content = $"*The coin settles.* ***{coinSides[Global.Random.Next(2)]}!***");
-                Timer.Dispose();
-            }
+            message.ModifyAsync(x => x.Content = $"*The coin lands.* ***{coinSides[Global.Random.Next(2)]}!***");
+            Timer.Stop();
+            Timer.Dispose();
         }
     }
 }

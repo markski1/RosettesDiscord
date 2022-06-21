@@ -50,7 +50,6 @@ namespace Rosettes.Modules.Engine
             var comms = ServiceManager.GetService<CommandService>();
             foreach (CommandInfo singleCommand in comms.Commands)
             {
-                // Every module has it's own list message to avoid surpasing the 2000char limit.
                 if (singleCommand.Module.Name == "UnlistedCommands") break;
                 if (currModule == null || currModule.Name != singleCommand.Module.Name)
                 {

@@ -19,6 +19,7 @@ namespace Rosettes.Modules.Commands.Emoji
             int emoteAmount = EmoteCollection.Count;
             int progress = 0;
             IUserMessage messageId;
+
             if (emoteAmount < 1)
             {
                 await ServerContext.Channel.SendMessageAsync("There are no custom emoji in this server, or I failed to retrieve them for some reason.");
@@ -30,8 +31,10 @@ namespace Rosettes.Modules.Commands.Emoji
                 messageId = await ServerContext.Channel.SendMessageAsync($"Progress: `0/{emoteAmount}`");
             }
             IsDownloading = true;
+
             string fileName = "";
             string serverName = ServerContext.Guild.Name.Replace(" ", "");
+            // ensure the folders to store the emoji exist.
             if (!Directory.Exists("./temp/"))
             {
                 Directory.CreateDirectory("./temp/");
@@ -40,6 +43,7 @@ namespace Rosettes.Modules.Commands.Emoji
             {
                 Directory.CreateDirectory($"./temp/{serverName}/");
             }
+            // download every emoji into this folder.
             foreach (GuildEmote emote in EmoteCollection)
             {
                 using (var stream = await Global.HttpClient.GetStreamAsync(emote.Url))
@@ -56,23 +60,28 @@ namespace Rosettes.Modules.Commands.Emoji
                     await stream.CopyToAsync(fileStream);
                 }
                 progress++;
-                // "store" the task nowhere, we don't care to await for this to finish.
+                // update the message with the current progress, every 3rd emoji.
                 if (progress % 3 == 0) await messageId.ModifyAsync(x => x.Content = $"Progress: `{progress}/{emoteAmount}`");
             }
+            // done, update message.
             await messageId.ModifyAsync(x => x.Content = $"Progress: `Complete!`");
             try
             {
+                // zip up the file.
                 string zipPath = $"./temp/{serverName}.zip";
                 if (File.Exists(zipPath))
                 {
                     File.Delete(zipPath);
                 }
                 ZipFile.CreateFromDirectory($"./temp/{serverName}", zipPath);
+
+                // move the zip file to the webserver.
                 if (File.Exists($"/var/www/html/{serverName}.zip"))
                 {
                     File.Delete($"/var/www/html/{serverName}.zip");
                 }
-                System.IO.File.Move(zipPath, $"/var/www/html/{serverName}.zip");
+                File.Move(zipPath, $"/var/www/html/{serverName}.zip");
+
                 await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.mrks.cf/{serverName}.zip>.");
             }
             catch (Exception ex)

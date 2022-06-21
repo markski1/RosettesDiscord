@@ -67,7 +67,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("twtvid")]
         [Summary("Get the video file of the specified tweet.\nExample usage: '$twtvid <tweet url>'")]
-        public async Task TweetVideoAsync(string tweetUrl = "UNSPECIFIED")
+        public async Task TweetVideo(string tweetUrl = "UNSPECIFIED")
         {
             if (tweetUrl == "UNSPECIFIED")
             {
@@ -117,7 +117,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("exportallemoji")]
         [Summary("Generate a ZIP file containing every single emoji in the guild where it's used. May only be used by the owner.")]
-        public async Task ExportEmojiAsync()
+        public async Task ExportEmoji()
         {
             if (Context.Guild == null)
             {
@@ -144,7 +144,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("arc")]
         [Summary("Provide a quick archive.is link for a provided URL.\nExample usage: '$arc example.com'")]
-        public async Task ArchiveAsync(string url = "empty")
+        public async Task Archive(string url = "empty")
         {
             if (url == "empty")
             {
@@ -156,7 +156,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("alarm")]
         [Summary("Sets an alarm to ring after a given period of time.\nExample usage: '$alarm 30 m' (Mentions you in 30 minutes) | h = hours, m = minutes, s = seconds")]
-        public async Task AlarmAsync(int amount = -69420, char time = 'n')
+        public async Task Alarm(int amount = -69420, char time = 'n')
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {
@@ -201,7 +201,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("cancelalarm")]
         [Summary("Cancels your current alarm.")]
-        public async Task CancelAlarmAsync()
+        public async Task CancelAlarm()
         {
             if (!AlarmManager.CheckUserHasAlarm(Context.User))
             {

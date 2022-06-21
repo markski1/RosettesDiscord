@@ -9,8 +9,8 @@ namespace Rosettes.Modules.Commands
 {
     public class UnlistedCommands : ModuleBase<SocketCommandContext>
     {
-        [Command("mewmory")]
-        public async Task GetMewmoryUsage()
+        [Command("memory")]
+        public async Task GetMemory()
         {
             using Process proc = Process.GetCurrentProcess();
             TimeSpan elapsed = DateTime.Now - proc.StartTime;
@@ -25,7 +25,7 @@ namespace Rosettes.Modules.Commands
             }
             runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
             string text =
-                $"```I am using {(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb of mewmory, across {proc.Threads.Count} threads.\n" +
+                $"```I am using {(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb of memory, across {proc.Threads.Count} threads.\n" +
                 $"I've been running for {runtimeText}\n" +
                 $"\n" +
                 $"THREAD LIST\n\n";
@@ -55,7 +55,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [Command("halt")]
-        public async Task HaltAsync()
+        public async Task Halt()
         {
             if (!Global.CheckSnep(Context.User.Id))
             {
@@ -97,13 +97,13 @@ namespace Rosettes.Modules.Commands
             var comms = ServiceManager.GetService<CommandService>();
             foreach (CommandInfo singleCommand in comms.Commands)
             {
-                // Every module has it's own list message to avoid surpasing the 2000char limit.
                 if (singleCommand.Module.Name == "UnlistedCommands") break;
                 if (currModule == null || currModule.Name != singleCommand.Module.Name)
                 {
                     if (currModule != null)
                     {
                         text += "```";
+                        // If we're not at 1000 chars yet, stay on the same message. Otherwise send.
                         if (text.Length > 1000)
                         {
                             await userDM.SendMessageAsync(text);

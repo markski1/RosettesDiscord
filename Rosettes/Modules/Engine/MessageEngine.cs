@@ -161,7 +161,7 @@ namespace Rosettes.Modules.Engine
                 if (end == -1) return;
                 steamID = ulong.Parse(extractID[begin..end]);
             }
-            // hard mode: if it's a vanity URL, resolve it through Steam WebAPI
+            // "hard" mode: if it's a vanity URL, resolve it through Steam WebAPI
             else
             {
                 int begin = extractID.IndexOf("/id/") + 4;
