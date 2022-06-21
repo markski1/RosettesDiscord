@@ -22,3 +22,11 @@ Having worked in software development for a while though, I like to think I've b
 #### Annoying
 Rosettes' replies to queries and patterns it finds should be as short and consise as possible.
 Within reason, it should not be spammy.
+
+## Building
+The solution file is there, all you have to do is open and compile.
+
+Getting it to work is a different beast. Rosettes was not built to be easily portable/deployed. There are token keys and database tables required for stuff to work.
+The reason I open sourced Rosettes is a simple matter of transparency. Let people see for themselves how things run behind the scenes. It's not really meant to be used on your own.
+
+You are, of course, free to grab any source code here and use it as you please, but don't expect to receive support if stuff doesn't work first try.
