@@ -24,6 +24,7 @@ namespace Rosettes.Modules.Commands
                 runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
             }
             runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
+            // we divide the privatememorysize in half because it includes a bunch of runtime memory usage which isn't the bot's problem, and it seems to consistently be half, plus minus 5 or 10%
             string text =
                 $"```I am using {(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb of memory, across {proc.Threads.Count} threads.\n" +
                 $"I've been running for {runtimeText}\n" +
