@@ -13,6 +13,11 @@ namespace Rosettes.Modules.Commands
         [Summary("Returns an AI generated picture of a cat.")]
         public async Task FakeCat()
         {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("This command cannot be used in DM's. Instead use https://thiscatdoesnotexist.com/");
+                return;
+            }
             try
             {
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thiscatdoesnotexist.com/");
@@ -40,6 +45,11 @@ namespace Rosettes.Modules.Commands
         [Summary("Returns an AI generated picture of an arguably human being.")]
         public async Task FakePerson()
         {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("This command cannot be used in DM's. Instead use https://thispersondoesnotexist.com/");
+                return;
+            }
             try
             {
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thispersondoesnotexist.com/image");

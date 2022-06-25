@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands
 {
-    public class UnlistedCommands : ModuleBase<SocketCommandContext>
+    public class ElevatedCommands : ModuleBase<SocketCommandContext>
     {
         [Command("memory")]
         public async Task GetMemory()
@@ -72,12 +72,11 @@ namespace Rosettes.Modules.Commands
         }
 
         [Command("commands")]
-        [Summary("List of commands.")]
         public async Task ListCommands(string argument = "")
         {
             if (argument.ToLower() != "dm")
             {
-                await ReplyAsync("A full list of commands is available at https://snep.mrks.cf");
+                await ReplyAsync("A full list of commands is available at https://mrks.cf/rosettes");
                 await ReplyAsync($"Alternatively, use `{Settings.Prefix}commands dm` to have them sent to your DM's. This is less convenient.");
                 return;
             }
@@ -97,7 +96,7 @@ namespace Rosettes.Modules.Commands
             var comms = ServiceManager.GetService<CommandService>();
             foreach (CommandInfo singleCommand in comms.Commands)
             {
-                if (singleCommand.Module.Name == "UnlistedCommands") break;
+                if (singleCommand.Module.Name == "ElevatedCommands") break;
                 if (currModule == null || currModule.Name != singleCommand.Module.Name)
                 {
                     if (currModule != null)
@@ -125,6 +124,82 @@ namespace Rosettes.Modules.Commands
             }
             text += "```";
             await userDM.SendMessageAsync(text);
+        }
+
+        /*
+         * This might look sus, so quick explanation of what this does (and check the code on your own to confirm, of course)
+         * 
+         * Generates an HTML page with the following data:
+         * 
+         *  - Total number of messages processed (not tied to guilds) since last restart
+         *  - How much have commands been used (because I want to know which commands are used the most)
+         *  - List of guilds where the bot is in, and user counts (because I want to know how many places the bot is being used in, and by how many people)
+         *  
+         *  None of this data is sensitive. These are simply very basic analytics for me to understand what gets used and how much.
+         *  None of this data can be linked to anyone, and it does not include command arguments not message contents.
+         *  Compared to what most public bots will do this is as close to 0 as it can reasonably be.
+         *  
+         *  I want to know these things for a few basic reasons:
+         *  
+         *  - Understand if it's worth maintaining the bot based on how much it's used
+         *  - Understand how well the bot behaves regarding resource fingerprint and latency relative to it's usage
+         *  - Track sudden spikes in resource usage which might have to do with sudden adoption by large server/s (Which is not undesired, but if it happens, I have to know)
+         * 
+         */
+
+        [Command("analytics")]
+        public async Task Analytics()
+        {
+            if (!Global.CheckSnep(Context.User.Id))
+            {
+                await ReplyAsync("This command is snep exclusive.");
+                return;
+            }
+            if (Context.Guild is not null)
+            {
+                return;
+            }
+
+            DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
+
+            string webContents = "<h1>Guilds</h1><ul>";
+
+            foreach (var guild in _client.Guilds)
+            {
+                webContents += $"<li><p><b>{guild.Name}</b>:{guild.Id} ({guild.MemberCount} users)";
+                if (MessageEngine.MessageUsage.ContainsKey(guild.Id))
+                {
+                    webContents += $" | {MessageEngine.MessageUsage[guild.Id]} messages processed.";
+                }
+                webContents += "</p></li>";
+            }
+
+            webContents += "</ul><h1>Command usage</h1><ul>";
+
+            foreach (var command in CommandEngine.CommandUsage)
+            {
+                webContents += $"<li><p><b>{command.Key}</b>: Used {command.Value} times.</p></li>";
+            }
+
+            // clear it all
+            CommandEngine.CommandUsage.Clear();
+            MessageEngine.MessageUsage.Clear();
+
+            if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
+            string fileName = $"./temp/analytics.html";
+
+            if (File.Exists(fileName)) File.Delete(fileName);
+
+            using var writer = File.CreateText(fileName);
+
+            writer.Write(webContents);
+
+            writer.Close();
+
+            await Context.Channel.SendFileAsync(fileName);
+
+            // no keeping this in the server
+            File.Delete(fileName);
         }
     }
 }

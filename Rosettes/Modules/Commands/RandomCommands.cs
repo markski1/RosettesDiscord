@@ -66,6 +66,12 @@ namespace Rosettes.Modules.Commands
         [Summary("Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
         public async Task CheckEm()
         {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.mrks.cf/checkem.php");
+                return;
+            }
+
             Random randomizer = new();
             var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
 
