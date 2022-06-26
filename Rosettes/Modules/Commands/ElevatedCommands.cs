@@ -147,7 +147,6 @@ namespace Rosettes.Modules.Commands
          *  - Track sudden spikes in resource usage which might have to do with sudden adoption by large server/s (Which is not undesired, but if it happens, I have to know)
          * 
          */
-
         [Command("analytics")]
         public async Task Analytics()
         {
@@ -156,6 +155,8 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command is snep exclusive.");
                 return;
             }
+
+            // no sending it in groups
             if (Context.Guild is not null)
             {
                 return;
@@ -186,6 +187,7 @@ namespace Rosettes.Modules.Commands
             CommandEngine.CommandUsage.Clear();
             MessageEngine.MessageUsage.Clear();
 
+            // save it all in a html file
             if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
             string fileName = $"./temp/analytics.html";
 
@@ -197,10 +199,35 @@ namespace Rosettes.Modules.Commands
 
             writer.Close();
 
-            await Context.Channel.SendFileAsync(fileName);
+            // send it to myself
+            var message = await Context.Channel.SendFileAsync(fileName);
 
-            // no keeping this in the server
+            // Delete it from the server.
             File.Delete(fileName);
+
+            // Give myself 10 seconds to get the file, then delete it from Discord too.
+            _ = new MessageDeleter(message, 10);
+        }
+    }
+
+    public class MessageDeleter
+    {
+        private readonly System.Timers.Timer Timer = new();
+        private readonly Discord.Rest.RestUserMessage message;
+
+        public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
+        {
+            Timer.Elapsed += DeleteMessage;
+            Timer.Interval = seconds * 1000;
+            message = _message;
+            Timer.Enabled = true;
+        }
+
+        public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            message.DeleteAsync();
+            Timer.Stop();
+            Timer.Dispose();
         }
     }
 }
