@@ -68,12 +68,12 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.mrks.cf/checkem.php");
+                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem.php");
                 return;
             }
 
             Random randomizer = new();
-            var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
+            var File = Directory.GetFiles("/var/www/html/snep.markski.ar/checkem/").OrderBy(x => randomizer.Next()).Take(1);
 
             int number = randomizer.Next(99999999) + 1;
             if (number < 10000000)
@@ -83,7 +83,7 @@ namespace Rosettes.Modules.Commands
 
             await ReplyAsync($"[{Context.User.Username}] Check'Em! : **{number}**");
 
-            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.mrks.cf/"));
+            await ReplyAsync(File.First().Replace("/var/www/html/snep.markski.ar/", "https://snep.markski.ar/"));
         }
     }
 

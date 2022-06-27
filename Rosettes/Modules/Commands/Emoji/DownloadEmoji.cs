@@ -76,13 +76,13 @@ namespace Rosettes.Modules.Commands.Emoji
                 ZipFile.CreateFromDirectory($"./temp/{serverName}", zipPath);
 
                 // move the zip file to the webserver.
-                if (File.Exists($"/var/www/html/{serverName}.zip"))
+                if (File.Exists($"/var/www/html/snep.markski.ar/{serverName}.zip"))
                 {
-                    File.Delete($"/var/www/html/{serverName}.zip");
+                    File.Delete($"/var/www/html/snep.markski.ar/{serverName}.zip");
                 }
-                File.Move(zipPath, $"/var/www/html/{serverName}.zip");
+                File.Move(zipPath, $"/var/www/html/snep.markski.ar/{serverName}.zip");
 
-                await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.mrks.cf/{serverName}.zip>.");
+                await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.markski.ar/{serverName}.zip>.");
             }
             catch (Exception ex)
             {

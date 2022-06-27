@@ -75,13 +75,13 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             // grab off python thing running as a flask server
-            if (!tweetUrl.Contains("snep.mrks.cf:42069"))
+            if (!tweetUrl.Contains("snep.markski.ar:42069"))
             {
                 if (!tweetUrl.Contains("twitter.com"))
                 {
                     await ReplyAsync("That's not a valid tweet URL.");
                 }
-                tweetUrl = tweetUrl.Replace("twitter.com", "snep.mrks.cf:42069");
+                tweetUrl = tweetUrl.Replace("twitter.com", "snep.markski.ar:42069");
                 tweetUrl = tweetUrl.Replace("https:/", "http:/");
             }
             tweetUrl = tweetUrl.Replace("<", string.Empty);
