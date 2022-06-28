@@ -59,9 +59,9 @@ namespace Rosettes.Modules.Engine
 
         public static void CreateCommandPage()
         {
-            if (!Directory.Exists("/var/www/html/snep.markski.ar/rosettes/"))
+            if (!Directory.Exists("/var/www/html/rosettes/"))
             {
-                Directory.CreateDirectory("/var/www/html/snep.markski.ar/rosettes/");
+                Directory.CreateDirectory("/var/www/html/rosettes/");
             }
 
             string webContents =
@@ -106,7 +106,7 @@ namespace Rosettes.Modules.Engine
                 }
             }
             webContents += "</div>";
-            using var writer = File.CreateText("/var/www/html/snep.markski.ar/rosettes/commands.html");
+            using var writer = File.CreateText("/var/www/html/rosettes/commands.html");
 
             writer.Write(webContents);
 
