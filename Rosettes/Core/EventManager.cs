@@ -13,9 +13,19 @@ namespace Rosettes.Core
         private static readonly LavaNode _lavaNode = ServiceManager.Provider.GetRequiredService<LavaNode>();
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         private static readonly CommandService _commandService = ServiceManager.GetService<CommandService>();
+        private static bool booting = true;
 
         public static Task LoadCommands()
         {
+            if (booting)
+            {
+                booting = false;
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
+
             _client.Log += message =>
             {
                 Console.WriteLine($"{DateTime.Now} | {message.ToString()}");
@@ -27,10 +37,19 @@ namespace Rosettes.Core
                 return Task.CompletedTask;
             };
 
+            
             _client.Ready += OnReady;
+
+            _client.Disconnected += OnDisconnect;
+
+            _client.JoinedGuild += OnJoinGuild;
+
+            _client.LeftGuild += OnLeftGuild;
+
             return Task.CompletedTask;
         }
 
+        // fired when booting
         private static async Task OnReady()
         {
             try
@@ -61,6 +80,7 @@ namespace Rosettes.Core
             _client.MessageReceived += OnMessageReceived;
         }
 
+        // fired when a message is received
         private static async Task OnMessageReceived(SocketMessage arg)
         {
             var message = arg as SocketUserMessage;
@@ -86,6 +106,32 @@ namespace Rosettes.Core
             {
                 await MessageEngine.HandleMessage(context);
             }
+        }
+
+        /*
+         * 
+         * The callbacks below are used for analytics.
+         * 
+         */
+        private static Task OnDisconnect(Exception ex)
+        {
+            Global.GenerateErrorMessage("OnReady", $"Rosettes has lost connection to Discord. {ex.Message}");
+
+            return Task.CompletedTask;
+        }
+
+        private static Task OnJoinGuild(SocketGuild guild)
+        {
+            Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
+
+            return Task.CompletedTask;
+        }
+
+        private static Task OnLeftGuild(SocketGuild guild)
+        {
+            Global.GenerateNotification($"Rosettes has left a guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
+
+            return Task.CompletedTask;
         }
     }
 }

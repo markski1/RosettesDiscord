@@ -40,6 +40,15 @@ namespace Rosettes.Core
             impawtantChannel.SendMessageAsync(_error);
         }
 
+        public static void GenerateNotification(string message)
+        {
+            // send it to #impawtant-data
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            if (client.GetChannel(984608927775854594) is not ITextChannel impawtantChannel) return;
+
+            impawtantChannel.SendMessageAsync(message);
+        }
+
         public static decimal Truncate(decimal d, byte decimals)
         {
             decimal r = Math.Round(d, decimals);
