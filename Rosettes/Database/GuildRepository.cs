@@ -17,7 +17,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT * FROM users";
+            var sql = @"SELECT * FROM guilds";
 
             try
             {
@@ -34,7 +34,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT count(1) FROM users WHERE id=@Id";
+            var sql = @"SELECT count(1) FROM guilds WHERE id=@Id";
 
             try
             {
@@ -51,7 +51,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, messages, commands, settings WHERE id=@id";
+            var sql = @"SELECT id, namecache, members, messages, commands, settings FROM guilds WHERE id=@id";
 
             try
             {
@@ -68,7 +68,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"INSERT INTO users (id, namecache, members, messages, commands, settings)
+            var sql = @"INSERT INTO guilds (id, namecache, members, messages, commands, settings)
                         VALUES(@Id, @NameCache, @Members, @Messages, @Commands, @Settings)";
 
             try
@@ -88,7 +88,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"UPDATE users
+            var sql = @"UPDATE guilds
                         SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, settings=@Settings
                         WHERE id = @Id";
             try
@@ -106,7 +106,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"DELETE FROM users
+            var sql = @"DELETE FROM guilds
                         WHERE id = @Id";
             try
             {

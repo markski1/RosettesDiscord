@@ -61,10 +61,10 @@ namespace Rosettes.Core
                 Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex.Message}");
             }
 
-
             if (Settings.ConnectToDatabase())
             {
                 await UserEngine.LoadAllUsersFromDatabase();
+                await GuildEngine.LoadAllGuildsFromDatabase();
                 AlarmManager.LoadAllAlarmsFromDatabase();
             }
             else

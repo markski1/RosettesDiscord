@@ -15,7 +15,8 @@ namespace Rosettes.Modules.Engine
         {
             if (!NoMessageChannel(context)) return;
 
-            GuildEngine.CountMessage(context.Guild);
+            var dbGuild = await GuildEngine.GetDBGuild((IGuild)context.Guild);
+            dbGuild.Messages++;
 
             _ = HandleExperience(context);
 

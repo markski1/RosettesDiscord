@@ -7,8 +7,63 @@ namespace Rosettes.Modules.Engine
 {
     public static class GuildEngine
     {
+        private static List<Guild> GuildCache = new();
+        public static readonly GuildRepository _interface = new();
 
+        public static bool IsGuildInCache(IGuild guild)
+        {
+            Guild? findGuild = null;
+            findGuild = GuildCache.Find(item => item.Id == guild.Id);
+            return findGuild != null;
+        }
 
+        public static async void SyncWithDatabase()
+        {
+            foreach (Guild guild in GuildCache)
+            {
+                await _interface.UpdateGuild(guild);
+            }
+        }
+
+        public static async Task<Guild> LoadGuildFromDatabase(IGuild guild)
+        {
+            Guild getGuild;
+            if (await _interface.CheckGuildExists(guild))
+            {
+                getGuild = await _interface.GetGuildData(guild);
+            }
+            else
+            {
+                getGuild = new Guild(guild);
+                _ = _interface.InsertGuild(getGuild);
+            }
+            if (getGuild.IsValid()) GuildCache.Add(getGuild);
+            return getGuild;
+        }
+
+        // return might seem useless but we need to AWAIT for all users to be loaded.
+        public static async Task<bool> LoadAllGuildsFromDatabase()
+        {
+            IEnumerable<Guild> guildCacheTemp;
+            guildCacheTemp = await _interface.GetAllGuildsAsync();
+            GuildCache = guildCacheTemp.ToList();
+            return true;
+        }
+
+        public static async Task<Guild> GetDBGuild(IGuild guild)
+        {
+            if (!IsGuildInCache(guild))
+            {
+                return await LoadGuildFromDatabase(guild);
+            }
+            return GuildCache.First(item => item.Id == guild.Id);
+        }
+
+        // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
+        public static Guild GetDBGuildById(ulong guild)
+        {
+            return GuildCache.First(item => item.Id == guild);
+        }
     }
 
 
@@ -56,6 +111,10 @@ namespace Rosettes.Modules.Engine
             NameCache = namecache;
         }
 
-
+        public bool IsValid()
+        {
+            // if guild was created with an Id of 0 it indicates a database failure and this user object is invalid.
+            return Id != 0;
+        }
     }
 }

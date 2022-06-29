@@ -168,10 +168,11 @@ namespace Rosettes.Modules.Commands
 
             foreach (var guild in _client.Guilds)
             {
+                var dbGuild = await GuildEngine.GetDBGuild(guild);
                 webContents += $"<li><p><b>{guild.Name}</b>:{guild.Id} ({guild.MemberCount} users)";
-                if (MessageEngine.MessageUsage.ContainsKey(guild.Id))
+                if (dbGuild.Messages > 0)
                 {
-                    webContents += $" | {MessageEngine.MessageUsage[guild.Id]} messages processed.";
+                    webContents += $" | {dbGuild.Messages} messages processed.";
                 }
                 webContents += "</p></li>";
             }
@@ -185,7 +186,6 @@ namespace Rosettes.Modules.Commands
 
             // clear it all
             CommandEngine.CommandUsage.Clear();
-            MessageEngine.MessageUsage.Clear();
 
             // save it all in a html file
             if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
