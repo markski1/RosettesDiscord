@@ -64,6 +64,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             UserEngine.SyncWithDatabase();
+            GuildEngine.SyncWithDatabase();
 
             await ReplyAsync("Disconnecting from Discord...");
             Game game = new("Disconnecting!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");

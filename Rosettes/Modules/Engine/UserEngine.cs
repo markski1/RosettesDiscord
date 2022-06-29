@@ -164,6 +164,7 @@ namespace Rosettes.Modules.Engine
         {
             return Currency;
         }
+
         public void AddCurrency(ulong amount)
         {
             Currency += amount;

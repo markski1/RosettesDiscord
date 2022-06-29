@@ -11,9 +11,7 @@ namespace Rosettes.Core
     {
         private readonly DiscordSocketClient Client;
         private readonly CommandService Commands;
-#if !DEBUG
-        private readonly System.Timers.Timer ConstantTimer = new(15000);
-#endif
+        private readonly System.Timers.Timer HalfHourlyTimer = new();
 
         public RosettesMain()
         {
@@ -58,28 +56,20 @@ namespace Rosettes.Core
             await CommandEngine.LoadCommands();
             await EventManager.LoadCommands();
 
-            // call ConstantChecks every 15 seconds
-#if !DEBUG
-            ConstantTimer.Elapsed += ConstantChecks;
-            ConstantTimer.AutoReset = true;
-            ConstantTimer.Enabled = true;
-#endif
+            // HalfHourlyThings(); defined below, runs every 30 minutes, or 1800 seconds
+            HalfHourlyTimer.Elapsed += HalfHourlyThings;
+            HalfHourlyTimer.Interval = 1800000;
+            HalfHourlyTimer.AutoReset = true;
+            HalfHourlyTimer.Enabled = true;
 
             // Done! Now keep this task blocked forever to avoid the bot from closing.
             await Task.Delay(-1);
         }
 
-        public async void ConstantChecks(object? source, System.Timers.ElapsedEventArgs e)
+        public void HalfHourlyThings(object? source, System.Timers.ElapsedEventArgs e)
         {
-            if (File.Exists("shutdown"))
-            {
-                File.Delete("shutdown");
-                UserEngine.SyncWithDatabase();
-                Game game = new("Disconnecting!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
-                var client = ServiceManager.GetService<DiscordSocketClient>();
-                await client.SetActivityAsync(game);
-                Environment.Exit(0);
-            }
+            UserEngine.SyncWithDatabase();
+            GuildEngine.SyncWithDatabase();
         }
     }
 }

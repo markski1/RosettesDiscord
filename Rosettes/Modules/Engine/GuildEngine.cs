@@ -101,7 +101,7 @@ namespace Rosettes.Modules.Engine
         }
 
         // database constructor, used on loading users
-        public Guild(ulong id, ulong messages, ulong commands, ulong members, string settings, string namecache)
+        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings)
         {
             Id = id;
             Messages = messages;
