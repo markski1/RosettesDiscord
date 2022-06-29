@@ -22,6 +22,9 @@ namespace Rosettes.Modules.Engine
             foreach (User user in UserCache)
             {
                 if (user.SyncUpToDate) continue;
+                // just get the name and don't do anything with it
+                // calling the method updates name_cache, which is what we want before saving
+                await user.GetName();
                 await _interface.UpdateUser(user);
                 user.SyncUpToDate = true;
             }
@@ -36,7 +39,7 @@ namespace Rosettes.Modules.Engine
             }
             else
             {
-                getUser = new User(user.Id);
+                getUser = new User(user);
                 _ = _interface.InsertUser(getUser);
             }
             if (getUser.IsValid()) UserCache.Add(getUser);
@@ -123,11 +126,21 @@ namespace Rosettes.Modules.Engine
         private ulong Currency;
         private int LastUsedCommand;
         private int LastSentMessage;
+        private string NameCache = "";
 
         // normal constructor
-        public User(ulong id)
+        public User(IUser? newUser)
         {
-            Id = id;
+            if (newUser is null)
+            {
+                Id = 0;
+                NameCache = "invalid";
+            }
+            else
+            {
+                Id = newUser.Id;
+                NameCache = newUser.Username + "#" + newUser.Discriminator;
+            }
             Exp = 0;
             Currency = 100;
             SyncUpToDate = true;
@@ -136,7 +149,7 @@ namespace Rosettes.Modules.Engine
         }
 
         // database constructor, used on loading users
-        public User(ulong id, ulong exp, ulong currency)
+        public User(ulong id, ulong exp, ulong currency, string namecache)
         {
             Id = id;
             Exp = exp;
@@ -144,6 +157,7 @@ namespace Rosettes.Modules.Engine
             SyncUpToDate = true;
             LastUsedCommand = 0;
             LastSentMessage = 0;
+            NameCache = namecache;
         }
 
         public ulong GetCurrency()
@@ -219,7 +233,8 @@ namespace Rosettes.Modules.Engine
         {
             var userReference = await GetDiscordReference();
             if (userReference is null) return "Failed to get user name.";
-            return userReference.Username + "#" + userReference.Discriminator;
+            NameCache = userReference.Username + "#" + userReference.Discriminator;
+            return NameCache;
         }
     }
 }

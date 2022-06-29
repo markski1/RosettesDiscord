@@ -51,7 +51,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, exp, currency FROM users WHERE id=@id";
+            var sql = @"SELECT id, exp, currency, namecache FROM users WHERE id=@id";
 
             try
             {
@@ -60,7 +60,7 @@ namespace Rosettes.Database
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-getuserdata", $"sqlException code {ex.Message}");
-                return new User(0);
+                return new User(null);
             }
         }
 
@@ -68,12 +68,12 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"INSERT INTO users (id, exp, currency)
-                        VALUES(@Id, @Exp, @Currency)";
+            var sql = @"INSERT INTO users (id, exp, currency, namecache)
+                        VALUES(@Id, @Exp, @Currency, @NameCache)";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = user.GetName() })) > 0;
             }
             catch (Exception ex)
             {
@@ -87,11 +87,11 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, exp=@Exp, currency=@Currency
+                        SET id=@Id, exp=@Exp, currency=@Currency, namecache=@NameCache
                         WHERE id = @Id";
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = user.GetName() })) > 0;
             }
             catch (Exception ex)
             {

@@ -11,19 +11,11 @@ namespace Rosettes.Modules.Engine
         private static int LastBlepUnix = 0;
         private static int LastPawUnix = 0;
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
-        public static readonly Dictionary<ulong, int> MessageUsage = new();
         public static async Task HandleMessage(SocketCommandContext context)
         {
             if (!NoMessageChannel(context)) return;
 
-            if (!MessageUsage.ContainsKey(context.Guild.Id))
-            {
-                MessageUsage.Add(context.Guild.Id, 1);
-            }
-            else
-            {
-                MessageUsage[context.Guild.Id]++;
-            }
+            GuildEngine.CountMessage(context.Guild);
 
             _ = HandleExperience(context);
 
