@@ -21,6 +21,7 @@ namespace Rosettes.Modules.Engine
             await _commands.AddModuleAsync<RandomCommands>(null);
             await _commands.AddModuleAsync<MusicCommands>(null);
             await _commands.AddModuleAsync<GameCommands>(null);
+            await _commands.AddModuleAsync<AdminCommands>(null);
             await _commands.AddModuleAsync<DumbCommands>(null);
 
             // always load ElevatedCommands last.

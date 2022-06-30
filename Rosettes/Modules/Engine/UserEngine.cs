@@ -233,7 +233,7 @@ namespace Rosettes.Modules.Engine
         public async Task<string> GetName()
         {
             var userReference = await GetDiscordReference();
-            if (userReference is null) return "Failed to get user name.";
+            if (userReference is null) return "rosettes_unset";
             NameCache = userReference.Username + "#" + userReference.Discriminator;
             return NameCache;
         }
