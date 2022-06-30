@@ -70,6 +70,7 @@ namespace Rosettes.Core
         {
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();
+            CommandEngine.SyncWithDatabase();
         }
     }
 }

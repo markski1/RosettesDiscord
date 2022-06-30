@@ -1,5 +1,7 @@
-﻿using Discord;
+﻿using Dapper;
+using Discord;
 using Discord.Commands;
+using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Commands;
 
@@ -8,7 +10,6 @@ namespace Rosettes.Modules.Engine
     public static class CommandEngine
     {
         private static readonly CommandService _commands = ServiceManager.GetService<CommandService>();
-
         public static readonly Dictionary<string, int> CommandUsage = new();
 
         public static async Task LoadCommands()
@@ -41,15 +42,11 @@ namespace Rosettes.Modules.Engine
                 {
                     usedCommand = context.Message.Content;
                 }
-                if (!CommandEngine.CommandUsage.ContainsKey(usedCommand))
+                var result = await _commands.ExecuteAsync(context: context, argPos: argPos, services: ServiceManager.Provider);
+                if (result.IsSuccess)
                 {
-                    CommandEngine.CommandUsage.Add(usedCommand, 1);
+                    ReportUse(usedCommand);
                 }
-                else
-                {
-                    CommandEngine.CommandUsage[usedCommand]++;
-                }
-                await _commands.ExecuteAsync(context: context, argPos: argPos, services: ServiceManager.Provider);
             }
             else
             {
@@ -111,6 +108,42 @@ namespace Rosettes.Modules.Engine
             writer.Write(webContents);
 
             writer.Close();
+        }
+
+        public static void ReportUse(string Command)
+        {
+            if (!CommandEngine.CommandUsage.ContainsKey(Command))
+            {
+                CommandEngine.CommandUsage.Add(Command, 1);
+            }
+            else
+            {
+                CommandEngine.CommandUsage[Command]++;
+            }
+        }
+
+        public static async void SyncWithDatabase()
+        {
+            foreach (var cmd in CommandEngine.CommandUsage)
+            {
+                var db = new MySqlConnection(Settings.Database.ConnectionString);
+
+                var sql = @"SELECT count(1) FROM command_analytics WHERE command=@Command";
+
+                bool result = await db.ExecuteScalarAsync<bool>(sql, new { Command = cmd.Key });
+
+                if (result)
+                {
+                    sql = @"UPDATE command_analytics SET uses=uses + @LoggedUses WHERE command=@Command";
+                }
+                else
+                {
+                    sql = @"INSERT INTO command_analytics (command, uses)
+                        VALUES(@Command, @LoggedUses)";
+                }
+                await db.ExecuteAsync(sql, new { Command = cmd.Key, LoggedUses = cmd.Value });
+            }
+            CommandEngine.CommandUsage.Clear();
         }
     }
 }
