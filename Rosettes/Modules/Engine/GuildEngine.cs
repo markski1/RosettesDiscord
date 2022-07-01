@@ -21,6 +21,7 @@ namespace Rosettes.Modules.Engine
         {
             foreach (Guild guild in GuildCache)
             {
+                guild.SelfTest();
                 await _interface.UpdateGuild(guild);
                 guild.Settings = await _interface.GetGuildSettings(guild);
             }
@@ -74,6 +75,7 @@ namespace Rosettes.Modules.Engine
         public ulong Messages;
         public ulong Commands;
         public ulong Members;
+        public ulong OwnerId;
         public string NameCache;
 
         // settings contains 10 characters, each representative of the toggle state of a setting.
@@ -95,6 +97,7 @@ namespace Rosettes.Modules.Engine
                 Id = guild.Id;
                 NameCache = guild.Name;
             }
+            OwnerId = 0;
             Messages = 0;
             Members = 0;
             Settings = "1111111111";
@@ -102,7 +105,7 @@ namespace Rosettes.Modules.Engine
         }
 
         // database constructor, used on loading users
-        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings)
+        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid)
         {
             Id = id;
             Messages = messages;
@@ -110,12 +113,25 @@ namespace Rosettes.Modules.Engine
             Commands = commands;
             Settings = settings;
             NameCache = namecache;
+            OwnerId = ownerid;
         }
 
         public bool IsValid()
         {
             // if guild was created with an Id of 0 it indicates a database failure and this user object is invalid.
             return Id != 0;
+        }
+
+        public IGuild GetDiscordReference()
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            return client.GetGuild(Id);
+        }
+
+        public async void SelfTest()
+        {
+            OwnerId = (await GetDiscordReference().GetOwnerAsync()).Id;
+            NameCache = GetDiscordReference().Name;
         }
     }
 }
