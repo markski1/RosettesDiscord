@@ -22,6 +22,7 @@ namespace Rosettes.Modules.Engine
             foreach (Guild guild in GuildCache)
             {
                 await _interface.UpdateGuild(guild);
+                guild.Settings = await _interface.GetGuildSettings(guild);
             }
         }
 

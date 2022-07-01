@@ -64,6 +64,23 @@ namespace Rosettes.Database
             }
         }
 
+        public async Task<string> GetGuildSettings(Guild guild)
+        {
+            var db = DBConnection();
+
+            var sql = @"SELECT settings FROM guilds WHERE id=@id";
+
+            try
+            {
+                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = guild.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
+                return "1111111111";
+            }
+        }
+
         public async Task<bool> InsertGuild(Guild guild)
         {
             var db = DBConnection();
@@ -89,7 +106,7 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, settings=@Settings
+                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands
                         WHERE id = @Id";
             try
             {

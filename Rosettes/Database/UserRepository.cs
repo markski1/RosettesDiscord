@@ -73,7 +73,7 @@ namespace Rosettes.Database
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = user.GetName() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = await user.GetName() })) > 0;
             }
             catch (Exception ex)
             {
@@ -90,10 +90,9 @@ namespace Rosettes.Database
                         SET id=@Id, exp=@Exp, currency=@Currency, namecache=@NameCache
                         WHERE id = @Id";
 
-            var NameCache = $"{await user.GetName()}";
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = await user.GetName() })) > 0;
             }
             catch (Exception ex)
             {

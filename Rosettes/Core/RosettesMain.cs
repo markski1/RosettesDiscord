@@ -56,9 +56,9 @@ namespace Rosettes.Core
             await CommandEngine.LoadCommands();
             await EventManager.LoadCommands();
 
-            // HalfHourlyThings(); defined below, runs every 30 minutes, or 1800 seconds
-            HalfHourlyTimer.Elapsed += HalfHourlyThings;
-            HalfHourlyTimer.Interval = 1800000;
+            // TenMinutyThings(); defined below, runs every 10 minutes, or 600 seconds
+            HalfHourlyTimer.Elapsed += TenMinutyThings;
+            HalfHourlyTimer.Interval = 600000;
             HalfHourlyTimer.AutoReset = true;
             HalfHourlyTimer.Enabled = true;
 
@@ -66,7 +66,7 @@ namespace Rosettes.Core
             await Task.Delay(-1);
         }
 
-        public void HalfHourlyThings(object? source, System.Timers.ElapsedEventArgs e)
+        public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
         {
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();
