@@ -145,14 +145,12 @@ namespace Rosettes.Modules.Engine
 
         public void SelfTest()
         {
-            var reference = GetDiscordReference();
+            SocketGuild? reference = GetDiscordReference();
             if (reference is null)
             {
-                Global.GenerateErrorMessage("guildengine", "Failing to get guild reference...");
                 return;
             }
-            var owner = reference.Owner;
-            OwnerId = owner.Id;
+            OwnerId = reference.OwnerId;
             NameCache = reference.Name;
             Members = (ulong)reference.MemberCount;
         }
