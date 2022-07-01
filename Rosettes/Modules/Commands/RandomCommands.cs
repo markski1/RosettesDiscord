@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Rosettes.Core;
+using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
@@ -11,6 +12,15 @@ namespace Rosettes.Modules.Commands
         [Summary("Generates a number between 1 and the provided number.\nExample usage: '$dice 20' (rolls a d20)")]
         public async Task Dice(int num = -69420)
         {
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (dbGuild is not null)
+            {
+                if (!dbGuild.AllowsRandom())
+                {
+                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    return;
+                }
+            }
             if (num == -69420)
             {
                 await ReplyAsync($"Usage: `{Settings.Prefix}dice <amount>`");
@@ -34,6 +44,15 @@ namespace Rosettes.Modules.Commands
         
         public async Task Ask()
         {
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (dbGuild is not null)
+            {
+                if (!dbGuild.AllowsRandom())
+                {
+                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    return;
+                }
+            }
             string[] replies = new string[]
             {
                 "yea",
@@ -56,6 +75,15 @@ namespace Rosettes.Modules.Commands
         [Summary("Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.\nExample usage: '$coin' or '$coin one two' for custom coin faces named one and two.")]
         public async Task CoinCommand(string face1 = "Tails", string face2 = "Face")
         {
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (dbGuild is not null)
+            {
+                if (!dbGuild.AllowsRandom())
+                {
+                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    return;
+                }
+            }
             await Context.Channel.TriggerTypingAsync();
             IUserMessage messageID = await ReplyAsync($"*A coin is thrown into the air... {face1} on one side, {face2} on the other.*");
             // the object takes care of everything, this allows us to just spawn a theoretically infinite amount of coins for any server at once.

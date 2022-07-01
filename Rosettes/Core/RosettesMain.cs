@@ -77,5 +77,5 @@ namespace Rosettes.Core
             GuildEngine.SyncWithDatabase();
             CommandEngine.SyncWithDatabase();
         }
-    }
+    }        
 }

@@ -83,6 +83,12 @@ namespace Rosettes.Modules.Engine
         //
         // this is a short sighted and limited approach by design, because rosettes is MEANT TO BE SIMPLE.
         // If we ever need more than 10 settings, we're doing something very wrong.
+        //
+        // - Char 0: Message Analysis level
+        // - Char 1: Music Command toggle
+        // - Char 2: Random Command toggle
+        // - Char 3: Dumb Command toggle
+        //
         public string Settings;
 
         // normal constructor
@@ -102,7 +108,7 @@ namespace Rosettes.Modules.Engine
             OwnerId = 0;
             Messages = 0;
             Members = 0;
-            Settings = "1111111111";
+            Settings = "2111111111";
         }
 
         // database constructor, used on loading users
@@ -153,6 +159,27 @@ namespace Rosettes.Modules.Engine
             OwnerId = reference.OwnerId;
             NameCache = reference.Name;
             Members = (ulong)reference.MemberCount;
+        }
+
+        public int MessageAnalysis()
+        {
+            char value = Settings[0];
+            return (int)(value - '0');
+        }
+        public bool AllowsMusic()
+        {
+            char value = Settings[1];
+            return value == '1';
+        }
+        public bool AllowsRandom()
+        {
+            char value = Settings[2];
+            return value == '1';
+        }
+        public bool AllowsDumb()
+        {
+            char value = Settings[3];
+            return value == '1';
         }
     }
 }

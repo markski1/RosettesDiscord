@@ -14,48 +14,22 @@ namespace Rosettes.Modules.Engine
         public static async Task HandleMessage(SocketCommandContext context)
         {
             if (!NoMessageChannel(context)) return;
-
             var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
-            dbGuild.Messages++;
+            // if a guild's message analysis level is 0, don't process messages at all.
+            if (dbGuild.MessageAnalysis() == 0)
+            {
+                return;
+            }
 
+            dbGuild.Messages++;
             _ = HandleExperience(context);
+
+            // if a guild's message analysis level is 1, don't parse messages.
+            if (dbGuild.MessageAnalysis() == 1) return;
 
             var message = context.Message;
             var messageText = message.Content.ToLower();
-            if (message.MentionedEveryone)
-            {
-                await context.Channel.SendMessageAsync("HISS!");
-            }
-            else if (message.MentionedUsers.Any())
-            {
-                foreach (var user in message.MentionedUsers)
-                {
-                    if (user.Username.ToLower().Contains("rosettes"))
-                    {
-                        await context.Channel.SendMessageAsync("mew wew");
-                    }
-                }
-            }
-            if (messageText.Contains("snep"))
-            {
-                int currentTime = Global.CurrentUnix();
-                if (currentTime > LastBlepUnix)
-                {
-                    LastBlepUnix = currentTime + 1200;
-                    await message.ReplyAsync("*blep*");
-                }
-                return;
-            }
-            if (messageText.Contains("big paw"))
-            {
-                int currentTime = Global.CurrentUnix();
-                if (currentTime > LastPawUnix)
-                {
-                    LastPawUnix = currentTime + 1800;
-                    await context.Channel.SendMessageAsync("I’m tired of these jokes about my giant paw. The first such incident occurred in 1956...");
-                }
-                return;
-            }
+
             if (messageText.Contains(@"store.steampowered.com/app/"))
             {
                 await GetGameInfo(context);
@@ -66,6 +40,17 @@ namespace Rosettes.Modules.Engine
             {
                 await GetProfileInfo(context);
                 return;
+            }
+
+            if (message.MentionedUsers.Any())
+            {
+                foreach (var user in message.MentionedUsers)
+                {
+                    if (user.Username.ToLower().Contains("rosettes"))
+                    {
+                        await context.Channel.SendMessageAsync("mew wew");
+                    }
+                }
             }
         }
 

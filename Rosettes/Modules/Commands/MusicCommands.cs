@@ -17,6 +17,12 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command won't run in my DM's, silly.");
                 return;
             }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsMusic())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                return;
+            }
             if (Context.User is not SocketGuildUser _socketUser || Context.User is not IVoiceState _voiceState || Context.Channel is not ITextChannel _textChannel)
             {
                 await ReplyAsync("Something went wrong.");
@@ -36,6 +42,12 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command won't run in my DM's, silly.");
                 return;
             }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsMusic())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                return;
+            }
             await ReplyAsync(
                     await MusicEngine.StopAsync(Context.Guild)
                 );
@@ -48,6 +60,12 @@ namespace Rosettes.Modules.Commands
             if (Context.Guild == null)
             {
                 await ReplyAsync("This command won't run in my DM's, silly.");
+                return;
+            }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsMusic())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
             await ReplyAsync(
@@ -64,6 +82,12 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command won't run in my DM's, silly.");
                 return;
             }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsMusic())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                return;
+            }
             await ReplyAsync(
                     await MusicEngine.ToggleAsync(Context.Guild)
                 );
@@ -76,6 +100,12 @@ namespace Rosettes.Modules.Commands
             if (Context.Guild == null)
             {
                 await ReplyAsync("This command won't run in my DM's, silly.");
+                return;
+            }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsMusic())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
             await ReplyAsync(

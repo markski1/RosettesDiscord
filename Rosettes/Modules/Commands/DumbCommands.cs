@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
+using Rosettes.Modules.Engine;
 using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands
@@ -16,6 +17,12 @@ namespace Rosettes.Modules.Commands
             if (Context.Guild is null)
             {
                 await ReplyAsync("This command cannot be used in DM's. Instead use https://thiscatdoesnotexist.com/");
+                return;
+            }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsDumb())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
             try
@@ -50,6 +57,12 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command cannot be used in DM's. Instead use https://thispersondoesnotexist.com/");
                 return;
             }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsDumb())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                return;
+            }
             try
             {
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thispersondoesnotexist.com/image");
@@ -77,6 +90,17 @@ namespace Rosettes.Modules.Commands
         [Summary("Returns an UrbanDictionary definition for the provided word.")]
         public async Task UrbanDefine(string givenTerm = "")
         {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("This command cannot be used in DM's.");
+                return;
+            }
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            if (!dbGuild.AllowsDumb())
+            {
+                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                return;
+            }
             if (givenTerm == "")
             {
                 await ReplyAsync($"Usage: `{Settings.Prefix}urban <term>`");
