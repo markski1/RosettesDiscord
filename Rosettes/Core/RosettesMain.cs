@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Modules.Engine;
 using Microsoft.Extensions.DependencyInjection;
 using Victoria;
+using Discord.Rest;
 
 namespace Rosettes.Core
 {

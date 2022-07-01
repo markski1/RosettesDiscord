@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Discord;
+using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;  
@@ -30,7 +31,7 @@ namespace Rosettes.Database
             }
         }
 
-        public async Task<bool> CheckGuildExists(IGuild guild)
+        public async Task<bool> CheckGuildExists(SocketGuild guild)
         {
             var db = DBConnection();
 
@@ -47,7 +48,7 @@ namespace Rosettes.Database
             }
         }
 
-        public async Task<Guild> GetGuildData(IGuild guild)
+        public async Task<Guild> GetGuildData(SocketGuild guild)
         {
             var db = DBConnection();
 

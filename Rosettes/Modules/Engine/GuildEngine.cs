@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Engine
         private static List<Guild> GuildCache = new();
         public static readonly GuildRepository _interface = new();
 
-        public static bool IsGuildInCache(IGuild guild)
+        public static bool IsGuildInCache(SocketGuild guild)
         {
             Guild? findGuild = null;
             findGuild = GuildCache.Find(item => item.Id == guild.Id);
@@ -27,7 +27,7 @@ namespace Rosettes.Modules.Engine
             }
         }
 
-        public static async Task<Guild> LoadGuildFromDatabase(IGuild guild)
+        public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
         {
             Guild getGuild;
             if (await _interface.CheckGuildExists(guild))
@@ -52,7 +52,7 @@ namespace Rosettes.Modules.Engine
             return true;
         }
 
-        public static async Task<Guild> GetDBGuild(IGuild guild)
+        public static async Task<Guild> GetDBGuild(SocketGuild guild)
         {
             if (!IsGuildInCache(guild))
             {
@@ -76,6 +76,7 @@ namespace Rosettes.Modules.Engine
         public ulong Commands;
         public ulong Members;
         public ulong OwnerId;
+        public SocketGuild? CachedReference;
         public string NameCache;
 
         // settings contains 10 characters, each representative of the toggle state of a setting.
@@ -85,7 +86,7 @@ namespace Rosettes.Modules.Engine
         public string Settings;
 
         // normal constructor
-        public Guild(IGuild? guild)
+        public Guild(SocketGuild? guild)
         {
             if (guild is null)
             {
@@ -97,11 +98,11 @@ namespace Rosettes.Modules.Engine
                 Id = guild.Id;
                 NameCache = guild.Name;
             }
+            CachedReference = guild;
             OwnerId = 0;
             Messages = 0;
             Members = 0;
             Settings = "1111111111";
-            
         }
 
         // database constructor, used on loading users
@@ -114,6 +115,7 @@ namespace Rosettes.Modules.Engine
             Settings = settings;
             NameCache = namecache;
             OwnerId = ownerid;
+            CachedReference = null;
         }
 
         public bool IsValid()
@@ -122,16 +124,37 @@ namespace Rosettes.Modules.Engine
             return Id != 0;
         }
 
-        public IGuild GetDiscordReference()
+        public SocketGuild? GetDiscordReference()
         {
+            if (CachedReference is not null) return CachedReference;
             var client = ServiceManager.GetService<DiscordSocketClient>();
-            return client.GetGuild(Id);
+            var foundGuild = client.GetGuild(Id);
+            if (foundGuild is not null)
+            {
+                CachedReference = foundGuild;
+            }
+            else
+            {
+                foreach (var guild in client.Guilds)
+                {
+                    if (guild.Id == Id) CachedReference = guild;
+                }
+            }
+            return CachedReference;
         }
 
-        public async void SelfTest()
+        public void SelfTest()
         {
-            OwnerId = (await GetDiscordReference().GetOwnerAsync()).Id;
-            NameCache = GetDiscordReference().Name;
+            var reference = GetDiscordReference();
+            if (reference is null)
+            {
+                Global.GenerateErrorMessage("guildengine", "Failing to get guild reference...");
+                return;
+            }
+            var owner = reference.Owner;
+            OwnerId = owner.Id;
+            NameCache = reference.Name;
+            Members = (ulong)reference.MemberCount;
         }
     }
 }
