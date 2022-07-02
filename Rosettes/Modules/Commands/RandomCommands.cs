@@ -35,7 +35,8 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await ReplyAsync((Global.Random.Next(num)+1).ToString());
+                Random Random = new();
+                await ReplyAsync((Random.Next(num)+1).ToString());
             }
         }
 
@@ -68,7 +69,8 @@ namespace Rosettes.Modules.Commands
                 "consider morbing",
                 $"perhaps you should leave it to a {Settings.Prefix}coin flip"
             };
-            await ReplyAsync(replies[Global.Random.Next(replies.Length - 1)]);
+            Random Random = new();
+            await ReplyAsync(replies[Random.Next(replies.Length - 1)]);
         }
 
         [Command("coin")]
@@ -132,7 +134,8 @@ namespace Rosettes.Modules.Commands
 
         public void CoinStateUpdate(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            message.ModifyAsync(x => x.Content = $"*The coin lands.* ***{coinSides[Global.Random.Next(2)]}!***");
+            Random Random = new();
+            message.ModifyAsync(x => x.Content = $"*The coin lands.* ***{coinSides[Random.Next(2)]}!***");
             Timer.Stop();
             Timer.Dispose();
         }

@@ -31,7 +31,8 @@ namespace Rosettes.Modules.Commands
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
                 if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/cats/");
-                string fileName = $"./temp/pics/{Global.Random.Next(20) + 1}.jpg";
+                Random Random = new();
+                string fileName = $"./temp/pics/{Random.Next(20) + 1}.jpg";
 
                 if (File.Exists(fileName)) File.Delete(fileName);
 
@@ -69,7 +70,8 @@ namespace Rosettes.Modules.Commands
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
                 if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/peeps/");
-                string fileName = $"./temp/pics/{Global.Random.Next(20) + 1}.jpg";
+                Random Random = new();
+                string fileName = $"./temp/pics/{Random.Next(20) + 1}.jpg";
 
                 if (File.Exists(fileName)) File.Delete(fileName);
 

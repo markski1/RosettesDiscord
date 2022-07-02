@@ -7,7 +7,6 @@ namespace Rosettes.Core
 {
     public static class Global
     {
-        public readonly static Random Random = new();
         public static readonly RosettesMain RosettesMain = new();
         public static readonly HttpClient HttpClient = new();
 

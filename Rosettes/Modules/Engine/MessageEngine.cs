@@ -8,8 +8,6 @@ namespace Rosettes.Modules.Engine
 {
     public static class MessageEngine
     {
-        private static int LastBlepUnix = 0;
-        private static int LastPawUnix = 0;
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         public static async Task HandleMessage(SocketCommandContext context)
         {
