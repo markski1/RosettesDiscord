@@ -53,7 +53,7 @@ namespace Rosettes.Modules.Engine
             else
             {
                 getGuild = new Guild(guild);
-                _ = _interface.InsertGuild(getGuild);
+                await _interface.InsertGuild(getGuild);
             }
             if (getGuild.IsValid()) GuildCache.Add(getGuild);
             return getGuild;
@@ -114,14 +114,16 @@ namespace Rosettes.Modules.Engine
             {
                 Id = 0;
                 NameCache = "invalid";
+                OwnerId = 0;
             }
             else
             {
                 Id = guild.Id;
                 NameCache = guild.Name;
+                OwnerId = guild.OwnerId;
             }
             CachedReference = guild;
-            OwnerId = 0;
+            
             Messages = 0;
             Members = 0;
             Settings = "2111111111";

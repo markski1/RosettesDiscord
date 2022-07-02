@@ -46,7 +46,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT count(1) FROM guilds WHERE id=@Id";
+            var sql = @"SELECT count(1) FROM guilds WHERE id=@guildId";
 
             try
             {
