@@ -7,6 +7,17 @@ using Rosettes.Modules.Engine;
 
 namespace Rosettes.Database
 {
+    public interface IGuildRepository
+    {
+        Task<IEnumerable<Guild>> GetAllGuildsAsync();
+        Task<Guild> GetGuildData(SocketGuild guild);
+        Task<string> GetGuildSettings(Guild guild);
+        Task<bool> CheckGuildExists(ulong guildId);
+        Task<bool> InsertGuild(Guild guild);
+        Task<bool> UpdateGuild(Guild guild);
+        Task<bool> DeleteGuild(Guild guild);
+    }
+
     public class GuildRepository : IGuildRepository
     {
         private static MySqlConnection DBConnection()
@@ -31,7 +42,7 @@ namespace Rosettes.Database
             }
         }
 
-        public async Task<bool> CheckGuildExists(SocketGuild guild)
+        public async Task<bool> CheckGuildExists(ulong guildId)
         {
             var db = DBConnection();
 
@@ -39,7 +50,7 @@ namespace Rosettes.Database
 
             try
             {
-                return await db.ExecuteScalarAsync<bool>(sql, new { guild.Id });
+                return await db.ExecuteScalarAsync<bool>(sql, new { guildId });
             }
             catch (Exception ex)
             {

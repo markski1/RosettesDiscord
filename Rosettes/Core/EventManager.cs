@@ -40,8 +40,6 @@ namespace Rosettes.Core
             
             _client.Ready += OnReady;
 
-            _client.Disconnected += OnDisconnect;
-
             _client.JoinedGuild += OnJoinGuild;
 
             _client.LeftGuild += OnLeftGuild;
@@ -113,16 +111,10 @@ namespace Rosettes.Core
          * The callbacks below are used for analytics.
          * 
          */
-        private static Task OnDisconnect(Exception ex)
-        {
-            Global.GenerateErrorMessage("OnReady", $"Rosettes has lost connection to Discord. {ex.Message}");
-
-            return Task.CompletedTask;
-        }
-
-        private static Task OnJoinGuild(SocketGuild guild)
+        private static async Task<Task> OnJoinGuild(SocketGuild guild)
         {
             Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
+            await GuildEngine.GetDBGuild(guild);
 
             return Task.CompletedTask;
         }

@@ -22,15 +22,31 @@ namespace Rosettes.Modules.Engine
             foreach (Guild guild in GuildCache)
             {
                 guild.SelfTest();
-                await _interface.UpdateGuild(guild);
-                guild.Settings = await _interface.GetGuildSettings(guild);
+                if (await _interface.CheckGuildExists(guild.Id))
+                {
+                    await _interface.UpdateGuild(guild);
+                    guild.Settings = await _interface.GetGuildSettings(guild);
+                }
+                else
+                {
+                    var client = ServiceManager.GetService<DiscordSocketClient>();
+                    SocketGuild? foundGuild = null;
+                    foreach (SocketGuild aSocketGuild in client.Guilds)
+                    {
+                        if (aSocketGuild.Id == guild.Id) foundGuild = aSocketGuild;
+                    }
+                    if (foundGuild is null)
+                    {
+                        GuildCache.Remove(guild);
+                    }
+                }
             }
         }
 
         public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
         {
             Guild getGuild;
-            if (await _interface.CheckGuildExists(guild))
+            if (await _interface.CheckGuildExists(guild.Id))
             {
                 getGuild = await _interface.GetGuildData(guild);
             }

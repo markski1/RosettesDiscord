@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using MySqlConnector;
 using System.Text;
 
 namespace Rosettes.Core
