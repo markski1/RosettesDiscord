@@ -29,6 +29,7 @@ namespace Rosettes.Modules.Engine
                 }
                 else
                 {
+                    // handle deletion or memory resets
                     var client = ServiceManager.GetService<DiscordSocketClient>();
                     SocketGuild? foundGuild = null;
                     foreach (SocketGuild aSocketGuild in client.Guilds)
@@ -38,6 +39,10 @@ namespace Rosettes.Modules.Engine
                     if (foundGuild is null)
                     {
                         GuildCache.Remove(guild);
+                    }
+                    else
+                    {
+                        await _interface.InsertGuild(guild);
                     }
                 }
             }
@@ -172,6 +177,7 @@ namespace Rosettes.Modules.Engine
             SocketGuild? reference = GetDiscordReference();
             if (reference is null)
             {
+                Global.GenerateErrorMessage("guild-selftest", $"Failed to find reference for {NameCache}");
                 return;
             }
             OwnerId = reference.OwnerId;
