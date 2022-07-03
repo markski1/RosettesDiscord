@@ -81,8 +81,19 @@ namespace Rosettes.Core
         // fired when a message is received
         private static async Task OnMessageReceived(SocketMessage arg)
         {
-            var message = arg as SocketUserMessage;
-            var context = new SocketCommandContext(_client, message);
+            SocketUserMessage? message;
+            SocketCommandContext? context;
+            try
+            {
+                message = arg as SocketUserMessage;
+                context = new SocketCommandContext(_client, message);
+            }
+            catch
+            {
+                // means the message can't be parsed and is likely a system message.
+                // rosettes don't handle those, so
+                return;
+            }
 
 #if !DEBUG
             if (context.Channel.Id == 971467116165353485) return;

@@ -12,9 +12,22 @@ namespace Rosettes.Core
         public static void GenerateErrorMessage(string source, string error)
         {
             // generate the error string
-            string _error = $"{DateTime.UtcNow} | mew wew! There was an error at \"{source}\".\n```{error}```\n";
+            string _error = $"There was an error at \"{source}\".\n```{error}```\n";
 
-            // log it to a file
+            // send it to error channel
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            if (client.GetChannel(984608927775854594) is not ITextChannel errorChannel) return;
+
+            if (_error.Length > 1999)
+            {
+                _error = _error[..1900];
+                _error += "```(truncated)";
+            }
+
+            errorChannel.SendMessageAsync(_error);
+
+            // and log it to a file
+            _error = $"{DateTime.UtcNow} | There was an error at \"{source}\".\n{error}\n\n";
             try
             {
                 using var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
@@ -24,18 +37,6 @@ namespace Rosettes.Core
             {
                 // meh, just don't stop
             }
-
-            // and send it to #impawtant-data
-            var client = ServiceManager.GetService<DiscordSocketClient>();
-            if (client.GetChannel(984608927775854594) is not ITextChannel impawtantChannel) return;
-
-            if (_error.Length > 1999)
-            {
-                _error = _error[..1900];
-                _error += "```(truncated)";
-            }
-
-            impawtantChannel.SendMessageAsync(_error);
         }
 
         public static void GenerateNotification(string message)
