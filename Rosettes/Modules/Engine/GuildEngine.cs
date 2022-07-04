@@ -26,6 +26,7 @@ namespace Rosettes.Modules.Engine
                 {
                     await _interface.UpdateGuild(guild);
                     guild.Settings = await _interface.GetGuildSettings(guild);
+                    guild.DefaultRole = await _interface.GetGuildDefaultRole(guild);
                 }
                 else
                 {
@@ -102,6 +103,7 @@ namespace Rosettes.Modules.Engine
         public ulong Commands;
         public ulong Members;
         public ulong OwnerId;
+        public ulong DefaultRole;
         public SocketGuild? CachedReference;
         public string NameCache;
 
@@ -133,14 +135,14 @@ namespace Rosettes.Modules.Engine
                 OwnerId = guild.OwnerId;
             }
             CachedReference = guild;
-            
+            DefaultRole = 0;
             Messages = 0;
             Members = 0;
             Settings = "2111111111";
         }
 
         // database constructor, used on loading users
-        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid)
+        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole)
         {
             Id = id;
             Messages = messages;
@@ -150,6 +152,7 @@ namespace Rosettes.Modules.Engine
             NameCache = namecache;
             OwnerId = ownerid;
             CachedReference = null;
+            DefaultRole = defaultrole;
         }
 
         public bool IsValid()

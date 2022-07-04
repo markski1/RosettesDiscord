@@ -44,8 +44,10 @@ namespace Rosettes.Core
 
             _client.LeftGuild += OnLeftGuild;
 
-            _client.RoleCreated += HandleRoleChange;
-            _client.RoleDeleted += HandleRoleChange;
+            _client.RoleCreated += OnRoleChange;
+            _client.RoleDeleted += OnRoleChange;
+
+            _client.UserJoined += OnUserJoin;
 
             return Task.CompletedTask;
         }
@@ -140,10 +142,22 @@ namespace Rosettes.Core
             return Task.CompletedTask;
         }
 
-        private static async Task<Task> HandleRoleChange(SocketRole role)
+        private static async Task<Task> OnRoleChange(SocketRole role)
         {
             Guild guild = await GuildEngine.GetDBGuild(role.Guild);
             guild.UpdateRoles();
+
+            return Task.CompletedTask;
+        }
+
+        private static async Task<Task> OnUserJoin(SocketGuildUser user)
+        {
+            if (user is null || user.Guild is null) return Task.CompletedTask;
+            var defRole = (await GuildEngine.GetDBGuild(user.Guild)).DefaultRole;
+            if (defRole != 0)
+            {
+                await user.AddRoleAsync(defRole);
+            }
 
             return Task.CompletedTask;
         }

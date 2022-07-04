@@ -2,7 +2,7 @@
 using Rosettes.Modules.Engine;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
-using Rosettes.Modules.Commands.Emoji;
+using Rosettes.Modules.Commands.EmojiDownloader;
 
 namespace Rosettes.Modules.Commands
 {

@@ -69,5 +69,35 @@ namespace Rosettes.Modules.Commands
             await ReplyAsync($"New unique key generated. Anyone with this key can change Rosettes settings for your servers, so beware.\nIf you ever want to change your key, just use $KeyGen again.");
             await ReplyAsync($"```{NewKey}```");
         }
+
+        [Command("newvote")]
+        [Summary("Creates a quick, simple vote with thumbs up and down. \nUsage: $newvote <question>")]
+        public async Task NewVote(params string[] questionWords)
+        {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("You may only create polls within a guild.");
+                return;
+            }
+
+            string question = "";
+
+            foreach (string word in questionWords)
+            {
+                question += $"{word} ";
+            }
+
+            string message = $"[{Context.User.Username}] created a vote:```{question}```";
+
+            var mid = await ReplyAsync(message);
+
+            var emojiList = new List<Emoji>();
+            emojiList.Add(new Emoji("👍"));
+            emojiList.Add(new Emoji("👎"));
+
+            await mid.AddReactionsAsync(emojiList);
+
+            await Context.Message.DeleteAsync();
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace Rosettes.Database
         Task<bool> UpdateGuild(Guild guild);
         Task<bool> DeleteGuild(Guild guild);
         Task<bool> UpdateGuildRoles(Guild guild);
+        Task<ulong> GetGuildDefaultRole(Guild guild);
     }
 
     public class GuildRepository : IGuildRepository
@@ -91,6 +92,23 @@ namespace Rosettes.Database
             {
                 Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
                 return "1111111111";
+            }
+        }
+
+        public async Task<ulong> GetGuildDefaultRole(Guild guild)
+        {
+            var db = DBConnection();
+
+            var sql = @"SELECT defaultrole FROM guilds WHERE id=@id";
+
+            try
+            {
+                return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { id = guild.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
+                return 0;
             }
         }
 

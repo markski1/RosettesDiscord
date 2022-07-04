@@ -3,7 +3,7 @@ using Discord.Commands;
 using Rosettes.Core;
 using System.IO.Compression;
 
-namespace Rosettes.Modules.Commands.Emoji
+namespace Rosettes.Modules.Commands.EmojiDownloader
 {
     public static class DownloadEmoji
     {
