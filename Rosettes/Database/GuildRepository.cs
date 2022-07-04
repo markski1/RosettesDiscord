@@ -163,7 +163,8 @@ namespace Rosettes.Database
 
             foreach (var role in discordGuild.Roles)
             {
-                if (role.Name.Contains("@everyone")) continue;
+                if (role.IsEveryone) continue;
+                if (role.IsManaged) continue;
                 await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString()});
             }
 

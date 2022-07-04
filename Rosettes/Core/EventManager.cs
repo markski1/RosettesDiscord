@@ -69,6 +69,7 @@ namespace Rosettes.Core
                 await UserEngine.LoadAllUsersFromDatabase();
                 await GuildEngine.LoadAllGuildsFromDatabase();
                 AlarmManager.LoadAllAlarmsFromDatabase();
+                RequestEngine.Initialize();
             }
             else
             {

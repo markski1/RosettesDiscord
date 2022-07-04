@@ -73,7 +73,7 @@ namespace Rosettes.Modules.Engine
             GuildCache = guildCacheTemp.ToList();
             foreach (Guild guild in GuildCache)
             {
-                await _interface.UpdateGuildRoles(guild);
+                _ = _interface.UpdateGuildRoles(guild);
             }
             // only returns a bool because I want this to be awaited for
             return true;
@@ -219,7 +219,23 @@ namespace Rosettes.Modules.Engine
         }
 
 
-
+        public async void SetRoleForEveryone(ulong roleid)
+        {
+            var dref = GetDiscordReference();
+            if (dref is null) return;
+            try
+            {
+                foreach (var user in dref.Users)
+                {
+                    await user.AddRoleAsync(roleid);
+                }
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("guild-setroleforeveryone", $"{ex}");
+                return;
+            }
+        }
         public async void UpdateRoles()
         {
             await GuildEngine._interface.UpdateGuildRoles(this);
