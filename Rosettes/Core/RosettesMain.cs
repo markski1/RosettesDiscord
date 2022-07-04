@@ -12,7 +12,7 @@ namespace Rosettes.Core
     {
         private readonly DiscordSocketClient Client;
         private readonly CommandService Commands;
-        private readonly System.Timers.Timer HalfHourlyTimer = new();
+        private readonly System.Timers.Timer FiveMinutyTimer = new();
 
         public RosettesMain()
         {
@@ -62,16 +62,16 @@ namespace Rosettes.Core
             await EventManager.LoadCommands();
 
             // TenMinutyThings(); defined below, runs every 10 minutes, or 600 seconds
-            HalfHourlyTimer.Elapsed += TenMinutyThings;
-            HalfHourlyTimer.Interval = 600000;
-            HalfHourlyTimer.AutoReset = true;
-            HalfHourlyTimer.Enabled = true;
+            FiveMinutyTimer.Elapsed += FiveMinutyThings;
+            FiveMinutyTimer.Interval = 300000;
+            FiveMinutyTimer.AutoReset = true;
+            FiveMinutyTimer.Enabled = true;
 
             // Done! Now keep this task blocked forever to avoid the bot from closing.
             await Task.Delay(-1);
         }
 
-        public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
+        public void FiveMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
         {
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();

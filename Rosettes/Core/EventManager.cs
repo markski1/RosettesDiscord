@@ -44,6 +44,9 @@ namespace Rosettes.Core
 
             _client.LeftGuild += OnLeftGuild;
 
+            _client.RoleCreated += HandleRoleChange;
+            _client.RoleDeleted += HandleRoleChange;
+
             return Task.CompletedTask;
         }
 
@@ -133,6 +136,14 @@ namespace Rosettes.Core
         private static Task OnLeftGuild(SocketGuild guild)
         {
             Global.GenerateNotification($"Rosettes has left a guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
+
+            return Task.CompletedTask;
+        }
+
+        private static async Task<Task> HandleRoleChange(SocketRole role)
+        {
+            Guild guild = await GuildEngine.GetDBGuild(role.Guild);
+            guild.UpdateRoles();
 
             return Task.CompletedTask;
         }

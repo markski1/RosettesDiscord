@@ -59,17 +59,22 @@ namespace Rosettes.Modules.Engine
             {
                 getGuild = new Guild(guild);
                 await _interface.InsertGuild(getGuild);
+                await _interface.UpdateGuildRoles(getGuild);
             }
             if (getGuild.IsValid()) GuildCache.Add(getGuild);
             return getGuild;
         }
 
-        // return might seem useless but we need to AWAIT for all users to be loaded.
         public static async Task<bool> LoadAllGuildsFromDatabase()
         {
             IEnumerable<Guild> guildCacheTemp;
             guildCacheTemp = await _interface.GetAllGuildsAsync();
             GuildCache = guildCacheTemp.ToList();
+            foreach (Guild guild in GuildCache)
+            {
+                await _interface.UpdateGuildRoles(guild);
+            }
+            // only returns a bool because I want this to be awaited for
             return true;
         }
 
@@ -166,7 +171,11 @@ namespace Rosettes.Modules.Engine
             {
                 foreach (var guild in client.Guilds)
                 {
-                    if (guild.Id == Id) CachedReference = guild;
+                    if (guild.Id == Id)
+                    {
+                        CachedReference = guild;
+                        break;
+                    }
                 }
             }
             return CachedReference;
@@ -204,6 +213,13 @@ namespace Rosettes.Modules.Engine
         {
             char value = Settings[3];
             return value == '1';
+        }
+
+
+
+        public async void UpdateRoles()
+        {
+            await GuildEngine._interface.UpdateGuildRoles(this);
         }
     }
 }

@@ -16,6 +16,7 @@ namespace Rosettes.Database
         Task<bool> InsertGuild(Guild guild);
         Task<bool> UpdateGuild(Guild guild);
         Task<bool> DeleteGuild(Guild guild);
+        Task<bool> UpdateGuildRoles(Guild guild);
     }
 
     public class GuildRepository : IGuildRepository
@@ -127,6 +128,28 @@ namespace Rosettes.Database
                 Global.GenerateErrorMessage("sql-updateguild", $"sqlException code {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<bool> UpdateGuildRoles(Guild guild)
+        {
+            var db = DBConnection();
+
+            var discordGuild = guild.GetDiscordReference();
+            if (discordGuild is null) return false;
+
+            var sql = @"DELETE FROM roles WHERE guildid = @Id";
+            await db.ExecuteAsync(sql, new { guild.Id });
+            
+            sql = @"INSERT INTO roles (id, rolename, guildid, color)
+                    VALUES (@Id, @Name, @GuildId, @Color)";
+
+            foreach (var role in discordGuild.Roles)
+            {
+                if (role.Name.Contains("@everyone")) continue;
+                await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString()});
+            }
+
+            return true;
         }
 
         public async Task<bool> DeleteGuild(Guild guild)
