@@ -152,7 +152,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var discordGuild = guild.GetDiscordReference();
+            var discordGuild = guild.GetDiscordSocketReference();
             if (discordGuild is null) return false;
 
             var sql = @"DELETE FROM roles WHERE guildid = @Id";

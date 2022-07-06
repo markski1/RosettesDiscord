@@ -70,7 +70,8 @@ namespace Rosettes.Core
             if (Settings.ConnectToDatabase())
             {
                 await UserEngine.LoadAllUsersFromDatabase();
-                await GuildEngine.LoadAllGuildsFromDatabase();
+                GuildEngine.LoadAllGuildsFromDatabase();
+                AutoRolesEngine.SyncWithDatabase();
                 AlarmManager.LoadAllAlarmsFromDatabase();
                 RequestEngine.Initialize();
             }
@@ -166,44 +167,26 @@ namespace Rosettes.Core
             return Task.CompletedTask;
         }
 
-        private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        private static Task OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
             var guild = GuildEngine.GetByRoleMessage(channel.Id);
             if (guild is null) return Task.CompletedTask;
 
             ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
 
-            var user = guild.GetSocketUser(reaction.UserId);
-
-            if (user is null)
-            {
-                // remove reaction
-            }
-            else
-            {
-                await user.AddRoleAsync(roleId);
-            }
+            guild.SetUserRole(reaction.UserId, roleId);
 
             return Task.CompletedTask;
         }
 
-        private static async Task<Task> OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        private static Task OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
             var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
             if (guild is null) return Task.CompletedTask;
 
             ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
 
-            var user = guild.GetSocketUser(reaction.UserId);
-
-            if (user is null)
-            {
-                // remove reaction
-            }
-            else
-            {
-                await user.RemoveRoleAsync(roleId);
-            }
+            guild.RemoveUserRole(reaction.UserId, roleId);
 
             return Task.CompletedTask;
         }

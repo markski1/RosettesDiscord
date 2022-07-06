@@ -1,4 +1,4 @@
-﻿using Discord;
+﻿using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
@@ -75,23 +75,21 @@ namespace Rosettes.Modules.Engine
             {
                 getGuild = new Guild(guild);
                 await _interface.InsertGuild(getGuild);
-                await _interface.UpdateGuildRoles(getGuild);
+                getGuild.UpdateRoles();
             }
             if (getGuild.IsValid()) GuildCache.Add(getGuild);
             return getGuild;
         }
 
-        public static async Task<bool> LoadAllGuildsFromDatabase()
+        public static async void LoadAllGuildsFromDatabase()
         {
             IEnumerable<Guild> guildCacheTemp;
             guildCacheTemp = await _interface.GetAllGuildsAsync();
             GuildCache = guildCacheTemp.ToList();
             foreach (Guild guild in GuildCache)
             {
-                _ = _interface.UpdateGuildRoles(guild);
+                guild.UpdateRoles();
             }
-            // only returns a bool because I want this to be awaited for
-            return true;
         }
 
         public static async Task<Guild> GetDBGuild(SocketGuild guild)
@@ -179,7 +177,14 @@ namespace Rosettes.Modules.Engine
             return Id != 0;
         }
 
-        public SocketGuild? GetDiscordReference()
+        public async Task<RestGuild?> GetDiscordRestReference()
+        {
+            DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
+            var foundGuild = await _client.Rest.GetGuildAsync(Id);
+            return foundGuild;
+        }
+
+        public SocketGuild? GetDiscordSocketReference()
         {
             if (CachedReference is not null) return CachedReference;
             var client = ServiceManager.GetService<DiscordSocketClient>();
@@ -204,7 +209,7 @@ namespace Rosettes.Modules.Engine
 
         public void SelfTest()
         {
-            SocketGuild? reference = GetDiscordReference();
+            SocketGuild? reference = GetDiscordSocketReference();
             if (reference is null)
             {
                 Global.GenerateErrorMessage("guild-selftest", $"Failed to find reference for {NameCache}");
@@ -239,27 +244,52 @@ namespace Rosettes.Modules.Engine
 
         public async void SetRoleForEveryone(ulong roleid)
         {
-            var dref = GetDiscordReference();
-            if (dref is null) return;
-            try
+            var socketRef = GetDiscordSocketReference();
+            if (socketRef is not null)
             {
-                foreach (var user in dref.Users)
+                await socketRef.DownloadUsersAsync();
+                foreach (var user in socketRef.Users)
                 {
                     await user.AddRoleAsync(roleid);
                 }
             }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("guild-setroleforeveryone", $"{ex}");
-                return;
-            }
         }
 
-        public SocketGuildUser? GetSocketUser(ulong userid)
+        // returns either a SocketGuildUser or a RestGuildUser, depending on wether cached or not.
+        public async Task<dynamic?> GetGuildUser(ulong userid)
         {
-            var dref = GetDiscordReference();
+            var dref = GetDiscordSocketReference();
             if (dref is null) return null;
-            return dref.GetUser(userid);
+            dynamic user;
+            user = dref.GetUser(userid);
+            // if null, not cached, pick it up through rest
+            if (user is null)
+            {
+                var restSelf = await GetDiscordRestReference();
+                if (restSelf is null) return null;
+                user = await restSelf.GetUserAsync(userid);
+            }
+            return user;
+        }
+
+        public async void SetUserRole(ulong userid, ulong roleid)
+        {
+            var user = await GetGuildUser(userid);
+            if (user is not null)
+            {
+                await user.AddRoleAsync(roleid);
+            }
+            return;
+        }
+
+        public async void RemoveUserRole(ulong userid, ulong roleid)
+        {
+            var user = await GetGuildUser(userid);
+            if (user is not null)
+            {
+                await user.RemoveRoleAsync(roleid);
+            }
+            return;
         }
 
         public async void UpdateRoles()

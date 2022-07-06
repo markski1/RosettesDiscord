@@ -26,20 +26,22 @@ namespace Rosettes.Modules.Engine
 
             foreach (Request req in result)
             {
-                Guild guild;
+                Guild guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
                 switch (req.RequestType)
                 {
                     // req type 0: assign role to everyone
                     case 0:
-                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
                         if (guild is null) continue;
                         guild.SetRoleForEveryone(req.RelevantValue);
                         break;
                     // req type 1: make guild update
                     case 1:
-                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
                         if (guild is null) continue;
                         await GuildEngine.UpdateGuild(guild);
+                        break;
+                    // req type 2: refresh autoroles
+                    case 2:
+                        AutoRolesEngine.SyncWithDatabase();
                         break;
                 }
                 sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";

@@ -6,7 +6,7 @@ namespace Rosettes.Modules.Engine
 {
     public static class AutoRolesEngine
     {
-        private static readonly List<AutoRoleEntry> AutoRolesEntries = new();
+        private static List<AutoRoleEntry> AutoRolesEntries = new();
 
         public static ulong GetRoleId(ulong guildid, string emoteName)
         {
@@ -15,11 +15,9 @@ namespace Rosettes.Modules.Engine
                 from role in AutoRolesEntries
                 where role.GuildId == guildid
                 select role;
-            //AutoRoleEntry found = GuildEntries.First(item => item.EmoteId == emoteName);
-            //if (found is null) return 0;
-            //return found.RoleId;
-
-            return 0;
+            AutoRoleEntry found = GuildEntries.First(item => item.Emote == emoteName);
+            if (found is null) return 0;
+            return found.RoleId;
         }
 
         public static async void SyncWithDatabase()
@@ -27,45 +25,22 @@ namespace Rosettes.Modules.Engine
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
-            var sql = @"SELECT * FROM requests";
+            var sql = @"SELECT guildid, emote, roleid FROM autorole_entries";
 
-            var result = await db.QueryAsync<Request>(sql, new { });
-
-            foreach (Request req in result)
-            {
-                Guild guild;
-                switch (req.RequestType)
-                {
-                    // req type 0: assign role to everyone
-                    case 0:
-                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
-                        if (guild is null) continue;
-                        guild.SetRoleForEveryone(req.RelevantValue);
-                        break;
-                    // req type 1: make guild update
-                    case 1:
-                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
-                        if (guild is null) continue;
-                        await GuildEngine.UpdateGuild(guild);
-                        break;
-                }
-                sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";
-
-                await db.ExecuteAsync(sql, new { req.RelevantGuild, req.RelevantValue });
-            }
+            AutoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
         }
     }
 
     public class AutoRoleEntry
     {
         public ulong GuildId;
-        public ulong EmoteId;
+        public string Emote;
         public ulong RoleId;
 
-        public AutoRoleEntry(ulong guildid, ulong emoteid, ulong roleid)
+        public AutoRoleEntry(ulong guildid, string emote, ulong roleid)
         {
             GuildId = guildid;
-            EmoteId = emoteid;
+            Emote = emote;
             RoleId = roleid;
         }
     }
