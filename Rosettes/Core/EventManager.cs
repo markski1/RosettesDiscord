@@ -47,6 +47,9 @@ namespace Rosettes.Core
             _client.RoleCreated += OnRoleChange;
             _client.RoleDeleted += OnRoleChange;
 
+            _client.ReactionAdded += OnReactionAdded;
+            _client.ReactionRemoved += OnReactionRemoved;
+
             _client.UserJoined += OnUserJoin;
 
             return Task.CompletedTask;
@@ -158,6 +161,48 @@ namespace Rosettes.Core
             if (defRole != 0)
             {
                 await user.AddRoleAsync(defRole);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        {
+            var guild = GuildEngine.GetByRoleMessage(channel.Id);
+            if (guild is null) return Task.CompletedTask;
+
+            ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
+
+            var user = guild.GetSocketUser(reaction.UserId);
+
+            if (user is null)
+            {
+                // remove reaction
+            }
+            else
+            {
+                await user.AddRoleAsync(roleId);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static async Task<Task> OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        {
+            var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
+            if (guild is null) return Task.CompletedTask;
+
+            ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
+
+            var user = guild.GetSocketUser(reaction.UserId);
+
+            if (user is null)
+            {
+                // remove reaction
+            }
+            else
+            {
+                await user.RemoveRoleAsync(roleId);
             }
 
             return Task.CompletedTask;

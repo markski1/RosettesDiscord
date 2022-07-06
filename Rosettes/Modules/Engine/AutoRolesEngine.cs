@@ -4,19 +4,26 @@ using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine
 {
-    public static class RequestEngine
+    public static class AutoRolesEngine
     {
-        private static readonly System.Timers.Timer RequestTimer = new();
+        private static readonly List<AutoRoleEntry> AutoRolesEntries = new();
 
-        public static void Initialize()
+        public static ulong GetRoleId(ulong guildid, string emoteName)
         {
-            RequestTimer.Elapsed += RequestHandler;
-            RequestTimer.Interval = 10000;
-            RequestTimer.AutoReset = true;
-            RequestTimer.Enabled = true;
+            IEnumerable<AutoRoleEntry> GuildEntries;
+            GuildEntries =
+                from role in AutoRolesEntries
+                where role.GuildId == guildid
+                select role;
+            //AutoRoleEntry found = GuildEntries.First(item => item.EmoteId == emoteName);
+            //if (found is null) return 0;
+            //return found.RoleId;
+
+            return 0;
         }
 
-        public static async void RequestHandler(object? source, System.Timers.ElapsedEventArgs e)
+        public static async void SyncWithDatabase()
+           
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
@@ -49,20 +56,17 @@ namespace Rosettes.Modules.Engine
         }
     }
 
-    public class Request
+    public class AutoRoleEntry
     {
-        public uint RequestType;
-        public ulong RelevantGuild;
-        public ulong RelevantValue;
-        public string RelevantStringValue;
+        public ulong GuildId;
+        public ulong EmoteId;
+        public ulong RoleId;
 
-        
-        public Request(System.UInt32 requesttype, System.UInt64 relevantguild, System.UInt64 relevantvalue, System.String relevantstringvalue)
+        public AutoRoleEntry(ulong guildid, ulong emoteid, ulong roleid)
         {
-            RequestType = requesttype;
-            RelevantGuild = relevantguild;
-            RelevantValue = relevantvalue;
-            RelevantStringValue = relevantstringvalue;
+            GuildId = guildid;
+            EmoteId = emoteid;
+            RoleId = roleid;
         }
     }
 }

@@ -17,36 +17,51 @@ namespace Rosettes.Modules.Engine
             return findGuild != null;
         }
 
+        public static Guild? GetByRoleMessage(ulong channelId)
+        {
+            foreach (var guild in GuildCache)
+            {
+                if (guild.AutoRolesMessage == channelId) return guild;
+            }
+            return null;
+        }
+
         public static async void SyncWithDatabase()
         {
             foreach (Guild guild in GuildCache)
             {
-                guild.SelfTest();
-                if (await _interface.CheckGuildExists(guild.Id))
+                await UpdateGuild(guild);
+            }
+        }
+
+        public static async Task<Task> UpdateGuild(Guild guild)
+        {
+            guild.SelfTest();
+            if (await _interface.CheckGuildExists(guild.Id))
+            {
+                await _interface.UpdateGuild(guild);
+                guild.Settings = await _interface.GetGuildSettings(guild);
+                guild.DefaultRole = await _interface.GetGuildDefaultRole(guild);
+            }
+            else
+            {
+                // handle deletion or memory resets
+                var client = ServiceManager.GetService<DiscordSocketClient>();
+                SocketGuild? foundGuild = null;
+                foreach (SocketGuild aSocketGuild in client.Guilds)
                 {
-                    await _interface.UpdateGuild(guild);
-                    guild.Settings = await _interface.GetGuildSettings(guild);
-                    guild.DefaultRole = await _interface.GetGuildDefaultRole(guild);
+                    if (aSocketGuild.Id == guild.Id) foundGuild = aSocketGuild;
+                }
+                if (foundGuild is null)
+                {
+                    GuildCache.Remove(guild);
                 }
                 else
                 {
-                    // handle deletion or memory resets
-                    var client = ServiceManager.GetService<DiscordSocketClient>();
-                    SocketGuild? foundGuild = null;
-                    foreach (SocketGuild aSocketGuild in client.Guilds)
-                    {
-                        if (aSocketGuild.Id == guild.Id) foundGuild = aSocketGuild;
-                    }
-                    if (foundGuild is null)
-                    {
-                        GuildCache.Remove(guild);
-                    }
-                    else
-                    {
-                        await _interface.InsertGuild(guild);
-                    }
+                    await _interface.InsertGuild(guild);
                 }
             }
+            return Task.CompletedTask;
         }
 
         public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
@@ -104,6 +119,7 @@ namespace Rosettes.Modules.Engine
         public ulong Members;
         public ulong OwnerId;
         public ulong DefaultRole;
+        public ulong AutoRolesMessage;
         public SocketGuild? CachedReference;
         public string NameCache;
 
@@ -135,14 +151,15 @@ namespace Rosettes.Modules.Engine
                 OwnerId = guild.OwnerId;
             }
             CachedReference = guild;
+            AutoRolesMessage = 0;
             DefaultRole = 0;
             Messages = 0;
             Members = 0;
             Settings = "2111111111";
         }
 
-        // database constructor, used on loading users
-        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole)
+        // database constructor, used on loading all guilds
+        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole, ulong autorolesmessage)
         {
             Id = id;
             Messages = messages;
@@ -153,6 +170,7 @@ namespace Rosettes.Modules.Engine
             OwnerId = ownerid;
             CachedReference = null;
             DefaultRole = defaultrole;
+            AutoRolesMessage = autorolesmessage;
         }
 
         public bool IsValid()
@@ -236,6 +254,14 @@ namespace Rosettes.Modules.Engine
                 return;
             }
         }
+
+        public SocketGuildUser? GetSocketUser(ulong userid)
+        {
+            var dref = GetDiscordReference();
+            if (dref is null) return null;
+            return dref.GetUser(userid);
+        }
+
         public async void UpdateRoles()
         {
             await GuildEngine._interface.UpdateGuildRoles(this);
