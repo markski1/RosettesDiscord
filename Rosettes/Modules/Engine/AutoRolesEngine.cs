@@ -8,16 +8,14 @@ namespace Rosettes.Modules.Engine
     {
         private static List<AutoRoleEntry> AutoRolesEntries = new();
 
-        public static ulong GetRoleId(ulong guildid, string emoteName)
+        public static IEnumerable<AutoRoleEntry> GetGuildRolesForEmote(ulong guildid, string emoteName)
         {
-            IEnumerable<AutoRoleEntry> GuildEntries;
-            GuildEntries =
+            IEnumerable<AutoRoleEntry> FoundEntries;
+            FoundEntries =
                 from role in AutoRolesEntries
-                where role.GuildId == guildid
+                where role.GuildId == guildid && role.Emote == emoteName
                 select role;
-            AutoRoleEntry found = GuildEntries.First(item => item.Emote == emoteName);
-            if (found is null) return 0;
-            return found.RoleId;
+            return FoundEntries;
         }
 
         public static async void SyncWithDatabase()

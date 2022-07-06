@@ -127,11 +127,6 @@ namespace Rosettes.Core
             }
         }
 
-        /*
-         * 
-         * The callbacks below are used for analytics.
-         * 
-         */
         private static async Task<Task> OnJoinGuild(SocketGuild guild)
         {
             Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
@@ -172,9 +167,12 @@ namespace Rosettes.Core
             var guild = GuildEngine.GetByRoleMessage(channel.Id);
             if (guild is null) return Task.CompletedTask;
 
-            ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
+            var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
 
-            guild.SetUserRole(reaction.UserId, roleId);
+            foreach (var role in roles)
+            {
+                guild.SetUserRole(reaction.UserId, role.RoleId);
+            }
 
             return Task.CompletedTask;
         }
@@ -184,9 +182,12 @@ namespace Rosettes.Core
             var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
             if (guild is null) return Task.CompletedTask;
 
-            ulong roleId = AutoRolesEngine.GetRoleId(guild.Id, reaction.Emote.Name);
+            var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
 
-            guild.RemoveUserRole(reaction.UserId, roleId);
+            foreach (var role in roles)
+            {
+                guild.RemoveUserRole(reaction.UserId, role.RoleId);
+            }
 
             return Task.CompletedTask;
         }
