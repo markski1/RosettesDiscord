@@ -46,6 +46,7 @@ namespace Rosettes.Core
 
             _client.RoleCreated += OnRoleChange;
             _client.RoleDeleted += OnRoleChange;
+            _client.RoleUpdated += OnRoleChange;
 
             _client.ReactionAdded += OnReactionAdded;
             _client.ReactionRemoved += OnReactionRemoved;
@@ -71,7 +72,7 @@ namespace Rosettes.Core
             {
                 await UserEngine.LoadAllUsersFromDatabase();
                 GuildEngine.LoadAllGuildsFromDatabase();
-                AutoRolesEngine.SyncWithDatabase();
+                _ = AutoRolesEngine.SyncWithDatabase();
                 AlarmManager.LoadAllAlarmsFromDatabase();
                 RequestEngine.Initialize();
             }
@@ -150,6 +151,14 @@ namespace Rosettes.Core
             return Task.CompletedTask;
         }
 
+        private static async Task<Task> OnRoleChange(SocketRole role, SocketRole role1)
+        {
+            Guild guild = await GuildEngine.GetDBGuild(role.Guild);
+            guild.UpdateRoles();
+
+            return Task.CompletedTask;
+        }
+
         private static async Task<Task> OnUserJoin(SocketGuildUser user)
         {
             if (user is null || user.Guild is null) return Task.CompletedTask;
@@ -164,8 +173,13 @@ namespace Rosettes.Core
 
         private static Task OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
-            var guild = GuildEngine.GetByRoleMessage(channel.Id);
+            var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
             if (guild is null) return Task.CompletedTask;
+
+            if (reaction.User.IsSpecified)
+            {
+                if (reaction.User.Value.IsBot) return Task.CompletedTask;
+            }
 
             var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
 
@@ -181,6 +195,11 @@ namespace Rosettes.Core
         {
             var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
             if (guild is null) return Task.CompletedTask;
+
+            if (reaction.User.IsSpecified)
+            {
+                if (reaction.User.Value.IsBot) return Task.CompletedTask;
+            }
 
             var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
 

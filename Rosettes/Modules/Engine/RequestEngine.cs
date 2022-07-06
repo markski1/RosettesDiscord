@@ -41,7 +41,7 @@ namespace Rosettes.Modules.Engine
                         break;
                     // req type 2: refresh autoroles
                     case 2:
-                        AutoRolesEngine.SyncWithDatabase();
+                        await AutoRolesEngine.SyncWithDatabase();
                         break;
                 }
                 sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";

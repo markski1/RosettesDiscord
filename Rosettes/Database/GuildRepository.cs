@@ -135,11 +135,11 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, ownerid=@OwnerId
+                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, ownerid=@OwnerId, autorolesmessage=@AutoRolesMessage
                         WHERE id = @Id";
             try
             {
-                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId })) > 0;
+                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId, guild.AutoRolesMessage })) > 0;
             }
             catch (Exception ex)
             {

@@ -128,7 +128,7 @@ namespace Rosettes.Modules.Commands
 
             if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
             {
-                await ReplyAsync("This command may only be used by the server owner or by the boss snep.");
+                await ReplyAsync("This command may only be used by the server owner.");
                 return;
             }
            

@@ -3,6 +3,7 @@ using Discord;
 using Discord.Commands;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
@@ -91,13 +92,72 @@ namespace Rosettes.Modules.Commands
 
             var mid = await ReplyAsync(message);
 
-            var emojiList = new List<Emoji>();
-            emojiList.Add(new Emoji("👍"));
-            emojiList.Add(new Emoji("👎"));
+            var emojiList = new List<Emoji>
+            {
+                new Emoji("👍"),
+                new Emoji("👎")
+            };
 
             await mid.AddReactionsAsync(emojiList);
 
             await Context.Message.DeleteAsync();
+        }
+
+        [Command("setautoroles")]
+        [Summary("Creates the AutoRoles channel in the channel where it's used. AutoRoles must first be set up from the web panel.")]
+        public async Task SetAutoRoles()
+        {
+            if (Context.Guild is null)
+            {
+                await ReplyAsync("This command must run in a guild.");
+                return;
+            }
+            if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
+            {
+                await ReplyAsync("This command may only be used by the server owner.");
+                return;
+            }
+
+            await AutoRolesEngine.SyncWithDatabase();
+
+            var roles = AutoRolesEngine.GetGuildAutoroles(Context.Guild.Id);
+
+            List<Emoji> emojis = new();
+
+            string text = "";
+
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            var restGuild = await dbGuild.GetDiscordRestReference();
+            var socketGuild = dbGuild.GetDiscordSocketReference();
+
+            var embed = new EmbedBuilder();
+
+            embed.WithTitle("Autoroles!");
+            embed.WithDescription("Click a reaction to get it's role.");
+
+            foreach (var role in roles)
+            {
+                emojis.Add(new Emoji(role.Emote));
+                string roleName = "";
+                if (socketGuild is not null)
+                {
+                    roleName = socketGuild.GetRole(role.RoleId).Name;
+                } else if (restGuild is not null)
+                {
+                    roleName = restGuild.GetRole(role.RoleId).Name;
+                }
+                text += $"{role.Emote} - {roleName}\n\n";
+            }
+
+            embed.AddField("Available roles: ", text);
+
+            var mid = await ReplyAsync(embed: embed.Build());
+
+            dbGuild.AutoRolesMessage = mid.Id;
+
+            await mid.AddReactionsAsync(emojis);
+
+            await GuildEngine.UpdateGuild(dbGuild);
         }
     }
 }

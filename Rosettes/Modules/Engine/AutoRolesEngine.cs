@@ -18,7 +18,17 @@ namespace Rosettes.Modules.Engine
             return FoundEntries;
         }
 
-        public static async void SyncWithDatabase()
+        public static IEnumerable<AutoRoleEntry> GetGuildAutoroles(ulong guildid)
+        {
+            IEnumerable<AutoRoleEntry> FoundEntries;
+            FoundEntries =
+                from role in AutoRolesEntries
+                where role.GuildId == guildid
+                select role;
+            return FoundEntries;
+        }
+
+        public static async Task<bool> SyncWithDatabase()
            
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
@@ -26,6 +36,8 @@ namespace Rosettes.Modules.Engine
             var sql = @"SELECT guildid, emote, roleid FROM autorole_entries";
 
             AutoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
+
+            return true;
         }
     }
 
