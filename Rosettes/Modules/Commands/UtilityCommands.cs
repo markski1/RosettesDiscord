@@ -3,6 +3,8 @@ using Rosettes.Modules.Engine;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Commands.EmojiDownloader;
+using Discord;
+using Discord.WebSocket;
 
 namespace Rosettes.Modules.Commands
 {
@@ -74,6 +76,7 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync($"Usage: `{Settings.Prefix}twtvid [tweet url]`");
                 return;
             }
+            string originalTweet = tweetUrl;
             // grab off python thing running as a flask server
             if (!tweetUrl.Contains("gateway.markski.ar:42069"))
             {
@@ -89,8 +92,8 @@ namespace Rosettes.Modules.Commands
             using HttpClient _client = new();
             _client.DefaultRequestHeaders.UserAgent.Clear();
             _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
-            var response = await _client.GetStringAsync(tweetUrl);
-
+            string response = await _client.GetStringAsync(tweetUrl);
+            
             if (response is null)
             {
                 await ReplyAsync("Could not fetch tweet data.");
@@ -113,7 +116,42 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             string videoLink = response[begin..end];
-            await ReplyAsync(videoLink);
+
+            if (Context.User is not SocketGuildUser GuildUser) return;
+
+            EmbedBuilder embed = new()
+            {
+                Title = "Tweet Video",
+                Description = $"Requested by {GuildUser.Nickname}#{GuildUser.Discriminator}"
+            };
+            Random Random = new();
+            if (!Directory.Exists("./temp/twtvid/"))
+            {
+                Directory.CreateDirectory("./temp/twtvid/");
+            }
+            embed.AddField("Download: ", $"[Download video]({videoLink})");
+            await ReplyAsync(embed: embed.Build());
+            var mid = await ReplyAsync("I am downloading the video...");
+            string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
+            using var videoStream = await Global.HttpClient.GetStreamAsync(videoLink);
+            using var fileStream = new FileStream(fileName, FileMode.Create);
+            await videoStream.CopyToAsync(fileStream);
+            fileStream.Close();
+            await mid.ModifyAsync(x => x.Content = $"I am downloading the video... DONE!\nI am uploading the video to Discord...");
+
+            ulong size = (ulong)new FileInfo(fileName).Length;
+
+            if (Context.Guild.MaxUploadLimit > size)
+            {
+                await Context.Channel.SendFileAsync(fileName);
+                await mid.DeleteAsync();
+            } 
+            else
+            {
+                await mid.ModifyAsync(x => x.Content = $"I am downloading the video... DONE!\nI am uploading the video to Discord... FAILED!");
+                await ReplyAsync("Sorry, video was too large to be uploaded...");
+            }
+            
         }
 
         [Command("exportallemoji")]
