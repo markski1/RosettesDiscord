@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
@@ -88,7 +89,18 @@ namespace Rosettes.Modules.Commands
                 question += $"{word} ";
             }
 
-            string message = $"[{Context.User.Username}] created a vote:```{question}```";
+            string displayName;
+            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
+            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            {
+                displayName = GuildUser.Nickname;
+            }
+            else
+            {
+                displayName = Context.User.Username;
+            }
+
+            string message = $"[{displayName}] created a vote:```{question}```";
 
             var mid = await ReplyAsync(message);
 

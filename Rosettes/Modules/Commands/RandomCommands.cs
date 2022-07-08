@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -111,7 +112,18 @@ namespace Rosettes.Modules.Commands
                 number += 10000000;
             }
 
-            await ReplyAsync($"[{Context.User.Username}] Check'Em! : **{number}**");
+            string displayName;
+            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
+            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            {
+                displayName = GuildUser.Nickname;
+            }
+            else
+            {
+                displayName = Context.User.Username;
+            }
+
+            await ReplyAsync($"[{displayName}] Check'Em! : **{number}**");
 
             await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
         }

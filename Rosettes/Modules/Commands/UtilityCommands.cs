@@ -22,7 +22,19 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("There was an error fetching your data from the database.");
                 return;
             }
-            string text = $"***{user.Username}#{user.Discriminator}***\n" +
+
+            string displayName;
+            SocketGuildUser? GuildUser = user as SocketGuildUser;
+            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            {
+                displayName = GuildUser.Nickname;
+            }
+            else
+            {
+                displayName = Context.User.Username;
+            }
+
+            string text = $"***{displayName}#{user.Discriminator}***\n" +
                 "```" +
                 $"Account created: {user.CreatedAt}\n" +
                 $"User ID: {user.Id}\n" +
@@ -117,12 +129,22 @@ namespace Rosettes.Modules.Commands
             }
             string videoLink = response[begin..end];
 
-            if (Context.User is not SocketGuildUser GuildUser) return;
+            string displayName;
+
+            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
+            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            {
+                displayName = GuildUser.Nickname;
+            }
+            else
+            {
+                displayName = Context.User.Username;
+            }
 
             EmbedBuilder embed = new()
             {
                 Title = "Tweet Video",
-                Description = $"Requested by {GuildUser.Nickname}#{GuildUser.Discriminator}"
+                Description = $"Requested by {displayName}#{Context.User.Discriminator}"
             };
             Random Random = new();
             if (!Directory.Exists("./temp/twtvid/"))
