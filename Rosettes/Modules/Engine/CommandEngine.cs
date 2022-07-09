@@ -142,7 +142,16 @@ namespace Rosettes.Modules.Engine
                     sql = @"INSERT INTO command_analytics (command, uses)
                         VALUES(@Command, @LoggedUses)";
                 }
-                await db.ExecuteAsync(sql, new { Command = cmd.Key, LoggedUses = cmd.Value });
+                try
+                {
+                    await db.ExecuteAsync(sql, new { Command = cmd.Key, LoggedUses = cmd.Value });
+                }
+                catch (Exception ex)
+                {
+                    Global.GenerateErrorMessage("commandEngine-usage", $"sqlException code {ex.Message}");
+                    return;
+                }
+                
             }
             CommandEngine.CommandUsage.Clear();
         }

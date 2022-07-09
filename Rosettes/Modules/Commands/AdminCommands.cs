@@ -25,7 +25,18 @@ namespace Rosettes.Modules.Commands
 
             var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
 
-            bool result = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
+            bool result;
+
+            try
+            {
+                result = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("keygen-getcode", $"sqlException code {ex.Message}");
+                return;
+            }
+            
 
             if (result)
             {
@@ -133,6 +144,12 @@ namespace Rosettes.Modules.Commands
             await AutoRolesEngine.SyncWithDatabase();
 
             var roles = AutoRolesEngine.GetGuildAutoroles(Context.Guild.Id);
+
+            if (roles is null || !roles.Any())
+            {
+                await ReplyAsync("It looks like you haven't set up your AutoRoles yet. AutoRoles are set up through the web interface. Head over to https://markski.ar/rosettes -> Roles -> Set up Autoroles");
+                return;
+            }
 
             List<Emoji> emojis = new();
 

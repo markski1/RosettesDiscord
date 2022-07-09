@@ -165,7 +165,14 @@ namespace Rosettes.Database
             {
                 if (role.IsEveryone) continue;
                 if (role.IsManaged) continue;
-                await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString()});
+                try
+                {
+                    await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
+                }
+                catch (Exception ex)
+                {
+                    Global.GenerateErrorMessage("sql-updateguildroles", $"Failed to update roles - {ex.Message}");
+                }
             }
 
             return true;
