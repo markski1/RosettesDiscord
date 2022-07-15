@@ -17,15 +17,6 @@ namespace Rosettes.Core
 
         public static Task LoadCommands()
         {
-            if (booting)
-            {
-                booting = false;
-            }
-            else
-            {
-                return Task.CompletedTask;
-            }
-
             _client.Log += message =>
             {
                 Console.WriteLine($"{DateTime.Now} | {message.ToString()}");
@@ -57,8 +48,17 @@ namespace Rosettes.Core
         }
 
         // fired when booting
-        private static async Task OnReady()
+        private static async Task<Task> OnReady()
         {
+            if (booting)
+            {
+                booting = false;
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
+
             try
             {
                 await _lavaNode.ConnectAsync();
@@ -82,11 +82,12 @@ namespace Rosettes.Core
             }
 
             CommandEngine.CreateCommandPage();
-            Game game = new("$commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
+            Game game = new("Click me! - $commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);
-            Console.WriteLine($"{DateTime.Now} | [READY] - Rosettes is nyow loaded.");
             await _client.SetStatusAsync(UserStatus.Online);
             _client.MessageReceived += OnMessageReceived;
+
+            return Task.CompletedTask;
         }
 
         // fired when a message is received

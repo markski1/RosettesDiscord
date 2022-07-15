@@ -102,7 +102,7 @@ namespace Rosettes.Modules.Commands
 
             string displayName;
             SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            if (GuildUser is not null && GuildUser.Nickname is not null)
             {
                 displayName = GuildUser.Nickname;
             }

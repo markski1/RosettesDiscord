@@ -47,6 +47,11 @@ namespace Rosettes.Modules.Engine
                 if (result.IsSuccess)
                 {
                     ReportUse(usedCommand);
+                    if (context.Guild is not null)
+                    {
+                        Guild dbGuild = await GuildEngine.GetDBGuild(context.Guild);
+                        dbGuild.Commands++;
+                    }
                 }
             }
             else

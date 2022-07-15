@@ -25,7 +25,7 @@ namespace Rosettes.Modules.Commands
 
             string displayName;
             SocketGuildUser? GuildUser = user as SocketGuildUser;
-            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
+            if (GuildUser is not null && GuildUser.Nickname is not null)
             {
                 displayName = GuildUser.Nickname;
             }
@@ -101,10 +101,21 @@ namespace Rosettes.Modules.Commands
             }
             tweetUrl = tweetUrl.Replace("<", string.Empty);
             tweetUrl = tweetUrl.Replace(">", string.Empty);
-            using HttpClient _client = new();
-            _client.DefaultRequestHeaders.UserAgent.Clear();
-            _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
-            string response = await _client.GetStringAsync(tweetUrl);
+
+            string? response = null;
+
+            try
+            {
+                using HttpClient _client = new();
+                _client.DefaultRequestHeaders.UserAgent.Clear();
+                _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
+                response = await _client.GetStringAsync(tweetUrl);
+            }
+            catch
+            {
+                await ReplyAsync("Could not fetch tweet data.");
+                return;
+            }
             
             if (response is null)
             {
@@ -129,29 +140,13 @@ namespace Rosettes.Modules.Commands
             }
             string videoLink = response[begin..end];
 
-            string displayName;
-
-            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-            if (GuildUser is not null && GuildUser.Nickname.Length < 1)
-            {
-                displayName = GuildUser.Nickname;
-            }
-            else
-            {
-                displayName = Context.User.Username;
-            }
-
-            EmbedBuilder embed = new()
-            {
-                Title = "Tweet Video",
-                Description = $"Requested by {displayName}#{Context.User.Discriminator}"
-            };
+            EmbedBuilder embed = new();
             Random Random = new();
             if (!Directory.Exists("./temp/twtvid/"))
             {
                 Directory.CreateDirectory("./temp/twtvid/");
             }
-            embed.AddField("Download: ", $"[Download video]({videoLink})");
+            embed.AddField("Download: ", $"[Direct link]({videoLink})");
             await ReplyAsync(embed: embed.Build());
             var mid = await ReplyAsync("I am downloading the video...");
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
