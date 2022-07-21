@@ -161,6 +161,10 @@ namespace Rosettes.Database
             sql = @"INSERT INTO roles (id, rolename, guildid, color)
                     VALUES (@Id, @Name, @GuildId, @Color)";
 
+            var sql2 = @"UPDATE roles
+                        SET rolename=@Name, guildid=@GuildId, color=@Color
+                        WHERE id = @Id";
+
             foreach (var role in discordGuild.Roles)
             {
                 if (role.IsEveryone) continue;
@@ -169,9 +173,10 @@ namespace Rosettes.Database
                 {
                     await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Global.GenerateErrorMessage("sql-updateguildroles", $"Failed to update roles - {ex.Message}");
+                    // if can't insert, attempt to update
+                    await db.ExecuteAsync(sql2, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
                 }
             }
 
