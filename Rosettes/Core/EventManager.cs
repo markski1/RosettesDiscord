@@ -134,6 +134,19 @@ namespace Rosettes.Core
             Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
             await GuildEngine.GetDBGuild(guild);
 
+            foreach (var user in guild.Users)
+            {
+                if (user is null) continue;
+                try
+                {
+                    await UserEngine.GetDBUser(user);
+                }
+                catch
+                {
+                    // just don't crash the rest of the program! We have nothing to handle here
+                }
+            }
+
             return Task.CompletedTask;
         }
 
