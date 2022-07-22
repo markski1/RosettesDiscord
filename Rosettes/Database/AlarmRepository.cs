@@ -23,7 +23,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT * FROM alarms";
+            var sql = @"SELECT datetime, user, channel FROM alarms";
 
             try
             {

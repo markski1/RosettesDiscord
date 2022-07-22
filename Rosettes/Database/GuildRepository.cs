@@ -31,7 +31,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT * FROM guilds";
+            var sql = @"SELECT id, namecache, members, messages, commands, settings, ownerid, defaultrole, autorolesmessage FROM guilds";
 
             try
             {

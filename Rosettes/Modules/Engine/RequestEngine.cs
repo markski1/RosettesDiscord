@@ -20,7 +20,7 @@ namespace Rosettes.Modules.Engine
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
-            var sql = @"SELECT * FROM requests";
+            var sql = @"SELECT requesttype, relevantguild, relevantvalue, relevantstringvalue FROM requests";
 
             var result = await db.QueryAsync<Request>(sql, new { });
 

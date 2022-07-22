@@ -28,7 +28,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT * FROM users";
+            var sql = @"SELECT id, exp, currency, namecache FROM users";
 
             try
             {
