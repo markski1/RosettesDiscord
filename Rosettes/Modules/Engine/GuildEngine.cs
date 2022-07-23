@@ -17,15 +17,6 @@ namespace Rosettes.Modules.Engine
             return findGuild != null;
         }
 
-        public static Guild? GetByRoleMessage(ulong channelId)
-        {
-            foreach (var guild in GuildCache)
-            {
-                if (guild.AutoRolesMessage == channelId) return guild;
-            }
-            return null;
-        }
-
         public static async void SyncWithDatabase()
         {
             foreach (Guild guild in GuildCache)

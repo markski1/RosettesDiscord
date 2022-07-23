@@ -187,7 +187,9 @@ namespace Rosettes.Core
 
         private static Task OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
-            var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
+            ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
+            if (guildid == 0) return Task.CompletedTask;
+            var guild = GuildEngine.GetDBGuildById(guildid);
             if (guild is null) return Task.CompletedTask;
 
             if (reaction.User.IsSpecified)
@@ -195,7 +197,7 @@ namespace Rosettes.Core
                 if (reaction.User.Value.IsBot) return Task.CompletedTask;
             }
 
-            var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
+            var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
             foreach (var role in roles)
             {
@@ -207,7 +209,9 @@ namespace Rosettes.Core
 
         private static Task OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
-            var guild = GuildEngine.GetByRoleMessage(reaction.MessageId);
+            ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
+            if (guildid == 0) return Task.CompletedTask;
+            var guild = GuildEngine.GetDBGuildById(guildid);
             if (guild is null) return Task.CompletedTask;
 
             if (reaction.User.IsSpecified)
@@ -215,7 +219,7 @@ namespace Rosettes.Core
                 if (reaction.User.Value.IsBot) return Task.CompletedTask;
             }
 
-            var roles = AutoRolesEngine.GetGuildRolesForEmote(guild.Id, reaction.Emote.Name);
+            var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
             foreach (var role in roles)
             {
