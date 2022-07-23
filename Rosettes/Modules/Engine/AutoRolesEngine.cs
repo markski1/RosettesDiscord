@@ -21,6 +21,18 @@ namespace Rosettes.Modules.Engine
             }
         }
 
+        public static string GetNameFromCode(uint code)
+        {
+            try
+            {
+                return (AutoRolesGroups.First(x => x.Id == code).Name);
+            }
+            catch
+            {
+                return "Autoroles!";
+            }
+        }
+
         public static IEnumerable<AutoRoleEntry> GetMessageRolesForEmote(ulong messageid, string emoteName)
         {
             IEnumerable<AutoRoleEntry> FoundEntries;
@@ -32,14 +44,26 @@ namespace Rosettes.Modules.Engine
             return FoundEntries;
         }
 
-        public static IEnumerable<AutoRoleEntry> GetRolesByCode(uint code, ulong guildid)
+        public static IEnumerable<AutoRoleEntry>? GetRolesByCode(uint code, ulong guildid)
         {
-            IEnumerable<AutoRoleEntry> FoundEntries;
-            uint parentGroup = (AutoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id);
-            FoundEntries =
-                from role in AutoRolesEntries
-                where role.RoleGroupId == parentGroup
-                select role;
+            foreach(var group in AutoRolesGroups)
+            {
+                System.Console.WriteLine($"{group.Id} - {group.GuildId} - {group.MessageId}");
+            }
+            IEnumerable<AutoRoleEntry>? FoundEntries;
+            try
+            {
+                uint parentGroup = (AutoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id);
+                System.Console.WriteLine($"{parentGroup}");
+                FoundEntries =
+                    from role in AutoRolesEntries
+                    where role.RoleGroupId == parentGroup
+                    select role;
+            }
+            catch
+            {
+                FoundEntries = null;
+            }
             return FoundEntries;
         }
 
@@ -62,7 +86,7 @@ namespace Rosettes.Modules.Engine
 
             AutoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
 
-            sql = @"SELECT id, guildid, messageid FROM autorole_groups";
+            sql = @"SELECT id, guildid, messageid, name FROM autorole_groups";
 
             AutoRolesGroups = (await db.QueryAsync<AutoRoleGroup>(sql, new { })).ToList();
 
@@ -71,6 +95,10 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<bool> UpdateGroupMessageId(uint Code, ulong MessageId)
         {
+            var group = AutoRolesGroups.First(x => x.Id == Code);
+
+            group.MessageId = MessageId;
+
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
             var sql = @"UPDATE autorole_groups
@@ -104,12 +132,14 @@ namespace Rosettes.Modules.Engine
         public uint Id;
         public ulong GuildId;
         public ulong MessageId;
+        public string Name;
 
-        public AutoRoleGroup(uint id, ulong guildid, ulong messageid)
+        public AutoRoleGroup(uint id, ulong guildid, ulong messageid, string name)
         {
             Id = id;
             GuildId = guildid;
             MessageId = messageid;
+            Name = name;
         }
     }
 }

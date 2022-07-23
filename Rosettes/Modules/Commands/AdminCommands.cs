@@ -126,7 +126,7 @@ namespace Rosettes.Modules.Commands
             await Context.Message.DeleteAsync();
         }
 
-        [Command("setautoroles")]
+        [Command("setautorole")]
         [Summary("Creates the AutoRoles channel in the channel where it's used. AutoRoles must first be set up from the web panel.")]
         public async Task SetAutoRoles(uint code = 99999999)
         {
@@ -166,17 +166,17 @@ namespace Rosettes.Modules.Commands
 
             var embed = new EmbedBuilder();
 
-            embed.WithTitle("Autoroles!");
+            embed.WithTitle(AutoRolesEngine.GetNameFromCode(code));
             embed.WithDescription(" ");
 
             foreach (var role in roles)
             {
                 emojis.Add(new Emoji(role.Emote));
                 string roleName = "";
-                if (socketGuild is not null)
+                if (socketGuild is not null && socketGuild.GetRole(role.RoleId) is not null)
                 {
                     roleName = socketGuild.GetRole(role.RoleId).Name;
-                } else if (restGuild is not null)
+                } else if (restGuild is not null && restGuild.GetRole(role.RoleId) is not null)
                 {
                     roleName = restGuild.GetRole(role.RoleId).Name;
                 }
