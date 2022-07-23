@@ -27,7 +27,9 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<Task> UpdateGuild(Guild guild)
         {
+            #if RELEASE
             guild.SelfTest();
+            #endif
             if (await _interface.CheckGuildExists(guild.Id))
             {
                 await _interface.UpdateGuild(guild);
@@ -108,7 +110,6 @@ namespace Rosettes.Modules.Engine
         public ulong Members;
         public ulong OwnerId;
         public ulong DefaultRole;
-        public ulong AutoRolesMessage;
         public SocketGuild? CachedReference;
         public string NameCache;
 
@@ -140,7 +141,6 @@ namespace Rosettes.Modules.Engine
                 OwnerId = guild.OwnerId;
             }
             CachedReference = guild;
-            AutoRolesMessage = 0;
             DefaultRole = 0;
             Messages = 0;
             Members = 0;
@@ -148,7 +148,7 @@ namespace Rosettes.Modules.Engine
         }
 
         // database constructor, used on loading all guilds
-        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole, ulong autorolesmessage)
+        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole)
         {
             Id = id;
             Messages = messages;
@@ -159,7 +159,6 @@ namespace Rosettes.Modules.Engine
             OwnerId = ownerid;
             CachedReference = null;
             DefaultRole = defaultrole;
-            AutoRolesMessage = autorolesmessage;
         }
 
         public bool IsValid()

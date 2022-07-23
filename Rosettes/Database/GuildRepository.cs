@@ -31,7 +31,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, messages, commands, settings, ownerid, defaultrole, autorolesmessage FROM guilds";
+            var sql = @"SELECT id, namecache, members, messages, commands, settings, ownerid, defaultrole FROM guilds";
 
             try
             {
@@ -135,11 +135,11 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, ownerid=@OwnerId, autorolesmessage=@AutoRolesMessage
+                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, ownerid=@OwnerId
                         WHERE id = @Id";
             try
             {
-                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId, guild.AutoRolesMessage })) > 0;
+                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId })) > 0;
             }
             catch (Exception ex)
             {

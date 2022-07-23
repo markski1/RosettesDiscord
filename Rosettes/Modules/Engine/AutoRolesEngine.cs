@@ -46,15 +46,10 @@ namespace Rosettes.Modules.Engine
 
         public static IEnumerable<AutoRoleEntry>? GetRolesByCode(uint code, ulong guildid)
         {
-            foreach(var group in AutoRolesGroups)
-            {
-                System.Console.WriteLine($"{group.Id} - {group.GuildId} - {group.MessageId}");
-            }
             IEnumerable<AutoRoleEntry>? FoundEntries;
             try
             {
                 uint parentGroup = (AutoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id);
-                System.Console.WriteLine($"{parentGroup}");
                 FoundEntries =
                     from role in AutoRolesEntries
                     where role.RoleGroupId == parentGroup

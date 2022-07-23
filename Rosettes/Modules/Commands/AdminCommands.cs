@@ -187,8 +187,6 @@ namespace Rosettes.Modules.Commands
 
             var mid = await ReplyAsync(embed: embed.Build());
 
-            dbGuild.AutoRolesMessage = mid.Id;
-
             await mid.AddReactionsAsync(emojis);
 
             await GuildEngine.UpdateGuild(dbGuild);
