@@ -128,7 +128,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("setautoroles")]
         [Summary("Creates the AutoRoles channel in the channel where it's used. AutoRoles must first be set up from the web panel.")]
-        public async Task SetAutoRoles()
+        public async Task SetAutoRoles(uint code = 99999999)
         {
             if (Context.Guild is null)
             {
@@ -140,14 +140,19 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command may only be used by the server owner.");
                 return;
             }
+            if (code == 99999999)
+            {
+                await ReplyAsync("Please provide a code.");
+                return;
+            }
 
             await AutoRolesEngine.SyncWithDatabase();
 
-            var roles = AutoRolesEngine.GetGuildAutoroles(Context.Guild.Id);
+            var roles = AutoRolesEngine.GetRolesByCode(code, Context.Guild.Id);
 
             if (roles is null || !roles.Any())
             {
-                await ReplyAsync("It looks like you haven't set up your AutoRoles yet. AutoRoles are set up through the web interface. Head over to https://markski.ar/rosettes -> Roles -> Set up Autoroles");
+                await ReplyAsync("Error. Please make sure you're using the right code in the right guild.");
                 return;
             }
 
@@ -162,7 +167,7 @@ namespace Rosettes.Modules.Commands
             var embed = new EmbedBuilder();
 
             embed.WithTitle("Autoroles!");
-            embed.WithDescription("Click a reaction to get it's role.");
+            embed.WithDescription(" ");
 
             foreach (var role in roles)
             {
@@ -187,6 +192,8 @@ namespace Rosettes.Modules.Commands
             await mid.AddReactionsAsync(emojis);
 
             await GuildEngine.UpdateGuild(dbGuild);
+
+            await AutoRolesEngine.UpdateGroupMessageId(code, mid.Id);
         }
     }
 }

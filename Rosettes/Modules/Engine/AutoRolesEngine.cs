@@ -32,6 +32,17 @@ namespace Rosettes.Modules.Engine
             return FoundEntries;
         }
 
+        public static IEnumerable<AutoRoleEntry> GetRolesByCode(uint code, ulong guildid)
+        {
+            IEnumerable<AutoRoleEntry> FoundEntries;
+            uint parentGroup = (AutoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id);
+            FoundEntries =
+                from role in AutoRolesEntries
+                where role.RoleGroupId == parentGroup
+                select role;
+            return FoundEntries;
+        }
+
         public static IEnumerable<AutoRoleEntry> GetMessageAutoroles(ulong messageid)
         {
             IEnumerable<AutoRoleEntry> FoundEntries;
@@ -44,7 +55,6 @@ namespace Rosettes.Modules.Engine
         }
 
         public static async Task<bool> SyncWithDatabase()
-           
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
@@ -52,9 +62,22 @@ namespace Rosettes.Modules.Engine
 
             AutoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
 
-            sql = @"SELECT id, guildid, name, messageid FROM autorole_groups";
+            sql = @"SELECT id, guildid, messageid FROM autorole_groups";
 
             AutoRolesGroups = (await db.QueryAsync<AutoRoleGroup>(sql, new { })).ToList();
+
+            return true;
+        }
+
+        public static async Task<bool> UpdateGroupMessageId(uint Code, ulong MessageId)
+        {
+            using var db = new MySqlConnection(Settings.Database.ConnectionString);
+
+            var sql = @"UPDATE autorole_groups
+                        SET messageid=@MessageId
+                        WHERE id = @Code";
+
+            await db.ExecuteAsync(sql, new { MessageId, Code });
 
             return true;
         }
@@ -81,13 +104,11 @@ namespace Rosettes.Modules.Engine
         public uint Id;
         public ulong GuildId;
         public ulong MessageId;
-        public string Name;
 
-        public AutoRoleGroup(uint id, ulong guildid, string name, ulong messageid)
+        public AutoRoleGroup(uint id, ulong guildid, ulong messageid)
         {
             Id = id;
             GuildId = guildid;
-            Name = name;
             MessageId = messageid;
         }
     }
