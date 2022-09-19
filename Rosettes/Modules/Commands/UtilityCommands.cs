@@ -43,7 +43,7 @@ namespace Rosettes.Modules.Commands
                 $"```";
 
             var avatar = user.GetAvatarUrl();
-            if (avatar == null) avatar = user.GetDefaultAvatarUrl();
+            avatar ??= user.GetDefaultAvatarUrl();
 
             await ReplyAsync(avatar);
             await ReplyAsync(text);
