@@ -140,14 +140,12 @@ namespace Rosettes.Modules.Commands
             }
             string videoLink = response[begin..end];
 
-            EmbedBuilder embed = new();
             Random Random = new();
             if (!Directory.Exists("./temp/twtvid/"))
             {
                 Directory.CreateDirectory("./temp/twtvid/");
             }
-            embed.AddField("Download: ", $"[Direct link]({videoLink})");
-            await ReplyAsync(embed: embed.Build());
+            
             var mid = await ReplyAsync("I am downloading the video...");
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
             using var videoStream = await Global.HttpClient.GetStreamAsync(videoLink);
@@ -166,9 +164,11 @@ namespace Rosettes.Modules.Commands
             else
             {
                 await mid.ModifyAsync(x => x.Content = $"I am downloading the video... DONE!\nI am uploading the video to Discord... FAILED!");
-                await ReplyAsync("Sorry, video was too large to be uploaded...");
+                await ReplyAsync("Sorry, video was too large to be uploaded...\nInstead, have a direct link.");
+                EmbedBuilder embed = new();
+                embed.AddField("Download: ", $"[Direct link]({videoLink})");
+                await ReplyAsync(embed: embed.Build());
             }
-            
         }
 
         [Command("exportallemoji")]

@@ -34,7 +34,8 @@ namespace Rosettes.Modules.Engine
                 return;
             }
             // profile pattern disabled until get profile info does something
-            if (/*messageText.Contains(@"steamcommunity.com/profiles/") || */messageText.Contains(@"steamcommunity.com/id/"))
+            if (/*messageText.Contains(@"steamcommunity.com/profiles/") || */
+            messageText.Contains(@"steamcommunity.com/id/"))
             {
                 await GetProfileInfo(context);
                 return;
