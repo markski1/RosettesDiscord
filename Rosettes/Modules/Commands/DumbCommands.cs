@@ -90,7 +90,7 @@ namespace Rosettes.Modules.Commands
 
         [Command("urban")]
         [Summary("Returns an UrbanDictionary definition for the provided word.")]
-        public async Task UrbanDefine(string givenTerm = "")
+        public async Task UrbanDefine(params string[] queryWords)
         {
             if (Context.Guild is null)
             {
@@ -103,12 +103,21 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
-            if (givenTerm == "")
+
+            string query = "";
+
+            foreach (string word in queryWords)
+            {
+                query += $"{word} ";
+            }
+
+            if (query == "")
             {
                 await ReplyAsync($"Usage: `{Settings.Prefix}urban <term>`");
                 return;
             }
-            if (!Regex.IsMatch(givenTerm, "^[a-zA-Z0-9]*$"))
+
+            if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
             {
                 await ReplyAsync($"The term must only contain letters and numbers.");
                 return;
@@ -119,7 +128,7 @@ namespace Rosettes.Modules.Commands
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={givenTerm.ToLower()}"),
+                RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={query.ToLower()}"),
                 Headers =
                     {
                         { "X-RapidAPI-Key", Settings.RapidAPIKey },
@@ -161,7 +170,7 @@ namespace Rosettes.Modules.Commands
                 dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
 
                 message =
-                    $"Definition for: {givenTerm}" +
+                    $"Definition for: {query}" +
                     $"```" +
                     definition.definition +
                     $"```" +

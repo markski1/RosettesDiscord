@@ -4,13 +4,12 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
-using Victoria;
+using Victoria.Node;
 
 namespace Rosettes.Core
 {
     public static class EventManager
     {
-        private static readonly LavaNode _lavaNode = ServiceManager.Provider.GetRequiredService<LavaNode>();
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         private static readonly CommandService _commandService = ServiceManager.GetService<CommandService>();
         private static bool booting = true;
@@ -59,14 +58,7 @@ namespace Rosettes.Core
                 return Task.CompletedTask;
             }
 
-            try
-            {
-                await _lavaNode.ConnectAsync();
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("OnReady", $"Failed to connect lavanode. {ex.Message}");
-            }
+            
 
             if (Settings.ConnectToDatabase())
             {

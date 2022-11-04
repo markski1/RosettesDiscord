@@ -5,6 +5,8 @@ using Rosettes.Modules.Engine;
 using Microsoft.Extensions.DependencyInjection;
 using Victoria;
 using Discord.Rest;
+using Victoria.Node;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Rosettes.Core
 {
@@ -37,18 +39,25 @@ namespace Rosettes.Core
 
             collection.AddSingleton(Client);
             collection.AddSingleton(Commands);
-            if (Settings.LavaLinkData is not null)
-            {
-                collection.AddLavaNode(x =>
-                {
-                    x.SelfDeaf = true;
-                    x.Hostname = Settings.LavaLinkData.Host;
-                    x.Port = Settings.LavaLinkData.Port;
-                    x.Authorization = Settings.LavaLinkData.Password;
-                });
-            }
 
             ServiceManager.SetProvider(collection);
+
+            if (Settings.LavaLinkData is not null)
+            {
+                NodeConfiguration lavaNodeConfig = new()
+                {
+                    SelfDeaf = true,
+                    Hostname = Settings.LavaLinkData.Host,
+                    Port = Settings.LavaLinkData.Port,
+                    Authorization = Settings.LavaLinkData.Password
+                };
+
+                NullLogger<LavaNode> nothing = new();
+
+                LavaNode lavaNode = new(Client, lavaNodeConfig, nothing);
+
+                MusicEngine.SetMusicEngine(lavaNode);
+            }
         }
 
         public async Task MainAsync()
