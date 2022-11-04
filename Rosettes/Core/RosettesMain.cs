@@ -27,7 +27,7 @@ namespace Rosettes.Core
                 AlwaysDownloadUsers = true,
                 LargeThreshold = 250,
                 MaxWaitBetweenGuildAvailablesBeforeReady = 10000,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers,
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
                 LogLevel = Settings.LogSeverity
             };
             Client = new(client_config);

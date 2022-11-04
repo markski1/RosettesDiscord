@@ -36,7 +36,6 @@ namespace Rosettes.Modules.Commands
                 Global.GenerateErrorMessage("keygen-getcode", $"sqlException code {ex.Message}");
                 return;
             }
-            
 
             if (result)
             {

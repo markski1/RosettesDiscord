@@ -123,7 +123,8 @@ namespace Rosettes.Core
             if (message.HasCharPrefix(Settings.Prefix, ref argPos))
             {
                 await CommandEngine.HandleCommand(context, argPos);
-            } else
+            } 
+            else
             {
                 await MessageEngine.HandleMessage(context);
             }
