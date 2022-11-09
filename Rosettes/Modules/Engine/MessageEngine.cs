@@ -3,7 +3,6 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
-using System.Security.Cryptography;
 
 namespace Rosettes.Modules.Engine
 {
@@ -139,10 +138,14 @@ namespace Rosettes.Modules.Engine
 
             string url = Global.GrabURLFromText(message);
 
-            // infer the format from the filename since 4cdn takes care of this.
-            int formatBegin = ((url[20..url.Length]).IndexOf('.')) + 21;
+            // Try to infer the format from the filename
+            // TODO: Infer the format from the downloaded data instead.
+            int formatBegin = url.LastIndexOf('.');
             if (formatBegin == -1) return;
             string format = url[formatBegin..url.Length];
+
+            // If the length of the grabbed "format" is too long, we can assume the URL didn't specify a format.
+            if (format.Length > 5) return;
 
             await context.Channel.SendMessageAsync("Expiring URL detected. - I will now attempt to mirror it.");
 

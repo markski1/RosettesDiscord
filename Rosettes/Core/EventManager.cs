@@ -59,7 +59,6 @@ namespace Rosettes.Core
             }
 
             
-
             if (Settings.ConnectToDatabase())
             {
                 await UserEngine.LoadAllUsersFromDatabase();
@@ -99,6 +98,7 @@ namespace Rosettes.Core
                 return;
             }
 
+            // ignore #testing
 #if !DEBUG
             if (context.Channel.Id == 971467116165353485) return;
 #endif
@@ -124,9 +124,11 @@ namespace Rosettes.Core
 
         private static async Task<Task> OnJoinGuild(SocketGuild guild)
         {
-            Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
+            // Inform of guild join.
+            Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}*");
             await GuildEngine.GetDBGuild(guild);
 
+            // cache users to memory
             foreach (var user in guild.Users)
             {
                 if (user is null) continue;
@@ -169,6 +171,8 @@ namespace Rosettes.Core
         private static async Task<Task> OnUserJoin(SocketGuildUser user)
         {
             if (user is null || user.Guild is null) return Task.CompletedTask;
+
+            // If the guild has set a default role, apply it.
             var defRole = (await GuildEngine.GetDBGuild(user.Guild)).DefaultRole;
             if (defRole != 0)
             {
@@ -180,6 +184,7 @@ namespace Rosettes.Core
 
         private static Task OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
+            // ensure guild is cached and their data can be accessed
             ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
             if (guildid == 0) return Task.CompletedTask;
             var guild = GuildEngine.GetDBGuildById(guildid);
@@ -190,6 +195,7 @@ namespace Rosettes.Core
                 if (reaction.User.Value.IsBot) return Task.CompletedTask;
             }
 
+            // If the message is AutoRoles, apply the relevant role.
             var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
             foreach (var role in roles)
@@ -202,6 +208,7 @@ namespace Rosettes.Core
 
         private static Task OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
+            // ensure guild is cached and their data can be accessed
             ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
             if (guildid == 0) return Task.CompletedTask;
             var guild = GuildEngine.GetDBGuildById(guildid);
@@ -212,6 +219,7 @@ namespace Rosettes.Core
                 if (reaction.User.Value.IsBot) return Task.CompletedTask;
             }
 
+            // If the message is AutoRoles, remove the relevant role.
             var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
             foreach (var role in roles)
