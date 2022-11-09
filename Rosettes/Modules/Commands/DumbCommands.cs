@@ -30,7 +30,7 @@ namespace Rosettes.Modules.Commands
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thiscatdoesnotexist.com/");
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/cats/");
+                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/pics/");
                 Random Random = new();
                 string fileName = $"./temp/pics/{Random.Next(20) + 1}.jpg";
 
@@ -69,7 +69,7 @@ namespace Rosettes.Modules.Commands
                 Stream data = await Global.HttpClient.GetStreamAsync($"https://thispersondoesnotexist.com/image");
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/peeps/");
+                if (!Directory.Exists("./temp/pics/")) Directory.CreateDirectory("./temp/pics/");
                 Random Random = new();
                 string fileName = $"./temp/pics/{Random.Next(20) + 1}.jpg";
 

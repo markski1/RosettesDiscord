@@ -69,6 +69,33 @@ namespace Rosettes.Core
             return (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
         }
 
+        public static string GrabURLFromText(string text)
+        {
+            // try to grab the first URL from the received text.
+            // Start by finding the first instance of http, and end as soon as we find a space or a control character.
+            // return "0" if we can't find a url.
+            int begin = text.IndexOf("http");
+            if (begin == -1) return "0";
+            int end = -1;
+            for (int i = begin; i < end; i++)
+            {
+                if (text[i] == ' ' || char.IsControl(text[i]))
+                {
+                    end = i;
+                    break;
+                }
+            }
+            if (end == -1)
+            {
+                end = text.Length;
+            }
+            string url = text[begin..end];
+            //remove any non-embed artifacts
+            url = url.Replace("<", string.Empty);
+            url = url.Replace(">", string.Empty);
+            return url;
+        }
+
         public static bool CheckSnep(ulong id)
         {
             if (id == 93115098461110272)

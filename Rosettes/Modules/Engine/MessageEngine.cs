@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using System.Security.Cryptography;
 
 namespace Rosettes.Modules.Engine
 {
@@ -38,6 +39,12 @@ namespace Rosettes.Modules.Engine
             messageText.Contains(@"steamcommunity.com/id/"))
             {
                 await GetProfileInfo(context);
+                return;
+            }
+
+            if (messageText.Contains(@"i.4cdn.org"))
+            {
+                await Mirror4cdnMedia(context);
                 return;
             }
 
@@ -123,6 +130,57 @@ namespace Rosettes.Modules.Engine
 
             if (result.result != 1) return;
             await context.Channel.SendMessageAsync($"^ Playing right now: {result.player_count:N0}");
+        }
+        public static async Task Mirror4cdnMedia(SocketCommandContext context)
+        {
+            string message = context.Message.Content;
+            if (message is null) return;
+
+
+            string url = Global.GrabURLFromText(message);
+
+            if (!url.Contains("i.4cdn")) return;
+
+            // infer the format from the filename since 4cdn takes care of this.
+            int formatBegin = ((url[20..url.Length]).IndexOf('.')) + 21;
+            if (formatBegin == -1) return;
+            string format = url[formatBegin..url.Length];
+
+            await context.Channel.SendMessageAsync($"`{url}`");
+
+            await context.Channel.SendMessageAsync("4cdn url detected.\nBecause 4cdn media expires, I will now attempt to mirror it.");
+
+            try
+            {
+                Stream data = await Global.HttpClient.GetStreamAsync(url);
+
+                if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
+                Random Random = new();
+                string fileName = $"./temp/{Random.Next(20) + 1}.{format}";
+
+                if (File.Exists(fileName)) File.Delete(fileName);
+
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await data.CopyToAsync(fileStream);
+                fileStream.Close();
+
+                ulong size = (ulong)new FileInfo(fileName).Length;
+
+                if (context.Guild.MaxUploadLimit > size)
+                {
+                    await context.Channel.SendFileAsync(fileName);
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync($"Sorry! The file was too large to upload to this guild.");
+                }
+
+                File.Delete(fileName);
+            }
+            catch (Exception ex)
+            {
+                await context.Channel.SendMessageAsync($"Sorry! I couldn't do it... - ({ex.Message})");
+            }
         }
 
         public static async Task GetProfileInfo(SocketCommandContext context)
