@@ -44,7 +44,7 @@ namespace Rosettes.Modules.Engine
 
             if (messageText.Contains(@"i.4cdn.org"))
             {
-                await Mirror4cdnMedia(context);
+                await MirrorExpiringMedia(context);
                 return;
             }
 
@@ -131,7 +131,7 @@ namespace Rosettes.Modules.Engine
             if (result.result != 1) return;
             await context.Channel.SendMessageAsync($"^ Playing right now: {result.player_count:N0}");
         }
-        public static async Task Mirror4cdnMedia(SocketCommandContext context)
+        public static async Task MirrorExpiringMedia(SocketCommandContext context)
         {
             string message = context.Message.Content;
             if (message is null) return;
@@ -139,16 +139,12 @@ namespace Rosettes.Modules.Engine
 
             string url = Global.GrabURLFromText(message);
 
-            if (!url.Contains("i.4cdn")) return;
-
             // infer the format from the filename since 4cdn takes care of this.
             int formatBegin = ((url[20..url.Length]).IndexOf('.')) + 21;
             if (formatBegin == -1) return;
             string format = url[formatBegin..url.Length];
 
-            await context.Channel.SendMessageAsync($"`{url}`");
-
-            await context.Channel.SendMessageAsync("4cdn url detected.\nBecause 4cdn media expires, I will now attempt to mirror it.");
+            await context.Channel.SendMessageAsync("Expiring URL detected. - I will now attempt to mirror it.");
 
             try
             {
