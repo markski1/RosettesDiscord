@@ -46,7 +46,7 @@ namespace Rosettes.Modules.Engine
             return getUser;
         }
 
-        // return might seem useless but we need to AWAIT for all users to be loaded.
+        // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
         public static async Task<bool> LoadAllUsersFromDatabase()
         {
             IEnumerable<User> userCacheTemp;

@@ -70,7 +70,7 @@ namespace Rosettes.Core
             await CommandEngine.LoadCommands();
             await EventManager.LoadCommands();
 
-            // TenMinutyThings(); defined below, runs every 10 minutes, or 600 seconds
+            // FiveMinutyTimer(); defined below, runs every 5 minutes, or 300 seconds
             FiveMinutyTimer.Elapsed += FiveMinutyThings;
             FiveMinutyTimer.Interval = 300000;
             FiveMinutyTimer.AutoReset = true;

@@ -79,7 +79,7 @@ namespace Rosettes.Modules.Commands
         {
             if (argument.ToLower() != "dm")
             {
-                await ReplyAsync("A full list of commands is available at https://markski.ar/rosettes");
+                await ReplyAsync("A full list of commands is available at https://snep.markski.ar/rosettes/commands.html");
                 await ReplyAsync($"Alternatively, use `{Settings.Prefix}commands dm` to have them sent to your DM's. This is less convenient.");
                 return;
             }

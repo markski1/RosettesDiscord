@@ -63,7 +63,7 @@ namespace Rosettes.Modules.Commands
             }
             catch
             {
-                await ReplyAsync("Failed to retrieve status data.");
+                await ReplyAsync("Failed to retrieve datacenter list.");
                 return;
             }
             var DeserializedLobbyObject = JsonConvert.DeserializeObject(lobbyData);
@@ -72,7 +72,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            dynamic lobby = (dynamic)DeserializedLobbyObject;
+            dynamic lobby = DeserializedLobbyObject;
 
             string lobbyText = $"Lobby status    : {((lobby.status == 1) ? "Online" : "Offline")}";
             string serverText = "";

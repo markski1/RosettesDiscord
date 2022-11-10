@@ -11,6 +11,7 @@ namespace Rosettes.Modules.Commands
     [Summary("General purpose commands")]
     public class UtilityCommands : ModuleBase<SocketCommandContext>
     {
+        /*
         [Command("myinfo")]
         [Summary("Provides information about yourself.")]
         public async Task MyInfo()
@@ -48,6 +49,7 @@ namespace Rosettes.Modules.Commands
             await ReplyAsync(avatar);
             await ReplyAsync(text);
         }
+        */
 
         [Command("guildinfo")]
         [Summary("Provides information about the guild where it's used.")]
@@ -80,7 +82,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [Command("twtvid")]
-        [Summary("Get the video file of the specified tweet.\nExample usage: '$twtvid <tweet url>'")]
+        [Summary(@"Get the video file of the specified tweet.\nExample usage: '$twtvid <tweet url>'")]
         public async Task TweetVideo(string tweetUrl = "UNSPECIFIED")
         {
             if (tweetUrl == "UNSPECIFIED")
@@ -89,7 +91,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             string originalTweet = tweetUrl;
-            // grab off python thing running as a flask server
+            // From the received URL, generate a URL to the python thing I'm running to parse tweet data.
             if (!tweetUrl.Contains("twitter.com"))
             {
                 await ReplyAsync("That's not a valid tweet URL.");
@@ -101,6 +103,7 @@ namespace Rosettes.Modules.Commands
 
             string? response = null;
 
+            // now try and get a response off the python thing
             try
             {
                 using HttpClient _client = new();
@@ -120,6 +123,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            // if we do get something back, it'll be embedded in an HTML, so now do some hacky string scraping things to get the video url out of it.
             if (!response.Contains("twitter:player:stream"))
             {
                 await ReplyAsync("Could not find a video in that tweet.");
@@ -136,7 +140,8 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             string videoLink = response[begin..end];
-
+            
+            // store the video locally
             Random Random = new();
             if (!Directory.Exists("./temp/twtvid/"))
             {
@@ -153,6 +158,7 @@ namespace Rosettes.Modules.Commands
 
             ulong size = (ulong)new FileInfo(fileName).Length;
 
+            // check if the guild supports a file this large, otherwise fail.
             if (Context.Guild.MaxUploadLimit > size)
             {
                 await Context.Channel.SendFileAsync(fileName);

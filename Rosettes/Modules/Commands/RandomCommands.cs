@@ -42,7 +42,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [Command("ask")]
-        [Summary("Ask the virtual snep a question.\nExample usage: '$ask Am I sus?'")]
+        [Summary("Ask the virtual snep a question.")]
         
         public async Task Ask()
         {
@@ -99,7 +99,7 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem.php");
+                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem");
                 return;
             }
 
@@ -107,6 +107,7 @@ namespace Rosettes.Modules.Commands
             var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
 
             int number = randomizer.Next(99999999) + 1;
+            // kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing so it doesn't matter.
             if (number < 10000000)
             {
                 number += 10000000;
