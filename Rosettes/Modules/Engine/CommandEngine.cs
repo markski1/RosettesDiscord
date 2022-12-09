@@ -96,7 +96,7 @@ namespace Rosettes.Modules.Engine
                 if (currModule == null || currModule.Name != singleCommand.Module.Name)
                 {
                     currModule = singleCommand.Module;
-                    webContents += $"<hr>\n<p><b>{currModule.Summary}</b></p>\n";
+                    webContents += $"<hr>\n<p><big><b>{currModule.Summary}</b></big></p>\n";
                 }
                 webContents += $"<p><b>{Settings.Prefix}{singleCommand.Name}</b><br>\n";
                 if (singleCommand.Summary != null)

@@ -82,7 +82,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [Command("twtvid")]
-        [Summary(@"Get the video file of the specified tweet.\nExample usage: '$twtvid <tweet url>'")]
+        [Summary(@"Get the video file of the specified tweet.\nExample usage: '$twtvid [tweet url]'")]
         public async Task TweetVideo(string tweetUrl = "UNSPECIFIED")
         {
             if (tweetUrl == "UNSPECIFIED")
