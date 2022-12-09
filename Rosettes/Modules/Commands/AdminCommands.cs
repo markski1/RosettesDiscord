@@ -45,7 +45,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("setautorole", "Sets the desired autoroles where used. Must first be created in the web panel.")]
-        public async Task SetAutoRoles(uint code = 99999999)
+        public async Task SetAutoRoles(uint code)
         {
             if (Context.Guild is null)
             {
@@ -55,11 +55,6 @@ namespace Rosettes.Modules.Commands
             if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
             {
                 await RespondAsync("This command may only be used by the server owner.");
-                return;
-            }
-            if (code == 99999999)
-            {
-                await RespondAsync("Please provide a code.");
                 return;
             }
 

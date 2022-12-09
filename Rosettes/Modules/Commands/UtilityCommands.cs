@@ -79,19 +79,19 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
-        public async Task TweetVideo(string tweetUrl = "UNSPECIFIED")
+        public async Task TweetVideo(string tweetUrl)
         {
-            if (tweetUrl == "UNSPECIFIED")
-            {
-                await RespondAsync($"Usage: `/twtvid [tweet url]`");
-                return;
-            }
             string originalTweet = tweetUrl;
             // From the received URL, generate a URL to the python thing I'm running to parse tweet data.
             if (!tweetUrl.Contains("twitter.com"))
             {
                 await RespondAsync("That's not a valid tweet URL.");
             }
+            // in case such a thing is pasted...
+            tweetUrl = tweetUrl.Replace("vxtwitter.com", "gateway.markski.ar:42069");
+            tweetUrl = tweetUrl.Replace("fxtwitter.com", "gateway.markski.ar:42069");
+            tweetUrl = tweetUrl.Replace("sxtwitter.com", "gateway.markski.ar:42069");
+            // normal replace
             tweetUrl = tweetUrl.Replace("twitter.com", "gateway.markski.ar:42069");
             tweetUrl = tweetUrl.Replace("https:/", "http:/");
             tweetUrl = tweetUrl.Replace("<", string.Empty);
@@ -197,18 +197,13 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("arc", "Provide a quick archive.is link for a provided URL.")]
-        public async Task Archive(string url = "empty")
+        public async Task Archive(string url)
         {
-            if (url == "empty")
-            {
-                await RespondAsync($"Usage: `/arc <url>`");
-                return;
-            }
             await RespondAsync($"<https://archive.is/submit/?url={url}>");
         }
 
-        [SlashCommand("alarm", "Sets an alarm to ring after a given period of time.")]
-        public async Task Alarm(int amount = -69420, char timeSpecifier = 'n')
+        [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
+        public async Task Alarm(int amount, char timeSpecifier = 'm')
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {

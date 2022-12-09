@@ -8,7 +8,7 @@ namespace Rosettes.Modules.Commands
     public class MusicCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("play", "Joins VC and plays the specified song. Can be a URL or a search term.")]
-        public async Task PlayMusic(string URLorSearch)
+        public async Task PlayMusic(string urlOrSearch)
         {
             if (await CheckMusicConditions(Context) == false) return;
             if (Context.User is not SocketGuildUser _socketUser || Context.User is not IVoiceState _voiceState || Context.Channel is not ITextChannel _textChannel)
@@ -17,7 +17,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             await RespondAsync(
-                    await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, URLorSearch)
+                    await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, urlOrSearch)
                 );
         }
 

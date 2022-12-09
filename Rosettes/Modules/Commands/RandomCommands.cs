@@ -8,7 +8,7 @@ namespace Rosettes.Modules.Commands
     public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
-        public async Task Dice(int num = -999)
+        public async Task Dice(int num)
         {
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (dbGuild is not null)
@@ -19,13 +19,9 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
             }
-            if (num == -999)
+            if (num < 2)
             {
-                await RespondAsync($"Usage: `/dice <amount>`");
-            }
-            if (num < 1)
-            {
-                await RespondAsync("The number cannot be lower than 1.");
+                await RespondAsync("The number cannot be lower than 2.");
             }
             else if (num > 1000000)
             {
