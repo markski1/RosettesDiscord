@@ -1,15 +1,13 @@
-﻿using Discord.Commands;
+﻿using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
 
 namespace Rosettes.Modules.Commands
 {
-    [Summary("Commands related to games.")]
-    public class GameCommands : ModuleBase<SocketCommandContext>
+    public class GameCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [Command("csgo")]
-        [Summary("Status of Steam and CSGO matchmaking.")]
+        [SlashCommand("csgo", "Status of Steam and CSGO matchmaking.")]
         public async Task CSGOStatus()
         {
             string text;
@@ -20,7 +18,7 @@ namespace Rosettes.Modules.Commands
                 var DeserialziedObject = JsonConvert.DeserializeObject(data);
                 if (DeserialziedObject == null)
                 {
-                    await ReplyAsync("Failed to retrieve status data.");
+                    await RespondAsync("Failed to retrieve status data.");
                     return;
                 }
                 dynamic result = ((dynamic)DeserialziedObject).result;
@@ -49,11 +47,10 @@ namespace Rosettes.Modules.Commands
             {
                 text = "Failed to fetch status data. This might mean steam is down.";
             }
-            await ReplyAsync(text);
+            await RespondAsync(text);
         }
 
-        [Command("ffxiv")]
-        [Summary("Status of FFXIV servers.")]
+        [SlashCommand("ffxiv", "Status of FFXIV servers.")]
         public async Task XIVCheck(string checkServer = "NOTSPECIFIED")
         {
             string lobbyData;
@@ -63,7 +60,7 @@ namespace Rosettes.Modules.Commands
             }
             catch
             {
-                await ReplyAsync("Failed to retrieve datacenter list.");
+                await RespondAsync("Failed to retrieve datacenter list.");
                 return;
             }
             var DeserializedLobbyObject = JsonConvert.DeserializeObject(lobbyData);
@@ -78,7 +75,7 @@ namespace Rosettes.Modules.Commands
             string serverText = "";
             if (checkServer == "NOTSPECIFIED")
             {
-                serverText = $"For world status, please specify a datacenter name. ({Settings.Prefix}ffxiv <name>)\n";
+                serverText = $"For world status, please specify a datacenter name. (/ffxiv <name>)\n";
             }
             else
             {
@@ -91,7 +88,7 @@ namespace Rosettes.Modules.Commands
                 }
                 catch
                 {
-                    await ReplyAsync("Failed to retrieve datacenter data.");
+                    await RespondAsync("Failed to retrieve datacenter data.");
                     return;
                 }
 
@@ -99,7 +96,7 @@ namespace Rosettes.Modules.Commands
                 var worldObj = JObject.Parse(worldData);
                 if (datacenterObj == null || worldObj == null)
                 {
-                    await ReplyAsync("Failed to retrieve datacenter data.");
+                    await RespondAsync("Failed to retrieve datacenter data.");
                     return;
                 }
 
@@ -152,7 +149,7 @@ namespace Rosettes.Modules.Commands
                 $"{serverText}" +
                 $"================\n" +
                 $"```";
-            await ReplyAsync(text);
+            await RespondAsync(text);
         }
     }
 }

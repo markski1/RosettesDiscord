@@ -1,16 +1,14 @@
 ﻿using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
-    [Summary("Commands to control the bot's music playback.")]
-    public class MusicCommands : ModuleBase<SocketCommandContext>
+    public class MusicCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [Command("play")]
-        [Summary("Joins your VC, and begins playing the specified song (either a URL or search term). If a song is already playing, it'll be queued.")]
-        public async Task PlayMusic([Remainder] string search)
+        [SlashCommand("play", "Joins VC and plays the specified song. Can be a URL or a search term.")]
+        public async Task PlayMusic(string URLorSearch)
         {
             if (await CheckMusicConditions(Context) == false) return;
             if (Context.User is not SocketGuildUser _socketUser || Context.User is not IVoiceState _voiceState || Context.Channel is not ITextChannel _textChannel)
@@ -18,53 +16,49 @@ namespace Rosettes.Modules.Commands
                 await Context.Channel.SendMessageAsync("Something went wrong.");
                 return;
             }
-            await ReplyAsync(
-                    await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, search)
+            await RespondAsync(
+                    await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, URLorSearch)
                 );
         }
 
-        [Command("stop")]
-        [Summary("Stops playing music.")]
+        [SlashCommand("stop", "Stops playing music.")]
         public async Task StopMusic()
         {
             if (await CheckMusicConditions(Context) == false) return;
-            await ReplyAsync(
+            await RespondAsync(
                     await MusicEngine.StopAsync(Context.Guild)
                 );
         }
 
-        [Command("skip")]
-        [Summary("Skip to the next song in the queue.")]
+        [SlashCommand("skip", "Skip to the next song in the queue.")]
         public async Task SkipMusic()
         {
             if (await CheckMusicConditions(Context) == false) return;
-            await ReplyAsync(
+            await RespondAsync(
                     await MusicEngine.SkipTrackAsync(Context.Guild)
                 );
         }
 
-        [Command("toggle")]
-        [Summary("Pauses and resumes the currently playing song.")]
+        [SlashCommand("toggle", "Pauses and resumes the currently playing song.")]
         public async Task ToggleMusic()
         {
             if (await CheckMusicConditions(Context) == false) return;
-            await ReplyAsync(
+            await RespondAsync(
                     await MusicEngine.ToggleAsync(Context.Guild)
                 );
         }
 
-        [Command("leave")]
-        [Summary("Make the bot leave VC.")]
+        [SlashCommand("leave", "Make the bot leave VC.")]
         public async Task LeaveMusic()
         {
             if (await CheckMusicConditions(Context) == false) return;
-            await ReplyAsync(
+            await RespondAsync(
                     await MusicEngine.LeaveAsync(Context.Guild)
                 );
         }
 
 
-        private static async Task<bool> CheckMusicConditions(SocketCommandContext Context)
+        private static async Task<bool> CheckMusicConditions(Discord.Interactions.SocketInteractionContext Context)
         {
             if (Context.Guild == null)
             {

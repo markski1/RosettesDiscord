@@ -1,15 +1,17 @@
-﻿using Discord;
-using Discord.Commands;
+﻿using Dapper;
+using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
+using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands
 {
-    public class ElevatedCommands : ModuleBase<SocketCommandContext>
+    public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [Command("memory")]
+        [SlashCommand("memory", "[PRIVILEGED COMMAND]")]
         public async Task GetMemory()
         {
             using Process proc = Process.GetCurrentProcess();
@@ -52,10 +54,10 @@ namespace Rosettes.Modules.Commands
                 separator = !separator;
             }
             text += "\n\nSnow leopards are organized and precise team workers.```";
-            await ReplyAsync(text);
+            await RespondAsync(text);
         }
 
-        [Command("halt")]
+        [SlashCommand("halt", "[PRIVILEGED COMMAND]")]
         public async Task Halt()
         {
             if (!Global.CheckSnep(Context.User.Id))
@@ -65,7 +67,6 @@ namespace Rosettes.Modules.Commands
             }
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();
-            CommandEngine.SyncWithDatabase();
 
             await ReplyAsync("Disconnecting from Discord...");
             Game game = new("Disconnecting!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
@@ -74,59 +75,74 @@ namespace Rosettes.Modules.Commands
             Environment.Exit(0);
         }
 
-        [Command("commands")]
-        public async Task ListCommands(string argument = "")
+        [SlashCommand("keygen", "Generates a unique key for logging into the Rosettes admin panel.")]
+        public async Task KeyGen()
         {
-            if (argument.ToLower() != "dm")
+            if (Context.Guild is not null)
             {
-                await ReplyAsync("A full list of commands is available at https://snep.markski.ar/rosettes/commands.html");
-                await ReplyAsync($"Alternatively, use `{Settings.Prefix}commands dm` to have them sent to your DM's. This is less convenient.");
+                await RespondAsync("Keys are private! You can't generate a new key while in a guild, you must do it in a private message.");
                 return;
             }
 
-            var guild = Context.Guild;
-            if (guild != null)
+            var db = new MySqlConnection(Settings.Database.ConnectionString);
+
+            var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
+
+            bool result;
+
+            try
             {
-                await ReplyAsync("Sending commands in DM's.");
+                result = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("keygen-getcode", $"sqlException code {ex.Message}");
+                return;
             }
 
-            // create a dm channel with the user.
-            IDMChannel userDM;
-            userDM = await Context.Message.Author.CreateDMChannelAsync();
-
-            ModuleInfo? currModule = null;
-            string text = "";
-            var comms = ServiceManager.GetService<CommandService>();
-            foreach (CommandInfo singleCommand in comms.Commands)
+            if (result)
             {
-                if (singleCommand.Module.Name == "ElevatedCommands") break;
-                if (currModule == null || currModule.Name != singleCommand.Module.Name)
+                sql = @"UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
+            }
+            else
+            {
+                sql = @"INSERT INTO login_keys (id, login_key)
+                        VALUES(@Id, @NewKey)";
+            }
+
+            Random rand = new();
+            int randNumba;
+            string NewKey = "";
+            char Character;
+            int offset;
+            for (int i = 0; i < 64; i++)
+            {
+                if (rand.Next(0, 2) == 0)
                 {
-                    if (currModule != null)
-                    {
-                        text += "```";
-                        // If we're not at 1000 chars yet, stay on the same message. Otherwise send.
-                        if (text.Length > 1000)
-                        {
-                            await userDM.SendMessageAsync(text);
-                            text = "";
-                        }
-                    }
-                    currModule = singleCommand.Module;
-                    text += $"```\n{currModule.Name}\n> {currModule.Summary}\n====================\n\n";
-                }
-                text += $"{Settings.Prefix}{singleCommand.Name}";
-                if (singleCommand.Summary != null)
-                {
-                    text += $":\n{singleCommand.Summary}\n\n";
+                    offset = 65;
                 }
                 else
                 {
-                    text += $"\n\n";
+                    offset = 97;
                 }
+                randNumba = rand.Next(0, 26);
+                Character = Convert.ToChar(randNumba + offset);
+                NewKey += Character;
             }
-            text += "```";
-            await userDM.SendMessageAsync(text);
+
+            try
+            {
+                await db.ExecuteAsync(sql, new { Context.User.Id, NewKey });
+            }
+            catch (Exception ex)
+            {
+                await RespondAsync("Sorry, there was an error generating a logon key for you. Please try again in a while.");
+                Global.GenerateErrorMessage("keygen", $"Error! {ex.Message}");
+                return;
+            }
+
+            await RespondAsync($"New unique key generated. Anyone with this key can change Rosettes settings for your servers, so beware.\nIf you ever want to change your key, just use $KeyGen again.");
+            await RespondAsync($"```{NewKey}```");
         }
     }
 

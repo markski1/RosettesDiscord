@@ -1,4 +1,4 @@
-﻿using Discord.Commands;
+﻿using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
@@ -7,22 +7,20 @@ using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands
 {
-    [Summary("Commands which are dumb.")]
-    public class DumbCommands : ModuleBase<SocketCommandContext>
-    {
-        [Command("fakecat")]
-        [Summary("Returns an AI generated picture of a cat.")]
+       public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
+        { 
+        [SlashCommand("fakecat", "Returns an AI generated picture of a cat.")]
         public async Task FakeCat()
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's. Instead use https://thiscatdoesnotexist.com/");
+                await RespondAsync("This command cannot be used in DM's. Instead use https://thiscatdoesnotexist.com/");
                 return;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsDumb())
             {
-                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
             try
@@ -40,28 +38,27 @@ namespace Rosettes.Modules.Commands
                 await data.CopyToAsync(fileStream);
                 fileStream.Close();
 
-                await Context.Channel.SendFileAsync(fileName);
+                await RespondWithFileAsync(fileName);
             }
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("fakecat", $"{ex.Message}");
-                await ReplyAsync($"Failed to fetch fake cat.");
+                await RespondAsync($"Failed to fetch fake cat.");
             }
         }
 
-        [Command("fakeperson")]
-        [Summary("Returns an AI generated picture of an arguably human being.")]
+        [SlashCommand("fakeperson", "Returns an AI generated picture of an arguably human being.")]
         public async Task FakePerson()
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's. Instead use https://thispersondoesnotexist.com/");
+                await RespondAsync("This command cannot be used in DM's. Instead use https://thispersondoesnotexist.com/");
                 return;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsDumb())
             {
-                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
             }
             try
@@ -79,47 +76,39 @@ namespace Rosettes.Modules.Commands
                 await data.CopyToAsync(fileStream);
                 fileStream.Close();
 
-                await Context.Channel.SendFileAsync(fileName);
+                await RespondWithFileAsync(fileName);
             }
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("fakeperson", $"{ex.Message}");
-                await ReplyAsync($"Failed to fetch fake person.");
+                await RespondAsync($"Failed to fetch fake person.");
             }
         }
 
-        [Command("urban")]
-        [Summary("Returns an UrbanDictionary definition for the provided word.")]
-        public async Task UrbanDefine(params string[] queryWords)
+        [SlashCommand("urban", "Returns an UrbanDictionary definition for the provided word.")]
+        public async Task UrbanDefine(string query)
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's.");
+                await RespondAsync("This command cannot be used in DM's.");
                 return;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsDumb())
             {
-                await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                 return;
-            }
-
-            string query = "";
-
-            foreach (string word in queryWords)
-            {
-                query += $"{word} ";
             }
 
             if (query == "")
             {
-                await ReplyAsync($"Usage: `{Settings.Prefix}urban <term>`");
+                await RespondAsync($"Usage: `/urban <term>`");
                 return;
             }
 
             if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
             {
-                await ReplyAsync($"The term must only contain letters and numbers.");
+                await RespondAsync($"The term must only contain letters and numbers.");
                 return;
             }
             
@@ -145,7 +134,7 @@ namespace Rosettes.Modules.Commands
                 var definitionList = JObject.Parse(data).First;
                 if (definitionList is null)
                 {
-                    await ReplyAsync("Failed to fetch definitions.");
+                    await RespondAsync("Failed to fetch definitions.");
                     return;
                 }
 
@@ -155,7 +144,7 @@ namespace Rosettes.Modules.Commands
                 // if the list is null, we have no results.
                 if (definitionList is null)
                 {
-                    await ReplyAsync("No definition found for that word.");
+                    await RespondAsync("No definition found for that word.");
                     return;
                 }
 
@@ -183,7 +172,7 @@ namespace Rosettes.Modules.Commands
                 Global.GenerateErrorMessage("urbanDictionary", ex.Message);
             }
 
-            await ReplyAsync(message);
+            await RespondAsync(message);
         }
     }
 }

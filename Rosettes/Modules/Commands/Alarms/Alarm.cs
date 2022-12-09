@@ -56,7 +56,7 @@ namespace Rosettes.Modules.Commands.Alarms
 
         private readonly bool Success;
 
-        // constructor used by $alarm
+        // constructor used by /alarm
         public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int seconds)
         {
             DateTime = dateTime;

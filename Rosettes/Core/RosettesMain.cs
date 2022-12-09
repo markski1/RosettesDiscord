@@ -1,10 +1,8 @@
 ﻿using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Engine;
 using Microsoft.Extensions.DependencyInjection;
-using Victoria;
-using Discord.Rest;
 using Victoria.Node;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -13,15 +11,14 @@ namespace Rosettes.Core
     public class RosettesMain
     {
         private readonly DiscordSocketClient Client;
-        private readonly CommandService Commands;
+        private readonly InteractionService Commands;
         private readonly System.Timers.Timer FiveMinutyTimer = new();
 
         public RosettesMain()
         {
-            CommandServiceConfig command_config = new()
+            InteractionServiceConfig interaction_config = new()
             {
                 DefaultRunMode = RunMode.Async,
-                IgnoreExtraArgs = true,
                 LogLevel = Settings.LogSeverity
             };
             DiscordSocketConfig client_config = new()
@@ -33,12 +30,14 @@ namespace Rosettes.Core
                 LogLevel = Settings.LogSeverity
             };
             Client = new(client_config);
-            Commands = new(command_config);
+            Commands = new(Client, interaction_config);
+
 
             ServiceCollection collection = new();
 
             collection.AddSingleton(Client);
             collection.AddSingleton(Commands);
+            collection.AddSingleton<InteractionManager>();
 
             ServiceManager.SetProvider(collection);
 
@@ -75,8 +74,7 @@ namespace Rosettes.Core
             await Client.StartAsync();
 
             // start thy stuff
-            await CommandEngine.LoadCommands();
-            await EventManager.LoadCommands();
+            await EventManager.SetupAsync();
 
             // FiveMinutyTimer(); defined below, runs every 5 minutes, or 300 seconds
             FiveMinutyTimer.Elapsed += FiveMinutyThings;
@@ -92,7 +90,6 @@ namespace Rosettes.Core
         {
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();
-            CommandEngine.SyncWithDatabase();
         }
     }        
 }

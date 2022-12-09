@@ -11,17 +11,11 @@ namespace Rosettes.Core
     public static class EventManager
     {
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
-        private static readonly CommandService _commandService = ServiceManager.GetService<CommandService>();
         private static bool booting = true;
 
-        public static Task LoadCommands()
+        public static Task SetupAsync()
         {
             _client.Log += message =>
-            {
-                Console.WriteLine($"{DateTime.Now} | {message.ToString()}");
-                return Task.CompletedTask;
-            };
-            _commandService.Log += message =>
             {
                 Console.WriteLine($"{DateTime.Now} | {message.ToString()}");
                 return Task.CompletedTask;
@@ -72,11 +66,20 @@ namespace Rosettes.Core
                 Global.GenerateErrorMessage("OnReady", "Failed to connect to database.");
             }
 
-            CommandEngine.CreateCommandPage();
-            Game game = new("Click me! - $commands", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
+            Game game = new("Tail Homphing", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);
             await _client.SetStatusAsync(UserStatus.Online);
             _client.MessageReceived += OnMessageReceived;
+
+            // it never would be null if we get this far, but this puts IntelliSense at ease.
+            if (ServiceManager.Provider is not null && ServiceManager.Provider.GetService<InteractionManager>() is not null)
+            {
+                await ServiceManager.Provider.GetService<InteractionManager>().SetupAsync();
+            }
+            else
+            {
+                Global.GenerateErrorMessage("startup", "Service provider has not initialized in time????");
+            }
 
             return Task.CompletedTask;
         }
@@ -114,7 +117,7 @@ namespace Rosettes.Core
             // if it's a valid user message but not a command, pass it over to the message handler.
             if (message.HasCharPrefix(Settings.Prefix, ref argPos))
             {
-                await CommandEngine.HandleCommand(context, argPos);
+                await context.Channel.SendMessageAsync("I no longer support prefix commands. All my commands are slash commands now!");
             } 
             else
             {

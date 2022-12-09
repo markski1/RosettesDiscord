@@ -1,5 +1,5 @@
 ﻿using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using Rosettes.Core;
 using System.IO.Compression;
 
@@ -8,10 +8,10 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
     public static class DownloadEmoji
     {
         private static IReadOnlyCollection<GuildEmote>? EmoteCollection;
-        private static SocketCommandContext? ServerContext;
+        private static SocketInteractionContext? ServerContext;
         private static bool IsDownloading = false;
 
-        public static async Task DoTheThing(SocketCommandContext serverContext)
+        public static async Task DoTheThing(SocketInteractionContext serverContext)
         {
             ServerContext = serverContext;
             EmoteCollection = await ServerContext.Guild.GetEmotesAsync();

@@ -1,48 +1,44 @@
 ﻿using Discord;
-using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
-using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
-    [Summary("Commands which simply return a random output based on what you provide it.")]
-    public class RandomCommands : ModuleBase<SocketCommandContext>
+    public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [Command("dice")]
-        [Summary("Generates a number between 1 and the provided number.\nExample usage: '$dice 20' (rolls a d20)")]
-        public async Task Dice(int num = -69420)
+        [SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
+        public async Task Dice(int num = -999)
         {
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (dbGuild is not null)
             {
                 if (!dbGuild.AllowsRandom())
                 {
-                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                     return;
                 }
             }
-            if (num == -69420)
+            if (num == -999)
             {
-                await ReplyAsync($"Usage: `{Settings.Prefix}dice <amount>`");
+                await RespondAsync($"Usage: `/dice <amount>`");
             }
             if (num < 1)
             {
-                await ReplyAsync("The number cannot be lower than 1.");
+                await RespondAsync("The number cannot be lower than 1.");
             }
             else if (num > 1000000)
             {
-                await ReplyAsync("The number cannot be greater than 1 million.");
+                await RespondAsync("The number cannot be greater than 1 million.");
             }
             else
             {
                 Random Random = new();
-                await ReplyAsync((Random.Next(num)+1).ToString());
+                await RespondAsync((Random.Next(num)+1).ToString());
             }
         }
 
-        [Command("ask")]
-        [Summary("Ask the virtual snep a question.")]
+        [SlashCommand("ask", "Ask the virtual snep a question.")]
         
         public async Task Ask()
         {
@@ -51,7 +47,7 @@ namespace Rosettes.Modules.Commands
             {
                 if (!dbGuild.AllowsRandom())
                 {
-                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                     return;
                 }
             }
@@ -68,14 +64,13 @@ namespace Rosettes.Modules.Commands
                 "maybe!",
                 "no way",
                 "consider morbing",
-                $"perhaps you should leave it to a {Settings.Prefix}coin flip"
+                $"perhaps you should leave it to a /coin flip"
             };
             Random Random = new();
-            await ReplyAsync(replies[Random.Next(replies.Length - 1)]);
+            await RespondAsync(replies[Random.Next(replies.Length - 1)]);
         }
 
-        [Command("coin")]
-        [Summary("Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.\nExample usage: '$coin' or '$coin one two' for custom coin faces named one and two.")]
+        [SlashCommand("coin", "Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.")]
         public async Task CoinCommand(string face1 = "Tails", string face2 = "Face")
         {
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
@@ -83,7 +78,7 @@ namespace Rosettes.Modules.Commands
             {
                 if (!dbGuild.AllowsRandom())
                 {
-                    await ReplyAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
                     return;
                 }
             }
@@ -93,13 +88,12 @@ namespace Rosettes.Modules.Commands
             _ = new Coin(messageID, face1, face2);
         }
 
-        [Command("checkem")]
-        [Summary("Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
+        [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
         public async Task CheckEm()
         {
             if (Context.Guild is null)
             {
-                await ReplyAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem");
+                await RespondAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem");
                 return;
             }
 
@@ -124,9 +118,9 @@ namespace Rosettes.Modules.Commands
                 displayName = Context.User.Username;
             }
 
-            await ReplyAsync($"[{displayName}] Check'Em! : **{number}**");
+            await RespondAsync($"[{displayName}] Check'Em! : **{number}**");
 
-            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
+            await RespondAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
         }
     }
 
