@@ -44,19 +44,27 @@ namespace Rosettes.Core
 
             if (Settings.LavaLinkData is not null)
             {
-                NodeConfiguration lavaNodeConfig = new()
+                try
                 {
-                    SelfDeaf = true,
-                    Hostname = Settings.LavaLinkData.Host,
-                    Port = Settings.LavaLinkData.Port,
-                    Authorization = Settings.LavaLinkData.Password
-                };
+                    NodeConfiguration lavaNodeConfig = new()
+                    {
+                        SelfDeaf = true,
+                        Hostname = Settings.LavaLinkData.Host,
+                        Port = Settings.LavaLinkData.Port,
+                        Authorization = Settings.LavaLinkData.Password,
+                        IsSecure = false
+                    };
 
-                NullLogger<LavaNode> nothing = new();
+                    NullLogger<LavaNode> nothing = new();
 
-                LavaNode lavaNode = new(Client, lavaNodeConfig, nothing);
+                    LavaNode lavaNode = new(Client, lavaNodeConfig, nothing);
 
-                MusicEngine.SetMusicEngine(lavaNode);
+                    MusicEngine.SetMusicEngine(lavaNode);
+                }
+                catch (Exception ex)
+                {
+                    Global.GenerateErrorMessage("RosettesMain-LavalinkStartFail", $"{ex.Message}");
+                }
             }
         }
 

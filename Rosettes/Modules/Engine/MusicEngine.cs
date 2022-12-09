@@ -22,11 +22,12 @@ namespace Rosettes.Modules.Engine
         public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
         {
             if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (user.VoiceChannel is null) return "You are not in VC.";
+
             if (!_lavaNode.IsConnected)
             {
                 await _lavaNode.ConnectAsync();
             }
-            if (user.VoiceChannel is null) return "You are not in VC.";
 
             if (!_lavaNode.HasPlayer(guild))
             {
