@@ -56,7 +56,7 @@ namespace Rosettes.Modules.Commands
             }
             if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
             {
-                await RespondAsync("This command may only be used by the server owner.");
+                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
                 return;
             }
 
@@ -66,7 +66,7 @@ namespace Rosettes.Modules.Commands
 
             if (roles is null || !roles.Any())
             {
-                await RespondAsync("Error. Please make sure you're using the right code in the right guild.");
+                await RespondAsync("Error. Please make sure you're using the right code in the right guild.", ephemeral: true);
                 return;
             }
 

@@ -62,13 +62,13 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild == null)
             {
-                await Context.Channel.SendMessageAsync("This command won't run in my DM's, silly.");
+                await Context.Interaction.RespondAsync("This command won't run in my DM's, silly.");
                 return false;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsMusic())
             {
-                await Context.Channel.SendMessageAsync("Sorry, but the guild admins have disabled the use of music commands.");
+                await Context.Interaction.RespondAsync("Sorry, but the guild admins have disabled the use of music commands.", ephemeral: true);
                 return false;
             }
             return true;

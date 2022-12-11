@@ -80,7 +80,7 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild is not null)
             {
-                await RespondAsync("Keys are private! You can't generate a new key while in a guild, you must do it in a private message.");
+                await RespondAsync("Keys are private! You can't generate a new key while in a guild, you must do it in a private message.", ephemeral: true);
                 return;
             }
 

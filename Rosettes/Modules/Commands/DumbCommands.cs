@@ -20,7 +20,7 @@ namespace Rosettes.Modules.Commands
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsDumb())
             {
-                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
                 return;
             }
             try
@@ -58,7 +58,7 @@ namespace Rosettes.Modules.Commands
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsDumb())
             {
-                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
                 return;
             }
             try
@@ -165,14 +165,14 @@ namespace Rosettes.Modules.Commands
                     $"```" +
                     $"**Upvotes**: {definition.thumbs_up} | **Downvotes**: {definition.thumbs_down}\n" +
                     $"**Permalink**: <{definition.permalink}>";
+
+                await RespondAsync(message);
             }
             catch (Exception ex)
             {
-                message = "There was an error fetching the definition.";
+                await RespondAsync("There was an error fetching the definition.", ephemeral: true);
                 Global.GenerateErrorMessage("urbanDictionary", ex.Message);
             }
-
-            await RespondAsync(message);
         }
     }
 }

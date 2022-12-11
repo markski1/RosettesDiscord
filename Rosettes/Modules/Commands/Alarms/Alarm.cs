@@ -18,9 +18,9 @@ namespace Rosettes.Modules.Commands.Alarms
             ActiveAlarms = activeAlarms.ToList();
         }
 
-        public static async void CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, int seconds)
+        public static async void CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes)
         {
-            Alarm newAlarm = new(dateTime, user, channel, seconds);
+            Alarm newAlarm = new(dateTime, user, channel, minutes);
             await _interface.InsertAlarm(newAlarm);
             ActiveAlarms.Add(newAlarm);
         }
@@ -57,12 +57,12 @@ namespace Rosettes.Modules.Commands.Alarms
         private readonly bool Success;
 
         // constructor used by /alarm
-        public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int seconds)
+        public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes)
         {
             DateTime = dateTime;
             User = user;
 
-            Timer = new(seconds * 1000);
+            Timer = new((minutes * 60) * 1000);
             Timer.Elapsed += AlarmRing;
             Timer.AutoReset = false;
             Timer.Enabled = true;

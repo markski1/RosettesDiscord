@@ -85,7 +85,7 @@ namespace Rosettes.Modules.Commands
             // From the received URL, generate a URL to the python thing I'm running to parse tweet data.
             if (!tweetUrl.Contains("twitter.com"))
             {
-                await RespondAsync("That's not a valid tweet URL.");
+                await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
             }
             // in case such a thing is pasted...
             tweetUrl = tweetUrl.Replace("vxtwitter.com", "gateway.markski.ar:42069");
@@ -122,7 +122,7 @@ namespace Rosettes.Modules.Commands
             // if we do get something back, it'll be embedded in an HTML, so now do some hacky string scraping things to get the video url out of it.
             if (!response.Contains("twitter:player:stream"))
             {
-                await RespondAsync("Could not find a video in that tweet.");
+                await RespondAsync("Could not find a video in that tweet.", ephemeral: true);
                 return;
             }
 
@@ -132,7 +132,7 @@ namespace Rosettes.Modules.Commands
             int end = response.IndexOf(".mp4") + 4;
             if (end == -1)
             {
-                await RespondAsync("A video was found in that tweet, but I could not extract it.");
+                await RespondAsync("A video was found in that tweet, but I could not extract it.", ephemeral: true);
                 return;
             }
             string videoLink = response[begin..end];
@@ -181,13 +181,13 @@ namespace Rosettes.Modules.Commands
 
             if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
             {
-                await RespondAsync("This command may only be used by the server owner.");
+                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
                 return;
             }
            
             if (DownloadEmoji.CheckIsDownloading())
             {
-                await RespondAsync("There's currently an emoji export being done, likely in another server. Try again in a bit.");
+                await RespondAsync("There's currently an emoji export being done, likely in another server. Try again in a bit.", ephemeral: true);
             }
             else
             {
@@ -203,47 +203,23 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
-        public async Task Alarm(int amount, char timeSpecifier = 'm')
+        public async Task Alarm(int minutes)
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {
-                await RespondAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with $cancelalarm.");
+                await RespondAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with $cancelalarm.", ephemeral: true);
                 return;
             }
 
-            int seconds;
-            string unit;
-            if (amount == -69420)
-            {
-                await RespondAsync($"Usage: `/alarm <amount> <time specifier>`\nwhere a time specifier can be h for hours, m for minutes or s for seconds.");
-            }
-            if (amount <= 0)
+            if (minutes <= 0)
             {
                 await RespondAsync("Time don't go in that direction.");
                 return;
             }
-            switch (timeSpecifier) {
-                case 's':
-                    seconds = amount;
-                    unit = "second";
-                    break;
 
-                case 'm':
-                    seconds = amount * 60;
-                    unit = "minute";
-                    break;
-                case 'h':
-                    seconds = amount * 3600;
-                    unit = "hour";
-                    break;
-                default:
-                    await RespondAsync($"Usage: `/alarm <amount> <optional: time specifier character>`\nwhere a time specifier can be 'h' for hours, 'm' for minutes or 's' for seconds.");
-                    return;
-            }
+            await RespondAsync($"Okay! I will tag you in {minutes} minute{((minutes != 1) ? 's' : null)}");
 
-            await RespondAsync($"Okay! I will tag you in {amount} {unit}{((amount != 1) ? 's' : null)}");
-
-            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(seconds)), await UserEngine.GetDBUser(Context.User), Context.Channel, seconds);
+            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(minutes)), await UserEngine.GetDBUser(Context.User), Context.Channel, minutes);
         }
 
         [SlashCommand("cancelalarm", "Cancels your current alarm.")]

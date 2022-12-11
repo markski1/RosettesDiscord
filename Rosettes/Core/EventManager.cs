@@ -66,15 +66,15 @@ namespace Rosettes.Core
                 Global.GenerateErrorMessage("OnReady", "Failed to connect to database.");
             }
 
-            Game game = new("Tail Homphing", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
+            Game game = new("Homph", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
             await _client.SetActivityAsync(game);
             await _client.SetStatusAsync(UserStatus.Online);
             _client.MessageReceived += OnMessageReceived;
 
             // it never would be null if we get this far, but this puts IntelliSense at ease.
-            if (ServiceManager.Provider is not null && ServiceManager.Provider.GetService<InteractionManager>() is not null)
+            if (ServiceManager.Provider.GetService<InteractionManager>() is InteractionManager _intMan)
             {
-                await ServiceManager.Provider.GetService<InteractionManager>().SetupAsync();
+                await _intMan.SetupAsync();
             }
             else
             {

@@ -19,17 +19,17 @@ namespace Rosettes.Modules.Commands
             {
                 if (!dbGuild.AllowsRandom())
                 {
-                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
                     return;
                 }
             }
             if (num < 2)
             {
-                await RespondAsync("The number cannot be lower than 2.");
+                await RespondAsync("The number cannot be lower than 2.", ephemeral: true);
             }
             else if (num > 1000000)
             {
-                await RespondAsync("The number cannot be greater than 1 million.");
+                await RespondAsync("The number cannot be greater than 1 million.", ephemeral: true);
             }
             else
             {
@@ -65,7 +65,7 @@ namespace Rosettes.Modules.Commands
             {
                 if (!dbGuild.AllowsRandom())
                 {
-                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
+                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
                     return;
                 }
             }

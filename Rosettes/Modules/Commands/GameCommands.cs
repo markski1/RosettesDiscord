@@ -18,7 +18,7 @@ namespace Rosettes.Modules.Commands
                 var DeserialziedObject = JsonConvert.DeserializeObject(data);
                 if (DeserialziedObject == null)
                 {
-                    await RespondAsync("Failed to retrieve status data.");
+                    await RespondAsync("Failed to retrieve status data.", ephemeral: true);
                     return;
                 }
                 dynamic result = ((dynamic)DeserialziedObject).result;
@@ -60,7 +60,7 @@ namespace Rosettes.Modules.Commands
             }
             catch
             {
-                await RespondAsync("Failed to retrieve datacenter list.");
+                await RespondAsync("Failed to retrieve datacenter list.", ephemeral: true);
                 return;
             }
             var DeserializedLobbyObject = JsonConvert.DeserializeObject(lobbyData);
@@ -88,7 +88,7 @@ namespace Rosettes.Modules.Commands
                 }
                 catch
                 {
-                    await RespondAsync("Failed to retrieve datacenter data.");
+                    await RespondAsync("Failed to retrieve datacenter data.", ephemeral: true);
                     return;
                 }
 
@@ -96,7 +96,7 @@ namespace Rosettes.Modules.Commands
                 var worldObj = JObject.Parse(worldData);
                 if (datacenterObj == null || worldObj == null)
                 {
-                    await RespondAsync("Failed to retrieve datacenter data.");
+                    await RespondAsync("Failed to retrieve datacenter data.", ephemeral: true);
                     return;
                 }
 
