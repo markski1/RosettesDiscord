@@ -144,26 +144,26 @@ namespace Rosettes.Modules.Commands
                 Directory.CreateDirectory("./temp/twtvid/");
             }
             
-            var mid = await ReplyAsync("I am downloading the video...");
+            var mid = await ReplyAsync("Downloading the video...");
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
             using var videoStream = await Global.HttpClient.GetStreamAsync(videoLink);
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await videoStream.CopyToAsync(fileStream);
             fileStream.Close();
-            await mid.ModifyAsync(x => x.Content = $"I am downloading the video... DONE!\nI am uploading the video to Discord...");
+            await mid.ModifyAsync(x => x.Content = $"Downloading the video... DONE!\nUploading the video to Discord...");
 
             ulong size = (ulong)new FileInfo(fileName).Length;
 
             // check if the guild supports a file this large, otherwise fail.
-            if (Context.Guild.MaxUploadLimit > size)
+            if (Context.Guild == null || Context.Guild.MaxUploadLimit > size)
             {
                 await RespondWithFileAsync(fileName);
                 await mid.DeleteAsync();
             } 
             else
             {
-                await mid.ModifyAsync(x => x.Content = $"I am downloading the video... DONE!\nI am uploading the video to Discord... FAILED!");
-                await RespondAsync("Sorry, video was too large to be uploaded...\nInstead, have a direct link.");
+                await mid.ModifyAsync(x => x.Content = $"Downloading the video... DONE!\nUploading the video to Discord... FAILED!");
+                await RespondAsync("Sorry, video was too large to be uploaded...\nInstead, have a direct link:");
                 EmbedBuilder embed = new();
                 embed.AddField("Download: ", $"[Direct link]({videoLink})");
                 await ReplyAsync(embed: embed.Build());
@@ -237,7 +237,7 @@ namespace Rosettes.Modules.Commands
                     unit = "hour";
                     break;
                 default:
-                    await ReplyAsync($"Usage: `/alarm <amount> <time specifier>`\nwhere a time specifier can be h for hours, m for minutes or s for seconds.");
+                    await RespondAsync($"Usage: `/alarm <amount> <optional: time specifier character>`\nwhere a time specifier can be 'h' for hours, 'm' for minutes or 's' for seconds.");
                     return;
             }
 

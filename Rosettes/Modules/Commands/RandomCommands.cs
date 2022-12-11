@@ -1,7 +1,11 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Modules.Engine;
+using static System.Net.Mime.MediaTypeNames;
+using System.Data;
+using System;
 
 namespace Rosettes.Modules.Commands
 {
@@ -30,40 +34,27 @@ namespace Rosettes.Modules.Commands
             else
             {
                 Random Random = new();
-                await RespondAsync((Random.Next(num)+1).ToString());
-            }
-        }
 
-        [SlashCommand("ask", "Ask the virtual snep a question.")]
-        
-        public async Task Ask()
-        {
-            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-            if (dbGuild is not null)
-            {
-                if (!dbGuild.AllowsRandom())
+                EmbedBuilder embed = new();
+
+                string displayName;
+                SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
+                if (GuildUser is not null && GuildUser.Nickname is not null)
                 {
-                    await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
-                    return;
+                    displayName = GuildUser.Nickname;
                 }
+                else
+                {
+                    displayName = Context.User.Username;
+                }
+
+                embed.WithTitle("Dice thrown!");
+                embed.WithDescription($"[{displayName}] has thrown a dice, from 1 to {num}");
+
+                embed.AddField("Result: ", (Random.Next(num) + 1).ToString());
+
+                await RespondAsync(embed: embed.Build());
             }
-            string[] replies = new string[]
-            {
-                "yea",
-                "no",
-                "`(Rosettes is troubled by your question)`",
-                "purrhaps",
-                "maybe you should CS:GO get some bitches instead",
-                "i think so",
-                "probably not",
-                "there's a strong chance",
-                "maybe!",
-                "no way",
-                "consider morbing",
-                $"perhaps you should leave it to a /coin flip"
-            };
-            Random Random = new();
-            await RespondAsync(replies[Random.Next(replies.Length - 1)]);
         }
 
         [SlashCommand("coin", "Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.")]

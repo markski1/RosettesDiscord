@@ -1,8 +1,6 @@
-﻿using Dapper;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -20,6 +18,8 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            await RespondAsync("Creating vote.", ephemeral: true);
+
             string displayName;
             SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
             if (GuildUser is not null && GuildUser.Nickname is not null)
@@ -31,9 +31,11 @@ namespace Rosettes.Modules.Commands
                 displayName = Context.User.Username;
             }
 
-            string message = $"[{displayName}] created a vote:```{question}```";
+            var embed = new EmbedBuilder();
 
-            var mid = await ReplyAsync(message);
+            embed.AddField($"[{displayName}] created a vote:", question);
+
+            var mid = await ReplyAsync(embed: embed.Build());
 
             var emojiList = new List<Emoji>
             {
@@ -104,6 +106,8 @@ namespace Rosettes.Modules.Commands
             await GuildEngine.UpdateGuild(dbGuild);
 
             await AutoRolesEngine.UpdateGroupMessageId(code, mid.Id);
+
+            await RespondAsync("Done!", ephemeral: true);
         }
     }
 }
