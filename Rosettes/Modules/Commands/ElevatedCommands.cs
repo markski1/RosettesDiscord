@@ -142,7 +142,7 @@ namespace Rosettes.Modules.Commands
             }
 
             await RespondAsync($"New unique key generated. Anyone with this key can change Rosettes settings for your servers, so beware.\nIf you ever want to change your key, just use $KeyGen again.");
-            await RespondAsync($"```{NewKey}```");
+            await ReplyAsync($"```{NewKey}```");
         }
     }
 

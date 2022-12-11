@@ -78,10 +78,11 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
             }
-            await Context.Channel.TriggerTypingAsync();
-            IUserMessage messageID = await ReplyAsync($"*A coin is thrown into the air... {face1} on one side, {face2} on the other.*");
-            // the object takes care of everything, this allows us to just spawn a theoretically infinite amount of coins for any server at once.
-            _ = new Coin(messageID, face1, face2);
+            string[] coinSides = new String[2];
+            coinSides[0] = face1;
+            coinSides[1] = face2;
+            Random rand = new();
+            await RespondAsync($"*A coin is thrown into the air... {face1} on one side, {face2} on the other.*\n`The coin lands on: {coinSides[rand.Next(0, 1)]}`");
         }
 
         [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
@@ -116,31 +117,7 @@ namespace Rosettes.Modules.Commands
 
             await RespondAsync($"[{displayName}] Check'Em! : **{number}**");
 
-            await RespondAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
-        }
-    }
-
-    public class Coin
-    {
-        private readonly System.Timers.Timer Timer = new(2500);
-        private readonly IUserMessage message;
-        private readonly string[] coinSides = new String[2];
-
-        public Coin(IUserMessage OriginalMessage, string face1, string face2)
-        {
-            coinSides[0] = face1;
-            coinSides[1] = face2;
-            message = OriginalMessage;
-            Timer.Elapsed += CoinStateUpdate;
-            Timer.Enabled = true;
-        }
-
-        public void CoinStateUpdate(Object? source, System.Timers.ElapsedEventArgs e)
-        {
-            Random Random = new();
-            message.ModifyAsync(x => x.Content = $"*The coin lands.* ***{coinSides[Random.Next(2)]}!***");
-            Timer.Stop();
-            Timer.Dispose();
+            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
         }
     }
 }
