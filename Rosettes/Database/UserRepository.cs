@@ -27,7 +27,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, exp, currency, namecache FROM users";
+            var sql = @"SELECT id, namecache FROM users";
 
             try
             {
@@ -61,7 +61,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, exp, currency, namecache FROM users WHERE id=@id";
+            var sql = @"SELECT id, namecache FROM users WHERE id=@id";
 
             try
             {
@@ -78,12 +78,12 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"INSERT INTO users (id, exp, currency, namecache)
-                        VALUES(@Id, @Exp, @Currency, @NameCache)";
+            var sql = @"INSERT INTO users (id, namecache)
+                        VALUES(@Id, @NameCache)";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = await user.GetName() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName() })) > 0;
             }
             catch (Exception ex)
             {
@@ -97,12 +97,12 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, exp=@Exp, currency=@Currency, namecache=@NameCache
+                        SET id=@Id, namecache=@NameCache
                         WHERE id = @Id";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, Exp = user.GetExperience(), Currency = user.GetCurrency(), NameCache = await user.GetName() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName() })) > 0;
             }
             catch (Exception ex)
             {

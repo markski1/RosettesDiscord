@@ -13,17 +13,11 @@ namespace Rosettes.Modules.Engine
         {
             if (!NoMessageChannel(context)) return;
             var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
-            // if a guild's message analysis level is 0, don't process messages at all.
+            // if a guild's message analysis level is 0, don't parse messages at all.
             if (dbGuild.MessageAnalysis() == 0)
             {
                 return;
             }
-
-            dbGuild.Messages++;
-            _ = HandleExperience(context);
-
-            // if a guild's message analysis level is 1, don't parse messages.
-            if (dbGuild.MessageAnalysis() == 1) return;
 
             var message = context.Message;
             var messageText = message.Content.ToLower();
@@ -59,20 +53,6 @@ namespace Rosettes.Modules.Engine
             }
         }
 
-        private static async Task HandleExperience(SocketCommandContext context)
-        {
-            var user = await UserEngine.GetDBUser(context.User);
-            if (!user.IsValid()) return;
-            if (context.Message.Attachments.Any())
-            {
-                user.AddExperience(2);
-            }
-            else
-            {
-                user.AddExperience(1);
-            }
-        }
-
         private static bool NoMessageChannel(SocketCommandContext context)
         {
             switch (context.Channel.GetChannelType())
@@ -88,7 +68,6 @@ namespace Rosettes.Modules.Engine
                 case ChannelType.DM:
                     return false;
             }
-            if (context.Channel.Id == 924483284749156412) return false; // ignore a certain channel TODO: make this a database table.
 
             return true;
         }

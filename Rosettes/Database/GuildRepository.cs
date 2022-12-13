@@ -31,7 +31,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, messages, commands, settings, ownerid, defaultrole FROM guilds";
+            var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole FROM guilds";
 
             try
             {
@@ -65,7 +65,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, messages, commands, settings, ownerid FROM guilds WHERE id=@id";
+            var sql = @"SELECT id, namecache, members, settings, ownerid FROM guilds WHERE id=@id";
 
             try
             {
@@ -116,12 +116,12 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"INSERT INTO guilds (id, namecache, members, messages, commands, settings, ownerid)
-                        VALUES(@Id, @NameCache, @Members, @Messages, @Commands, @Settings, @OwnerId)";
+            var sql = @"INSERT INTO guilds (id, namecache, members, settings, ownerid)
+                        VALUES(@Id, @NameCache, @Members, @Settings, @OwnerId)";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId })) > 0;
+                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId })) > 0;
             }
             catch (Exception ex)
             {
@@ -135,11 +135,11 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, messages=@Messages, commands=@Commands, ownerid=@OwnerId
+                        SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId
                         WHERE id = @Id";
             try
             {
-                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Messages, guild.Commands, guild.Settings, guild.OwnerId })) > 0;
+                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId })) > 0;
             }
             catch (Exception ex)
             {

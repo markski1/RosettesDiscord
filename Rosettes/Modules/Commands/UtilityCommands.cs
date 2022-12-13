@@ -68,12 +68,8 @@ namespace Rosettes.Modules.Commands
                 $"Roles         :  {guild.Roles.Count}\n" +
                 $"Stickers      :  {guild.Stickers.Count}\n" +
                 $"Emoji         :  {guild.Emotes.Count}\n" +
-                $"==============\n\n" +
-                $"Top users by experience:\n" +
-                $"==============\n"
+                $"=============="
                 ;
-            text += await UserEngine.GetTopUsersString(guild);
-            text += $"==============```";
             if (guild.IconUrl != null) await RespondAsync(guild.IconUrl);
             await RespondAsync(text);
         }

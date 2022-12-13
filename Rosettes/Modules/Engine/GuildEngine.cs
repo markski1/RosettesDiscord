@@ -105,8 +105,6 @@ namespace Rosettes.Modules.Engine
     public class Guild
     {
         public ulong Id;
-        public ulong Messages;
-        public ulong Commands;
         public ulong Members;
         public ulong OwnerId;
         public ulong DefaultRole;
@@ -142,18 +140,15 @@ namespace Rosettes.Modules.Engine
             }
             CachedReference = guild;
             DefaultRole = 0;
-            Messages = 0;
             Members = 0;
             Settings = "2111111111";
         }
 
         // database constructor, used on loading all guilds
-        public Guild(ulong id, string namecache, ulong members, ulong messages, ulong commands, string settings, ulong ownerid, ulong defaultrole)
+        public Guild(ulong id, string namecache, ulong members, string settings, ulong ownerid, ulong defaultrole)
         {
             Id = id;
-            Messages = messages;
             Members = members;
-            Commands = commands;
             Settings = settings;
             NameCache = namecache;
             OwnerId = ownerid;
