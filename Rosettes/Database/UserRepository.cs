@@ -16,7 +16,6 @@ namespace Rosettes.Database
         Task<bool> DeleteUser(User user);
     }
 
-
     public class UserRepository : IUserRepository
     {
         private static MySqlConnection DBConnection()

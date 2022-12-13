@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Rosettes.Modules.Engine;
 using System.Reflection;
 
 namespace Rosettes.Core
@@ -35,6 +36,11 @@ namespace Rosettes.Core
             }
         }
 
+        private async Task OnButtonClicked(SocketMessageComponent component)
+        {
+            await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
+        }
+
         private Task OnCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
         {
             return Task.CompletedTask;
@@ -47,6 +53,8 @@ namespace Rosettes.Core
             await _commands.RegisterCommandsGloballyAsync();
 
             _client.InteractionCreated += OnInteraction;
+
+            _client.ButtonExecuted += OnButtonClicked;
 
             _commands.SlashCommandExecuted += OnCommandExecuted;
         }

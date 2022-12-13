@@ -48,15 +48,13 @@ namespace Rosettes.Modules.Commands
 
         [SlashCommand("makepoll", "Creates a poll with up to 4 options.")]
 
-        public async Task MakePoll(string question, string option1, string option2, string option3="NOT_PROVIDED", string option4= "NOT_PROVIDED")
+        public async Task MakePoll(string question, string option1, string option2, string option3 = "NOT_PROVIDED", string option4 = "NOT_PROVIDED")
         {
             if (Context.Guild is null)
             {
                 await RespondAsync("You may only create polls within a guild.");
                 return;
             }
-
-            await RespondAsync("Poll will be made.", ephemeral: true);
 
             // prevent option 4 with no option 3
             if (option3 == "NOT_PROVIDED" && option4 != "NOT_PROVIDED")
@@ -65,44 +63,41 @@ namespace Rosettes.Modules.Commands
                 option4 = "NOT_PROVIDED";
             }
 
-            string displayName;
-            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-            if (GuildUser is not null && GuildUser.Nickname is not null)
+            var embed = new EmbedBuilder
             {
-                displayName = GuildUser.Nickname;
-            }
-            else
-            {
-                displayName = Context.User.Username;
-            }
-
-            var embed = new EmbedBuilder();
-
-            embed.AddField($"[{displayName}] created a poll:", question);
-
-            string options = $"1. {option1}\n2. {option2}";
-            var emojiList = new List<Emoji>
-            {
-                new Emoji("1️⃣"),
-                new Emoji("2️⃣")
+                Title = question,
+                Description = "Choose one:"
             };
+
+            var comps = new ComponentBuilder();
+
+            comps.WithButton(label: option1, customId: "1", row: 0);
+            embed.AddField(option1, "0 votes");
+            comps.WithButton(label: option2, customId: "2", row: 1);
+            embed.AddField(option2, "0 votes");
 
             if (option3 != "NOT_PROVIDED")
             {
-                options += $"\n3. {option3}";
-                emojiList.Add("3️⃣");
+                comps.WithButton(label: option3, customId: "3", row: 2);
+                embed.AddField(option3, "0 votes");
             }
             if (option4 != "NOT_PROVIDED")
             {
-                options += $"\n4. {option4}";
-                emojiList.Add("4️⃣");
+                comps.WithButton(label: option4, customId: "4", row: 3);
+                embed.AddField(option4, "0 votes");
             }
 
-            embed.AddField("Please choose: ", options);
+            await RespondAsync(embed: embed.Build(), components: comps.Build());
 
-            var mid = await ReplyAsync(embed: embed.Build());
+            ulong id = (await GetOriginalResponseAsync()).Id;
 
-            await mid.AddReactionsAsync(emojiList);
+            bool success = await PollEngine.AddPoll(id, question, option1, option2, option3, option4);
+
+            if (!success)
+            {
+                await DeleteOriginalResponseAsync();
+                await RespondAsync("Sorry, there was an error creating this poll.", ephemeral: true);
+            }
         }
 
         [SlashCommand("setautorole", "Sets the desired autoroles where used. Must first be created in the web panel.")]
