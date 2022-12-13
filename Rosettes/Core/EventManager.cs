@@ -101,28 +101,13 @@ namespace Rosettes.Core
                 return;
             }
 
-            // ignore #testing
-#if !DEBUG
-            if (context.Channel.Id == 971467116165353485) return;
-#endif
-
-            int argPos = 0;
-
             // halt if it's not a valid user message.
             if (message == null || message.Author.IsBot)
             {
                 return;
             }
 
-            // if it's a valid user message but not a command, pass it over to the message handler.
-            if (message.HasCharPrefix(Settings.Prefix, ref argPos))
-            {
-                await context.Channel.SendMessageAsync("I no longer support prefix commands. All my commands are slash commands now!");
-            } 
-            else
-            {
-                await MessageEngine.HandleMessage(context);
-            }
+            await MessageEngine.HandleMessage(context);
         }
 
         private static async Task<Task> OnJoinGuild(SocketGuild guild)

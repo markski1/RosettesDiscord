@@ -7,8 +7,6 @@ namespace Rosettes.Core
 {
     public static class Settings
     {
-        public static readonly char Prefix = '$';
-
         public static readonly string Token = LoadSetting("token");
         public static readonly string SteamDevKey = LoadSetting("steam");
         public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
