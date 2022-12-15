@@ -11,7 +11,12 @@ The set-up process should never be any harder than inviting it into a server. At
 Rosettes should be as quick as possible with a reasonable memory footprint. Anything that can be do in a non-blocking manner, must.
 
 #### Privacy conscious
-Rosettes must never log any personal data at all. The only things stored are alarms, experience and "currency" numbers for users, using their ID for relationality, which is publicly available anyways.
+Rosettes will never log any personal data at all. Rosettes will never log any messages.
+
+Only the following data is stored by Rosettes:
+- User data: Name and Discord ID. Both of these are publicly available and are only kept for caching purposes. We don't even store in which Guild a specific user is in.
+- Guild data stored: Name, Discord ID, Owner's Discord ID (see above), Member count and Roles. Again, all this data is already public, and kept for caching and admin-panel functionality purposes. Furthermore, you can request all this data be automatically deleted from the admin panel if you ever decide to get rid of Rosettes.
+- Obvious data stored: Autoroles, Settings, Alarms (deleted after they ring) and Polls (For the sake of preventing double-voting, we will store IF someone voted in a poll, but we will not store WHAT they voted for - all poll replies are anonymous).
 
 ## What is Rosettes not meant to be?
 
