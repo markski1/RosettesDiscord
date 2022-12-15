@@ -59,6 +59,18 @@ namespace Rosettes.Modules.Engine
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-voteCount", $"sqlException code {ex.Message}");
+                // if we fail to count the actual vote, then remove the has voted entry.
+                sql = @"DELETE FROM poll_votes WHERE user_id=@userId AND poll_id=@Id)";
+                try
+                {
+                    await conn.ExecuteAsync(sql, new { userId, pollMessage.Id });
+                }
+                catch
+                {
+                    // catastrophic db failure --- if we SOMEHOW get here, we managed to log a user as having voted without having counted their vote.
+                    // This should NEVER happen, but it would be irresponsible to not at least check if it ever does and see if a more elegant solution is needed.
+                    Global.GenerateErrorMessage("sql-voteCountFailedUncount", $"Catastrophic failure, we set a user as having voted without counting the vote. - sqlException code {ex.Message}");
+                }
                 return "Sorry, there was an error adding your vote.";
             }
 

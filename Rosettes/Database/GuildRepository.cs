@@ -176,7 +176,14 @@ namespace Rosettes.Database
                 catch
                 {
                     // if can't insert, attempt to update
-                    await db.ExecuteAsync(sql2, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
+                    try
+                    {
+                        await db.ExecuteAsync(sql2, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
+                    }
+                    catch
+                    {
+                        // if we also failed to update, just fail.
+                    }
                 }
             }
 
