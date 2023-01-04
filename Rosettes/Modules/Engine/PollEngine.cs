@@ -80,24 +80,21 @@ namespace Rosettes.Modules.Engine
 
             if (pollResult is not null)
             {
-                var embed = new EmbedBuilder
-                {
-                    Title = pollResult.Question,
-                    Description = "Choose one:"
-                };
+                var comps = new ComponentBuilder();
 
-                embed.AddField(pollResult.Option1, $"{pollResult.Count1} votes");
-                embed.AddField(pollResult.Option2, $"{pollResult.Count2} votes");
+                comps.WithButton(label: $"{pollResult.Option1} - {pollResult.Count1} votes", customId: "1", row: 0);
+                comps.WithButton(label: $"{pollResult.Option2} - {pollResult.Count2} votes", customId: "2", row: 1);
+
                 if (pollResult.Option3 != "NOT_PROVIDED")
                 {
-                    embed.AddField(pollResult.Option3, $"{pollResult.Count3} votes");
+                    comps.WithButton(label: $"{pollResult.Option3} - {pollResult.Count3} votes", customId: "3", row: 2);
                 }
                 if (pollResult.Option4 != "NOT_PROVIDED")
                 {
-                    embed.AddField(pollResult.Option4, $"{pollResult.Count4} votes");
+                    comps.WithButton(label: $"{pollResult.Option4} - {pollResult.Count4} votes", customId: "4", row: 3);
                 }
 
-                await pollMessage.ModifyAsync(msg => msg.Embed = embed.Build());
+                await pollMessage.ModifyAsync(msg => msg.Components = comps.Build());
             }
 
             return "Your vote has been counted.";

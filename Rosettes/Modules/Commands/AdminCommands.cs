@@ -71,20 +71,16 @@ namespace Rosettes.Modules.Commands
 
             var comps = new ComponentBuilder();
 
-            comps.WithButton(label: option1, customId: "1", row: 0);
-            embed.AddField(option1, "0 votes");
-            comps.WithButton(label: option2, customId: "2", row: 1);
-            embed.AddField(option2, "0 votes");
+            comps.WithButton(label: $"{option1} - 0 votes", customId: "1", row: 0);
+            comps.WithButton(label: $"{option2} - 0 votes", customId: "2", row: 1);
 
             if (option3 != "NOT_PROVIDED")
             {
-                comps.WithButton(label: option3, customId: "3", row: 2);
-                embed.AddField(option3, "0 votes");
+                comps.WithButton(label: $"{option3} - 0 votes", customId: "3", row: 2);
             }
             if (option4 != "NOT_PROVIDED")
             {
-                comps.WithButton(label: option4, customId: "4", row: 3);
-                embed.AddField(option4, "0 votes");
+                comps.WithButton(label: $"{option4} - 0 votes", customId: "4", row: 3);
             }
 
             await RespondAsync(embed: embed.Build(), components: comps.Build());
