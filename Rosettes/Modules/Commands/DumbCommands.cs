@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
@@ -7,8 +8,126 @@ using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands
 {
-       public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
-       { 
+    public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
+    {
+        [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
+        public async Task MakeSweeper(string anEmoji, int difficulty = 2)
+        {
+            if (difficulty < 1 || difficulty > 3)
+            {
+                await RespondAsync("Difficulty must be from 1 to 3", ephemeral: true);
+                return;
+            }
+
+            int gridWidth = 6 + (difficulty * 3);
+            int gridHeight = 4 + (difficulty * 2);
+            int mineCount = 6 + (difficulty * 6);
+            
+            string diffName = difficulty switch
+            {
+                1 => "Easy",
+                2 => "Normal",
+                _ => "Hard",
+            };
+
+
+            int[,] playingField = new int[gridWidth, gridHeight];
+
+            Random rand = new();
+
+            int i, j;
+
+            // decide the position of every mine
+            for (i = 0; i < mineCount; i++)
+            {
+                int x, y;
+                // avoid repeats by breaking out of the 'loop' only if the chosen square has no other mines.
+                while (true)
+                {
+                    x = rand.Next(gridWidth);
+                    y = rand.Next(gridHeight);
+
+                    if (playingField[x, y] == -1) continue;
+                    break;
+                }
+                // set -1 where the mine is
+                playingField[x, y] = -1;
+            }
+
+            string board = "", board_chunk = "";
+
+            // calculate the amount of mines against every square
+            for (j = 0; j < gridHeight; j++)
+            {
+                for (i = 0; i < gridWidth; i++)
+                {
+                    // fill in mines
+                    if (playingField[i, j] == -1)
+                    {
+                        board += $"||{anEmoji}||";
+                        continue;
+                    }
+
+                    // if not a mine, count nearby mines
+                    int count = 0;
+
+                    // check to the left if we're not at the very left.
+                    if (i != 0)
+                    {
+                        if (playingField[i - 1, j] == -1)
+                            count++;
+
+                        if (j != 0 && playingField[i - 1, j - 1] == -1) 
+                            count++;
+
+                        if (j != gridHeight - 1 && playingField[i - 1, j + 1] == -1)
+                            count++;
+                    }
+                    // check to the right, if we're not at the very right.
+                    if (i != gridWidth - 1)
+                    {
+                        if (playingField[i + 1, j] == -1)
+                            count++;
+
+                        if (j != 0 && playingField[i + 1, j - 1] == -1)
+                            count++;
+
+                        if (j != gridHeight - 1 && playingField[i + 1, j + 1] == -1)
+                            count++;
+                    }
+
+                    // check up and down, if anything.
+                    if (j != 0 && playingField[i, j - 1] == -1)
+                        count++;
+                    if (j != gridHeight - 1 && playingField[i, j + 1] == -1)
+                        count++;
+
+                    playingField[i, j] = count;
+                   
+                    board += $"||{new Emoji($"{count}⃣")}||";
+                }
+                // when done with a row, break line
+                board += "\n";
+                // if the difficulty is 3, we split the board in two to avoid issues at the 6th row.
+                if (j == 4 && difficulty == 3)
+                {
+                    board_chunk = board;
+                    board = "";
+                }
+            }
+
+            EmbedBuilder embed = new()
+            {
+                Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.",
+                Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!"
+            };
+
+            await RespondAsync(embed: embed.Build());
+            // if the difficulty is 3, we send the first chunk of the board first.
+            if (difficulty == 3) await Context.Channel.SendMessageAsync(board_chunk);
+            await Context.Channel.SendMessageAsync(board);
+        }
+
         [SlashCommand("urban", "Returns an UrbanDictionary definition for the provided word.")]
         public async Task UrbanDefine(string query)
         {
