@@ -8,44 +8,6 @@ namespace Rosettes.Modules.Commands
 {
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     {
-
-        [SlashCommand("makevote", "Creates a quick, simple vote with thumbs up and down.")]
-        public async Task NewVote(string question)
-        {
-            if (Context.Guild is null)
-            {
-                await RespondAsync("You may only create polls within a guild.");
-                return;
-            }
-
-            await RespondAsync("Vote will be made.", ephemeral: true);
-
-            string displayName;
-            SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-            if (GuildUser is not null && GuildUser.Nickname is not null)
-            {
-                displayName = GuildUser.Nickname;
-            }
-            else
-            {
-                displayName = Context.User.Username;
-            }
-
-            var embed = new EmbedBuilder();
-
-            embed.AddField($"[{displayName}] created a vote:", question);
-
-            var mid = await ReplyAsync(embed: embed.Build());
-
-            var emojiList = new List<Emoji>
-            {
-                new Emoji("👍"),
-                new Emoji("👎")
-            };
-
-            await mid.AddReactionsAsync(emojiList);
-        }
-
         [SlashCommand("makepoll", "Creates a poll with up to 4 options.")]
 
         public async Task MakePoll(string question, string option1, string option2, string option3 = "NOT_PROVIDED", string option4 = "NOT_PROVIDED")
