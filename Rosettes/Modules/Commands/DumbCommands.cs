@@ -11,7 +11,7 @@ namespace Rosettes.Modules.Commands
     public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
-        public async Task MakeSweeper(string anEmoji, int difficulty = 2)
+        public async Task MakeSweeper(string anEmoji, int difficulty = 2, string hideZeros = "false", string unspoilered = "false")
         {
             if (difficulty < 1 || difficulty > 3)
             {
@@ -19,9 +19,26 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            int gridWidth = 6 + (difficulty * 3);
-            int gridHeight = 4 + (difficulty * 2);
-            int mineCount = 6 + (difficulty * 6);
+            if (unspoilered != "false" && unspoilered != "true")
+            {
+                await RespondAsync("Valid values for unspoilered: 'false', 'true'", ephemeral: true);
+                return;
+            }
+
+            if (hideZeros != "false" && hideZeros != "true")
+            {
+                await RespondAsync("Valid values for hideZeros: 'false', 'true'", ephemeral: true);
+                return;
+            }
+
+            // set parameters for the board based on difficulty.
+            int diffMod = difficulty;
+            if (diffMod > 2) diffMod = 2;
+
+            int gridWidth = 4 + (diffMod * 4);
+            int gridHeight = 4 + (diffMod * 2);
+
+            int mineCount = 8 + (difficulty * 6);
             
             string diffName = difficulty switch
             {
@@ -54,17 +71,24 @@ namespace Rosettes.Modules.Commands
                 playingField[x, y] = -1;
             }
 
-            string board = "", board_chunk = "";
+            string board = "";
 
-            // calculate the amount of mines against every square
+            // Go through every square in the board.
             for (j = 0; j < gridHeight; j++)
             {
                 for (i = 0; i < gridWidth; i++)
                 {
-                    // fill in mines
+                    // If the space contains a "mine", fill in the emoji.
                     if (playingField[i, j] == -1)
                     {
-                        board += $"||{anEmoji}||";
+                        if (unspoilered == "true")
+                        {
+                            board += $"{anEmoji}";
+                        }
+                        else
+                        {
+                            board += $"||{anEmoji}||";
+                        }
                         continue;
                     }
 
@@ -103,28 +127,42 @@ namespace Rosettes.Modules.Commands
                         count++;
 
                     playingField[i, j] = count;
-                   
-                    board += $"||{new Emoji($"{count}⃣")}||";
+
+                    // don't spoiler if that was requested.
+                    if (unspoilered == "true")
+                    {
+                        board += $"{new Emoji($"{count}⃣")}";
+                        continue;
+                    }
+
+                    // if the count is greater than 0, add a spoilered emoji with the count, otherwise just a zero - unless the user requested zeros are hidden too.
+                    if (count > 0 || hideZeros == "true") board += $"||{new Emoji($"{count}⃣")}||";
+                    else board += "0⃣";
                 }
                 // when done with a row, break line
                 board += "\n";
-                // if the difficulty is 3, we split the board in two to avoid issues at the 6th row.
-                if (j == 4 && difficulty == 3)
-                {
-                    board_chunk = board;
-                    board = "";
-                }
             }
 
-            EmbedBuilder embed = new()
+            EmbedBuilder embed;
+
+            if (unspoilered == "false")
             {
-                Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.",
-                Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!"
-            };
+                embed = new()
+                {
+                    Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.",
+                    Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!"
+                };
+            } 
+            else
+            {
+                embed = new()
+                {
+                    Title = $"Non-playable {anEmoji}-sweeper board generated.",
+                };
+            }
 
             await RespondAsync(embed: embed.Build());
             // if the difficulty is 3, we send the first chunk of the board first.
-            if (difficulty == 3) await Context.Channel.SendMessageAsync(board_chunk);
             await Context.Channel.SendMessageAsync(board);
         }
 
