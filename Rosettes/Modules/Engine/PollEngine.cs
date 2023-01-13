@@ -2,9 +2,7 @@
 using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
-using Rosettes.Database;
 using Dapper;
-using Rosettes.Modules.Commands.Alarms;
 
 namespace Rosettes.Modules.Engine
 {

@@ -15,7 +15,6 @@ namespace Rosettes.Database
         Task<bool> CheckGuildExists(ulong guildId);
         Task<bool> InsertGuild(Guild guild);
         Task<bool> UpdateGuild(Guild guild);
-        Task<bool> DeleteGuild(Guild guild);
         Task<bool> UpdateGuildRoles(Guild guild);
         Task<ulong> GetGuildDefaultRole(Guild guild);
     }
@@ -188,23 +187,6 @@ namespace Rosettes.Database
             }
 
             return true;
-        }
-
-        public async Task<bool> DeleteGuild(Guild guild)
-        {
-            var db = DBConnection();
-
-            var sql = @"DELETE FROM guilds
-                        WHERE id = @Id";
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { guild.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-deleteguild", $"sqlException code {ex.Message}");
-                return false;
-            }
         }
     }
 }

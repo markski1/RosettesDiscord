@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 

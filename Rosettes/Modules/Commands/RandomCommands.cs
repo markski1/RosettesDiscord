@@ -1,11 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Modules.Engine;
-using static System.Net.Mime.MediaTypeNames;
 using System.Data;
-using System;
 
 namespace Rosettes.Modules.Commands
 {
@@ -77,7 +74,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-        public async Task CheckEm()
+        public async Task CheckEm(string image = "false")
         {
             if (Context.Guild is null)
             {
@@ -85,8 +82,13 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            if (image != "false" && image != "true")
+            {
+                await RespondAsync("the 'image' parameter may only be 'true' or 'false'(default)", ephemeral: true);
+                return;
+            }
+
             Random randomizer = new();
-            var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
 
             int number = randomizer.Next(99999999) + 1;
             // kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing so it doesn't matter.
@@ -108,7 +110,11 @@ namespace Rosettes.Modules.Commands
 
             await RespondAsync($"[{displayName}] Check'Em! : **{number}**");
 
-            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
+            if (image == "true")
+            {
+                var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
+                await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
+            }
         }
     }
 }

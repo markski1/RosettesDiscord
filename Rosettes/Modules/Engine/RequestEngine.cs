@@ -43,6 +43,7 @@ namespace Rosettes.Modules.Engine
                     case 2:
                         await AutoRolesEngine.SyncWithDatabase();
                         break;
+                    
                 }
                 sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";
 

@@ -55,21 +55,15 @@ namespace Rosettes.Modules.Engine
 
         private static bool NoMessageChannel(SocketCommandContext context)
         {
-            switch (context.Channel.GetChannelType())
+            return context.Channel.GetChannelType() switch
             {
-                case ChannelType.News:
-                    return false;
-                case ChannelType.NewsThread:
-                    return false;
-                case ChannelType.PublicThread:
-                    return false;
-                case ChannelType.PrivateThread:
-                    return false;
-                case ChannelType.DM:
-                    return false;
-            }
-
-            return true;
+                ChannelType.News => false,
+                ChannelType.NewsThread => false,
+                ChannelType.PublicThread => false,
+                ChannelType.PrivateThread => false,
+                ChannelType.DM => false,
+                _ => true,
+            };
         }
 
         public static async Task GetGameInfo(SocketCommandContext context)

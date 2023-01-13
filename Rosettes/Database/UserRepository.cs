@@ -13,7 +13,6 @@ namespace Rosettes.Database
         Task<bool> CheckUserExists(IUser user);
         Task<bool> InsertUser(User user);
         Task<bool> UpdateUser(User user);
-        Task<bool> DeleteUser(User user);
     }
 
     public class UserRepository : IUserRepository
@@ -107,23 +106,6 @@ namespace Rosettes.Database
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> DeleteUser(User user)
-        {
-            var db = DBConnection();
-
-            var sql = @"DELETE FROM users
-                        WHERE id = @Id";
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { user.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-deleteuser", $"sqlException code {ex.Message}");
                 return false;
             }
         }

@@ -1,5 +1,4 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Engine;
 using System.Reflection;
