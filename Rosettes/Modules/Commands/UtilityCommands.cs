@@ -238,5 +238,20 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("There was an error deleting your alarm.");
             }
         }
+
+        [SlashCommand("feedback", "To send suggestions, feedback, bug reports, complaints or anything else to the bot developers.")]
+        public async Task SendFeedback(string text)
+        {
+            string message;
+            message = $"Feedback received from {Context.User.Username}#{Context.User.Discriminator} (id {Context.User.Id})";
+            if (Context.Guild is not null)
+            {
+                message += $"\nSent from guild {Context.Guild.Name} (id {Context.Guild.Id})";
+            }
+            message += $"```{text}```";
+            Global.GenerateNotification(message);
+
+            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implementer or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.", ephemeral: true);
+        }
     }
 }

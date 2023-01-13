@@ -43,7 +43,10 @@ namespace Rosettes.Modules.Engine
                     case 2:
                         await AutoRolesEngine.SyncWithDatabase();
                         break;
-                    
+                    // req type 3: message to given guild or user.
+                    case 3:
+                        Global.SendMessage(req.RelevantGuild, req.RelevantStringValue);
+                        break;
                 }
                 sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";
 

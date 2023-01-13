@@ -9,6 +9,21 @@ namespace Rosettes.Core
         public static readonly RosettesMain RosettesMain = new();
         public static readonly HttpClient HttpClient = new();
 
+        public static async void SendMessage(ulong id, string message)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            try
+            {
+                var user = await client.GetUserAsync(id);
+                var channel = await user.CreateDMChannelAsync();
+                await channel.SendMessageAsync($"ADMIN MESSAGE:```{message}```");
+            }
+            catch (Exception ex)
+            {
+                GenerateErrorMessage("global", $"failed to deliver admin message to user {id} \n----\n {ex}");
+            }
+        }
+
         public static void GenerateErrorMessage(string source, string error)
         {
             // generate the error string
