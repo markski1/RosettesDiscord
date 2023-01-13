@@ -94,7 +94,7 @@ namespace Rosettes.Modules.Engine
             return GuildCache.First(item => item.Id == guild.Id);
         }
 
-        // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
+        // assumes guild is cached! to be used in constructors, where async tasks cannot be awaited.
         public static Guild GetDBGuildById(ulong guild)
         {
             return GuildCache.First(item => item.Id == guild);

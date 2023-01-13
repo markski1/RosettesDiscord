@@ -26,16 +26,18 @@ namespace Rosettes.Modules.Engine
 
             foreach (Request req in result)
             {
-                Guild guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
+                Guild? guild = null;
                 switch (req.RequestType)
                 {
                     // req type 0: assign role to everyone
                     case 0:
+                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
                         if (guild is null) continue;
                         guild.SetRoleForEveryone(req.RelevantValue);
                         break;
                     // req type 1: make guild update
                     case 1:
+                        guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
                         if (guild is null) continue;
                         await GuildEngine.UpdateGuild(guild);
                         break;
