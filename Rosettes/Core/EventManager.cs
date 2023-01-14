@@ -169,7 +169,7 @@ namespace Rosettes.Core
             return Task.CompletedTask;
         }
 
-        private static Task OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
             // ensure guild is cached and their data can be accessed
             ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
@@ -187,13 +187,18 @@ namespace Rosettes.Core
 
             foreach (var role in roles)
             {
-                guild.SetUserRole(reaction.UserId, role.RoleId);
+                var success = await guild.SetUserRole(reaction.UserId, role.RoleId);
+                if (!success)
+                {
+                    var cacheChannel = await channel.DownloadAsync();
+                    await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions!");
+                }
             }
 
             return Task.CompletedTask;
         }
 
-        private static Task OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
+        private static async Task<Task> OnReactionRemoved(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)
         {
             // ensure guild is cached and their data can be accessed
             ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
@@ -211,7 +216,12 @@ namespace Rosettes.Core
 
             foreach (var role in roles)
             {
-                guild.RemoveUserRole(reaction.UserId, role.RoleId);
+                var success = await guild.RemoveUserRole(reaction.UserId, role.RoleId);
+                if (!success)
+                {
+                    var cacheChannel = await channel.DownloadAsync();
+                    await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions!");
+                }
             }
 
             return Task.CompletedTask;

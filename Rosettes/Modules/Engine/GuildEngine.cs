@@ -257,24 +257,39 @@ namespace Rosettes.Modules.Engine
             return user;
         }
 
-        public async void SetUserRole(ulong userid, ulong roleid)
+        public async Task<Boolean> SetUserRole(ulong userid, ulong roleid)
         {
             var user = await GetGuildUser(userid);
             if (user is not null)
             {
-                await user.AddRoleAsync(roleid);
+                try
+                {
+                    await user.AddRoleAsync(roleid);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
             }
-            return;
+            return false;
         }
 
-        public async void RemoveUserRole(ulong userid, ulong roleid)
+        public async Task<Boolean> RemoveUserRole(ulong userid, ulong roleid)
         {
             var user = await GetGuildUser(userid);
             if (user is not null)
             {
-                await user.RemoveRoleAsync(roleid);
+                try
+                {
+                    await user.RemoveRoleAsync(roleid);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
-            return;
+            return false;
         }
 
         public async void UpdateRoles()

@@ -100,10 +100,10 @@ namespace Rosettes.Modules.Commands
                 string roleName = "";
                 if (socketGuild is not null && socketGuild.GetRole(role.RoleId) is not null)
                 {
-                    roleName = socketGuild.GetRole(role.RoleId).Name;
+                    roleName = socketGuild.GetRole(role.RoleId).Mention;
                 } else if (restGuild is not null && restGuild.GetRole(role.RoleId) is not null)
                 {
-                    roleName = restGuild.GetRole(role.RoleId).Name;
+                    roleName = restGuild.GetRole(role.RoleId).Mention;
                 }
                 text += $"{role.Emote} - {roleName}\n\n";
             }
