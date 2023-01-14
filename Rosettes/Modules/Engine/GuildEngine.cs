@@ -225,6 +225,11 @@ namespace Rosettes.Modules.Engine
             char value = Settings[3];
             return value == '1';
         }
+        public bool AllowsFishing()
+        {
+            char value = Settings[4];
+            return value == '1';
+        }
 
 
         public async void SetRoleForEveryone(ulong roleid)

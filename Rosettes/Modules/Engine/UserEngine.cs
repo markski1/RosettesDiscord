@@ -69,14 +69,37 @@ namespace Rosettes.Modules.Engine
         {
             return UserCache.First(item => item.Id == user);
         }
+
+        public static async Task<List<User>> GetAllUsersFromGuild(IGuild guild)
+        {
+            var users = await guild.GetUsersAsync();
+            List<User> userList = new();
+            if (users is null) return userList;
+            foreach (var user in users)
+            {
+                userList.Add(await GetDBUser(user));
+            }
+            return userList;
+        }
     }
 
     public class User
     {
         public ulong Id { get; set; }
+        // Contains if the user's data in memory has changed since last syncing to database.
         public bool SyncUpToDate { get; set; }
+
+        // timers
         private int LastUsedCommand;
+        private int LastFished;
+
+
+        // Database flags
         private string NameCache = "";
+        // fishing
+        public int FishCount;
+        public int RareFishCount;
+        public int GarbageCount;
 
         // normal constructor
         public User(IUser? newUser)
@@ -93,15 +116,22 @@ namespace Rosettes.Modules.Engine
             }
             SyncUpToDate = true;
             LastUsedCommand = 0;
+            LastFished = 0;
+
+            FishCount = 0; RareFishCount = 0; GarbageCount = 0;
         }
 
         // database constructor, used on loading users
-        public User(ulong id, string namecache)
+        public User(ulong id, string namecache, int fishcount, int rarefishcount, int garbagecount)
         {
             Id = id;
             SyncUpToDate = true;
             LastUsedCommand = 0;
+            LastFished = 0;
             NameCache = namecache;
+            FishCount = fishcount;
+            RareFishCount = rarefishcount;
+            GarbageCount = garbagecount;
         }
 
         public bool IsValid()
@@ -115,6 +145,16 @@ namespace Rosettes.Modules.Engine
             if (Global.CurrentUnix() > LastUsedCommand)
             {
                 LastUsedCommand = Global.CurrentUnix() + change;
+                return true;
+            }
+            return false;
+        }
+
+        public bool CanFish()
+        {
+            if (Global.CurrentUnix() > LastFished)
+            {
+                LastFished = Global.CurrentUnix() + 3600;
                 return true;
             }
             return false;
