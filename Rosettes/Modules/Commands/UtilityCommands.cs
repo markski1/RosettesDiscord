@@ -49,8 +49,8 @@ namespace Rosettes.Modules.Commands
         }
         */
 
-        [SlashCommand("guildinfo", "Provides information about the guild where it's used.")]
-        public async Task GuildInfo() 
+        [SlashCommand("serverinfo", "Display server information.")]
+        public async Task ServerInfo() 
         {
             var guild = Context.Guild;
             if (guild == null)
@@ -58,20 +58,25 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("This command won't run in my DM's, silly.");
                 return;
             }
-            string text = "```" +
-                $"Information about guild {guild.Name}\n" +
-                $"==============\n" +
-                $"Guild created :  {guild.CreatedAt}\n" +
-                $"Guild ID      :  {guild.Id}\n" +
-                $"Members       :  {guild.MemberCount}\n" +
-                $"Owner         :  {guild.Owner.DisplayName}\n" +
-                $"Roles         :  {guild.Roles.Count}\n" +
-                $"Stickers      :  {guild.Stickers.Count}\n" +
-                $"Emoji         :  {guild.Emotes.Count}\n" +
-                $"=============="
-                ;
-            if (guild.IconUrl != null) await RespondAsync(guild.IconUrl);
-            await RespondAsync(text);
+            EmbedBuilder embed = new()
+            {
+                Title = $"Information about guild {guild.Name}",
+                ImageUrl = guild.IconUrl
+            };
+
+            embed.AddField("Creation date", guild.CreatedAt);
+            embed.AddField("Snowflake ID", guild.Id);
+            embed.AddField("Members", guild.MemberCount);
+            embed.AddField("Owner", guild.Owner.Username + "#" + guild.Owner.Discriminator);
+            embed.AddField("Roles", guild.Roles.Count);
+            embed.AddField("Stickers", guild.Stickers.Count);
+            embed.AddField("Emoji", guild.Emotes.Count);
+            if (guild.SplashUrl is not null)
+            {
+                embed.AddField("Splash image URL", $"<{guild.SplashUrl}>");
+            }
+
+            await RespondAsync(embed: embed.Build());
         }
 
         [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
@@ -89,7 +94,9 @@ namespace Rosettes.Modules.Commands
             tweetUrl = tweetUrl.Replace("sxtwitter.com", "gateway.markski.ar:42069");
             // normal replace
             tweetUrl = tweetUrl.Replace("twitter.com", "gateway.markski.ar:42069");
+            // internal domain so no need for SSL
             tweetUrl = tweetUrl.Replace("https:/", "http:/");
+            // remove non-embed gt and lt signs if applicable
             tweetUrl = tweetUrl.Replace("<", string.Empty);
             tweetUrl = tweetUrl.Replace(">", string.Empty);
 
@@ -192,14 +199,8 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("arc", "Provide a quick archive.is link for a provided URL.")]
-        public async Task Archive(string url)
-        {
-            await RespondAsync($"<https://archive.is/submit/?url={url}>");
-        }
-
         [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
-        public async Task Alarm(int minutes)
+        public async Task Alarm(int amount, string unit = "minute")
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {
@@ -207,15 +208,32 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            if (minutes <= 0)
+            if (unit.Contains("minute"))
+            {
+                // nothing as the function receives minutes
+            }
+            else if (unit.Contains("hour"))
+            {
+                amount *= 60;
+            }
+            else if (unit.Contains("day"))
+            {
+                amount = amount * 60 * 24;
+            }
+            else
+            {
+                await RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
+            }
+
+            if (amount <= 0)
             {
                 await RespondAsync("Time don't go in that direction.");
                 return;
             }
 
-            await RespondAsync($"Okay! I will tag you in {minutes} minute{((minutes != 1) ? 's' : null)}");
+            await RespondAsync($"Okay! I will tag you in {amount} minute{((amount != 1) ? 's' : null)}");
 
-            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(minutes)), await UserEngine.GetDBUser(Context.User), Context.Channel, minutes);
+            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(amount)), await UserEngine.GetDBUser(Context.User), Context.Channel, amount);
         }
 
         [SlashCommand("cancelalarm", "Cancels your current alarm.")]

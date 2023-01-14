@@ -37,8 +37,4 @@
     <PackageReference Include="Victoria" Version="6.0.1026" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Modules\TypeConverters\" />
-  </ItemGroup>
-
 </Project>

@@ -61,7 +61,7 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
                 }
                 progress++;
                 // update the message with the current progress, every 3rd emoji.
-                if (progress % 2 == 0) await messageId.ModifyAsync(x => x.Content = $"Progress: `{progress}/{emoteAmount}`");
+                if (progress % 3 == 0) await messageId.ModifyAsync(x => x.Content = $"Progress: `{progress}/{emoteAmount}`");
             }
             // done, update message.
             await messageId.ModifyAsync(x => x.Content = $"Progress: `Complete!`");

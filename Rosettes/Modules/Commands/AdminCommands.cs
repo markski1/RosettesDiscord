@@ -118,7 +118,7 @@ namespace Rosettes.Modules.Commands
 
             await AutoRolesEngine.UpdateGroupMessageId(code, mid.Id);
 
-            await RespondAsync("Done!", ephemeral: true);
+            await RespondAsync("Autoroles message created. If you get permissions errors, remember the following:\n\n1. Make sure you did not remove the 'Manage roles' permission when you invited Rosettes into your server.\n2. Make sure the role \"Rosettes\" is higher in the list of roles than the ones which can be chosen.", ephemeral: true);
         }
     }
 }

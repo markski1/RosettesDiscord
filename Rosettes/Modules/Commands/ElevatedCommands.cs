@@ -53,7 +53,7 @@ namespace Rosettes.Modules.Commands
                 }
                 separator = !separator;
             }
-            text += "\n\nSnow leopards are organized and precise team workers.```";
+            text += "```";
             await RespondAsync(text);
         }
 
@@ -141,7 +141,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            await RespondAsync($"New unique key generated. Anyone with this key can change Rosettes settings for your servers, so beware.\nIf you ever want to change your key, just use $KeyGen again.");
+            await RespondAsync($"New unique key generated. This key is to be used in the webpanel, at https://snep.markski.ar/rosettes\n\nAnyone with this key can change Rosettes' settings in guilds owned by you.\nIf you ever want to change your key, just use /keygen again.");
             await ReplyAsync($"```{NewKey}```");
         }
     }

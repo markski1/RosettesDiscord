@@ -191,7 +191,7 @@ namespace Rosettes.Core
                 if (!success)
                 {
                     var cacheChannel = await channel.DownloadAsync();
-                    await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions!");
+                    await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options!");
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Rosettes.Core
                 if (!success)
                 {
                     var cacheChannel = await channel.DownloadAsync();
-                    await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions!");
+                    await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options!");
                 }
             }
 
