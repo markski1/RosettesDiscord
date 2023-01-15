@@ -96,12 +96,6 @@ namespace Rosettes.Modules.Engine
 
         // Database flags
         private string NameCache = "";
-        // fishing
-        private int FishCount;
-        private int UncommonFishCount;
-        private int RareFishCount;
-        private int GarbageCount;
-        private int SushiCount;
 
         // normal constructor
         public User(IUser? newUser)
@@ -119,23 +113,16 @@ namespace Rosettes.Modules.Engine
             SyncUpToDate = true;
             LastUsedCommand = 0;
             LastFished = 0;
-
-            FishCount = 0; RareFishCount = 0; GarbageCount = 0; SushiCount = 0;
         }
 
         // database constructor, used on loading users
-        public User(ulong id, string namecache, int fishcount, int uncommonfishcount, int rarefishcount, int garbagecount, int sushicount)
+        public User(ulong id, string namecache)
         {
             Id = id;
             SyncUpToDate = true;
             LastUsedCommand = 0;
             LastFished = 0;
             NameCache = namecache;
-            FishCount = fishcount;
-            UncommonFishCount = uncommonfishcount;
-            RareFishCount = rarefishcount;
-            GarbageCount = garbagecount;
-            SushiCount = sushicount;
         }
 
         public bool IsValid()
@@ -173,9 +160,6 @@ namespace Rosettes.Modules.Engine
             return NameCache;
         }
 
-
-
-
         // fish stuff
 
         public bool CanFish()
@@ -186,78 +170,6 @@ namespace Rosettes.Modules.Engine
                 return true;
             }
             return false;
-        }
-
-        public void AddFish(int fishType, int amount)
-        {
-            _ = fishType switch
-            {
-                1 => FishCount += amount,
-                2 => UncommonFishCount += amount,
-                3 => RareFishCount += amount,
-                _ => GarbageCount += amount
-            };
-            SyncUpToDate = false;
-        }
-
-        public void TakeFish(int fishType, int amount)
-        {
-            _ = fishType switch
-            {
-                1 => FishCount -= amount,
-                2 => UncommonFishCount -= amount,
-                3 => RareFishCount -= amount,
-                _ => GarbageCount -= amount
-            };
-            SyncUpToDate = false;
-        }
-
-        public int GetFish(int type)
-        {
-            return type switch
-            {
-                1 => FishCount,
-                2 => UncommonFishCount,
-                3 => RareFishCount,
-                _ => GarbageCount
-            };
-        }
-
-        public int GetGarbage()
-        {
-            return GarbageCount;
-        }
-
-        public int GetSushi()
-        {
-            return SushiCount;
-        }
-
-        public void MakeSushi()
-        {
-            FishCount -= 2;
-            RareFishCount -= 1;
-            SushiCount += 1;
-            SyncUpToDate = false;
-        }
-
-        public void GiveSushi(User receiver)
-        {
-            SushiCount -= 1;
-            receiver.AddSushi();
-            SyncUpToDate = false;
-        }
-
-        public void AddSushi()
-        {
-            SushiCount += 1;
-            SyncUpToDate = false;
-        }
-
-        public void UseSushi()
-        {
-            SushiCount -= 1;
-            SyncUpToDate = false;
         }
     }
 }

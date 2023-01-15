@@ -13,6 +13,8 @@ namespace Rosettes.Database
         Task<bool> CheckUserExists(IUser user);
         Task<bool> InsertUser(User user);
         Task<bool> UpdateUser(User user);
+        Task<int> FetchInventoryItem(User user, string item);
+        Task<bool> ModifyInventoryItem(User user, string item, int amount);
     }
 
     public class UserRepository : IUserRepository
@@ -26,7 +28,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, fishcount, uncommonfishcount,  rarefishcount, garbagecount, sushicount FROM users";
+            var sql = @"SELECT id, namecache FROM users";
 
             try
             {
@@ -60,7 +62,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, fishcount, uncommonfishcount, rarefishcount, garbagecount, sushicount FROM users WHERE id=@id";
+            var sql = @"SELECT id, namecache FROM users WHERE id=@id";
 
             try
             {
@@ -96,16 +98,50 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, namecache=@NameCache, fishcount=@FishCount, uncommonfishcount=@UncommonFishCount,  rarefishcount=@RareFishCount, garbagecount=@GarbageCount, sushicount=@SushiCount
+                        SET id=@Id, namecache=@NameCache
                         WHERE id = @Id";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), FishCount = user.GetFish(1), UncommonFishCount = user.GetFish(2), RareFishCount = user.GetFish(3), GarbageCount = user.GetFish(999), SushiCount = user.GetSushi() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName() })) > 0;
             }
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<int> FetchInventoryItem(User user, string item)
+        {
+            var db = DBConnection();
+
+            var sql = $"SELECT `{item}` FROM users WHERE id=@id";
+
+            try
+            {
+                return await db.QueryFirstOrDefaultAsync<int>(sql, new { id = user.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
+                return -1;
+            }
+        }
+
+        public async Task<bool> ModifyInventoryItem(User user, string item, int amount)
+        {
+            var db = DBConnection();
+
+            var sql = $"UPDATE users SET {item} = {item} + @amount WHERE id=@id";
+
+            try
+            {
+                return (await db.ExecuteAsync(sql, new { item, amount, id = user.Id })) > 0;
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
                 return false;
             }
         }

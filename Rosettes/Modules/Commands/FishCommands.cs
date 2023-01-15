@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish", "Try to catch a fish")]
         public async Task CatchFish()
         {
-            if (!await FishHelper.CanFish(Context))
+            if (!await FishEngine.CanFish(Context))
             {
                 await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
                 return;
@@ -29,25 +29,28 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish-make", "Use your fish to make something.")]
         public async Task FishMake(string option = "none")
         {
-            if (!await FishHelper.CanFish(Context))
+            if (!await FishEngine.CanFish(Context))
             {
                 await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
                 return;
             }
 
-            if (option.ToLower() == "sushi")
+            string choice = option.ToLower();
+
+            if (FishEngine.IsValidMakeChoice(choice))
             {
                 var dbUser = await UserEngine.GetDBUser(Context.User);
-                if (dbUser.GetFish(1) < 2 || dbUser.GetFish(2) < 1)
+                string ingredientsOrSuccess = await FishEngine.HasIngredients(dbUser, choice);
+                if (ingredientsOrSuccess != "success")
                 {
-                    await RespondAsync($"You need at least 2 {FishHelper.GetFullFishName(1)} and 1 {FishHelper.GetFullFishName(2)} to make sushi.", ephemeral: true);
+                    await RespondAsync($"You need at least {ingredientsOrSuccess} to make {FishEngine.GetItemName(choice)}.", ephemeral: true);
                     return;
                 }
 
-                dbUser.MakeSushi();
+                ingredientsOrSuccess = FishEngine.MakeItem(dbUser, choice);
 
-                await RespondAsync($"[{Context.User.Username}] You have spent 2 {FishHelper.GetFishEmoji(1)} and 1 {FishHelper.GetFishEmoji(2)} to make: {FishHelper.WriteSushi()}");
-                await ReplyAsync($"1 {FishHelper.WriteSushi()} added to inventory.");
+                await RespondAsync($"[{Context.User.Username}] You have spent {ingredientsOrSuccess} to make: {FishEngine.GetItemName(choice)}");
+                await ReplyAsync($"1 {FishEngine.GetItemName(choice)} added to inventory.");
             }
             else
             {
@@ -59,26 +62,30 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish-give", "Give an item to another user.")]
         public async Task FishGive(IUser user, string option = "none")
         {
-            if (!await FishHelper.CanFish(Context))
+            if (!await FishEngine.CanFish(Context))
             {
                 await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
                 return;
             }
 
-            if (option.ToLower() == "sushi")
+            string choice = option.ToLower();
+
+            if (FishEngine.IsValidGiveChoice(choice))
             {
                 var dbUser = await UserEngine.GetDBUser(Context.User);
                 var receiver = await UserEngine.GetDBUser(user);
 
-                if (dbUser.GetSushi() < 1)
+                if (await FishEngine.GetItem(dbUser, choice) < 1)
                 {
-                    await RespondAsync("You don't have any sushi to give.");
+                    await RespondAsync($"You don't have any {FishEngine.GetItemName(choice)} to give.");
                     return;
                 }
 
-                dbUser.GiveSushi(receiver);
+                FishEngine.ModifyItem(receiver, choice, +1);
 
-                await RespondAsync($"[{Context.User.Username}] have given {FishHelper.WriteSushi()} to {user.Mention}!");
+                FishEngine.ModifyItem(dbUser, choice, -1);
+
+                await RespondAsync($"[{Context.User.Username}] have given {FishEngine.GetItemName(choice)} to {user.Mention}!");
             }
             else
             {
@@ -90,7 +97,7 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish-use", "Use an item, optionally with another user.")]
         public async Task FishUse(string option = "none", IUser? user = null)
         {
-            if (!await FishHelper.CanFish(Context))
+            if (!await FishEngine.CanFish(Context))
             {
                 await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
                 return;
@@ -98,34 +105,34 @@ namespace Rosettes.Modules.Commands
 
             var dbUser = await UserEngine.GetDBUser(Context.User);
 
-            if (option.ToLower() == "sushi")
+            string choice = option.ToLower();
+
+            if (choice == "sushi")
             {
-                if (dbUser.GetSushi() < 1)
+                if (await FishEngine.GetItem(dbUser, choice) < 1)
                 {
-                    await RespondAsync("You don't have any sushi to give.");
+                    await RespondAsync($"You don't have any {FishEngine.GetItemName(choice)} to use.");
                     return;
                 }
 
-                dbUser.UseSushi();
+                FishEngine.ModifyItem(dbUser, choice, -1);
 
                 if (user is null)
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {FishHelper.WriteSushi()}. Tasty!");
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}. Tasty!");
                 }
                 else
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {FishHelper.WriteSushi()}, and shared some with {user.Mention}. Tasty!");
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}, and shared some with {user.Mention}. Tasty!");
                 }
             }
-            if (option.ToLower() == "garbage")
+            if (choice == "garbage")
             {
-                if (dbUser.GetFish(999) < 1)
+                if (await FishEngine.GetItem(dbUser, "garbage") < 1)
                 {
-                    await RespondAsync("You don't have any garbage to throw.");
+                    await RespondAsync($"You don't have any {FishEngine.GetItemName(choice)} to use.");
                     return;
                 }
-
-                
 
                 if (user is null)
                 {
@@ -133,8 +140,8 @@ namespace Rosettes.Modules.Commands
                 }
                 else
                 {
-                    dbUser.TakeFish(999, 1);
-                    await RespondAsync($"[{Context.User.Username}] has thrown some {FishHelper.GetFullFishName(999)} at {user.Mention}. Well done!");
+                    FishEngine.ModifyFish(dbUser, 999, -1);
+                    await RespondAsync($"[{Context.User.Username}] has thrown some {FishEngine.GetItemName("garbage")} at {user.Mention}. Well done!");
                 }
             }
             else
@@ -161,13 +168,13 @@ namespace Rosettes.Modules.Commands
 
             embed.AddField(
                 $"Fish", 
-                $"{FishHelper.GetFullFishName(1)}: {user.GetFish(1)} \n" +
-                $"{FishHelper.GetFullFishName(2)}: {user.GetFish(2)} \n" +
-                $"{FishHelper.GetFullFishName(3)}: {user.GetFish(3)} \n");
+                $"{FishEngine.GetFullFishName(1)}: {await FishEngine.GetFish(user, 1)} \n" +
+                $"{FishEngine.GetFullFishName(2)}: {await FishEngine.GetFish(user, 2)} \n" +
+                $"{FishEngine.GetFullFishName(3)}: {await FishEngine.GetFish(user, 3)} \n");
             embed.AddField(
                 $"Items",
-                $"{FishHelper.GetFullFishName(999)}: {user.GetFish(999)}\n" +
-                $"{FishHelper.WriteSushi()}: {user.GetSushi()}");
+                $"{FishEngine.GetItemName("garbage")}: {await FishEngine.GetItem(user, "garbage")}\n" +
+                $"{FishEngine.GetItemName("sushi")}: {await FishEngine.GetItem(user, "sushi")}");
 
             await RespondAsync(embed: embed.Build());
         }
@@ -175,6 +182,8 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish-top", "List the top fishers by total fish in their inventory")]
         public async Task FishTops()
         {
+            await RespondAsync("Top fisher leaderboard is currently unavailable!");
+            /*
             if (Context.Guild is null)
             {
                 await RespondAsync("Fish commands don't work in DM's.");
@@ -189,7 +198,7 @@ namespace Rosettes.Modules.Commands
             }
 
             // Compiler isn't happy about writing on top of the same lists so we create two new ones. It's fiiiine.
-            var OrderedList = users.OrderByDescending(x => x.GetFish(1) + x.GetFish(2)).Take(10);
+            var OrderedList = users.OrderByDescending(x => await FishEngine.GetFish(x, 1) + x.GetFish(2)).Take(10);
 
             string topList = "Top 10 fishers in this list: ```";
 
@@ -201,10 +210,11 @@ namespace Rosettes.Modules.Commands
             topList += "```";
 
             await RespondAsync(topList);
+            */
         }
     }
 
-    public class StartFishing : IDisposable
+    public class StartFishing
     {
         private readonly System.Timers.Timer Timer = new(1000);
         private int fishState = 0;
@@ -244,13 +254,14 @@ namespace Rosettes.Modules.Commands
                     _ => 999,
                 };
 
-                await message.ModifyAsync(x => x.Content = $"You caught... {FishHelper.GetFullFishName(caught)}!");
-                await message.Channel.SendMessageAsync($"*{FishHelper.GetFullFishName(caught)} caught and added to inventory.*");
+                await message.ModifyAsync(x => x.Content = $"You caught... {FishEngine.GetFullFishName(caught)}!");
+                await message.Channel.SendMessageAsync($"*{FishEngine.GetFullFishName(caught)} caught and added to inventory.*");
 
-                user.AddFish(caught, 1);
+                FishEngine.ModifyFish(user, caught, +1);
 
                 fishState = 2;
                 Timer.Enabled = true;
+                Timer.Dispose();
             }
             if (fishState == 2)
             {
@@ -258,9 +269,6 @@ namespace Rosettes.Modules.Commands
                 {
                     fishState = 3;
                     await message.DeleteAsync();
-                    Timer.Enabled = false;
-                    Timer.Dispose();
-                    Dispose();
                 }
                 catch {
                     // sometimes system timer will get all sus and call this last stage twice, I don't know why.
@@ -268,60 +276,5 @@ namespace Rosettes.Modules.Commands
                 }
             }
         }
-
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
     }
-
-    public static class FishHelper
-    {
-        public static string GetFishName(int type)
-        {
-            return type switch
-            {
-                1 => "Common fish",
-                2 => "Uncommon fish",
-                3 => "Rare fish",
-                _ => "Garbage",
-            };
-        }
-
-        public static Emoji GetFishEmoji(int type)
-        {
-            return type switch
-            {
-                1 => new Emoji("🐡"),
-                2 => new Emoji("🐟"),
-                3 => new Emoji("🐠"),
-                _ => new Emoji("🗑")
-            };
-        }
-
-        public static string GetFullFishName(int type)
-        {
-            return $"{GetFishEmoji(type)} {GetFishName(type)}";
-        }
-
-        public static string WriteSushi()
-        {
-            return $"{new Emoji("🍣")} Sushi";
-        }
-
-        internal static async Task<bool> CanFish(SocketInteractionContext context)
-        {
-            if (context.Guild is null)
-            {
-                return false;
-            }
-            var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
-            if (!dbGuild.AllowsFishing())
-            {
-                return false;
-            }
-            return true;
-        }
-    }
-
 }
