@@ -208,15 +208,15 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            if (unit.Contains("minute"))
+            if (unit.ToLower().Contains("minute"))
             {
                 // nothing as the function receives minutes
             }
-            else if (unit.Contains("hour"))
+            else if (unit.ToLower().Contains("hour"))
             {
                 amount *= 60;
             }
-            else if (unit.Contains("day"))
+            else if (unit.ToLower().Contains("day"))
             {
                 amount = amount * 60 * 24;
             }

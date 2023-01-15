@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using System.Linq.Expressions;
 
 namespace Rosettes.Modules.Commands
 {
@@ -22,9 +21,70 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("You can only fish every 60 minutes.");
                 return;
             }
-            await RespondAsync($"Fishing! {new Emoji("🎣")}");
+            await RespondAsync($"[{Context.User.Username}] Fishing! {new Emoji("🎣")}");
             var message = await ReplyAsync("You caught");
             _ = new StartFishing(message, dbUser);
+        }
+
+        [SlashCommand("fish-make", "Use your fish to make something.")]
+        public async Task FishMake(string option = "none")
+        {
+            if (!await FishHelper.CanFish(Context))
+            {
+                await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
+                return;
+            }
+
+            if (option.ToLower() == "sushi")
+            {
+                var dbUser = await UserEngine.GetDBUser(Context.User);
+                if (dbUser.GetFish(1) < 2 || dbUser.GetFish(2) < 1)
+                {
+                    await RespondAsync($"You need at least 2 {FishHelper.GetFullFishName(1)} and 1 {FishHelper.GetFullFishName(2)} to make sushi.", ephemeral: true);
+                    return;
+                }
+
+                dbUser.MakeSushi();
+
+                await RespondAsync($"[{Context.User.Username}] You have spent 2 {FishHelper.GetFishEmoji(1)} and 1 {FishHelper.GetFishEmoji(2)} to make: {FishHelper.WriteSushi()}");
+                await ReplyAsync($"1 {FishHelper.WriteSushi()} added to inventory.");
+            }
+            else
+            {
+                await RespondAsync("Valid things to make: Sushi", ephemeral: true);
+                return;
+            }
+        }
+
+        [SlashCommand("fish-give", "Give sushi to another user.")]
+        public async Task FishGive(IUser user, string option = "none")
+        {
+            if (!await FishHelper.CanFish(Context))
+            {
+                await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
+                return;
+            }
+
+            if (option.ToLower() == "sushi")
+            {
+                var dbUser = await UserEngine.GetDBUser(Context.User);
+                var receiver = await UserEngine.GetDBUser(user);
+
+                if (dbUser.GetSushi() < 1)
+                {
+                    await RespondAsync("You don't have any sushi to give.");
+                    return;
+                }
+
+                dbUser.GiveSushi(receiver);
+
+                await RespondAsync($"[{Context.User.Username}] have given {FishHelper.WriteSushi()} to {user.Mention}!");
+            }
+            else
+            {
+                await RespondAsync("Valid things to give: Sushi", ephemeral: true);
+                return;
+            }
         }
 
         [SlashCommand("fish-inventory", "Check your fish inventory")]
@@ -42,9 +102,11 @@ namespace Rosettes.Modules.Commands
 
             var user = await UserEngine.GetDBUser(Context.User);
 
-            embed.AddField($"{FishHelper.GetFishEmoji(1)}", $"{FishHelper.GetFishName(1)}: {user.FishCount}");
-            embed.AddField($"{FishHelper.GetFishEmoji(2)}", $"{FishHelper.GetFishName(2)}: {user.FishCount}");
-            embed.AddField($"{FishHelper.GetFishEmoji(999)}", $"{FishHelper.GetFishName(999)}: {user.FishCount}");
+            embed.AddField($"{FishHelper.GetFishEmoji(1)}", $"{FishHelper.GetFishName(1)}: {user.GetFish(1)}");
+            embed.AddField($"{FishHelper.GetFishEmoji(2)}", $"{FishHelper.GetFishName(2)}: {user.GetFish(2)}");
+            embed.AddField($"{FishHelper.GetFishEmoji(3)}", $"{FishHelper.GetFishName(3)}: {user.GetFish(3)}");
+            embed.AddField($"{FishHelper.GetFishEmoji(999)}", $"{FishHelper.GetFishName(999)}: {user.GetFish(999)}");
+            embed.AddField($"{new Emoji("🍣")}", $"Sushi: {user.GetSushi()}");
 
             await RespondAsync(embed: embed.Build());
         }
@@ -66,13 +128,13 @@ namespace Rosettes.Modules.Commands
             }
 
             // Compiler isn't happy about writing on top of the same lists so we create two new ones. It's fiiiine.
-            var OrderedList = users.OrderByDescending(x => x.FishCount + x.RareFishCount).Take(10);
+            var OrderedList = users.OrderByDescending(x => x.GetFish(1) + x.GetFish(2)).Take(10);
 
             string topList = "Top 10 fishers in this list: ```";
 
             foreach (var user in OrderedList)
             {
-                topList += $"{await user.GetName()} | {user.FishCount + user.RareFishCount} fish total\n";
+                topList += $"{await user.GetName()} | {user.GetFish(1) + user.GetFish(2)} fish total\n";
             }
 
             topList += "```";
@@ -108,25 +170,23 @@ namespace Rosettes.Modules.Commands
             if (fishState == 1)
             {
                 Random rand = new();
-                int caught = rand.Next(101);
+                int caught = rand.Next(100);
                 caught = caught switch
                 {
                     //common fish
                     (<= 40) => 1,
-                    //rare fish
-                    (> 40 and <= 60) => 2,
+                    //uncommon fish
+                    (> 40 and <= 70) => 2,
+                    // rare fish
+                    (> 70 and <= 85) => 3,
                     // garbage
                     _ => 999,
                 };
-                await message.ModifyAsync(x => x.Content = $"You caught... {FishHelper.GetFishName(caught)}! {FishHelper.GetFishEmoji(caught)}");
-                await message.Channel.SendMessageAsync($"*{FishHelper.GetFishName(caught)} {FishHelper.GetFishEmoji(caught)} added to inventory.*");
 
-                _ = caught switch
-                {
-                    1 => user.FishCount += 1,
-                    2 => user.RareFishCount += 1,
-                    _ => user.GarbageCount += 1
-                };
+                await message.ModifyAsync(x => x.Content = $"You caught... {FishHelper.GetFullFishName(caught)}!");
+                await message.Channel.SendMessageAsync($"*{FishHelper.GetFullFishName(caught)} caught and added to inventory.*");
+
+                user.AddFish(caught, 1);
 
                 fishState = 2;
                 Timer.Enabled = true;
@@ -161,7 +221,8 @@ namespace Rosettes.Modules.Commands
             return type switch
             {
                 1 => "Common fish",
-                2 => "Rare fish",
+                2 => "Uncommon fish",
+                3 => "Rare fish",
                 _ => "Garbage",
             };
         }
@@ -170,10 +231,21 @@ namespace Rosettes.Modules.Commands
         {
             return type switch
             {
-                1 => new Emoji("🐟"),
-                2 => new Emoji("🐠"),
+                1 => new Emoji("🐡"),
+                2 => new Emoji("🐟"),
+                3 => new Emoji("🐠"),
                 _ => new Emoji("🗑")
             };
+        }
+
+        public static string GetFullFishName(int type)
+        {
+            return $"{GetFishEmoji(type)} {GetFishName(type)}";
+        }
+
+        public static string WriteSushi()
+        {
+            return $"{new Emoji("🍣")} Sushi";
         }
 
         internal static async Task<bool> CanFish(SocketInteractionContext context)

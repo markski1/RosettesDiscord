@@ -97,9 +97,11 @@ namespace Rosettes.Modules.Engine
         // Database flags
         private string NameCache = "";
         // fishing
-        public int FishCount;
-        public int RareFishCount;
-        public int GarbageCount;
+        private int FishCount;
+        private int UncommonFishCount;
+        private int RareFishCount;
+        private int GarbageCount;
+        private int SushiCount;
 
         // normal constructor
         public User(IUser? newUser)
@@ -118,11 +120,11 @@ namespace Rosettes.Modules.Engine
             LastUsedCommand = 0;
             LastFished = 0;
 
-            FishCount = 0; RareFishCount = 0; GarbageCount = 0;
+            FishCount = 0; RareFishCount = 0; GarbageCount = 0; SushiCount = 0;
         }
 
         // database constructor, used on loading users
-        public User(ulong id, string namecache, int fishcount, int rarefishcount, int garbagecount)
+        public User(ulong id, string namecache, int fishcount, int uncommonfishcount, int rarefishcount, int garbagecount, int sushicount)
         {
             Id = id;
             SyncUpToDate = true;
@@ -130,8 +132,10 @@ namespace Rosettes.Modules.Engine
             LastFished = 0;
             NameCache = namecache;
             FishCount = fishcount;
+            UncommonFishCount = uncommonfishcount;
             RareFishCount = rarefishcount;
             GarbageCount = garbagecount;
+            SushiCount = sushicount;
         }
 
         public bool IsValid()
@@ -145,16 +149,6 @@ namespace Rosettes.Modules.Engine
             if (Global.CurrentUnix() > LastUsedCommand)
             {
                 LastUsedCommand = Global.CurrentUnix() + change;
-                return true;
-            }
-            return false;
-        }
-
-        public bool CanFish()
-        {
-            if (Global.CurrentUnix() > LastFished)
-            {
-                LastFished = Global.CurrentUnix() + 3600;
                 return true;
             }
             return false;
@@ -177,6 +171,88 @@ namespace Rosettes.Modules.Engine
                 SyncUpToDate = false;
             }
             return NameCache;
+        }
+
+
+
+
+        // fish stuff
+
+        public bool CanFish()
+        {
+            if (Global.CurrentUnix() > LastFished)
+            {
+                LastFished = Global.CurrentUnix() + 3600;
+                return true;
+            }
+            return false;
+        }
+
+        public void AddFish(int fishType, int amount)
+        {
+            _ = fishType switch
+            {
+                1 => FishCount += amount,
+                2 => UncommonFishCount += amount,
+                3 => RareFishCount += amount,
+                _ => GarbageCount += amount
+            };
+            SyncUpToDate = false;
+        }
+
+        public void TakeFish(int fishType, int amount)
+        {
+            _ = fishType switch
+            {
+                1 => FishCount -= amount,
+                2 => UncommonFishCount -= amount,
+                3 => RareFishCount -= amount,
+                _ => GarbageCount -= amount
+            };
+            SyncUpToDate = false;
+        }
+
+        public int GetFish(int type)
+        {
+            return type switch
+            {
+                1 => FishCount,
+                2 => UncommonFishCount,
+                3 => RareFishCount,
+                _ => GarbageCount
+            };
+        }
+
+        public int GetSushi()
+        {
+            return SushiCount;
+        }
+
+        public void MakeSushi()
+        {
+            FishCount -= 2;
+            RareFishCount -= 1;
+            SushiCount += 1;
+            SyncUpToDate = false;
+        }
+
+        public void GiveSushi(User receiver)
+        {
+            SushiCount -= 1;
+            receiver.AddSushi();
+            SyncUpToDate = false;
+        }
+
+        public void AddSushi()
+        {
+            SushiCount += 1;
+            SyncUpToDate = false;
+        }
+
+        public void UseSushi()
+        {
+            SushiCount -= 1;
+            SyncUpToDate = false;
         }
     }
 }

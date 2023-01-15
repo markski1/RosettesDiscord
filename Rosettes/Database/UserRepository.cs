@@ -26,7 +26,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, fishcount, rarefishcount, garbagecount FROM users";
+            var sql = @"SELECT id, namecache, fishcount, uncommonfishcount,  rarefishcount, garbagecount, sushicount FROM users";
 
             try
             {
@@ -60,7 +60,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, fishcount, rarefishcount, garbagecount FROM users WHERE id=@id";
+            var sql = @"SELECT id, namecache, fishcount, uncommonfishcount, rarefishcount, garbagecount, sushicount FROM users WHERE id=@id";
 
             try
             {
@@ -96,12 +96,12 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, namecache=@NameCache, fishcount=@FishCount, rarefishcount=@RareFishCount, garbagecount=@GarbageCount
+                        SET id=@Id, namecache=@NameCache, fishcount=@FishCount, uncommonfishcount=@UncommonFishCount,  rarefishcount=@RareFishCount, garbagecount=@GarbageCount, sushicount=@SushiCount
                         WHERE id = @Id";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.FishCount, user.RareFishCount, user.GarbageCount })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), FishCount = user.GetFish(1), UncommonFishCount = user.GetFish(2), RareFishCount = user.GetFish(3), GarbageCount = user.GetFish(999), SushiCount = user.GetSushi() })) > 0;
             }
             catch (Exception ex)
             {
