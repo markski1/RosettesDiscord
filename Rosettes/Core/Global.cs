@@ -89,8 +89,13 @@ namespace Rosettes.Core
             // try to grab the first URL from the received text.
             // Start by finding the first instance of http, and end as soon as we find a space or a control character.
             // return "0" if we can't find a url.
-            int begin = text.IndexOf("http");
-            if (begin == -1) return "0";
+            int begin;
+            begin = text.IndexOf("https:/");
+            if (begin == -1)
+            {
+                begin = text.IndexOf("http:/");
+                if (begin == -1) return "0";
+            }
             int end = -1;
             for (int i = begin; i < end; i++)
             {

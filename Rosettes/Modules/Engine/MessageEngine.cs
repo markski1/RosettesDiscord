@@ -41,14 +41,11 @@ namespace Rosettes.Modules.Engine
                 return;
             }
 
-            if (message.MentionedUsers.Any())
+            if (messageText.Contains("nitro") && (messageText.Contains("free") || messageText.Contains("earn") || messageText.Contains("win")))
             {
-                foreach (var user in message.MentionedUsers)
+                if (message.MentionedEveryone || message.MentionedRoles.Any() || message.MentionedUsers.Any() || Global.GrabURLFromText(message.Content) != "0")
                 {
-                    if (user.Username.ToLower().Contains("rosettes"))
-                    {
-                        await context.Channel.SendMessageAsync("mew wew");
-                    }
+                    await message.Channel.SendMessageAsync("HEY! Be careful of scammers and hackers, don't click on links you don't know or trust!");
                 }
             }
         }
