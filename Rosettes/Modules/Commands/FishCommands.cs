@@ -1,4 +1,4 @@
-﻿    using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
@@ -125,14 +125,15 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
 
-                dbUser.TakeFish(999, 1);
+                
 
                 if (user is null)
                 {
-                    await RespondAsync($"[{Context.User.Username}] has thrown some {FishHelper.GetFullFishName(999)} on the floor.");
+                    await RespondAsync($"'Using' garbage requires tagging another member to throw the trash at.", ephemeral: true);
                 }
                 else
                 {
+                    dbUser.TakeFish(999, 1);
                     await RespondAsync($"[{Context.User.Username}] has thrown some {FishHelper.GetFullFishName(999)} at {user.Mention}. Well done!");
                 }
             }
@@ -153,16 +154,20 @@ namespace Rosettes.Modules.Commands
             }
             EmbedBuilder embed = new()
             {
-                Title = $"{Context.User.Username}'s fish inventory"
+                Title = $"{Context.User.Username}'s inventory"
             };
 
             var user = await UserEngine.GetDBUser(Context.User);
 
-            embed.AddField($"{FishHelper.GetFishEmoji(1)}", $"{FishHelper.GetFishName(1)}: {user.GetFish(1)}");
-            embed.AddField($"{FishHelper.GetFishEmoji(2)}", $"{FishHelper.GetFishName(2)}: {user.GetFish(2)}");
-            embed.AddField($"{FishHelper.GetFishEmoji(3)}", $"{FishHelper.GetFishName(3)}: {user.GetFish(3)}");
-            embed.AddField($"{FishHelper.GetFishEmoji(999)}", $"{FishHelper.GetFishName(999)}: {user.GetFish(999)}");
-            embed.AddField($"{new Emoji("🍣")}", $"Sushi: {user.GetSushi()}");
+            embed.AddField(
+                $"Fish", 
+                $"{FishHelper.GetFullFishName(1)}: {user.GetFish(1)} \n" +
+                $"{FishHelper.GetFullFishName(2)}: {user.GetFish(2)} \n" +
+                $"{FishHelper.GetFullFishName(3)}: {user.GetFish(3)} \n");
+            embed.AddField(
+                $"Items",
+                $"{FishHelper.GetFullFishName(999)}: {user.GetFish(999)}\n" +
+                $"{FishHelper.WriteSushi()}: {user.GetSushi()}");
 
             await RespondAsync(embed: embed.Build());
         }
@@ -258,7 +263,7 @@ namespace Rosettes.Modules.Commands
                     Dispose();
                 }
                 catch {
-                    // something system timer will get all sus and call this last stage twice, I don't know why.
+                    // sometimes system timer will get all sus and call this last stage twice, I don't know why.
                     // this just avoids crashing if it tries to delete the same message a second time and discord yells at us
                 }
             }
