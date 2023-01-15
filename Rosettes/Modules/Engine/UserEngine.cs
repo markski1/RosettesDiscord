@@ -223,6 +223,11 @@ namespace Rosettes.Modules.Engine
             };
         }
 
+        public int GetGarbage()
+        {
+            return GarbageCount;
+        }
+
         public int GetSushi()
         {
             return SushiCount;

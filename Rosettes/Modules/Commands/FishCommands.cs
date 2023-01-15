@@ -56,7 +56,7 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("fish-give", "Give sushi to another user.")]
+        [SlashCommand("fish-give", "Give an item to another user.")]
         public async Task FishGive(IUser user, string option = "none")
         {
             if (!await FishHelper.CanFish(Context))
@@ -83,6 +83,62 @@ namespace Rosettes.Modules.Commands
             else
             {
                 await RespondAsync("Valid things to give: Sushi", ephemeral: true);
+                return;
+            }
+        }
+
+        [SlashCommand("fish-use", "Use an item, optionally with another user.")]
+        public async Task FishUse(string option = "none", IUser? user = null)
+        {
+            if (!await FishHelper.CanFish(Context))
+            {
+                await RespondAsync("Sorry, fishing commands are disabled in this server.", ephemeral: true);
+                return;
+            }
+
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+
+            if (option.ToLower() == "sushi")
+            {
+                if (dbUser.GetSushi() < 1)
+                {
+                    await RespondAsync("You don't have any sushi to give.");
+                    return;
+                }
+
+                dbUser.UseSushi();
+
+                if (user is null)
+                {
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishHelper.WriteSushi()}. Tasty!");
+                }
+                else
+                {
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishHelper.WriteSushi()}, and shared some with {user.Mention}. Tasty!");
+                }
+            }
+            if (option.ToLower() == "garbage")
+            {
+                if (dbUser.GetFish(999) < 1)
+                {
+                    await RespondAsync("You don't have any garbage to throw.");
+                    return;
+                }
+
+                dbUser.TakeFish(999, 1);
+
+                if (user is null)
+                {
+                    await RespondAsync($"[{Context.User.Username}] has thrown some {FishHelper.GetFullFishName(999)} on the floor.");
+                }
+                else
+                {
+                    await RespondAsync($"[{Context.User.Username}] has thrown some {FishHelper.GetFullFishName(999)} at {user.Mention}. Well done!");
+                }
+            }
+            else
+            {
+                await RespondAsync("Valid things to use: Sushi, Garbage", ephemeral: true);
                 return;
             }
         }
