@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
@@ -21,7 +20,7 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("You can only fish every 60 minutes.");
                 return;
             }
-            await RespondAsync($"[{Context.User.Username}] Fishing! {new Emoji("🎣")}");
+            await RespondAsync($"[{Context.User.Username}] Fishing! 🎣");
             var message = await ReplyAsync("You caught");
             _ = new StartFishing(message, dbUser);
         }
@@ -182,8 +181,6 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish-top", "List the top fishers by total fish in their inventory")]
         public async Task FishTops()
         {
-            await RespondAsync("Top fisher leaderboard is currently unavailable!");
-            /*
             if (Context.Guild is null)
             {
                 await RespondAsync("Fish commands don't work in DM's.");
@@ -197,20 +194,30 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            // Compiler isn't happy about writing on top of the same lists so we create two new ones. It's fiiiine.
-            var OrderedList = users.OrderByDescending(x => await FishEngine.GetFish(x, 1) + x.GetFish(2)).Take(10);
+            var getSushiTasks = users.Select(x => FishEngine.GetItem(x, "sushi")).ToList();
+            var userSushi = await Task.WhenAll(getSushiTasks);
+            var usersWithSushi = users.Zip(userSushi, (User, Sushi) => (User, Sushi));
+            var topUsers = usersWithSushi.OrderByDescending(x => x.Sushi).Take(10);
 
-            string topList = "Top 10 fishers in this list: ```";
+            string topList = "Top 10 by sushi count: ```";
+            topList += $"User                             {FishEngine.GetItemName("sushi")}\n\n";
+            var spaceStr = "";
+            var space = 32;
 
-            foreach (var user in OrderedList)
+            foreach (var anUser in topUsers)
             {
-                topList += $"{await user.GetName()} | {user.GetFish(1) + user.GetFish(2)} fish total\n";
+                spaceStr = "";
+                space = 32 - (await anUser.User.GetName()).Length;
+                for (int i = 0; i < space; i++)
+                {
+                    spaceStr += " ";
+                }
+                topList += $"{await anUser.User.GetName()} {spaceStr}| {anUser.Sushi}\n";
             }
 
             topList += "```";
 
             await RespondAsync(topList);
-            */
         }
     }
 }

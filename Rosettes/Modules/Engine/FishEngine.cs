@@ -1,10 +1,5 @@
 ﻿using Discord.Interactions;
 using Discord;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rosettes.Modules.Engine
 {
@@ -52,14 +47,14 @@ namespace Rosettes.Modules.Engine
             return await UserEngine._interface.FetchInventoryItem(dbUser, name);
         }
 
-        public static Emoji GetFishEmoji(int type)
+        public static string GetFishEmoji(int type)
         {
             return type switch
             {
-                1 => new Emoji("🐡"),
-                2 => new Emoji("🐟"),
-                3 => new Emoji("🐠"),
-                _ => new Emoji("🗑")
+                1 => "🐡",
+                2 => "🐟",
+                3 => "🐠",
+                _ => "🗑"
             };
         }
 
@@ -119,8 +114,8 @@ namespace Rosettes.Modules.Engine
         {
             return choice switch
             {
-                "sushi" => $"{new Emoji("🍣")} Sushi",
-                "garbage" => $"{new Emoji("🗑")} Garbage",
+                "sushi" => "🍣 Sushi",
+                "garbage" => "🗑 Garbage",
                 _ => "invalid item"
             };
         }
