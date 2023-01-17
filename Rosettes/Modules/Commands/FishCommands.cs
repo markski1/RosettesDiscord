@@ -53,7 +53,7 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("Valid things to make: Sushi", ephemeral: true);
+                await RespondAsync("Valid things to make: sushi, shrimprice", ephemeral: true);
                 return;
             }
         }
@@ -88,7 +88,7 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("Valid things to give: Sushi", ephemeral: true);
+                await RespondAsync("Valid things to give: sushi, shrimprice", ephemeral: true);
                 return;
             }
         }
@@ -106,7 +106,7 @@ namespace Rosettes.Modules.Commands
 
             string choice = option.ToLower();
 
-            if (choice == "sushi")
+            if (choice == "sushi" || choice == "shrimprice")
             {
                 if (await FishEngine.GetItem(dbUser, choice) < 1)
                 {
@@ -118,11 +118,11 @@ namespace Rosettes.Modules.Commands
 
                 if (user is null)
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}. Tasty!");
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}.");
                 }
                 else
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}, and shared some with {user.Mention}. Tasty!");
+                    await RespondAsync($"[{Context.User.Username}] has eaten {FishEngine.GetItemName(choice)}, and shared some with {user.Mention}.");
                 }
             }
             if (choice == "garbage")
@@ -145,7 +145,7 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("Valid things to use: Sushi, Garbage", ephemeral: true);
+                await RespondAsync("Valid things to use: sushi, shrimprice, garbage", ephemeral: true);
                 return;
             }
         }
@@ -166,19 +166,50 @@ namespace Rosettes.Modules.Commands
             var user = await UserEngine.GetDBUser(Context.User);
 
             embed.AddField(
-                $"Fish", 
+                $"Catch", 
                 $"{FishEngine.GetFullFishName(1)}: {await FishEngine.GetFish(user, 1)} \n" +
                 $"{FishEngine.GetFullFishName(2)}: {await FishEngine.GetFish(user, 2)} \n" +
-                $"{FishEngine.GetFullFishName(3)}: {await FishEngine.GetFish(user, 3)} \n");
+                $"{FishEngine.GetFullFishName(3)}: {await FishEngine.GetFish(user, 3)} \n" +
+                $"{FishEngine.GetFullFishName(4)}: {await FishEngine.GetFish(user, 4)}");
             embed.AddField(
                 $"Items",
                 $"{FishEngine.GetItemName("garbage")}: {await FishEngine.GetItem(user, "garbage")}\n" +
-                $"{FishEngine.GetItemName("sushi")}: {await FishEngine.GetItem(user, "sushi")}");
+                $"{FishEngine.GetItemName("rice")}: {await FishEngine.GetItem(user, "rice")}\n" +
+                $"{FishEngine.GetItemName("sushi")}: {await FishEngine.GetItem(user, "sushi")}\n" +
+                $"{FishEngine.GetItemName("shrimprice")}: {await FishEngine.GetItem(user, "shrimprice")}");
 
             await RespondAsync(embed: embed.Build());
         }
 
-        [SlashCommand("fish-top", "List the top fishers by total fish in their inventory")]
+        [SlashCommand("fish-shop", "See items available in the fish shop, or provide an option to buy.")]
+        public async Task FishShop(int option = -1)
+        {
+            if (option == -1)
+            {
+                var dbUser = await UserEngine.GetDBUser(Context.User);
+                if (dbUser is null) return;
+                EmbedBuilder embed = new()
+                {
+                    Title = "Fish shop!",
+                    Description = $"{Context.User.Username} currency: {await FishEngine.GetFish(dbUser, 3)} {FishEngine.GetFullFishName(3)} ; {await FishEngine.GetItem(dbUser, "garbage")} {FishEngine.GetItemName("garbage")}"
+                };
+
+                embed.AddField("Options:",
+                    $"**1.** Buy [2 {FishEngine.GetItemName("rice")}] for [1 {FishEngine.GetFullFishName(3)}]\n" +
+                    $"**2.** Buy [1 {FishEngine.GetFullFishName(1)}] for [2 {FishEngine.GetItemName("garbage")}]\n" +
+                    $"**3.** Buy [1 {FishEngine.GetFullFishName(2)}] for [5 {FishEngine.GetItemName("garbage")}]\n");
+
+                await RespondAsync(embed: embed.Build());
+                return;
+            }
+            else
+            {
+                var user = await UserEngine.GetDBUser(Context.User);
+                await RespondAsync(await FishEngine.ShopBuy(user, option, Context.User.Username));
+            }
+        }
+
+        [SlashCommand("fish-leader", "List the top fishers by total fish in their inventory")]
         public async Task FishTops()
         {
             if (Context.Guild is null)
@@ -194,25 +225,38 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            /*
+             * Regarding the horrors ahead:
+             * 
+             * In any other scenario in the world, the following should be a single SQL query.
+             * However, because one of the most important objectives of Rosettes is to not store more personal data than necesary,
+             * and this includes not having to store what guilds a given user is in, this operation must happen in memory.
+             * So we need to fetch sushi and shrimp of every user in the guild indivdiually in order to rank them.
+             * This is very slow, but the database is always cached in memory and runs locally, so not a real as far as performance goes.
+             * 
+             */
             var getSushiTasks = users.Select(x => FishEngine.GetItem(x, "sushi")).ToList();
+            var getShrimpRiceTasks = users.Select(x => FishEngine.GetItem(x, "shrimprice")).ToList();
             var userSushi = await Task.WhenAll(getSushiTasks);
+            var userShrimpRice = await Task.WhenAll(getShrimpRiceTasks);
             var usersWithSushi = users.Zip(userSushi, (User, Sushi) => (User, Sushi));
-            var topUsers = usersWithSushi.OrderByDescending(x => x.Sushi).Take(10);
+            var usersWithSushiAndShrimp = usersWithSushi.Zip(userShrimpRice, (User, Shrimp) => (User, Shrimp));
+            var topUsers = usersWithSushiAndShrimp.OrderByDescending(x => x.User.Sushi + x.Shrimp).Take(10);
 
             string topList = "Top 10 by sushi count: ```";
-            topList += $"User                             {FishEngine.GetItemName("sushi")}\n\n";
+            topList += $"User                               {FishEngine.GetItemName("sushi")}  {FishEngine.GetItemName("shrimprice")}\n\n";
             var spaceStr = "";
-            var space = 32;
+            var space = 30;
 
             foreach (var anUser in topUsers)
             {
                 spaceStr = "";
-                space = 32 - (await anUser.User.GetName()).Length;
+                space = 32 - (await anUser.User.User.GetName(false)).Length;
                 for (int i = 0; i < space; i++)
                 {
                     spaceStr += " ";
                 }
-                topList += $"{await anUser.User.GetName()} {spaceStr}| {anUser.Sushi}\n";
+                topList += $"{await anUser.User.User.GetName(false)} {spaceStr}|       {anUser.User.Sushi}            {anUser.Shrimp}\n";
             }
 
             topList += "```";

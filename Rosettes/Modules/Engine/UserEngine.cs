@@ -147,11 +147,13 @@ namespace Rosettes.Modules.Engine
             return await client.GetUserAsync(Id);
         }
 
-        public async Task<string> GetName()
+        public async Task<string> GetName(bool full = true)
         {
             var userReference = await GetDiscordReference();
             if (userReference is null) return NameCache;
-            string nameGot = userReference.Username + "#" + userReference.Discriminator;
+            string nameGot;
+            if (full) nameGot = userReference.Username + "#" + userReference.Discriminator;
+            else nameGot = userReference.Username;
             if (nameGot != NameCache)
             {
                 NameCache = nameGot;
@@ -171,5 +173,9 @@ namespace Rosettes.Modules.Engine
             }
             return false;
         }
+
+        // temps for fishing leaderboard
+        public int shrimpCache = 0;
+        public int sushiCache = 0;
     }
 }

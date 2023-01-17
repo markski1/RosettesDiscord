@@ -5,17 +5,6 @@ namespace Rosettes.Modules.Engine
 {
     public static class FishEngine
     {
-        public static string GetFishName(int type)
-        {
-            return type switch
-            {
-                1 => "Common fish",
-                2 => "Uncommon fish",
-                3 => "Rare fish",
-                _ => "Garbage",
-            };
-        }
-
         public static string GetFishDBName(int type)
         {
             return type switch
@@ -23,8 +12,50 @@ namespace Rosettes.Modules.Engine
                 1 => "fish",
                 2 => "uncommonfish",
                 3 => "rarefish",
+                4 => "shrimp",
                 _ => "garbage",
             };
+        }
+
+        public static string GetFishName(int type)
+        {
+            return type switch
+            {
+                1 => "Common fish",
+                2 => "Uncommon fish",
+                3 => "Rare fish",
+                4 => "Shrimp",
+                _ => "Garbage",
+            };
+        }
+
+        public static string GetFishEmoji(int type)
+        {
+            return type switch
+            {
+                1 => "🐡",
+                2 => "🐟",
+                3 => "🐠",
+                4 => "🦐",
+                _ => "🗑"
+            };
+        }
+
+        public static string GetItemName(string choice)
+        {
+            return choice switch
+            {
+                "sushi" => "🍣 Sushi",
+                "rice" => "🍙 Rice",
+                "shrimprice" => "🍚 Shrimp Fried Rice",
+                "garbage" => "🗑 Garbage",
+                _ => "invalid item"
+            };
+        }
+
+        public static string GetFullFishName(int type)
+        {
+            return $"{GetFishEmoji(type)} {GetFishName(type)}";
         }
 
         public static async void ModifyFish(User dbUser, int type, int amount)
@@ -47,22 +78,6 @@ namespace Rosettes.Modules.Engine
             return await UserEngine._interface.FetchInventoryItem(dbUser, name);
         }
 
-        public static string GetFishEmoji(int type)
-        {
-            return type switch
-            {
-                1 => "🐡",
-                2 => "🐟",
-                3 => "🐠",
-                _ => "🗑"
-            };
-        }
-
-        public static string GetFullFishName(int type)
-        {
-            return $"{GetFishEmoji(type)} {GetFishName(type)}";
-        }
-
         internal static async Task<bool> CanFish(SocketInteractionContext context)
         {
             if (context.Guild is null)
@@ -79,11 +94,19 @@ namespace Rosettes.Modules.Engine
 
         internal static async Task<string> HasIngredients(User dbUser, string item)
         {
+            string ingredients;
             switch (item)
             {
                 case "sushi":
-                    string ingredients = $"2 {GetFullFishName(1)} and 1 {GetFullFishName(2)}";
-                    if (await GetFish(dbUser, 1) >= 2 && await GetFish(dbUser, 2) >= 1)
+                    ingredients = $"2 {GetFullFishName(1)}, 1 {GetFullFishName(2)} and 1 {GetItemName("rice")}.";
+                    if (await GetFish(dbUser, 1) >= 2 && await GetFish(dbUser, 2) >= 1 && await GetItem(dbUser, "rice") >= 1)
+                    {
+                        return "success";
+                    }
+                    return ingredients;
+                case "shrimprice":
+                    ingredients = $"2 {GetFullFishName(4)} and 1 {GetItemName("rice")}";
+                    if (await GetFish(dbUser, 1) >= 2 && await GetFish(dbUser, 2) >= 1 && await GetItem(dbUser, "rice") >= 1)
                     {
                         return "success";
                     }
@@ -98,7 +121,13 @@ namespace Rosettes.Modules.Engine
                 case "sushi":
                     ModifyFish(dbUser, 1, -2);
                     ModifyFish(dbUser, 2, -1);
+                    ModifyItem(dbUser, "rice", -1);
                     ModifyItem(dbUser, "sushi", +1);
+                    return $"2 {GetFullFishName(1)}, 1 {GetFullFishName(2)} and 1 {GetItemName("rice")}";
+                case "shrimprice":
+                    ModifyFish(dbUser, 4, -2);
+                    ModifyItem(dbUser, "rice", -1);
+                    ModifyItem(dbUser, "shrimprice", +1);
                     return $"2 {GetFullFishName(1)} and 1 {GetFullFishName(2)}";
             }
             return "nothing";
@@ -106,30 +135,61 @@ namespace Rosettes.Modules.Engine
 
         public static bool IsValidMakeChoice(string choice)
         {
-            string[] choices = { "sushi" };
+            string[] choices = { "sushi", "shrimprice" };
             return choices.Contains(choice);
-        }
-
-        public static string GetItemName(string choice)
-        {
-            return choice switch
-            {
-                "sushi" => "🍣 Sushi",
-                "garbage" => "🗑 Garbage",
-                _ => "invalid item"
-            };
         }
 
         public static bool IsValidGiveChoice(string choice)
         {
-            string[] choices = { "sushi" };
+            string[] choices = { "sushi", "shrimprice" };
             return choices.Contains(choice);
         }
 
         public static bool IsValidUseChoice(string choice)
         {
-            string[] choices = { "sushi", "garbage" };
+            string[] choices = { "sushi", "shrimprice", "garbage" };
             return choices.Contains(choice);
+        }
+
+        internal static async Task<string> ShopBuy(User user, int option, string name)
+        {
+            switch (option)
+            {
+                case 1:
+                    if (await GetFish(user, 3) >= 1)
+                    {
+                        ModifyFish(user, 3, -1);
+                        ModifyItem(user, "rice", +2);
+                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 1 {GetFullFishName(3)}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetFullFishName(3)}";
+                    }
+                case 2:
+                    if (await GetItem(user, "garbage") >= 2)
+                    {
+                        ModifyItem(user, "garbage", -2);
+                        ModifyFish(user, 1, +1);
+                        return $"[{name}] You have purchased 1 {GetFullFishName(1)} for 2 {GetItemName("garbage")}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetItemName("garbage")}";
+                    }
+                case 3:
+                    if (await GetItem(user, "garbage") >= 5)
+                    {
+                        ModifyItem(user, "garbage", -5);
+                        ModifyFish(user, 2, +1);
+                        return $"[{name}] You have purchased 1 {GetFullFishName(2)} for 5 {GetItemName("garbage")}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetItemName("garbage")}";
+                    }
+            }
+            return $"[{name}] Invalid option. Must be the number of your selection.";
         }
     }
 
@@ -164,11 +224,13 @@ namespace Rosettes.Modules.Engine
                 caught = caught switch
                 {
                     //common fish
-                    (<= 40) => 1,
+                    (<= 35) => 1,
                     //uncommon fish
-                    (> 40 and <= 70) => 2,
+                    (> 35 and <= 55) => 2,
                     // rare fish
-                    (> 70 and <= 85) => 3,
+                    (> 55 and <= 65) => 3,
+                    // shrimp
+                    (> 65 and < 85) => 4,
                     // garbage
                     _ => 999,
                 };
