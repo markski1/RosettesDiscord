@@ -5,46 +5,14 @@ namespace Rosettes.Modules.Engine
 {
     public static class FishEngine
     {
-        public static string GetFishDBName(int type)
-        {
-            return type switch
-            {
-                1 => "fish",
-                2 => "uncommonfish",
-                3 => "rarefish",
-                4 => "shrimp",
-                _ => "garbage",
-            };
-        }
-
-        public static string GetFishName(int type)
-        {
-            return type switch
-            {
-                1 => "Common fish",
-                2 => "Uncommon fish",
-                3 => "Rare fish",
-                4 => "Shrimp",
-                _ => "Garbage",
-            };
-        }
-
-        public static string GetFishEmoji(int type)
-        {
-            return type switch
-            {
-                1 => "🐡",
-                2 => "🐟",
-                3 => "🐠",
-                4 => "🦐",
-                _ => "🗑"
-            };
-        }
-
         public static string GetItemName(string choice)
         {
             return choice switch
             {
+                "fish" => "🐡 Common fish",
+                "uncommonfish" => "🐟 Uncommon fish",
+                "rarefish" => "🐠 Rare fish",
+                "shrimp" => "🦐 Shrimp",
                 "sushi" => "🍣 Sushi",
                 "rice" => "🍙 Rice",
                 "shrimprice" => "🍚 Shrimp Fried Rice",
@@ -53,24 +21,9 @@ namespace Rosettes.Modules.Engine
             };
         }
 
-        public static string GetFullFishName(int type)
-        {
-            return $"{GetFishEmoji(type)} {GetFishName(type)}";
-        }
-
-        public static async void ModifyFish(User dbUser, int type, int amount)
-        {
-            await UserEngine._interface.ModifyInventoryItem(dbUser, GetFishDBName(type), amount);
-        }
-
         public static async void ModifyItem(User dbUser, string choice, int amount)
         {
             await UserEngine._interface.ModifyInventoryItem(dbUser, choice, amount);
-        }
-
-        public static async Task<int> GetFish(User dbUser, int type)
-        {
-            return await UserEngine._interface.FetchInventoryItem(dbUser, GetFishDBName(type));
         }
 
         public static async Task<int> GetItem(User dbUser, string name)
@@ -98,15 +51,15 @@ namespace Rosettes.Modules.Engine
             switch (item)
             {
                 case "sushi":
-                    ingredients = $"2 {GetFullFishName(1)}, 1 {GetFullFishName(2)} and 1 {GetItemName("rice")}.";
-                    if (await GetFish(dbUser, 1) >= 2 && await GetFish(dbUser, 2) >= 1 && await GetItem(dbUser, "rice") >= 1)
+                    ingredients = $"2 {GetItemName("fish")}, 1 {GetItemName("uncommonfish")} and 1 {GetItemName("rice")}.";
+                    if (await GetItem(dbUser, "fish") >= 2 && await GetItem(dbUser, "uncommonfish") >= 1 && await GetItem(dbUser, "rice") >= 1)
                     {
                         return "success";
                     }
                     return ingredients;
                 case "shrimprice":
-                    ingredients = $"2 {GetFullFishName(4)} and 1 {GetItemName("rice")}";
-                    if (await GetFish(dbUser, 1) >= 2 && await GetFish(dbUser, 2) >= 1 && await GetItem(dbUser, "rice") >= 1)
+                    ingredients = $"2 {GetItemName("shrimp")} and 1 {GetItemName("rice")}";
+                    if (await GetItem(dbUser, "shrimp") >= 2 && await GetItem(dbUser, "rice") >= 1)
                     {
                         return "success";
                     }
@@ -119,16 +72,16 @@ namespace Rosettes.Modules.Engine
             switch (item)
             {
                 case "sushi":
-                    ModifyFish(dbUser, 1, -2);
-                    ModifyFish(dbUser, 2, -1);
+                    ModifyItem(dbUser, "fish", -2);
+                    ModifyItem(dbUser, "uncommonfish", -1);
                     ModifyItem(dbUser, "rice", -1);
                     ModifyItem(dbUser, "sushi", +1);
-                    return $"2 {GetFullFishName(1)}, 1 {GetFullFishName(2)} and 1 {GetItemName("rice")}";
+                    return $"2 {GetItemName("fish")}, 1 {GetItemName("uncommonfish")} and 1 {GetItemName("rice")}";
                 case "shrimprice":
-                    ModifyFish(dbUser, 4, -2);
+                    ModifyItem(dbUser, "shrimp", -2);
                     ModifyItem(dbUser, "rice", -1);
                     ModifyItem(dbUser, "shrimprice", +1);
-                    return $"2 {GetFullFishName(1)} and 1 {GetFullFishName(2)}";
+                    return $"2 {GetItemName("shrimp")} and 1 {GetItemName("rice")}";
             }
             return "nothing";
         }
@@ -156,22 +109,22 @@ namespace Rosettes.Modules.Engine
             switch (option)
             {
                 case 1:
-                    if (await GetFish(user, 3) >= 1)
+                    if (await GetItem(user, "rarefish") >= 1)
                     {
-                        ModifyFish(user, 3, -1);
+                        ModifyItem(user, "rarefish", -1);
                         ModifyItem(user, "rice", +2);
-                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 1 {GetFullFishName(3)}";
+                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 1 {GetItemName("rarefish")}";
                     }
                     else
                     {
-                        return $"[{name}] You don't have enough {GetFullFishName(3)}";
+                        return $"[{name}] You don't have enough {GetItemName("rarefish")}";
                     }
                 case 2:
                     if (await GetItem(user, "garbage") >= 2)
                     {
                         ModifyItem(user, "garbage", -2);
-                        ModifyFish(user, 1, +1);
-                        return $"[{name}] You have purchased 1 {GetFullFishName(1)} for 2 {GetItemName("garbage")}";
+                        ModifyItem(user, "fish", +1);
+                        return $"[{name}] You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("garbage")}";
                     }
                     else
                     {
@@ -181,8 +134,8 @@ namespace Rosettes.Modules.Engine
                     if (await GetItem(user, "garbage") >= 5)
                     {
                         ModifyItem(user, "garbage", -5);
-                        ModifyFish(user, 2, +1);
-                        return $"[{name}] You have purchased 1 {GetFullFishName(2)} for 5 {GetItemName("garbage")}";
+                        ModifyItem(user, "uncommonfish", +1);
+                        return $"[{name}] You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("garbage")}";
                     }
                     else
                     {
@@ -196,7 +149,6 @@ namespace Rosettes.Modules.Engine
     public class StartFishing
     {
         private readonly System.Timers.Timer Timer = new(1000);
-        private int fishState = 0;
         private readonly IUserMessage message;
         private readonly User user;
 
@@ -211,52 +163,23 @@ namespace Rosettes.Modules.Engine
 
         public async void FishStateUpdate(Object? source, System.Timers.ElapsedEventArgs e)
         {
-            if (fishState == 0)
+            await message.ModifyAsync(x => x.Content = "You caught... ");
+            await Task.Delay(1000);
+            Random rand = new();
+            int caught = rand.Next(100);
+            string fishingCatch = caught switch
             {
-                await message.ModifyAsync(x => x.Content = "You caught... ");
-                fishState = 1;
-                Timer.Enabled = true;
-            }
-            if (fishState == 1)
-            {
-                Random rand = new();
-                int caught = rand.Next(100);
-                caught = caught switch
-                {
-                    //common fish
-                    (<= 35) => 1,
-                    //uncommon fish
-                    (> 35 and <= 55) => 2,
-                    // rare fish
-                    (> 55 and <= 65) => 3,
-                    // shrimp
-                    (> 65 and < 85) => 4,
-                    // garbage
-                    _ => 999,
-                };
-
-                await message.ModifyAsync(x => x.Content = $"You caught... {FishEngine.GetFullFishName(caught)}!");
-                await message.Channel.SendMessageAsync($"*{FishEngine.GetFullFishName(caught)} caught and added to inventory.*");
-
-                FishEngine.ModifyFish(user, caught, +1);
-
-                fishState = 2;
-                Timer.Enabled = true;
-                Timer.Dispose();
-            }
-            if (fishState == 2)
-            {
-                try
-                {
-                    fishState = 3;
-                    await message.DeleteAsync();
-                }
-                catch
-                {
-                    // sometimes system timer will get all sus and call this last stage twice, I don't know why.
-                    // this just avoids crashing if it tries to delete the same message a second time and discord yells at us
-                }
-            }
+                (<= 35) => "fish",
+                (> 35 and <= 55) => "uncommonfish",
+                (> 55 and <= 65) => "rarefish",
+                (> 65 and < 85) => "shrimp",
+                _ => "garbage"
+            };
+            await message.ModifyAsync(x => x.Content = $"You caught... {FishEngine.GetItemName(fishingCatch)}!");
+            await message.Channel.SendMessageAsync($"*{FishEngine.GetItemName(fishingCatch)} caught and added to inventory.*");
+            FishEngine.ModifyItem(user, fishingCatch, +1);
+            await Task.Delay(1000);
+            await message.DeleteAsync();
         }
     }
 }

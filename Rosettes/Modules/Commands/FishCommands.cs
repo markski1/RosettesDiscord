@@ -139,7 +139,7 @@ namespace Rosettes.Modules.Commands
                 }
                 else
                 {
-                    FishEngine.ModifyFish(dbUser, 999, -1);
+                    FishEngine.ModifyItem(dbUser, "garbage", -1);
                     await RespondAsync($"[{Context.User.Username}] has thrown some {FishEngine.GetItemName("garbage")} at {user.Mention}. Well done!");
                 }
             }
@@ -158,19 +158,23 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("Fish commands don't work in DM's.");
                 return;
             }
+
             EmbedBuilder embed = new()
             {
-                Title = $"{Context.User.Username}'s inventory"
+                Title = $"{Context.User.Username}'s inventory",
+                Description = "Loading inventory..."
             };
+
+            await RespondAsync(embed: embed.Build());
 
             var user = await UserEngine.GetDBUser(Context.User);
 
             embed.AddField(
                 $"Catch", 
-                $"{FishEngine.GetFullFishName(1)}: {await FishEngine.GetFish(user, 1)} \n" +
-                $"{FishEngine.GetFullFishName(2)}: {await FishEngine.GetFish(user, 2)} \n" +
-                $"{FishEngine.GetFullFishName(3)}: {await FishEngine.GetFish(user, 3)} \n" +
-                $"{FishEngine.GetFullFishName(4)}: {await FishEngine.GetFish(user, 4)}");
+                $"{FishEngine.GetItemName("fish")}: {await FishEngine.GetItem(user, "fish")} \n" +
+                $"{FishEngine.GetItemName("uncommonfish")}: {await FishEngine.GetItem(user, "uncommonfish")} \n" +
+                $"{FishEngine.GetItemName("rarefish")}: {await FishEngine.GetItem(user, "rarefish")} \n" +
+                $"{FishEngine.GetItemName("shrimp")}: {await FishEngine.GetItem(user, "shrimp")}");
             embed.AddField(
                 $"Items",
                 $"{FishEngine.GetItemName("garbage")}: {await FishEngine.GetItem(user, "garbage")}\n" +
@@ -178,7 +182,8 @@ namespace Rosettes.Modules.Commands
                 $"{FishEngine.GetItemName("sushi")}: {await FishEngine.GetItem(user, "sushi")}\n" +
                 $"{FishEngine.GetItemName("shrimprice")}: {await FishEngine.GetItem(user, "shrimprice")}");
 
-            await RespondAsync(embed: embed.Build());
+            embed.Description = null;
+            await ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
         }
 
         [SlashCommand("fish-shop", "See items available in the fish shop, or provide an option to buy.")]
@@ -191,13 +196,13 @@ namespace Rosettes.Modules.Commands
                 EmbedBuilder embed = new()
                 {
                     Title = "Fish shop!",
-                    Description = $"{Context.User.Username} currency: {await FishEngine.GetFish(dbUser, 3)} {FishEngine.GetFullFishName(3)} ; {await FishEngine.GetItem(dbUser, "garbage")} {FishEngine.GetItemName("garbage")}"
+                    Description = $"{Context.User.Username} currency: {await FishEngine.GetItem(dbUser, "rarefish")} {FishEngine.GetItemName("rarefish")} ; {await FishEngine.GetItem(dbUser, "garbage")} {FishEngine.GetItemName("garbage")}"
                 };
 
                 embed.AddField("Options:",
-                    $"**1.** Buy [2 {FishEngine.GetItemName("rice")}] for [1 {FishEngine.GetFullFishName(3)}]\n" +
-                    $"**2.** Buy [1 {FishEngine.GetFullFishName(1)}] for [2 {FishEngine.GetItemName("garbage")}]\n" +
-                    $"**3.** Buy [1 {FishEngine.GetFullFishName(2)}] for [5 {FishEngine.GetItemName("garbage")}]\n");
+                    $"**1.** Buy [2 {FishEngine.GetItemName("rice")}] for [1 {FishEngine.GetItemName("rarefish")}]\n" +
+                    $"**2.** Buy [1 {FishEngine.GetItemName("fish")}] for [2 {FishEngine.GetItemName("garbage")}]\n" +
+                    $"**3.** Buy [1 {FishEngine.GetItemName("uncommonfish")}] for [5 {FishEngine.GetItemName("garbage")}]\n");
 
                 await RespondAsync(embed: embed.Build());
                 return;
@@ -243,8 +248,8 @@ namespace Rosettes.Modules.Commands
             var usersWithSushiAndShrimp = usersWithSushi.Zip(userShrimpRice, (User, Shrimp) => (User, Shrimp));
             var topUsers = usersWithSushiAndShrimp.OrderByDescending(x => x.User.Sushi + x.Shrimp).Take(10);
 
-            string topList = "Top 10 by sushi count: ```";
-            topList += $"User                               {FishEngine.GetItemName("sushi")}  {FishEngine.GetItemName("shrimprice")}\n\n";
+            string topList = "Top 10 by combined finished food count: ```";
+            topList += $"User                                    🍣    🍚\n\n";
             var spaceStr = "";
             var space = 30;
 
@@ -256,7 +261,17 @@ namespace Rosettes.Modules.Commands
                 {
                     spaceStr += " ";
                 }
-                topList += $"{await anUser.User.User.GetName(false)} {spaceStr}|       {anUser.User.Sushi}            {anUser.Shrimp}\n";
+                var spaceBetweenStuff = "   ";
+                if (anUser.User.Sushi < 100)
+                {
+                    spaceBetweenStuff += " ";
+                    if (anUser.User.Sushi < 10)
+                    {
+                        spaceBetweenStuff += " ";
+                    }
+                }
+                
+                topList += $"{await anUser.User.User.GetName(false)} {spaceStr}|       {anUser.User.Sushi}{spaceBetweenStuff}{anUser.Shrimp}\n";
             }
 
             topList += "```";

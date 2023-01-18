@@ -130,6 +130,7 @@ namespace Rosettes.Modules.Engine
             // if user was created with an Id of 0 it indicates a database failure and this user object is invalid.
             return Id != 0;
         }
+
         public bool CanUseCommand(SocketGuild? guild)
         {
             int change = (guild is null) ? 10 : 3;
