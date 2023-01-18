@@ -1,9 +1,10 @@
 ﻿using Discord.Interactions;
 using Discord;
+using System.Xml.Linq;
 
 namespace Rosettes.Modules.Engine
 {
-    public static class FishEngine
+    public static class RpgEngine
     {
         public static string GetItemName(string choice)
         {
@@ -17,6 +18,7 @@ namespace Rosettes.Modules.Engine
                 "rice" => "🍙 Rice",
                 "shrimprice" => "🍚 Shrimp Fried Rice",
                 "garbage" => "🗑 Garbage",
+                "dabloons" => "🐾 Dabloons",
                 _ => "invalid item"
             };
         }
@@ -31,14 +33,14 @@ namespace Rosettes.Modules.Engine
             return await UserEngine._interface.FetchInventoryItem(dbUser, name);
         }
 
-        internal static async Task<bool> CanFish(SocketInteractionContext context)
+        internal static async Task<bool> CanuseRPGCommand(SocketInteractionContext context)
         {
             if (context.Guild is null)
             {
                 return false;
             }
             var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
-            if (!dbGuild.AllowsFishing())
+            if (!dbGuild.AllowsRPG())
             {
                 return false;
             }
@@ -109,40 +111,70 @@ namespace Rosettes.Modules.Engine
             switch (option)
             {
                 case 1:
+                    if (await GetItem(user, "dabloons") >= 5)
+                    {
+                        ModifyItem(user, "dabloons", -5);
+                        ModifyItem(user, "rice", +2);
+                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 5 {GetItemName("dabloons")}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
+                    }
+                case 2:
+                    if (await GetItem(user, "dabloons") >= 2)
+                    {
+                        ModifyItem(user, "dabloons", -2);
+                        ModifyItem(user, "fish", +1);
+                        return $"[{name}] You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("dabloons")}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
+                    }
+                case 3:
+                    if (await GetItem(user, "dabloons") >= 5)
+                    {
+                        ModifyItem(user, "dabloons", -5);
+                        ModifyItem(user, "uncommonfish", +1);
+                        return $"[{name}] You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("dabloons")}";
+                    }
+                    else
+                    {
+                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
+                    }
+            }
+            return $"[{name}] Invalid buy option. Must be the number of your selection.";
+        }
+
+        public static async Task<string> ShopSell(User user, int option, string name)
+        {
+            switch (option)
+            {
+                case 1:
                     if (await GetItem(user, "rarefish") >= 1)
                     {
                         ModifyItem(user, "rarefish", -1);
-                        ModifyItem(user, "rice", +2);
-                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 1 {GetItemName("rarefish")}";
+                        ModifyItem(user, "dabloons", +5);
+                        return $"[{name}] You have sold 1 {GetItemName("rarefish")} for 5 {GetItemName("dabloons")}";
                     }
                     else
                     {
                         return $"[{name}] You don't have enough {GetItemName("rarefish")}";
                     }
                 case 2:
-                    if (await GetItem(user, "garbage") >= 2)
-                    {
-                        ModifyItem(user, "garbage", -2);
-                        ModifyItem(user, "fish", +1);
-                        return $"[{name}] You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("garbage")}";
-                    }
-                    else
-                    {
-                        return $"[{name}] You don't have enough {GetItemName("garbage")}";
-                    }
-                case 3:
                     if (await GetItem(user, "garbage") >= 5)
                     {
                         ModifyItem(user, "garbage", -5);
-                        ModifyItem(user, "uncommonfish", +1);
-                        return $"[{name}] You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("garbage")}";
+                        ModifyItem(user, "dabloons", +5);
+                        return $"[{name}] You have sold 5 {GetItemName("garbage")} for 5 {GetItemName("dabloons")}";
                     }
                     else
                     {
                         return $"[{name}] You don't have enough {GetItemName("garbage")}";
                     }
             }
-            return $"[{name}] Invalid option. Must be the number of your selection.";
+            return $"[{name}] Invalid sell option. Must be the number of your selection.";
         }
     }
 
@@ -175,9 +207,9 @@ namespace Rosettes.Modules.Engine
                 (> 65 and < 85) => "shrimp",
                 _ => "garbage"
             };
-            await message.ModifyAsync(x => x.Content = $"You caught... {FishEngine.GetItemName(fishingCatch)}!");
-            await message.Channel.SendMessageAsync($"*{FishEngine.GetItemName(fishingCatch)} caught and added to inventory.*");
-            FishEngine.ModifyItem(user, fishingCatch, +1);
+            await message.ModifyAsync(x => x.Content = $"You caught... {RpgEngine.GetItemName(fishingCatch)}!");
+            await message.Channel.SendMessageAsync($"*{RpgEngine.GetItemName(fishingCatch)} caught and added to inventory.*");
+            RpgEngine.ModifyItem(user, fishingCatch, +1);
             await Task.Delay(1000);
             await message.DeleteAsync();
         }

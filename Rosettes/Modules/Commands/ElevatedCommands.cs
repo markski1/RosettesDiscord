@@ -57,22 +57,24 @@ namespace Rosettes.Modules.Commands
             await RespondAsync(text);
         }
 
-        [SlashCommand("halt", "[PRIVILEGED COMMAND]")]
-        public async Task Halt()
+        [SlashCommand("admin", "To be used for administrative/developer functions.")]
+        public async Task Halt(string function)
         {
             if (!Global.CheckSnep(Context.User.Id))
             {
                 await ReplyAsync("This command is snep exclusive.");
                 return;
             }
-            UserEngine.SyncWithDatabase();
-            GuildEngine.SyncWithDatabase();
-
-            await ReplyAsync("Disconnecting from Discord...");
-            Game game = new("Disconnecting!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
-            var client = ServiceManager.GetService<DiscordSocketClient>();
-            await client.SetActivityAsync(game);
-            Environment.Exit(0);
+            if (function == "halt")
+            {
+                UserEngine.SyncWithDatabase();
+                GuildEngine.SyncWithDatabase();
+                await RespondAsync("Disconnecting from Discord...");
+                Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
+                var client = ServiceManager.GetService<DiscordSocketClient>();
+                await client.SetActivityAsync(game);
+                Environment.Exit(0);
+            }
         }
 
         [SlashCommand("keygen", "Generates a unique key for logging into the Rosettes admin panel.")]

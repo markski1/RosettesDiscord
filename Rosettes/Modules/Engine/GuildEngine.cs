@@ -225,7 +225,7 @@ namespace Rosettes.Modules.Engine
             char value = Settings[3];
             return value == '1';
         }
-        public bool AllowsFishing()
+        public bool AllowsRPG()
         {
             char value = Settings[4];
             return value == '1';
