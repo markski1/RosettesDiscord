@@ -1,7 +1,9 @@
-﻿using Discord.Rest;
+﻿using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using System;
 
 namespace Rosettes.Modules.Engine
 {
@@ -304,6 +306,23 @@ namespace Rosettes.Modules.Engine
         public async void UpdateRoles()
         {
             await GuildEngine._interface.UpdateGuildRoles(this);
+        }
+
+        public async void SendLogMessage(EmbedBuilder embed)
+        {
+            var guildref = GetDiscordSocketReference();
+            
+            if (guildref is null)
+            {
+                return;
+            }
+            
+            SocketTextChannel? chan = guildref.GetTextChannel(LogChannel);
+
+            if (chan is not null)
+            {
+                await chan.SendMessageAsync(embed: embed.Build());
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Rosettes.Core
                 return Task.CompletedTask;
             };
 
-            
+
             _client.Ready += OnReady;
 
             _client.JoinedGuild += OnJoinGuild;
@@ -35,6 +35,7 @@ namespace Rosettes.Core
             _client.ReactionRemoved += OnReactionRemoved;
 
             _client.UserJoined += OnUserJoin;
+            _client.UserLeft += OnUserLeft;
 
             return Task.CompletedTask;
         }
@@ -51,7 +52,7 @@ namespace Rosettes.Core
                 return Task.CompletedTask;
             }
 
-            
+
             if (Settings.ConnectToDatabase())
             {
                 await UserEngine.LoadAllUsersFromDatabase();
@@ -159,14 +160,64 @@ namespace Rosettes.Core
         {
             if (user is null || user.Guild is null) return Task.CompletedTask;
 
+            var dbGuild = await GuildEngine.GetDBGuild(user.Guild);
+
             // If the guild has set a default role, apply it.
-            var defRole = (await GuildEngine.GetDBGuild(user.Guild)).DefaultRole;
+            var defRole = (dbGuild).DefaultRole;
             if (defRole != 0)
             {
                 await user.AddRoleAsync(defRole);
             }
 
+            if (dbGuild.LogChannel > 0)
+            {
+                EmbedBuilder embed = MakeEmbedForUser(user);
+                embed.Title = "User joined the server.";
+                embed.AddField("Bot:", $"{user.IsBot}");
+
+                dbGuild.SendLogMessage(embed);
+            }
+
             return Task.CompletedTask;
+        }
+
+        private static async Task<Task> OnUserLeft(SocketGuild guild, SocketUser user)
+        {
+            if (user is null || guild is null) return Task.CompletedTask;
+
+            var dbGuild = await GuildEngine.GetDBGuild(guild);
+
+            if (dbGuild.LogChannel > 0)
+            {
+                EmbedBuilder embed = MakeEmbedForUser(user);
+                embed.Title = "User left the server.";
+
+                dbGuild.SendLogMessage(embed);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static EmbedBuilder MakeEmbedForUser(dynamic user)
+        {
+            if ((user is SocketUser or SocketGuildUser))
+            {
+                EmbedBuilder embed = new()
+                {
+                    Description = $"[{user.Username}#{user.Discriminator}]"
+                };
+
+                if (user.GetAvatarUrl() != null)
+                {
+                    embed.ImageUrl = user.GetAvatarUrl();
+                }
+
+                return embed;
+            }
+            else
+            {
+                return new EmbedBuilder();
+            }
         }
 
         private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, UInt64> message, Cacheable<IMessageChannel, UInt64> channel, SocketReaction reaction)

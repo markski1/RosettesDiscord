@@ -120,5 +120,29 @@ namespace Rosettes.Modules.Commands
 
             await RespondAsync("Autoroles message created. If you get permissions errors, remember the following:\n\n1. Make sure you did not remove the 'Manage roles' permission when you invited Rosettes into your server.\n2. Make sure the role \"Rosettes\" is higher in the list of roles than the ones which can be chosen.", ephemeral: true);
         }
+
+        [SlashCommand("setlogchan", "Sets the channel where user join/left should be sent. Use 'disable: true' if you wish to disable logs.")]
+        public async Task SetLogChan(string disable = "false")
+        {
+            if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+            {
+                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
+            }
+
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+
+            if (disable == "false")
+            {
+                dbGuild.LogChannel = Context.Channel.Id;
+
+                await RespondAsync("Got it, Rosettes will now report joins and leaves in this channel.");
+            }
+            else
+            {
+                dbGuild.LogChannel = 0;
+
+                await RespondAsync("Got it, Rosettes will no longer report joins and leaves.");
+            }
+        }
     }
 }
