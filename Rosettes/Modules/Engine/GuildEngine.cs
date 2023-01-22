@@ -108,6 +108,7 @@ namespace Rosettes.Modules.Engine
         public ulong Members;
         public ulong OwnerId;
         public ulong DefaultRole;
+        public ulong LogChannel;
         public SocketGuild? CachedReference;
         public string NameCache;
 
@@ -120,6 +121,7 @@ namespace Rosettes.Modules.Engine
         // - Char 1: Music Command toggle
         // - Char 2: Random Command toggle
         // - Char 3: Dumb Command toggle
+        // - Char 4: RPG Command toggle
         //
         public string Settings;
 
@@ -141,11 +143,12 @@ namespace Rosettes.Modules.Engine
             CachedReference = guild;
             DefaultRole = 0;
             Members = 0;
+            LogChannel = 0;
             Settings = "2111111111";
         }
 
         // database constructor, used on loading all guilds
-        public Guild(ulong id, string namecache, ulong members, string settings, ulong ownerid, ulong defaultrole)
+        public Guild(ulong id, string namecache, ulong members, string settings, ulong ownerid, ulong defaultrole, ulong logchan)
         {
             Id = id;
             Members = members;
@@ -154,11 +157,12 @@ namespace Rosettes.Modules.Engine
             OwnerId = ownerid;
             CachedReference = null;
             DefaultRole = defaultrole;
+            LogChannel = logchan;
         }
 
         public bool IsValid()
         {
-            // if guild was created with an Id of 0 it indicates a database failure and this user object is invalid.
+            // if guild was created with an Id of 0 it indicates a database failure and this object is invalid.
             return Id != 0;
         }
 
