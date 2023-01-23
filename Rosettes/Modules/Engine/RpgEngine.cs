@@ -177,41 +177,4 @@ namespace Rosettes.Modules.Engine
             return $"[{name}] Invalid sell option. Must be the number of your selection.";
         }
     }
-
-    public class StartFishing
-    {
-        private readonly System.Timers.Timer Timer = new(1000);
-        private readonly IUserMessage message;
-        private readonly User user;
-
-        public StartFishing(IUserMessage _message, User _user)
-        {
-            message = _message;
-            user = _user;
-            Timer.Elapsed += FishStateUpdate;
-            Timer.AutoReset = false;
-            Timer.Enabled = true;
-        }
-
-        public async void FishStateUpdate(Object? source, System.Timers.ElapsedEventArgs e)
-        {
-            await message.ModifyAsync(x => x.Content = "You caught... ");
-            await Task.Delay(1000);
-            Random rand = new();
-            int caught = rand.Next(100);
-            string fishingCatch = caught switch
-            {
-                (<= 35) => "fish",
-                (> 35 and <= 55) => "uncommonfish",
-                (> 55 and <= 65) => "rarefish",
-                (> 65 and < 85) => "shrimp",
-                _ => "garbage"
-            };
-            await message.ModifyAsync(x => x.Content = $"You caught... {RpgEngine.GetItemName(fishingCatch)}!");
-            await message.Channel.SendMessageAsync($"*{RpgEngine.GetItemName(fishingCatch)} caught and added to inventory.*");
-            RpgEngine.ModifyItem(user, fishingCatch, +1);
-            await Task.Delay(1000);
-            await message.DeleteAsync();
-        }
-    }
 }

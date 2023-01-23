@@ -33,21 +33,10 @@ namespace Rosettes.Modules.Commands
             {
                 Random Random = new();
 
-                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
 
-                string displayName;
-                SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-                if (GuildUser is not null && GuildUser.Nickname is not null)
-                {
-                    displayName = GuildUser.Nickname;
-                }
-                else
-                {
-                    displayName = Context.User.Username;
-                }
-
-                embed.WithTitle("Dice thrown!");
-                embed.WithDescription($"[{displayName}] has thrown a dice, from 1 to {num}");
+                embed.WithTitle("Threw a dice!");
+                embed.WithDescription($"From 1 to {num}.");
 
                 embed.AddField("Result: ", (Random.Next(num) + 1).ToString());
 
@@ -102,7 +91,7 @@ namespace Rosettes.Modules.Commands
             SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
             if (GuildUser is not null && GuildUser.Nickname is not null)
             {
-                displayName = GuildUser.Nickname;
+                displayName = GuildUser.DisplayName;
             }
             else
             {

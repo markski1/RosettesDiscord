@@ -33,9 +33,19 @@ namespace Rosettes.Core
             };
             if (author is not null)
             {
+                string displayName;
+                SocketGuildUser? GuildUser = author as SocketGuildUser;
+                if (GuildUser is not null && GuildUser.Nickname is not null)
+                {
+                    displayName = GuildUser.DisplayName;
+                }
+                else
+                {
+                    displayName = author.Username;
+                }
                 EmbedAuthorBuilder authorEmbed = new()
                 {
-                    Name = author.Username
+                    Name = displayName
                 };
                 if (author.GetAvatarUrl() is not null)
                 {

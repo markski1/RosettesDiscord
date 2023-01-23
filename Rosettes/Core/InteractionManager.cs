@@ -31,7 +31,7 @@ namespace Rosettes.Core
                 Global.GenerateErrorMessage("InteractionManager", $"{ex}");
 
                 // acknoweldge we crashed.
-                await inter.RespondAsync("Sorry, there was an unknown error executing the command.");
+                await inter.RespondAsync("Sorry, there was an unknown error executing the command.", ephemeral: true);
             }
         }
 

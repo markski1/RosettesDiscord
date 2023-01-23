@@ -23,9 +23,46 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("You can only fish every 60 minutes.");
                 return;
             }
-            await RespondAsync($"[{Context.User.Username}] Fishing! 🎣");
-            var message = await ReplyAsync("You caught");
-            _ = new StartFishing(message, dbUser);
+            EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+            embed.Title = "Fishing! 🎣";
+            EmbedFieldBuilder fishField = new()
+            {
+                Name = "Catching...",
+                Value = "[ ##.......... ]"
+            };
+            embed.AddField(fishField);
+            await RespondAsync(embed: embed.Build());
+
+            await Task.Delay(250);
+
+            fishField.Value = "[ ####..... ]";
+            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            await Task.Delay(250);
+
+            fishField.Value = "[ ###### ]";
+            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            Random rand = new();
+            int caught = rand.Next(100);
+            string fishingCatch = caught switch
+            {
+                (<= 35) => "fish",
+                (> 35 and <= 55) => "uncommonfish",
+                (> 55 and <= 65) => "rarefish",
+                (> 65 and < 85) => "shrimp",
+                _ => "garbage"
+            };
+
+            fishField.Name = "You caught:";
+            fishField.Value = RpgEngine.GetItemName(fishingCatch);
+
+            embed.Footer = new EmbedFooterBuilder()
+            {
+                Text = $"added to inventory."
+            };
+
+            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
 
         [SlashCommand("craft", "Combine your items to make something.")]
@@ -49,10 +86,20 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
 
+                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+                embed.Title = "Crafted new item.";
+
                 ingredientsOrSuccess = RpgEngine.MakeItem(dbUser, choice);
 
-                await RespondAsync($"[{Context.User.Username}] You have spent {ingredientsOrSuccess} to make: {RpgEngine.GetItemName(choice)}");
-                await ReplyAsync($"1 {RpgEngine.GetItemName(choice)} added to inventory.");
+                embed.AddField("Spent:", ingredientsOrSuccess);
+                embed.AddField("Made:", RpgEngine.GetItemName(choice));
+
+                embed.Footer = new EmbedFooterBuilder()
+                {
+                    Text = $"added to inventory."
+                };
+
+                await RespondAsync(embed: embed.Build());
             }
             else
             {
