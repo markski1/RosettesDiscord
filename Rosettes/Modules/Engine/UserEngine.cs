@@ -61,7 +61,7 @@ namespace Rosettes.Modules.Engine
             {
                 return await LoadUserFromDatabase(user);
             }
-            return UserCache.First(item => item.Id == user.Id);
+            return UserCache.First(item => item.Id == user.Id); ;
         }
 
         // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
@@ -90,7 +90,6 @@ namespace Rosettes.Modules.Engine
         public bool SyncUpToDate { get; set; }
 
         // timers
-        private int LastUsedCommand;
         private int LastFished;
 
 
@@ -111,7 +110,6 @@ namespace Rosettes.Modules.Engine
                 NameCache = newUser.Username + "#" + newUser.Discriminator;
             }
             SyncUpToDate = true;
-            LastUsedCommand = 0;
             LastFished = 0;
         }
 
@@ -120,7 +118,6 @@ namespace Rosettes.Modules.Engine
         {
             Id = id;
             SyncUpToDate = true;
-            LastUsedCommand = 0;
             LastFished = 0;
             NameCache = namecache;
         }
@@ -129,17 +126,6 @@ namespace Rosettes.Modules.Engine
         {
             // if user was created with an Id of 0 it indicates a database failure and this user object is invalid.
             return Id != 0;
-        }
-
-        public bool CanUseCommand(SocketGuild? guild)
-        {
-            int change = (guild is null) ? 10 : 3;
-            if (Global.CurrentUnix() > LastUsedCommand)
-            {
-                LastUsedCommand = Global.CurrentUnix() + change;
-                return true;
-            }
-            return false;
         }
 
         public async Task<IUser> GetDiscordReference()
@@ -174,9 +160,5 @@ namespace Rosettes.Modules.Engine
             }
             return false;
         }
-
-        // temps for fishing leaderboard
-        public int shrimpCache = 0;
-        public int sushiCache = 0;
     }
 }

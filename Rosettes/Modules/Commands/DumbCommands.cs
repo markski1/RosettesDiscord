@@ -143,22 +143,16 @@ namespace Rosettes.Modules.Commands
                 board += "\n";
             }
 
-            EmbedBuilder embed;
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
 
             if (unspoilered == "false")
             {
-                embed = new()
-                {
-                    Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.",
-                    Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!"
-                };
+                embed.Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.";
+                embed.Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!";
             } 
             else
             {
-                embed = new()
-                {
-                    Title = $"Non-playable {anEmoji}-sweeper board generated.",
-                };
+                embed.Title = $"Non-playable {anEmoji}-sweeper board generated.";
             }
 
             await RespondAsync(embed: embed.Build());

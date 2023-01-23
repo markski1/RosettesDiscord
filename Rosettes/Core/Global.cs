@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Core
 {
@@ -22,6 +23,27 @@ namespace Rosettes.Core
             {
                 GenerateErrorMessage("global", $"failed to deliver admin message to user {id} \n----\n {ex}");
             }
+        }
+
+        public static EmbedBuilder MakeRosettesEmbed(IUser? author = null)
+        {
+            EmbedBuilder embed = new()
+            {
+                Color = Color.DarkPurple
+            };
+            if (author is not null)
+            {
+                EmbedAuthorBuilder authorEmbed = new()
+                {
+                    Name = author.Username
+                };
+                if (author.GetAvatarUrl() is not null)
+                {
+                    authorEmbed.IconUrl = author.GetAvatarUrl();
+                }
+                embed.Author = authorEmbed;
+            }
+            return embed;
         }
 
         public static void GenerateErrorMessage(string source, string error)

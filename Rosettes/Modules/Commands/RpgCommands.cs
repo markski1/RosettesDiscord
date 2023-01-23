@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
@@ -161,11 +162,9 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            EmbedBuilder embed = new()
-            {
-                Title = $"{Context.User.Username}'s inventory",
-                Description = "Loading inventory..."
-            };
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            embed.Title = $"{Context.User.Username}'s inventory";
+            embed.Description = "Loading inventory...";
 
             await RespondAsync(embed: embed.Build());
 
@@ -190,6 +189,7 @@ namespace Rosettes.Modules.Commands
                 $"{RpgEngine.GetItemName("shrimprice")}: {await RpgEngine.GetItem(user, "shrimprice")}");
 
             embed.Description = null;
+
             await ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
         }
 
@@ -205,11 +205,9 @@ namespace Rosettes.Modules.Commands
             {
                 var dbUser = await UserEngine.GetDBUser(Context.User);
                 if (dbUser is null) return;
-                EmbedBuilder embed = new()
-                {
-                    Title = "Rosettes shop!",
-                    Description = $"[{Context.User.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}"
-                };
+                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                embed.Title = "Rosettes shop!";
+                embed.Description = $"[{Context.User.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}";
 
                 embed.AddField("Buy options:",
                     $"**1.** Buy [2 {RpgEngine.GetItemName("rice")}] for [5 {RpgEngine.GetItemName("dabloons")}]\n" +

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Data;
 
@@ -32,7 +33,7 @@ namespace Rosettes.Modules.Commands
             {
                 Random Random = new();
 
-                EmbedBuilder embed = new();
+                EmbedBuilder embed = Global.MakeRosettesEmbed();
 
                 string displayName;
                 SocketGuildUser? GuildUser = Context.User as SocketGuildUser;

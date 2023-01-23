@@ -58,11 +58,9 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("This command won't run in my DM's, silly.");
                 return;
             }
-            EmbedBuilder embed = new()
-            {
-                Title = $"Information about guild {guild.Name}",
-                ImageUrl = guild.IconUrl
-            };
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            embed.Title = $"Information about guild {guild.Name}";
+            embed.ImageUrl = guild.IconUrl;
 
             embed.AddField("Creation date", guild.CreatedAt);
             embed.AddField("Snowflake ID", guild.Id);
@@ -112,17 +110,17 @@ namespace Rosettes.Modules.Commands
             }
             catch
             {
-                await RespondAsync("Could not fetch tweet data.");
+                await RespondAsync("Could not fetch tweet data.", ephemeral: true);
                 return;
             }
             
             if (response is null)
             {
-                await RespondAsync("Could not fetch tweet data.");
+                await RespondAsync("Could not fetch tweet data.", ephemeral: true);
                 return;
             }
 
-            // if we do get something back, it'll be embedded in an HTML, so now do some hacky string scraping things to get the video url out of it.
+            // if we do get something back, it'll be embedded in an HTML, so now just sccrape the video url out of it.
             if (!response.Contains("twitter:player:stream"))
             {
                 await RespondAsync("Could not find a video in that tweet.", ephemeral: true);
@@ -167,7 +165,7 @@ namespace Rosettes.Modules.Commands
             {
                 await mid.ModifyAsync(x => x.Content = $"Downloading the video... DONE!\nUploading the video to Discord... FAILED!");
                 await RespondAsync("Sorry, video was too large to be uploaded...\nInstead, have a direct link:");
-                EmbedBuilder embed = new();
+                EmbedBuilder embed = Global.MakeRosettesEmbed();
                 embed.AddField("Download: ", $"[Direct link]({videoLink})");
                 await ReplyAsync(embed: embed.Build());
             }

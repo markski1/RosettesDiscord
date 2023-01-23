@@ -202,10 +202,8 @@ namespace Rosettes.Core
         {
             if ((user is SocketUser or SocketGuildUser))
             {
-                EmbedBuilder embed = new()
-                {
-                    Description = $"[{user.Username}#{user.Discriminator}]"
-                };
+                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                embed.Description = $"[{user.Username}#{user.Discriminator}]";
 
                 if (user.GetAvatarUrl() != null)
                 {
@@ -216,7 +214,7 @@ namespace Rosettes.Core
             }
             else
             {
-                return new EmbedBuilder();
+                return Global.MakeRosettesEmbed();
             }
         }
 

@@ -24,11 +24,9 @@ namespace Rosettes.Modules.Commands
                 option4 = "NOT_PROVIDED";
             }
 
-            var embed = new EmbedBuilder
-            {
-                Title = question,
-                Description = "Choose one:"
-            };
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            embed.Title = question;
+            embed.Description = "Choose one:";
 
             var comps = new ComponentBuilder();
 
@@ -89,10 +87,12 @@ namespace Rosettes.Modules.Commands
             var restGuild = await dbGuild.GetDiscordRestReference();
             var socketGuild = dbGuild.GetDiscordSocketReference();
 
-            var embed = new EmbedBuilder();
-
-            embed.WithTitle(AutoRolesEngine.GetNameFromCode(code));
-            embed.WithDescription(" ");
+            EmbedBuilder embed = new()
+            {
+                Color = Color.DarkPurple,
+                Title = AutoRolesEngine.GetNameFromCode(code),
+                Description = " "
+            };
 
             foreach (var role in roles)
             {
