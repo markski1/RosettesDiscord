@@ -121,7 +121,7 @@ namespace Rosettes.Modules.Commands
             await RespondAsync("Autoroles message created. If you get permissions errors, remember the following:\n\n1. Make sure you did not remove the 'Manage roles' permission when you invited Rosettes into your server.\n2. Make sure the role \"Rosettes\" is higher in the list of roles than the ones which can be chosen.", ephemeral: true);
         }
 
-        [SlashCommand("setlogchan", "Sets the channel where user join/left should be sent. Use 'disable: true' if you wish to disable logs.")]
+        [SlashCommand("setlogchan", "Sets the channel where user join/left is sent. Use 'disable: true' to disable.")]
         public async Task SetLogChan(string disable = "false")
         {
             if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))

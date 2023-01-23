@@ -21,7 +21,7 @@ namespace Rosettes.Modules.Engine
 
         public static async void SyncWithDatabase()
         {
-            foreach (Guild guild in GuildCache)
+            foreach (Guild guild in GuildCache.ToList())
             {
                 await UpdateGuild(guild);
             }
@@ -203,7 +203,6 @@ namespace Rosettes.Modules.Engine
             SocketGuild? reference = GetDiscordSocketReference();
             if (reference is null)
             {
-                Global.GenerateErrorMessage("guild-selftest", $"Failed to find reference for {NameCache}");
                 return;
             }
             OwnerId = reference.OwnerId;
