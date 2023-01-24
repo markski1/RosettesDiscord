@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -28,20 +29,22 @@ namespace Rosettes.Modules.Commands
             EmbedFieldBuilder fishField = new()
             {
                 Name = "Catching...",
-                Value = "[ ##.......... ]"
+                Value = "`[|||       ]`"
             };
             embed.AddField(fishField);
             await RespondAsync(embed: embed.Build());
 
             await Task.Delay(250);
 
-            fishField.Value = "[ ####..... ]";
+            fishField.Value = "`[||||||    ]`";
             await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
 
             await Task.Delay(250);
 
-            fishField.Value = "[ ###### ]";
+            fishField.Value = "`[||||||||| ]`";
             await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            await Task.Delay(200);
 
             Random rand = new();
             int caught = rand.Next(100);
@@ -61,6 +64,8 @@ namespace Rosettes.Modules.Commands
             {
                 Text = $"added to inventory."
             };
+
+            RpgEngine.ModifyItem(dbUser, fishingCatch, +1);
 
             await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
@@ -134,7 +139,12 @@ namespace Rosettes.Modules.Commands
 
                 RpgEngine.ModifyItem(dbUser, choice, -1);
 
-                await RespondAsync($"[{Context.User.Username}] have given {RpgEngine.GetItemName(choice)} to {user.Mention}!");
+                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                embed.Title = "Item given.";
+
+                embed.AddField(Context.User.Mention, $"Given {RpgEngine.GetItemName(choice)} to {user.Mention}!");
+
+                await RespondAsync(embed: embed.Build());
             }
             else
             {
@@ -166,14 +176,19 @@ namespace Rosettes.Modules.Commands
 
                 RpgEngine.ModifyItem(dbUser, choice, -1);
 
+                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+                embed.Title = "Item consumed.";
+
                 if (user is null)
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {RpgEngine.GetItemName(choice)}.");
+                    embed.Description = $"Has eaten {RpgEngine.GetItemName(choice)}";
                 }
                 else
                 {
-                    await RespondAsync($"[{Context.User.Username}] has eaten {RpgEngine.GetItemName(choice)}, and shared some with {user.Mention}.");
+                    embed.Description = $"Has eaten {RpgEngine.GetItemName(choice)}, and shared some with {user.Mention}.";
                 }
+
+                await RespondAsync(embed: embed.Build());
             }
             if (choice == "garbage")
             {
