@@ -30,7 +30,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan FROM guilds";
+            var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
 
             try
             {
@@ -64,7 +64,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan FROM guilds WHERE id=@id";
+            var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
             try
             {
@@ -134,11 +134,11 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel
+                        SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@RpgChannel
                         WHERE id = @Id";
             try
             {
-                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel })) > 0;
+                return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.RpgChannel })) > 0;
             }
             catch (Exception ex)
             {

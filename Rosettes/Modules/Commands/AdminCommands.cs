@@ -144,5 +144,29 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("Got it, Rosettes will no longer report joins and leaves.");
             }
         }
+
+        [SlashCommand("setrpgchan", "Sets the channel where RPG commands may be used. Use 'disable: true' to disable.")]
+        public async Task SetRpgChan(string disable = "false")
+        {
+            if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+            {
+                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
+            }
+
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+
+            if (disable == "false")
+            {
+                dbGuild.RpgChannel = Context.Channel.Id;
+
+                await RespondAsync("Got it, Rosettes will now only allow RPG commands in this channel.");
+            }
+            else
+            {
+                dbGuild.RpgChannel = 0;
+
+                await RespondAsync("Got it, Rosettes will now allow RPG commands anywhere in the guild (unless disabled from the web panel).");
+            }
+        }
     }
 }

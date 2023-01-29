@@ -33,18 +33,22 @@ namespace Rosettes.Modules.Engine
             return await UserEngine._interface.FetchInventoryItem(dbUser, name);
         }
 
-        internal static async Task<bool> CanuseRPGCommand(SocketInteractionContext context)
+        internal static async Task<string> CanuseRPGCommand(SocketInteractionContext context)
         {
             if (context.Guild is null)
             {
-                return false;
+                return "RPG Commands do not work in direct messages.";
             }
             var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
             if (!dbGuild.AllowsRPG())
             {
-                return false;
+                return "This guild does not allow RPG commands.";
             }
-            return true;
+            if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
+            {
+                return "RPG commands are not allowed in this channel, please use the RPG/bot channel.";
+            }
+            return "yes";
         }
 
         internal static async Task<string> HasIngredients(User dbUser, string item)

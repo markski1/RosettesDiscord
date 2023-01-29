@@ -111,6 +111,7 @@ namespace Rosettes.Modules.Engine
         public ulong OwnerId;
         public ulong DefaultRole;
         public ulong LogChannel;
+        public ulong RpgChannel;
         public SocketGuild? CachedReference;
         public string NameCache;
 
@@ -146,11 +147,12 @@ namespace Rosettes.Modules.Engine
             DefaultRole = 0;
             Members = 0;
             LogChannel = 0;
+            RpgChannel = 0;
             Settings = "2111111111";
         }
 
         // database constructor, used on loading all guilds
-        public Guild(ulong id, string namecache, ulong members, string settings, ulong ownerid, ulong defaultrole, ulong logchan)
+        public Guild(ulong id, string namecache, ulong members, string settings, ulong ownerid, ulong defaultrole, ulong logchan, ulong rpgchan)
         {
             Id = id;
             Members = members;
@@ -160,6 +162,7 @@ namespace Rosettes.Modules.Engine
             CachedReference = null;
             DefaultRole = defaultrole;
             LogChannel = logchan;
+            RpgChannel = rpgchan;
         }
 
         public bool IsValid()

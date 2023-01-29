@@ -13,9 +13,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("fish", "Try to catch a fish")]
         public async Task CatchFish()
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
             var dbUser = await UserEngine.GetDBUser(Context.User);
@@ -73,9 +74,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("craft", "Combine your items to make something.")]
         public async Task RpgMake(string option = "none")
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
@@ -116,9 +118,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("give", "Give an item to another user.")]
         public async Task GiveItem(IUser user, string option = "none")
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
@@ -156,9 +159,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("use", "Use an item, optionally with another user.")]
         public async Task ItemUse(string option = "none", IUser? user = null)
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
@@ -218,9 +222,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("inventory", "Check your inventory")]
         public async Task RpgInventory()
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
@@ -258,9 +263,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
         public async Task RpgShop(int buy = -1, int sell = -1)
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
             if (buy == -1 && sell == -1)
@@ -298,9 +304,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("food-leader", "Leaderbord by amount of food made.")]
         public async Task FoodLeaderboard()
         {
-            if (!await RpgEngine.CanuseRPGCommand(Context))
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("Sorry, RPG commands are disabled in this server.", ephemeral: true);
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
             var users = await UserEngine.GetAllUsersFromGuild(Context.Guild);
