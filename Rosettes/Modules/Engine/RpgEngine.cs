@@ -180,5 +180,27 @@ namespace Rosettes.Modules.Engine
             }
             return $"[{name}] Invalid sell option. Must be the number of your selection.";
         }
+
+        public static async Task<string> ListItems(User user, List<string> items)
+        {
+            string list = "";
+
+            foreach (var item in items)
+            {
+                int amount = await GetItem(user, item);
+
+                if (amount != 0)
+                {
+                    list += $"{RpgEngine.GetItemName(item)}: {amount}\n";
+                }
+            }
+
+            if (list == "")
+            {
+                list = "Nothing.";
+            }
+
+            return list;
+        }
     }
 }

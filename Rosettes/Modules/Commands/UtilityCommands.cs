@@ -60,15 +60,15 @@ namespace Rosettes.Modules.Commands
             }
             EmbedBuilder embed = Global.MakeRosettesEmbed();
             embed.Title = $"Information about guild {guild.Name}";
-            embed.ImageUrl = guild.IconUrl;
+            embed.ThumbnailUrl = guild.IconUrl;
 
             embed.AddField("Creation date", guild.CreatedAt);
             embed.AddField("Snowflake ID", guild.Id);
-            embed.AddField("Members", guild.MemberCount);
+            embed.AddField("Members", guild.MemberCount, true);
+            embed.AddField("Roles", guild.Roles.Count, true);
             embed.AddField("Owner", guild.Owner.Username + "#" + guild.Owner.Discriminator);
-            embed.AddField("Roles", guild.Roles.Count);
-            embed.AddField("Stickers", guild.Stickers.Count);
-            embed.AddField("Emoji", guild.Emotes.Count);
+            embed.AddField("Stickers", guild.Stickers.Count, true);
+            embed.AddField("Emoji", guild.Emotes.Count, true);
             if (guild.SplashUrl is not null)
             {
                 embed.AddField("Splash image URL", $"<{guild.SplashUrl}>");
@@ -137,7 +137,20 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             string videoLink = response[begin..end];
-            
+
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+
+            embed.Title = "Exporting twitter video.";
+
+            EmbedFieldBuilder downloadField = new() { Name = "Video download.", Value = "In progress...", IsInline = true };
+
+            EmbedFieldBuilder uploadField = new() { Name = "Video upload.", Value = "Waiting..." };
+
+            embed.AddField(downloadField);
+            embed.AddField(uploadField);
+
+            var mid = await ReplyAsync(embed: embed.Build());
+
             // store the video locally
             Random Random = new();
             if (!Directory.Exists("./temp/twtvid/"))
@@ -145,13 +158,17 @@ namespace Rosettes.Modules.Commands
                 Directory.CreateDirectory("./temp/twtvid/");
             }
             
-            var mid = await ReplyAsync("Downloading the video...");
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
             using var videoStream = await Global.HttpClient.GetStreamAsync(videoLink);
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await videoStream.CopyToAsync(fileStream);
             fileStream.Close();
-            await mid.ModifyAsync(x => x.Content = $"Downloading the video... DONE!\nUploading the video to Discord...");
+
+            downloadField.Value = "Done.";
+
+            uploadField.Value = "In progress...";
+
+            await mid.ModifyAsync(x => x.Embed = embed.Build());
 
             ulong size = (ulong)new FileInfo(fileName).Length;
 
@@ -159,15 +176,14 @@ namespace Rosettes.Modules.Commands
             if (Context.Guild == null || Context.Guild.MaxUploadLimit > size)
             {
                 await RespondWithFileAsync(fileName);
-                await mid.DeleteAsync();
+                _ = mid.DeleteAsync();
             } 
             else
             {
-                await mid.ModifyAsync(x => x.Content = $"Downloading the video... DONE!\nUploading the video to Discord... FAILED!");
-                await RespondAsync("Sorry, video was too large to be uploaded...\nInstead, have a direct link:");
-                EmbedBuilder embed = Global.MakeRosettesEmbed();
-                embed.AddField("Download: ", $"[Direct link]({videoLink})");
-                await ReplyAsync(embed: embed.Build());
+                _ = mid.DeleteAsync();
+                uploadField.Value = "Failed.";
+                embed.AddField("Video was too large.", $"Instead, have a [Direct link]({videoLink}).");
+                await RespondAsync(embed: embed.Build());
             }
         }
 

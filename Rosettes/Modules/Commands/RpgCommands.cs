@@ -229,31 +229,42 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
-            embed.Title = $"{Context.User.Username}'s inventory";
+            EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+            embed.Title = $"Inventory";
             embed.Description = "Loading inventory...";
 
             await RespondAsync(embed: embed.Build());
 
-            var user = await UserEngine.GetDBUser(Context.User);
+            User user = await UserEngine.GetDBUser(Context.User);
 
-            embed.AddField(
-                $"Wallet",
-                $"{await RpgEngine.GetItem(user, "dabloons")} {RpgEngine.GetItemName("dabloons")}");
-            embed.AddField(
-                $"Items",
-                $"{RpgEngine.GetItemName("garbage")}: {await RpgEngine.GetItem(user, "garbage")}\n" +
-                $"{RpgEngine.GetItemName("rice")}: {await RpgEngine.GetItem(user, "rice")}");
-            embed.AddField(
-                $"Catch", 
-                $"{RpgEngine.GetItemName("fish")}: {await RpgEngine.GetItem(user, "fish")} \n" +
-                $"{RpgEngine.GetItemName("uncommonfish")}: {await RpgEngine.GetItem(user, "uncommonfish")} \n" +
-                $"{RpgEngine.GetItemName("rarefish")}: {await RpgEngine.GetItem(user, "rarefish")} \n" +
-                $"{RpgEngine.GetItemName("shrimp")}: {await RpgEngine.GetItem(user, "shrimp")}");
-            embed.AddField(
-                $"Finished Goods",
-                $"{RpgEngine.GetItemName("sushi")}: {await RpgEngine.GetItem(user, "sushi")}\n" +
-                $"{RpgEngine.GetItemName("shrimprice")}: {await RpgEngine.GetItem(user, "shrimprice")}");
+            string fieldContents;
+            List<string> fieldsToList = new();
+
+            EmbedFooterBuilder footer = new() { Text = $"================= Wallet: {await RpgEngine.GetItem(user, "dabloons")} {RpgEngine.GetItemName("dabloons")} =================" };
+
+            embed.Footer = footer;
+
+            fieldsToList.Add("garbage");
+            fieldsToList.Add("rice");
+            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
+
+            embed.AddField($"Items", fieldContents);
+
+            fieldsToList.Clear();
+            fieldsToList.Add("fish");
+            fieldsToList.Add("uncommonfish");
+            fieldsToList.Add("rarefish");
+            fieldsToList.Add("shrimp");
+            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
+
+            embed.AddField($"Catch", fieldContents, true);
+
+            fieldsToList.Clear();
+            fieldsToList.Add("sushi");
+            fieldsToList.Add("shrimprice");
+            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
+
+            embed.AddField($"Finished Goods", fieldContents, true);
 
             embed.Description = null;
 
