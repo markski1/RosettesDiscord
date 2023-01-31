@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Rosettes.Core;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands.EmojiDownloader
 {
@@ -36,7 +37,12 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
             }
 
             string fileName = "";
+            
+            // clean up servername
             string serverName = ServerContext.Guild.Name.Replace(" ", "");
+            Regex rgx = new("[^a-zA-Z0-9 -]");
+            serverName = rgx.Replace(serverName, "");
+
             // ensure the folders to store the emoji exist.
             if (!Directory.Exists("./temp/"))
             {
