@@ -202,14 +202,9 @@ namespace Rosettes.Modules.Commands
                 return;
             }
            
-            if (DownloadEmoji.CheckIsDownloading())
-            {
-                await RespondAsync("There's currently an emoji export being done, likely in another server. Try again in a bit.", ephemeral: true);
-            }
             else
             {
-                await RespondAsync("Retrieving emoji...");
-                _ = DownloadEmoji.DoTheThing(Context);
+                _ = (new EmojiDownloader.EmojiDownloader()).DownloadEmojis(Context);
             }
         }
 

@@ -5,32 +5,35 @@ using System.IO.Compression;
 
 namespace Rosettes.Modules.Commands.EmojiDownloader
 {
-    public static class DownloadEmoji
+    public class EmojiDownloader
     {
-        private static IReadOnlyCollection<GuildEmote>? EmoteCollection;
-        private static SocketInteractionContext? ServerContext;
-        private static bool IsDownloading = false;
+        private IReadOnlyCollection<GuildEmote>? EmoteCollection;
 
-        public static async Task DoTheThing(SocketInteractionContext serverContext)
+        public async Task DownloadEmojis(SocketInteractionContext ServerContext)
         {
-            ServerContext = serverContext;
             EmoteCollection = await ServerContext.Guild.GetEmotesAsync();
             string ServerName = ServerContext.Guild.Name;
             int emoteAmount = EmoteCollection.Count;
             int progress = 0;
-            IUserMessage messageId;
+
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+
+            embed.Title = "Exporting emoji.";
+
+            EmbedFieldBuilder statusField = new() { Name = "Status" };
+
+            embed.AddField(statusField);
 
             if (emoteAmount < 1)
             {
-                await ServerContext.Channel.SendMessageAsync("There are no custom emoji in this server, or I failed to retrieve them for some reason.");
+                await ServerContext.Interaction.RespondAsync("There are no custom emoji in this server, or I failed to retrieve them for some reason.");
                 return;
             }
             else
             {
-                await ServerContext.Channel.SendMessageAsync("I'll now download every emoji in this server, and I'll send it over as a ZIP when I'm done.");
-                messageId = await ServerContext.Channel.SendMessageAsync($"Progress: `0/{emoteAmount}`");
+                statusField.Value = $"Progress: `0/{emoteAmount}`";
+                await ServerContext.Interaction.RespondAsync(embed: embed.Build());
             }
-            IsDownloading = true;
 
             string fileName = "";
             string serverName = ServerContext.Guild.Name.Replace(" ", "");
@@ -61,10 +64,15 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
                 }
                 progress++;
                 // update the message with the current progress, every 3rd emoji.
-                if (progress % 3 == 0) await messageId.ModifyAsync(x => x.Content = $"Progress: `{progress}/{emoteAmount}`");
+                if (progress % 3 == 0)
+                {
+                    statusField.Value = $"Progress: `{progress}/{emoteAmount}`";
+                    await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+                }
             }
             // done, update message.
-            await messageId.ModifyAsync(x => x.Content = $"Progress: `Complete!`");
+            statusField.Value = $"Progress: `Done exporting. Compressing and uploading, please wait...`";
+            await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             try
             {
                 // zip up the file.
@@ -82,19 +90,16 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
                 }
                 File.Move(zipPath, $"/var/www/html/{serverName}.zip");
 
-                await ServerContext.Channel.SendMessageAsync($"Done! The ZIP file with all emoji is now available at <https://snep.markski.ar/{serverName}.zip>.");
+                statusField.Value = $"Progress: `Done exporting. Done uploading.`";
+                embed.AddField("Download link", $"<https://snep.markski.ar/{serverName}.zip>");
+                await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("exportemoji", $"Error allocation zip file for emoji\n{ex.Message}");
-                await ServerContext.Channel.SendMessageAsync($"Sorry! Emojis were exported, but there was an issue allocating the zip file.");
+                statusField.Value = $"Progress: `Failed. Sorry, the error has been reported.`";
+                Global.GenerateErrorMessage("emojiExporter", $"{ex}");
+                await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             }
-            IsDownloading = false;
-        }
-
-        public static bool CheckIsDownloading()
-        {
-            return IsDownloading;
         }
     }
 }
