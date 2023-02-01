@@ -1,6 +1,8 @@
 ﻿using Discord.Interactions;
 using Discord;
 using System.Xml.Linq;
+using Discord.WebSocket;
+using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine
 {
@@ -110,45 +112,90 @@ namespace Rosettes.Modules.Engine
             return choices.Contains(choice);
         }
 
-        internal static async Task<string> ShopBuy(User user, int option, string name)
+        public static async Task ShopBuy(SocketMessageComponent component)
         {
-            switch (option)
+            var dbUser = await UserEngine.GetDBUser(component.User);
+
+            var embed = Global.MakeRosettesEmbed(component.User);
+
+            switch (component.Data.CustomId)
             {
-                case 1:
-                    if (await GetItem(user, "dabloons") >= 5)
+                case "buy":
+                    switch (component.Data.Values.Last())
                     {
-                        ModifyItem(user, "dabloons", -5);
-                        ModifyItem(user, "rice", +2);
-                        return $"[{name}] You have purchased 2 {GetItemName("rice")} for 5 {GetItemName("dabloons")}";
+                        case "buy1":
+                            if (await GetItem(dbUser, "dabloons") >= 5)
+                            {
+                                ModifyItem(dbUser, "dabloons", -5);
+                                ModifyItem(dbUser, "rice", +2);
+                                embed.Description = $"You have purchased 2 {GetItemName("rice")} for 5 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                            }
+                            break;
+                        case "buy2":
+                            if (await GetItem(dbUser, "dabloons") >= 2)
+                            {
+                                ModifyItem(dbUser, "dabloons", -2);
+                                ModifyItem(dbUser, "fish", +1);
+                                embed.Description = $"You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                            }
+                            break;
+                        case "buy3":
+                            embed.Title = "Purchase";
+                            if (await GetItem(dbUser, "dabloons") >= 5)
+                            {
+                                ModifyItem(dbUser, "dabloons", -5);
+                                ModifyItem(dbUser, "uncommonfish", +1);
+                                embed.Description = $"You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                            }
+                            break;
                     }
-                    else
+                    break;
+
+                case "sell":
+                    embed.Title = "Sale";
+                    switch (component.Data.Values.Last())
                     {
-                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
+                        case "sell1":
+                            if (await GetItem(dbUser, "rarefish") >= 1)
+                            {
+                                ModifyItem(dbUser, "rarefish", -1);
+                                ModifyItem(dbUser, "dabloons", +5);
+                                embed.Description = $"You have sold 1 {GetItemName("rarefish")} for 5 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have enough {GetItemName("rarefish")}";
+                            }
+                            break;
+                        case "sell2":
+                            if (await GetItem(dbUser, "garbage") >= 5)
+                            {
+                                ModifyItem(dbUser, "garbage", -5);
+                                ModifyItem(dbUser, "dabloons", +5);
+                                embed.Description = $"You have sold 5 {GetItemName("garbage")} for 5 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have enough {GetItemName("garbage")}";
+                            }
+                            break;
                     }
-                case 2:
-                    if (await GetItem(user, "dabloons") >= 2)
-                    {
-                        ModifyItem(user, "dabloons", -2);
-                        ModifyItem(user, "fish", +1);
-                        return $"[{name}] You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("dabloons")}";
-                    }
-                    else
-                    {
-                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
-                    }
-                case 3:
-                    if (await GetItem(user, "dabloons") >= 5)
-                    {
-                        ModifyItem(user, "dabloons", -5);
-                        ModifyItem(user, "uncommonfish", +1);
-                        return $"[{name}] You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("dabloons")}";
-                    }
-                    else
-                    {
-                        return $"[{name}] You don't have enough {GetItemName("dabloons")}";
-                    }
+                    break;
             }
-            return $"[{name}] Invalid buy option. Must be the number of your selection.";
+
+            await component.RespondAsync(text: component.Data.Value, embed: embed.Build());
         }
 
         public static async Task<string> ShopSell(User user, int option, string name)

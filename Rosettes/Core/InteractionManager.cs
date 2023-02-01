@@ -40,6 +40,11 @@ namespace Rosettes.Core
             await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
         }
 
+        private async Task OnMenuSelectionMade(SocketMessageComponent component)
+        {
+            await RpgEngine.ShopBuy(component);
+        }
+
         private Task OnCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
         {
             return Task.CompletedTask;
@@ -54,6 +59,8 @@ namespace Rosettes.Core
             _client.InteractionCreated += OnInteraction;
 
             _client.ButtonExecuted += OnButtonClicked;
+
+            _client.SelectMenuExecuted += OnMenuSelectionMade;
 
             _commands.SlashCommandExecuted += OnCommandExecuted;
         }

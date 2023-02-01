@@ -237,7 +237,6 @@ namespace Rosettes.Modules.Commands
 
             User user = await UserEngine.GetDBUser(Context.User);
 
-            string fieldContents;
             List<string> fieldsToList = new();
 
             EmbedFooterBuilder footer = new() { Text = $"================= Wallet: {await RpgEngine.GetItem(user, "dabloons")} {RpgEngine.GetItemName("dabloons")} =================" };
@@ -246,25 +245,34 @@ namespace Rosettes.Modules.Commands
 
             fieldsToList.Add("garbage");
             fieldsToList.Add("rice");
-            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
 
-            embed.AddField($"Items", fieldContents);
+            embed.AddField(
+                $"Items",
+                await RpgEngine.ListItems(user, fieldsToList),
+                false
+            );
 
             fieldsToList.Clear();
             fieldsToList.Add("fish");
             fieldsToList.Add("uncommonfish");
             fieldsToList.Add("rarefish");
             fieldsToList.Add("shrimp");
-            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
 
-            embed.AddField($"Catch", fieldContents, true);
+            embed.AddField(
+                $"Catch",
+                await RpgEngine.ListItems(user, fieldsToList),
+                true
+            );
 
             fieldsToList.Clear();
             fieldsToList.Add("sushi");
             fieldsToList.Add("shrimprice");
-            fieldContents = await RpgEngine.ListItems(user, fieldsToList);
 
-            embed.AddField($"Finished Goods", fieldContents, true);
+            embed.AddField(
+                $"Finished Goods",
+                await RpgEngine.ListItems(user, fieldsToList),
+                true
+            );
 
             embed.Description = null;
 
@@ -272,7 +280,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
-        public async Task RpgShop(int buy = -1, int sell = -1)
+        public async Task RpgShop()
         {
             string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
             if (isAllowed != "yes")
@@ -280,36 +288,38 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
-            if (buy == -1 && sell == -1)
-            {
-                var dbUser = await UserEngine.GetDBUser(Context.User);
-                if (dbUser is null) return;
-                EmbedBuilder embed = Global.MakeRosettesEmbed();
-                embed.Title = "Rosettes shop!";
-                embed.Description = $"[{Context.User.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}";
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+            if (dbUser is null) return;
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            embed.Title = "Rosettes shop!";
+            embed.Description = $"The shop allows for buying and selling items for doubloons.";
 
-                embed.AddField("Buy options:",
-                    $"**1.** Buy [2 {RpgEngine.GetItemName("rice")}] for [5 {RpgEngine.GetItemName("dabloons")}]\n" +
-                    $"**2.** Buy [1 {RpgEngine.GetItemName("fish")}] for [2 {RpgEngine.GetItemName("dabloons")}]\n" +
-                    $"**3.** Buy [1 {RpgEngine.GetItemName("uncommonfish")}] for [5 {RpgEngine.GetItemName("dabloons")}]\n");
+            embed.Footer = new EmbedFooterBuilder() { Text = $"[{ Context.User.Username }] has: { await RpgEngine.GetItem(dbUser, "dabloons")} { RpgEngine.GetItemName("dabloons")}" };
 
-                embed.AddField("Sell otions:",
-                    $"**1.** Sell [1 {RpgEngine.GetItemName("rarefish")}] for [5 {RpgEngine.GetItemName("dabloons")}]\n" +
-                    $"**2.** Sell [5 {RpgEngine.GetItemName("garbage")}] for [5 {RpgEngine.GetItemName("dabloons")}]\n");
+            var comps = new ComponentBuilder();
 
-                await RespondAsync(embed: embed.Build());
-                return;
-            }
-            else if (buy >= 0)
+            SelectMenuBuilder buyMenu = new()
             {
-                var user = await UserEngine.GetDBUser(Context.User);
-                await RespondAsync(await RpgEngine.ShopBuy(user, buy, Context.User.Username));
-            }
-            else if (sell >= 0)
+                Placeholder = "Buy...",
+                CustomId = "buy"
+            };
+            buyMenu.AddOption(label: $"2 {RpgEngine.GetItemName("rice")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fish")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
+
+            SelectMenuBuilder sellMenu = new()
             {
-                var user = await UserEngine.GetDBUser(Context.User);
-                await RespondAsync(await RpgEngine.ShopSell(user, sell, Context.User.Username));
-            }
+                Placeholder = "Sell...",
+                CustomId = "sell"
+            };
+            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}]", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
+            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("garbage")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
+
+            comps.WithSelectMenu(buyMenu, 0);
+            comps.WithSelectMenu(sellMenu, 0);
+
+            await RespondAsync(embed: embed.Build(), components: comps.Build());
+            return;
         }
 
         [SlashCommand("food-leader", "Leaderbord by amount of food made.")]
