@@ -1,5 +1,6 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
+using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
 using System.Reflection;
 
@@ -37,7 +38,21 @@ namespace Rosettes.Core
 
         private async Task OnButtonClicked(SocketMessageComponent component)
         {
-            await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
+            switch (component.Data.CustomId)
+            {
+                case "fish":
+                    await RpgEngine.CatchFishFunc(component, component.User);
+                    break;
+                case "inventory":
+                    await RpgEngine.ShowInventoryFunc(component, component.User);
+                    break;
+                case "shop":
+                    await RpgEngine.ShowShopFunc(component, component.User);
+                    break;
+                default:
+                    await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
+                    break;
+            }
         }
 
         private async Task OnMenuSelectionMade(SocketMessageComponent component)

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.VisualBasic;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -19,56 +20,33 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
-            var dbUser = await UserEngine.GetDBUser(Context.User);
-            if (!dbUser.CanFish())
+            await RpgEngine.CatchFishFunc(Context.Interaction, Context.User);
+        }
+
+        [SlashCommand("inventory", "Check your inventory")]
+        public async Task RpgInventory()
+        {
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                await RespondAsync("You can only fish every 60 minutes.");
+                await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
-            EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
-            embed.Title = "Fishing! 🎣";
-            EmbedFieldBuilder fishField = new()
+
+            await RpgEngine.ShowInventoryFunc(Context.Interaction, Context.User);
+        }
+
+        [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
+        public async Task RpgShop()
+        {
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
             {
-                Name = "Catching...",
-                Value = "`[|||       ]`"
-            };
-            embed.AddField(fishField);
-            await RespondAsync(embed: embed.Build());
-
-            await Task.Delay(250);
-
-            fishField.Value = "`[||||||    ]`";
-            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-
-            await Task.Delay(250);
-
-            fishField.Value = "`[||||||||| ]`";
-            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-
-            await Task.Delay(200);
-
-            Random rand = new();
-            int caught = rand.Next(100);
-            string fishingCatch = caught switch
-            {
-                (<= 35) => "fish",
-                (> 35 and <= 55) => "uncommonfish",
-                (> 55 and <= 65) => "rarefish",
-                (> 65 and < 85) => "shrimp",
-                _ => "garbage"
-            };
-
-            fishField.Name = "You caught:";
-            fishField.Value = RpgEngine.GetItemName(fishingCatch);
-
-            embed.Footer = new EmbedFooterBuilder()
-            {
-                Text = $"added to inventory."
-            };
-
-            RpgEngine.ModifyItem(dbUser, fishingCatch, +1);
-
-            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+                await RespondAsync(isAllowed, ephemeral: true);
+                return;
+            }
+            
+            await RpgEngine.ShowShopFunc(Context.Interaction, Context.User);
         }
 
         [SlashCommand("give", "Give an item to another user.")]
@@ -173,123 +151,6 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("Valid things to use: sushi, shrimprice, garbage", ephemeral: true);
                 return;
             }
-        }
-
-        [SlashCommand("inventory", "Check your inventory")]
-        public async Task RpgInventory()
-        {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
-            if (isAllowed != "yes")
-            {
-                await RespondAsync(isAllowed, ephemeral: true);
-                return;
-            }
-
-            EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
-            embed.Title = $"Inventory";
-            embed.Description = "Loading inventory...";
-
-            await RespondAsync(embed: embed.Build());
-
-            User user = await UserEngine.GetDBUser(Context.User);
-
-            List<string> fieldsToList = new();
-
-            EmbedFooterBuilder footer = new() { Text = $"================= Wallet: {await RpgEngine.GetItem(user, "dabloons")} {RpgEngine.GetItemName("dabloons")} =================" };
-
-            embed.Footer = footer;
-
-            fieldsToList.Add("garbage");
-            fieldsToList.Add("rice");
-
-            embed.AddField(
-                $"Items",
-                await RpgEngine.ListItems(user, fieldsToList),
-                false
-            );
-
-            fieldsToList.Clear();
-            fieldsToList.Add("fish");
-            fieldsToList.Add("uncommonfish");
-            fieldsToList.Add("rarefish");
-            fieldsToList.Add("shrimp");
-
-            embed.AddField(
-                $"Catch",
-                await RpgEngine.ListItems(user, fieldsToList),
-                true
-            );
-
-            fieldsToList.Clear();
-            fieldsToList.Add("sushi");
-            fieldsToList.Add("shrimprice");
-
-            embed.AddField(
-                $"Finished Goods",
-                await RpgEngine.ListItems(user, fieldsToList),
-                true
-            );
-
-            embed.Description = null;
-
-            await ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
-
-            ComponentBuilder comps = new();
-
-            SelectMenuBuilder craftMenu = new()
-            {
-                Placeholder = "Craft menu",
-                CustomId = "make"
-            };
-            craftMenu.AddOption(label: RpgEngine.GetItemName("sushi"), description: RpgEngine.GetCraftingCost("sushi"), value: "sushi");
-            craftMenu.AddOption(label: RpgEngine.GetItemName("shrimprice"), description: RpgEngine.GetCraftingCost("shrimprice"), value: "shrimprice");
-
-            comps.WithSelectMenu(craftMenu);
-
-            await ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
-        }
-
-        [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
-        public async Task RpgShop()
-        {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
-            if (isAllowed != "yes")
-            {
-                await RespondAsync(isAllowed, ephemeral: true);
-                return;
-            }
-            var dbUser = await UserEngine.GetDBUser(Context.User);
-            if (dbUser is null) return;
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
-            embed.Title = "Rosettes shop!";
-            embed.Description = $"The shop allows for buying and selling items for doubloons.";
-
-            embed.Footer = new EmbedFooterBuilder() { Text = $"[{ Context.User.Username }] has: { await RpgEngine.GetItem(dbUser, "dabloons")} { RpgEngine.GetItemName("dabloons")}" };
-
-            var comps = new ComponentBuilder();
-
-            SelectMenuBuilder buyMenu = new()
-            {
-                Placeholder = "Buy...",
-                CustomId = "buy"
-            };
-            buyMenu.AddOption(label: $"2 {RpgEngine.GetItemName("rice")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fish")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
-
-            SelectMenuBuilder sellMenu = new()
-            {
-                Placeholder = "Sell...",
-                CustomId = "sell"
-            };
-            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}]", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("garbage")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
-
-            comps.WithSelectMenu(buyMenu, 0);
-            comps.WithSelectMenu(sellMenu, 0);
-
-            await RespondAsync(embed: embed.Build(), components: comps.Build());
-            return;
         }
 
         [SlashCommand("food-leader", "Leaderbord by amount of food made.")]

@@ -261,5 +261,184 @@ namespace Rosettes.Modules.Engine
 
             return list;
         }
+
+
+        // main funcs
+
+        public static async Task CatchFishFunc(SocketInteraction interaction, IUser user)
+        {
+            var dbUser = await UserEngine.GetDBUser(user);
+            if (!dbUser.CanFish())
+            {
+                await interaction.RespondAsync("You can only fish every 60 minutes.");
+                return;
+            }
+            EmbedBuilder embed = Global.MakeRosettesEmbed(user);
+            embed.Title = "Fishing! 🎣";
+            EmbedFieldBuilder fishField = new()
+            {
+                Name = "Catching...",
+                Value = "`[|||       ]`"
+            };
+            embed.AddField(fishField);
+            await interaction.RespondAsync(embed: embed.Build());
+
+            await Task.Delay(250);
+
+            fishField.Value = "`[||||||    ]`";
+            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            await Task.Delay(250);
+
+            fishField.Value = "`[||||||||| ]`";
+            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            await Task.Delay(200);
+
+            Random rand = new();
+            int caught = rand.Next(100);
+            string fishingCatch = caught switch
+            {
+                (<= 35) => "fish",
+                (> 35 and <= 55) => "uncommonfish",
+                (> 55 and <= 65) => "rarefish",
+                (> 65 and < 85) => "shrimp",
+                _ => "garbage"
+            };
+
+            fishField.Name = "You caught:";
+            fishField.Value = RpgEngine.GetItemName(fishingCatch);
+
+            embed.Footer = new EmbedFooterBuilder()
+            {
+                Text = $"added to inventory."
+            };
+
+            RpgEngine.ModifyItem(dbUser, fishingCatch, +1);
+
+            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+        }
+
+        public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
+        {
+            EmbedBuilder embed = Global.MakeRosettesEmbed(user);
+            embed.Title = $"Inventory";
+            embed.Description = "Loading inventory...";
+
+            await interaction.RespondAsync(embed: embed.Build());
+
+            User dbUser = await UserEngine.GetDBUser(user);
+
+            List<string> fieldsToList = new();
+
+            EmbedFooterBuilder footer = new() { Text = $"Wallet: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+
+            embed.Footer = footer;
+
+            fieldsToList.Add("garbage");
+            fieldsToList.Add("rice");
+
+            embed.AddField(
+                $"Items",
+                await ListItems(dbUser, fieldsToList),
+                false
+            );
+
+            fieldsToList.Clear();
+            fieldsToList.Add("fish");
+            fieldsToList.Add("uncommonfish");
+            fieldsToList.Add("rarefish");
+            fieldsToList.Add("shrimp");
+
+            embed.AddField(
+                $"Catch",
+                await ListItems(dbUser, fieldsToList),
+                true
+            );
+
+            fieldsToList.Clear();
+            fieldsToList.Add("sushi");
+            fieldsToList.Add("shrimprice");
+
+            embed.AddField(
+                $"Finished Goods",
+                await ListItems(dbUser, fieldsToList),
+                true
+            );
+
+            embed.Description = null;
+
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            SelectMenuBuilder craftMenu = new()
+            {
+                Placeholder = "Craft menu",
+                CustomId = "make"
+            };
+            craftMenu.AddOption(label: RpgEngine.GetItemName("sushi"), description: RpgEngine.GetCraftingCost("sushi"), value: "sushi");
+            craftMenu.AddOption(label: RpgEngine.GetItemName("shrimprice"), description: RpgEngine.GetCraftingCost("shrimprice"), value: "shrimprice");
+            craftMenu.MaxValues = 1;
+
+            comps.WithSelectMenu(craftMenu);
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+        }
+
+        public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
+        {
+            var dbUser = await UserEngine.GetDBUser(user);
+            if (dbUser is null) return;
+            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            embed.Title = "Rosettes shop!";
+            embed.Description = $"The shop allows for buying and selling items for doubloons.";
+
+            embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+
+            var comps = new ComponentBuilder();
+
+            SelectMenuBuilder buyMenu = new()
+            {
+                Placeholder = "Buy...",
+                CustomId = "buy"
+            };
+            buyMenu.AddOption(label: $"2 {RpgEngine.GetItemName("rice")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fish")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
+            buyMenu.MaxValues = 1;
+
+            SelectMenuBuilder sellMenu = new()
+            {
+                Placeholder = "Sell...",
+                CustomId = "sell"
+            };
+            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}]", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
+            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("garbage")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
+            sellMenu.MaxValues = 1;
+
+            comps.WithSelectMenu(buyMenu, 0);
+            comps.WithSelectMenu(sellMenu, 0);
+
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
     }
 }

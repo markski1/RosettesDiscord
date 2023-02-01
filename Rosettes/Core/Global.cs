@@ -53,6 +53,7 @@ namespace Rosettes.Core
                 }
                 embed.Author = authorEmbed;
             }
+            embed.ThumbnailUrl = "https://markski.ar/images/trans.png";
             return embed;
         }
 
