@@ -42,7 +42,13 @@ namespace Rosettes.Core
 
         private async Task OnMenuSelectionMade(SocketMessageComponent component)
         {
-            await RpgEngine.ShopBuy(component);
+            if (component.Data.CustomId is "buy" or "sell") {
+                await RpgEngine.ShopAction(component);
+            }
+            if (component.Data.CustomId is "make")
+            {
+                await RpgEngine.CraftAction(component);
+            }
         }
 
         private Task OnCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)

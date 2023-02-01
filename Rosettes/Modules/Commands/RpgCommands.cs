@@ -71,50 +71,6 @@ namespace Rosettes.Modules.Commands
             await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
 
-        [SlashCommand("craft", "Combine your items to make something.")]
-        public async Task RpgMake(string option = "none")
-        {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
-            if (isAllowed != "yes")
-            {
-                await RespondAsync(isAllowed, ephemeral: true);
-                return;
-            }
-
-            string choice = option.ToLower();
-
-            if (RpgEngine.IsValidMakeChoice(choice))
-            {
-                var dbUser = await UserEngine.GetDBUser(Context.User);
-                string ingredientsOrSuccess = await RpgEngine.HasIngredients(dbUser, choice);
-                if (ingredientsOrSuccess != "success")
-                {
-                    await RespondAsync($"You need at least {ingredientsOrSuccess} to make {RpgEngine.GetItemName(choice)}.", ephemeral: true);
-                    return;
-                }
-
-                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
-                embed.Title = "Crafted new item.";
-
-                ingredientsOrSuccess = RpgEngine.MakeItem(dbUser, choice);
-
-                embed.AddField("Spent:", ingredientsOrSuccess);
-                embed.AddField("Made:", RpgEngine.GetItemName(choice));
-
-                embed.Footer = new EmbedFooterBuilder()
-                {
-                    Text = $"added to inventory."
-                };
-
-                await RespondAsync(embed: embed.Build());
-            }
-            else
-            {
-                await RespondAsync("Valid things to make: sushi, shrimprice", ephemeral: true);
-                return;
-            }
-        }
-
         [SlashCommand("give", "Give an item to another user.")]
         public async Task GiveItem(IUser user, string option = "none")
         {
@@ -277,6 +233,20 @@ namespace Rosettes.Modules.Commands
             embed.Description = null;
 
             await ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
+
+            ComponentBuilder comps = new();
+
+            SelectMenuBuilder craftMenu = new()
+            {
+                Placeholder = "Craft menu",
+                CustomId = "make"
+            };
+            craftMenu.AddOption(label: RpgEngine.GetItemName("sushi"), description: RpgEngine.GetCraftingCost("sushi"), value: "sushi");
+            craftMenu.AddOption(label: RpgEngine.GetItemName("shrimprice"), description: RpgEngine.GetCraftingCost("shrimprice"), value: "shrimprice");
+
+            comps.WithSelectMenu(craftMenu);
+
+            await ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
