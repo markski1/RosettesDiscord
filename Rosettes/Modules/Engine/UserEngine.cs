@@ -86,6 +86,8 @@ namespace Rosettes.Modules.Engine
     public class User
     {
         public ulong Id { get; set; }
+        public int MainPet { get; set; }
+
         // Contains if the user's data in memory has changed since last syncing to database.
         public bool SyncUpToDate { get; set; }
 
@@ -111,15 +113,17 @@ namespace Rosettes.Modules.Engine
             }
             SyncUpToDate = true;
             LastFished = 0;
+            MainPet = 0;
         }
 
         // database constructor, used on loading users
-        public User(ulong id, string namecache)
+        public User(ulong id, string namecache, int mainpet)
         {
             Id = id;
             SyncUpToDate = true;
             LastFished = 0;
             NameCache = namecache;
+            MainPet = mainpet;
         }
 
         public bool IsValid()
@@ -149,7 +153,7 @@ namespace Rosettes.Modules.Engine
             return NameCache;
         }
 
-        // fish stuff
+        // rpg stuff
 
         public bool CanFish()
         {
@@ -159,6 +163,12 @@ namespace Rosettes.Modules.Engine
                 return true;
             }
             return false;
+        }
+
+        public void SetPet(int id)
+        {
+            MainPet = id;
+            SyncUpToDate = false;
         }
     }
 }

@@ -76,7 +76,7 @@ namespace Rosettes.Modules.Commands
 
                 RpgEngine.ModifyItem(dbUser, choice, -1);
 
-                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                EmbedBuilder embed = await Global.MakeRosettesEmbed();
                 embed.Title = "Item given.";
 
                 embed.AddField(Context.User.Mention, $"Given {RpgEngine.GetItemName(choice)} to {user.Mention}!");
@@ -114,7 +114,7 @@ namespace Rosettes.Modules.Commands
 
                 RpgEngine.ModifyItem(dbUser, choice, -1);
 
-                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
                 embed.Title = "Item consumed.";
 
                 if (user is null)

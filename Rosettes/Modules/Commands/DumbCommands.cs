@@ -143,7 +143,7 @@ namespace Rosettes.Modules.Commands
                 board += "\n";
             }
 
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
             if (unspoilered == "false")
             {

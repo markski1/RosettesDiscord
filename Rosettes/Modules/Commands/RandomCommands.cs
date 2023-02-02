@@ -13,6 +13,8 @@ namespace Rosettes.Modules.Commands
         public async Task Dice(int num)
         {
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+
             if (dbGuild is not null)
             {
                 if (!dbGuild.AllowsRandom())
@@ -33,7 +35,7 @@ namespace Rosettes.Modules.Commands
             {
                 Random Random = new();
 
-                EmbedBuilder embed = Global.MakeRosettesEmbed(Context.User);
+                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
                 embed.WithTitle("Threw a dice!");
                 embed.WithDescription($"From 1 to {num}.");

@@ -24,7 +24,7 @@ namespace Rosettes.Modules.Commands
                 option4 = "NOT_PROVIDED";
             }
 
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
             embed.Title = question;
             embed.Description = "Choose one:";
 

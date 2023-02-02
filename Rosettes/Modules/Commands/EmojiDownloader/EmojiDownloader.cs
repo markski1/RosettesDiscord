@@ -17,7 +17,7 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
             int emoteAmount = EmoteCollection.Count;
             int progress = 0;
 
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
             embed.Title = "Exporting emoji.";
 

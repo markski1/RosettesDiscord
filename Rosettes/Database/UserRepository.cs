@@ -14,7 +14,9 @@ namespace Rosettes.Database
         Task<bool> InsertUser(User user);
         Task<bool> UpdateUser(User user);
         Task<int> FetchInventoryItem(User user, string item);
+        Task<string> FetchInventoryStringItem(User user, string item);
         Task<bool> ModifyInventoryItem(User user, string item, int amount);
+        Task<bool> ModifyStrInventoryItem(User user, string item, string newValue);
     }
 
     public class UserRepository : IUserRepository
@@ -28,7 +30,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache FROM users";
+            var sql = @"SELECT id, namecache, mainpet FROM users";
 
             try
             {
@@ -62,7 +64,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache FROM users WHERE id=@id";
+            var sql = @"SELECT id, namecache, mainpet FROM users WHERE id=@id";
 
             try
             {
@@ -79,12 +81,12 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"INSERT INTO users (id, namecache)
-                        VALUES(@Id, @NameCache)";
+            var sql = @"INSERT INTO users (id, namecache, mainpet)
+                        VALUES(@Id, @NameCache, @MainPet)";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet })) > 0;
             }
             catch (Exception ex)
             {
@@ -129,6 +131,23 @@ namespace Rosettes.Database
             }
         }
 
+        public async Task<string> FetchInventoryStringItem(User user, string item)
+        {
+            var db = DBConnection();
+
+            var sql = $"SELECT `{item}` FROM users WHERE id=@id";
+
+            try
+            {
+                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id });
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
+                return "invalid";
+            }
+        }
+
         public async Task<bool> ModifyInventoryItem(User user, string item, int amount)
         {
             var db = DBConnection();
@@ -137,7 +156,24 @@ namespace Rosettes.Database
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { item, amount, id = user.Id })) > 0;
+                return (await db.ExecuteAsync(sql, new { amount, id = user.Id })) > 0;
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
+        {
+            var db = DBConnection();
+
+            var sql = $"UPDATE users SET {item} = {newValue} WHERE id=@id";
+
+            try
+            {
+                return (await db.ExecuteAsync(sql, new { id = user.Id })) > 0;
             }
             catch (Exception ex)
             {

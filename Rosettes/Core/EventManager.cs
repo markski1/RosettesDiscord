@@ -171,7 +171,7 @@ namespace Rosettes.Core
 
             if (dbGuild.LogChannel > 0)
             {
-                EmbedBuilder embed = MakeEmbedForUser(user);
+                EmbedBuilder embed = await MakeEmbedForUser(user);
                 embed.Title = "User joined the server.";
                 embed.AddField("Bot:", $"{user.IsBot}");
 
@@ -189,7 +189,7 @@ namespace Rosettes.Core
 
             if (dbGuild.LogChannel > 0)
             {
-                EmbedBuilder embed = MakeEmbedForUser(user);
+                EmbedBuilder embed = await MakeEmbedForUser(user);
                 embed.Title = "User left the server.";
 
                 dbGuild.SendLogMessage(embed);
@@ -198,11 +198,11 @@ namespace Rosettes.Core
             return Task.CompletedTask;
         }
 
-        private static EmbedBuilder MakeEmbedForUser(dynamic user)
+        private static async Task<EmbedBuilder> MakeEmbedForUser(dynamic user)
         {
             if ((user is SocketUser or SocketGuildUser))
             {
-                EmbedBuilder embed = Global.MakeRosettesEmbed();
+                EmbedBuilder embed = await Global.MakeRosettesEmbed();
                 embed.Description = $"[{user.Username}#{user.Discriminator}]";
 
                 if (user.GetAvatarUrl() != null)
@@ -214,7 +214,7 @@ namespace Rosettes.Core
             }
             else
             {
-                return Global.MakeRosettesEmbed();
+                return await Global.MakeRosettesEmbed();
             }
         }
 

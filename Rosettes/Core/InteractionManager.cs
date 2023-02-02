@@ -49,6 +49,9 @@ namespace Rosettes.Core
                 case "shop":
                     await RpgEngine.ShowShopFunc(component, component.User);
                     break;
+                case "pets":
+                    await RpgEngine.ShowPets(component, component.User);
+                    break;
                 default:
                     await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
                     break;
@@ -63,6 +66,10 @@ namespace Rosettes.Core
             if (component.Data.CustomId is "make")
             {
                 await RpgEngine.CraftAction(component);
+            }
+            if (component.Data.CustomId is "defaultPet")
+            {
+                await RpgEngine.SetDefaultPet(component);
             }
         }
 

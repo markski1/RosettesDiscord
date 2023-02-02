@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Rosettes.Modules.Engine;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Core
 {
@@ -25,35 +25,48 @@ namespace Rosettes.Core
             }
         }
 
-        public static EmbedBuilder MakeRosettesEmbed(IUser? author = null)
+        public static async Task<EmbedBuilder> MakeRosettesEmbed(User? dbUser = null)
         {
             EmbedBuilder embed = new()
             {
                 Color = Color.DarkPurple
             };
-            if (author is not null)
+
+            if (dbUser is not null)
             {
-                string displayName;
-                SocketGuildUser? GuildUser = author as SocketGuildUser;
-                if (GuildUser is not null && GuildUser.Nickname is not null)
+                IUser? author;
+                author = await dbUser.GetDiscordReference();
+
+                if (author is not null)
                 {
-                    displayName = GuildUser.DisplayName;
+                    SocketGuildUser? GuildUser = author as SocketGuildUser;
+                    EmbedAuthorBuilder authorEmbed = new();
+                    embed.Author = authorEmbed;
+                    if (GuildUser is not null && GuildUser.Nickname is not null)
+                    {
+                        authorEmbed.Name = GuildUser.DisplayName;
+                        if (GuildUser.GetDisplayAvatarUrl() is not null)
+                        {
+                            authorEmbed.IconUrl = GuildUser.GetDisplayAvatarUrl();
+                        }
+                    }
+                    else
+                    {
+                        authorEmbed.Name = author.Username;
+                        if (author.GetAvatarUrl() is not null)
+                        {
+                            authorEmbed.IconUrl = author.GetAvatarUrl();
+                        }
+                    }
+                    if (dbUser.MainPet > 0)
+                    {
+                        authorEmbed.Name += $" | with {RpgEngine.PetEmojis(dbUser.MainPet)}";
+                    }
                 }
-                else
-                {
-                    displayName = author.Username;
-                }
-                EmbedAuthorBuilder authorEmbed = new()
-                {
-                    Name = displayName
-                };
-                if (author.GetAvatarUrl() is not null)
-                {
-                    authorEmbed.IconUrl = author.GetAvatarUrl();
-                }
-                embed.Author = authorEmbed;
             }
+            
             embed.ThumbnailUrl = "https://markski.ar/images/trans.png";
+
             return embed;
         }
 

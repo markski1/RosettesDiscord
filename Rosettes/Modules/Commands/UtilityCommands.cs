@@ -58,7 +58,7 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("This command won't run in my DM's, silly.");
                 return;
             }
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
             embed.Title = $"Information about guild {guild.Name}";
             embed.ThumbnailUrl = guild.IconUrl;
 
@@ -138,7 +138,7 @@ namespace Rosettes.Modules.Commands
             }
             string videoLink = response[begin..end];
 
-            EmbedBuilder embed = Global.MakeRosettesEmbed();
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
             embed.Title = "Exporting twitter video.";
 
