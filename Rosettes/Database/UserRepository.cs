@@ -100,12 +100,12 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, namecache=@NameCache
+                        SET id=@Id, namecache=@NameCache, mainpet=@MainPet
                         WHERE id = @Id";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName() })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet })) > 0;
             }
             catch (Exception ex)
             {
