@@ -11,7 +11,7 @@ namespace Rosettes.Modules.Commands
 {
     public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("memory", "[PRIVILEGED COMMAND]")]
+        [SlashCommand("about", "About rosettes.")]
         public async Task GetMemory()
         {
             using Process proc = Process.GetCurrentProcess();
@@ -25,40 +25,31 @@ namespace Rosettes.Modules.Commands
             {
                 runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
             }
-            runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
-            // we divide the privatememorysize in half because it includes a bunch of runtime memory usage which isn't the bot's problem, and it seems to consistently be half, plus minus 5 or 10%
-            string text =
-                $"```I am using {(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb of memory, across {proc.Threads.Count} threads.\n" +
-                $"I've been running for {runtimeText}\n" +
-                $"\n" +
-                $"THREAD LIST\n\n";
-            bool separator = true;
-            int id = 0;
-            foreach (ProcessThread thread in proc.Threads)
-            {
-                string newLine = $"ID {id} // TIME {thread.TotalProcessorTime.Milliseconds:N0}MS";
-                id++;
-                text += newLine;
-                if (separator)
-                {
-                    int spacing = 22 - newLine.Length;
-                    for (int i = 0; i < spacing; i++)
-                    {
-                        text += " ";
-                    }
-                    text += "|   ";
-                } else
-                {
-                    text += "\n";
-                }
-                separator = !separator;
-            }
-            text += "```";
-            await RespondAsync(text);
+            runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)} ago.";
+
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+            embed.Title = "About Rosettes.";
+            embed.Description = "A simple, free, open source discord bot.";
+            embed.ThumbnailUrl = "https://markski.ar/images/rosettes.png";
+
+            embed.AddField("Memory in use", $"{(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb", inline: true);
+            embed.AddField("Threads", $"{proc.Threads.Count}", inline: true);
+            embed.AddField("Last updated", runtimeText);
+            embed.AddField("Currently serving", $"{client.Guilds.Count} guilds.", inline: true);
+            embed.AddField("Ping to Discord", $"{client.Latency}ms", inline: true);
+            embed.AddField("Learn about me", "<https://markski.ar/rosettes>");
+
+            EmbedFooterBuilder footer = new() { Text = "Developed and maintained by Markski. | https://markski.ar", IconUrl = "https://markski.ar/images/profileDesplacement.png" };
+
+            embed.Footer = footer;
+
+            await RespondAsync(embed: embed.Build());
         }
 
         [SlashCommand("admin", "To be used for administrative/developer functions.")]
-        public async Task Halt(string function)
+        public async Task AdminMenu(string function)
         {
             if (!Global.CheckSnep(Context.User.Id))
             {
@@ -145,27 +136,6 @@ namespace Rosettes.Modules.Commands
 
             await RespondAsync($"New unique key generated. This key is to be used in the webpanel, at https://snep.markski.ar/rosettes\n\nAnyone with this key can change Rosettes' settings in guilds owned by you.\nIf you ever want to change your key, just use /keygen again.");
             await ReplyAsync($"```{NewKey}```");
-        }
-    }
-
-    public class MessageDeleter
-    {
-        private readonly System.Timers.Timer Timer = new();
-        private readonly Discord.Rest.RestUserMessage message;
-
-        public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
-        {
-            Timer.Elapsed += DeleteMessage;
-            Timer.Interval = seconds * 1000;
-            message = _message;
-            Timer.Enabled = true;
-        }
-
-        public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
-        {
-            message.DeleteAsync();
-            Timer.Stop();
-            Timer.Dispose();
         }
     }
 }

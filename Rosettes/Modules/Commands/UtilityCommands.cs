@@ -236,13 +236,22 @@ namespace Rosettes.Modules.Commands
 
             if (amount <= 0)
             {
-                await RespondAsync("Time don't go in that direction.");
+                await RespondAsync("Time don't go in that direction.", ephemeral: true);
                 return;
             }
 
-            await RespondAsync($"Okay! I will tag you in {amount} minute{((amount != 1) ? 's' : null)}");
+            var dbUser = await UserEngine.GetDBUser(Context.User);
 
-            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromSeconds(amount)), await UserEngine.GetDBUser(Context.User), Context.Channel, amount);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = "Alarm set!";
+            embed.Description = $"An alarm has been. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
+
+            embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
+
+            await RespondAsync(embed: embed.Build());
+
+            AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromMinutes(amount)), await UserEngine.GetDBUser(Context.User), Context.Channel, amount);
         }
 
         [SlashCommand("cancelalarm", "Cancels your current alarm.")]

@@ -62,7 +62,15 @@ namespace Rosettes.Modules.Commands
             coinSides[0] = face1;
             coinSides[1] = face2;
             Random rand = new();
-            await RespondAsync($"*A coin is thrown into the air... {face1} on one side, {face2} on the other.*\n`The coin lands on: {coinSides[rand.Next(0, 1)]}`");
+
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+            embed.Title = "A coin is thrown in the air...";
+            embed.Description = $"{face1} in one side, {face2} in the other.";
+
+            embed.AddField("Result:", $"{coinSides[rand.Next(0, 1)]}");
+
+            await RespondAsync(embed: embed.Build());
         }
 
         [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]

@@ -92,7 +92,7 @@ namespace Rosettes.Modules.Engine
         public bool SyncUpToDate { get; set; }
 
         // timers
-        private int LastFished;
+        public int LastFished { get; set; }
 
 
         // Database flags

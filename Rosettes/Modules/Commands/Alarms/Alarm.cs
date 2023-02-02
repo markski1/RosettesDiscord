@@ -104,20 +104,32 @@ namespace Rosettes.Modules.Commands.Alarms
             // first remove the alarm off the database.
             AlarmManager.DeleteAlarm(this);
             // if the database constructior failed to load the channel.
+            IUser discordRef = await User.GetDiscordReference();
+            if (discordRef is null)
+            {
+                Global.GenerateErrorMessage("alarm", $"Sadly, I have failed to deliver an alarm to {await User.GetName()}. Error 1");
+                return;
+            }
             if (Channel is null)
             {
                 // we establish a channel through DM.
-                Channel = (await User.GetDiscordReference()).CreateDMChannelAsync() as ISocketMessageChannel;
+                Channel = (await discordRef.CreateDMChannelAsync() as ISocketMessageChannel);
                 // If we can't establish a channel, Rosettes has failed to alert the user.
                 if (Channel is null)
                 {
-                    Global.GenerateErrorMessage("alarm", $"Sadly, I have failed to deliver an alarm to {await User.GetName()}");
+                    Global.GenerateErrorMessage("alarm", $"Sadly, I have failed to deliver an alarm to {await User.GetName()}. Error 2");
                     return;
                 }
             }
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(User);
+
+            embed.Title = "Ring!";
+            embed.Description = $"Alarm for {discordRef.Mention}!";
+
             if (Success)
             {
-                await Channel.SendMessageAsync($"Ring! {(await User.GetDiscordReference()).Mention} !");
+                await Channel.SendMessageAsync(embed: embed.Build());
             }
             else
             {

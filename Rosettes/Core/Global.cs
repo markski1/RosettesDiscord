@@ -171,4 +171,25 @@ namespace Rosettes.Core
             return false;
         }
     }
+
+    public class MessageDeleter
+    {
+        private readonly System.Timers.Timer Timer = new();
+        private readonly Discord.Rest.RestUserMessage message;
+
+        public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
+        {
+            Timer.Elapsed += DeleteMessage;
+            Timer.Interval = seconds * 1000;
+            message = _message;
+            Timer.Enabled = true;
+        }
+
+        public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            message.DeleteAsync();
+            Timer.Stop();
+            Timer.Dispose();
+        }
+    }
 }

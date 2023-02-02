@@ -370,7 +370,7 @@ namespace Rosettes.Modules.Engine
                 StringBuilder stringBuilder = new ();
                 stringBuilder.Append(userPets);
 
-                stringBuilder[pet] = '1';
+                stringBuilder[pet - 1] = '1';
 
                 string newPets = stringBuilder.ToString();
 
@@ -387,12 +387,28 @@ namespace Rosettes.Modules.Engine
         public static async Task CatchFishFunc(SocketInteraction interaction, IUser user)
         {
             var dbUser = await UserEngine.GetDBUser(user);
+            
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
             if (!dbUser.CanFish())
             {
-                await interaction.RespondAsync("You can only fish every 60 minutes.");
+                embed.Title = "Can't fish yet.";
+                embed.Description = $"You may fish again <t:{dbUser.LastFished}:R>";
+
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
                 return;
             }
-            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
             embed.Title = "Fishing! 🎣";
             EmbedFieldBuilder fishField = new()
             {
@@ -438,17 +454,6 @@ namespace Rosettes.Modules.Engine
             }
 
             await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-
-            ComponentBuilder comps = new();
-
-            ActionRowBuilder buttonRow = new();
-
-            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
-            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
-            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
-
-            comps.AddRow(buttonRow);
-
             await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 

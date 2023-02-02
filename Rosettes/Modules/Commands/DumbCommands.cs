@@ -187,8 +187,6 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             
-            string message;
-
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
@@ -233,15 +231,17 @@ namespace Rosettes.Modules.Commands
 
                 dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
 
-                message =
-                    $"Definition for: {query}" +
-                    $"```" +
-                    definition.definition +
-                    $"```" +
-                    $"**Upvotes**: {definition.thumbs_up} | **Downvotes**: {definition.thumbs_down}\n" +
-                    $"**Permalink**: <{definition.permalink}>";
+                var dbUser = await UserEngine.GetDBUser(Context.User);
+                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-                await RespondAsync(message);
+                embed.Title = $"Definition for: {query}";
+                embed.Description = definition.definition;
+
+                embed.AddField("Upvotes", $"{definition.thumbs_up}", inline: true);
+                embed.AddField("Downvotes", $"{definition.thumbs_down}", inline: true);
+                embed.AddField("Permalink", $"<{definition.permalink}>");
+
+                await RespondAsync(embed: embed.Build());
             }
             catch (Exception ex)
             {
