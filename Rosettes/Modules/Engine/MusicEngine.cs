@@ -10,48 +10,71 @@ namespace Rosettes.Modules.Engine
 {
     public static class MusicEngine
     {
-        private static LavaNode? _lavaNode;
+        private static int backupState = 0;
+        private static LavaNode? _lavaNode1;
+        private static LavaNode? _lavaNode2;
+        private static LavaNode? _lavaNode3;
 
-        public static void SetMusicEngine(LavaNode lavaNode)
+        public static void SetMusicEngine(LavaNode lavaNode, LavaNode lavaNode2, LavaNode lavaNode3)
         {
-            _lavaNode = lavaNode;
+            _lavaNode1 = lavaNode;
+            _lavaNode2 = lavaNode2;
+            _lavaNode3 = lavaNode3;
 
-            _lavaNode.OnTrackEnd += TrackEnded;
+            _lavaNode1.OnTrackEnd += TrackEnded;
+            _lavaNode2.OnTrackEnd += TrackEnded;
+            _lavaNode3.OnTrackEnd += TrackEnded;
+        }
+
+        public static LavaNode GetWorkingLavaNode()
+        {
+            // null is checked for where it's used, but the compiler doesn't agree
+            #pragma warning disable CS8603 // Posible tipo de valor devuelto de referencia nulo
+            if (_lavaNode1 is null || _lavaNode2 is null || _lavaNode3 is null) return null;
+            #pragma warning restore CS8603 // Posible tipo de valor devuelto de referencia nulo
+            return backupState switch
+            {
+                0 => _lavaNode1,
+                1 => _lavaNode2,
+                _ => _lavaNode3
+            };
         }
     
         public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
         {
-            if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (GetWorkingLavaNode() is null) return "Music playback hasn't initialized yet.";
             if (user.VoiceChannel is null) return "You are not in VC.";
 
-            if (!_lavaNode.IsConnected)
+            if (!GetWorkingLavaNode().IsConnected)
             {
-                await _lavaNode.ConnectAsync();
+                await GetWorkingLavaNode().ConnectAsync();
             }
 
-            if (!_lavaNode.HasPlayer(guild))
+            if (!GetWorkingLavaNode().HasPlayer(guild))
             {
                 try
                 {
-                    await _lavaNode.JoinAsync(voiceState.VoiceChannel, channel);
+                    await GetWorkingLavaNode().JoinAsync(voiceState.VoiceChannel, channel);
                 }
                 catch (Exception ex)
                 {
+                    backupState++;
+                    if (backupState > 2) backupState = 0;
                     Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex.Message}");
-                    return "Error joining the channel.";
+                    return "Error joining the channel, please try again.";
                 }
             }
 
             try
             {
-                if (!_lavaNode.TryGetPlayer(guild, out var player))
+                if (!GetWorkingLavaNode().TryGetPlayer(guild, out var player))
                 {
                     return "I cannot connect to the channel.";
                 }
 
                 SearchResponse search;
 
-                search = await _lavaNode.SearchAsync(Uri.IsWellFormedUriString(query, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, query);
+                search = await GetWorkingLavaNode().SearchAsync(Uri.IsWellFormedUriString(query, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, query);
 
                 if (search.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
                 {
@@ -76,20 +99,23 @@ namespace Rosettes.Modules.Engine
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
-                return "There was an error trying to fetch the song.";
+                backupState++;
+                if (backupState > 2) backupState = 0;
+                return "There was an error trying to fetch the song, please try again.";
             }
         }
 
         public static async Task<string> StopAsync(IGuild guild)
         {
-            if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (GetWorkingLavaNode() is null) return "Music playback hasn't initialized yet.";
             try
             {
-                if (!_lavaNode.TryGetPlayer(guild, out var player))
+                if (!GetWorkingLavaNode().TryGetPlayer(guild, out var player))
                 {
                     return "I cannot connect to the channel.";
                 }
                 if (player.PlayerState is PlayerState.Playing) await player.StopAsync();
+                await GetWorkingLavaNode().LeaveAsync(player.VoiceChannel);
                 return "Playback stopped.";
             }
             catch
@@ -100,10 +126,10 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<string> SkipTrackAsync(IGuild guild)
         {
-            if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (GetWorkingLavaNode() is null) return "Music playback hasn't initialized yet.";
             try
             {
-                if (!_lavaNode.TryGetPlayer(guild, out var player))
+                if (!GetWorkingLavaNode().TryGetPlayer(guild, out var player))
                 {
                     return "I cannot connect to the channel.";
                 }
@@ -137,10 +163,10 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<string> ToggleAsync(IGuild guild)
         {
-            if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (GetWorkingLavaNode() is null) return "Music playback hasn't initialized yet.";
             try
             {
-                if (!_lavaNode.TryGetPlayer(guild, out var player))
+                if (!GetWorkingLavaNode().TryGetPlayer(guild, out var player))
                 {
                     return "I cannot connect to the channel.";
                 }
@@ -165,15 +191,15 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<string> LeaveAsync(IGuild guild)
         {
-            if (_lavaNode is null) return "Music playback hasn't initialized yet.";
+            if (GetWorkingLavaNode() is null) return "Music playback hasn't initialized yet.";
             try
             {
-                if (!_lavaNode.TryGetPlayer(guild, out var player))
+                if (!GetWorkingLavaNode().TryGetPlayer(guild, out var player))
                 {
                     return "I cannot connect to the channel.";
                 }
                 if (player.PlayerState is PlayerState.Playing) await player.StopAsync();
-                await _lavaNode.LeaveAsync(player.VoiceChannel);
+                await GetWorkingLavaNode().LeaveAsync(player.VoiceChannel);
 
                 return "Left the VC.";
             }

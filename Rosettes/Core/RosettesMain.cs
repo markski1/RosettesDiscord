@@ -54,11 +54,31 @@ namespace Rosettes.Core
                         IsSecure = false
                     };
 
+                    NodeConfiguration lavaNodeConfigBackup = new()
+                    {
+                        SelfDeaf = true,
+                        Hostname = Settings.LavaLinkBackup.Host,
+                        Port = Settings.LavaLinkBackup.Port,
+                        Authorization = Settings.LavaLinkBackup.Password,
+                        IsSecure = false
+                    };
+
+                    NodeConfiguration lavaNodeConfigBackupBackup = new()
+                    {
+                        SelfDeaf = true,
+                        Hostname = Settings.LavaLinkBackup2.Host,
+                        Port = Settings.LavaLinkBackup2.Port,
+                        Authorization = Settings.LavaLinkBackup2.Password,
+                        IsSecure = false
+                    };
+
                     NullLogger<LavaNode> nothing = new();
 
                     LavaNode lavaNode = new(Client, lavaNodeConfig, nothing);
+                    LavaNode lavaNodeBackup = new(Client, lavaNodeConfigBackup, nothing);
+                    LavaNode lavaNodeBackup2 = new(Client, lavaNodeConfigBackupBackup, nothing);
 
-                    MusicEngine.SetMusicEngine(lavaNode);
+                    MusicEngine.SetMusicEngine(lavaNode, lavaNodeBackup, lavaNodeBackup2);
                 }
                 catch (Exception ex)
                 {

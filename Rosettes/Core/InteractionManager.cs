@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
@@ -38,8 +39,11 @@ namespace Rosettes.Core
 
         private async Task OnButtonClicked(SocketMessageComponent component)
         {
-            switch (component.Data.CustomId)
+            string action = component.Data.CustomId;
+
+            switch (action)
             {
+                // rpg stuff
                 case "fish":
                     await RpgEngine.CatchFishFunc(component, component.User);
                     break;
@@ -52,6 +56,44 @@ namespace Rosettes.Core
                 case "pets":
                     await RpgEngine.ShowPets(component, component.User);
                     break;
+
+
+                // music stuff
+                case "music_toggle": case "music_skip": case "music_stop":
+                    if (component.GuildId is ulong guild_id)
+                    {
+                        var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+                        if (dbGuild != null)
+                        {
+                            var guild = dbGuild.GetDiscordSocketReference();
+                            if (guild != null)
+                            {
+                                var dbUser = await UserEngine.GetDBUser(component.User);
+                                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+                                embed.Title = "Music Player";
+                                if (action == "music_toggle")
+                                {
+                                    embed.Description = await MusicEngine.ToggleAsync(guild);
+                                    await component.RespondAsync(embed: embed.Build(), components: MusicCommands.GetMusicButtons());
+                                }
+                                if (action == "music_skip")
+                                {
+                                    embed.Description = await MusicEngine.SkipTrackAsync(guild);
+                                    await component.RespondAsync(embed: embed.Build(), components: MusicCommands.GetMusicButtons());
+                                }
+                                if (action == "music_stop")
+                                {
+                                    embed.Description = await MusicEngine.StopAsync(guild);
+                                    await component.RespondAsync(embed: embed.Build());
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+
+
+                // if nothing else, it's poll stuff
                 default:
                     await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
                     break;
