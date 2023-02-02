@@ -1,9 +1,7 @@
 ﻿using Discord.Interactions;
 using Discord;
-using System.Xml.Linq;
 using Discord.WebSocket;
 using Rosettes.Core;
-using System.Text;
 
 namespace Rosettes.Modules.Engine
 {

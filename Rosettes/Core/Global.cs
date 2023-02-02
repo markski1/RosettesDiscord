@@ -60,7 +60,7 @@ namespace Rosettes.Core
                     }
                     if (dbUser.MainPet > 0)
                     {
-                        authorEmbed.Name += $" | with {RpgEngine.PetEmojis(dbUser.MainPet)}";
+                        authorEmbed.Name += $" | with {RpgEngine.PetEmojis(dbUser.MainPet)} pet";
                     }
                 }
             }

@@ -229,17 +229,26 @@ namespace Rosettes.Modules.Commands
                     parsedDefinitionList.Add(temp);
                 }
 
-                dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
-
                 var dbUser = await UserEngine.GetDBUser(Context.User);
                 EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
                 embed.Title = $"Definition for: {query}";
-                embed.Description = definition.definition;
 
-                embed.AddField("Upvotes", $"{definition.thumbs_up}", inline: true);
-                embed.AddField("Downvotes", $"{definition.thumbs_down}", inline: true);
-                embed.AddField("Permalink", $"<{definition.permalink}>");
+                if (parsedDefinitionList.Count > 0)
+                {
+                    dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
+
+                    embed.Description = definition.definition;
+
+                    embed.AddField("Upvotes", $"{definition.thumbs_up}", inline: true);
+                    embed.AddField("Downvotes", $"{definition.thumbs_down}", inline: true);
+                    embed.AddField("Permalink", $"<{definition.permalink}>");
+                }
+                else
+                {
+                    embed.Description = "Sorry, there does not seem to be any definition for that word.";
+                }
+                
 
                 await RespondAsync(embed: embed.Build());
             }
