@@ -325,6 +325,15 @@ namespace Rosettes.Modules.Engine
                 8 => "🦎 Lizard",
                 9 => "🐹 Hamster",
                 10 => "🐸 Frog",
+                11 => "🦝 Raccoon",
+                12 => "🐼 Panda",
+                13 => "🐁 Mice",
+                14 => "🐊 Crocodile",
+                15 => "🐢 Turtle",
+                16 => "🦦 Otter",
+                17 => "🦜 Parrot",
+                18 => "🦨 Skunk",
+                19 => "🐿 Chipmunk",
                 _ => "? Invalid Pet"
             };
         }
@@ -343,6 +352,15 @@ namespace Rosettes.Modules.Engine
                 8 => "🦎",
                 9 => "🐹",
                 10 => "🐸",
+                11 => "🦝",
+                12 => "🐼",
+                13 => "🐁",
+                14 => "🐊",
+                15 => "🐢",
+                16 => "🦦",
+                17 => "🦜",
+                18 => "🦨",
+                19 => "🐿",
                 _ => "?"
             };
         }
@@ -351,13 +369,13 @@ namespace Rosettes.Modules.Engine
         {
             Random rand = new();
 
-            if (rand.Next(30) == 0)
+            if (rand.Next(25) == 0)
             {
                 int pet;
                 int attempts = 0;
                 while (true)
                 {
-                    pet = rand.Next(10) + 1;
+                    pet = rand.Next(19);
                     if (await HasPet(dbUser, pet) == false) break;
                     
                     // if after 5 attempts there's only repeated pets, don't get a pet.
@@ -367,16 +385,13 @@ namespace Rosettes.Modules.Engine
 
                 string userPets = await GetStrItem(dbUser, "pets");
 
-                StringBuilder stringBuilder = new ();
-                stringBuilder.Append(userPets);
+                char[] petsAsChars = userPets.ToCharArray();
 
-                stringBuilder[pet - 1] = '1';
+                petsAsChars[pet] = '1';
 
-                string newPets = stringBuilder.ToString();
+                ModifyStrItem(dbUser, "pets", new string(petsAsChars));
 
-                ModifyStrItem(dbUser, "pets", newPets);
-
-                return pet;
+                return pet + 1;
             }
 
             return 0;

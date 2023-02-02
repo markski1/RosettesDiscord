@@ -169,7 +169,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = $"UPDATE users SET {item} = {newValue} WHERE id=@id";
+            var sql = $"UPDATE users SET `{item}` = '{newValue}' WHERE id=@id";
 
             try
             {
