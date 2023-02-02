@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -7,9 +8,9 @@ namespace Rosettes.Modules.Commands
 {
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("makepoll", "Creates a poll with up to 4 options.")]
+        [SlashCommand("makepoll", "Provides an UI to create your own custom poll.")]
 
-        public async Task MakePoll(string question, string option1, string option2, string option3 = "NOT_PROVIDED", string option4 = "NOT_PROVIDED")
+        public async Task MakePoll()
         {
             if (Context.Guild is null)
             {
@@ -17,11 +18,29 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            ModalBuilder modal = new()
+            {
+                Title = "Poll maker",
+                CustomId = "pollMaker"
+            };
+
+            modal.AddTextInput("Question", "question", TextInputStyle.Paragraph, placeholder: "Ask a question...", minLength: 5, maxLength: 250);
+
+            modal.AddTextInput("Option 1", "option1", required: true, minLength: 1, maxLength: 100);
+            modal.AddTextInput("Option 2", "option2", required: true, minLength: 1, maxLength: 100);
+            modal.AddTextInput("Option 3", "option3", required: false, minLength: 1, maxLength: 100);
+            modal.AddTextInput("Option 4", "option4", required: false, minLength: 1, maxLength: 100);
+
+            await RespondWithModalAsync(modal.Build());
+        }
+
+        public async static Task FollowUpPoll(string question, string option1, string option2, string option3, string option4, SocketModal component)
+        {
             // prevent option 4 with no option 3
-            if (option3 == "NOT_PROVIDED" && option4 != "NOT_PROVIDED")
+            if (option3 == string.Empty && option4 != string.Empty)
             {
                 option3 = option4;
-                option4 = "NOT_PROVIDED";
+                option4 = string.Empty;
             }
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
@@ -33,25 +52,33 @@ namespace Rosettes.Modules.Commands
             comps.WithButton(label: $"{option1} - 0 votes", customId: "1", row: 0);
             comps.WithButton(label: $"{option2} - 0 votes", customId: "2", row: 1);
 
-            if (option3 != "NOT_PROVIDED")
+            if (option3 != string.Empty)
             {
                 comps.WithButton(label: $"{option3} - 0 votes", customId: "3", row: 2);
             }
-            if (option4 != "NOT_PROVIDED")
+            else
+            {
+                option3 = "NOT_PROVIDED";
+            }
+            if (option4 != string.Empty)
             {
                 comps.WithButton(label: $"{option4} - 0 votes", customId: "4", row: 3);
             }
+            else
+            {
+                option4 = "NOT_PROVIDED";
+            }
 
-            await RespondAsync(embed: embed.Build(), components: comps.Build());
+            await component.RespondAsync(embed: embed.Build(), components: comps.Build());
 
-            ulong id = (await GetOriginalResponseAsync()).Id;
+            ulong id = (await component.GetOriginalResponseAsync()).Id;
 
             bool success = await PollEngine.AddPoll(id, question, option1, option2, option3, option4);
 
             if (!success)
             {
-                await DeleteOriginalResponseAsync();
-                await RespondAsync("Sorry, there was an error creating this poll.", ephemeral: true);
+                await component.DeleteOriginalResponseAsync();
+                await component.RespondAsync("Sorry, there was an error creating this poll.", ephemeral: true);
             }
         }
 

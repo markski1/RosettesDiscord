@@ -100,6 +100,22 @@ namespace Rosettes.Core
             }
         }
 
+        private async Task OnModalSubmitted(SocketModal modal)
+        {
+            if (modal.Data.CustomId == "pollMaker")
+            {
+                List<SocketMessageComponentData> components = modal.Data.Components.ToList();
+
+                string question = components.First(x => x.CustomId == "question").Value;
+                string option1 = components.First(x => x.CustomId == "option1").Value;
+                string option2 = components.First(x => x.CustomId == "option2").Value;
+                string option3 = components.First(x => x.CustomId == "option3").Value;
+                string option4 = components.First(x => x.CustomId == "option4").Value;
+
+                await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
+            }
+        }
+
         private async Task OnMenuSelectionMade(SocketMessageComponent component)
         {
             if (component.Data.CustomId is "buy" or "sell") {
@@ -131,6 +147,8 @@ namespace Rosettes.Core
             _client.ButtonExecuted += OnButtonClicked;
 
             _client.SelectMenuExecuted += OnMenuSelectionMade;
+
+            _client.ModalSubmitted += OnModalSubmitted;
 
             _commands.SlashCommandExecuted += OnCommandExecuted;
         }
