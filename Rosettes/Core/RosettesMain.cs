@@ -41,7 +41,7 @@ namespace Rosettes.Core
 
             ServiceManager.SetProvider(collection);
 
-            if (Settings.LavaLinkData is not null)
+            if (Settings.LavaLinkData is not null )
             {
                 try
                 {

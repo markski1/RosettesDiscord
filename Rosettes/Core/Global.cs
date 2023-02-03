@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using Rosettes.Modules.Engine;
+using System.Diagnostics;
 using System.Text;
 
 namespace Rosettes.Core
@@ -171,26 +173,69 @@ namespace Rosettes.Core
             }
             return false;
         }
-    }
 
-    public class MessageDeleter
-    {
-        private readonly System.Timers.Timer Timer = new();
-        private readonly Discord.Rest.RestUserMessage message;
-
-        public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
+        public static Task<int> RunBash(this string cmd)
         {
-            Timer.Elapsed += DeleteMessage;
-            Timer.Interval = seconds * 1000;
-            message = _message;
-            Timer.Enabled = true;
+            var source = new TaskCompletionSource<int>();
+            var escapedArgs = cmd.Replace("\"", "\\\"");
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "bash",
+                    Arguments = $"-c \"{escapedArgs}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                },
+                EnableRaisingEvents = true
+            };
+            process.Exited += (sender, args) =>
+            {
+                if (process.ExitCode == 0)
+                {
+                    source.SetResult(0);
+                }
+                else
+                {
+                    source.SetException(new Exception($"Command `{cmd}` failed with exit code `{process.ExitCode}`"));
+                }
+
+                process.Dispose();
+            };
+
+            try
+            {
+                process.Start();
+            }
+            catch (Exception e)
+            {
+                source.SetException(e);
+            }
+
+            return source.Task;
         }
 
-        public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+        public class MessageDeleter
         {
-            message.DeleteAsync();
-            Timer.Stop();
-            Timer.Dispose();
+            private readonly System.Timers.Timer Timer = new();
+            private readonly Discord.Rest.RestUserMessage message;
+
+            public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
+            {
+                Timer.Elapsed += DeleteMessage;
+                Timer.Interval = seconds * 1000;
+                message = _message;
+                Timer.Enabled = true;
+            }
+
+            public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+            {
+                message.DeleteAsync();
+                Timer.Stop();
+                Timer.Dispose();
+            }
         }
     }
 }

@@ -257,7 +257,7 @@ namespace Rosettes.Modules.Engine
 
             int petRequested = Int32.Parse(component.Data.Values.Last());
 
-            if (petRequested < 1 || petRequested > 10)
+            if (petRequested < 1 || petRequested > 19)
             {
                 dbUser.SetPet(0);
                 embed.Title = "Main pet removed.";

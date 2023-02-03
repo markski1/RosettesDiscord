@@ -2,6 +2,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
@@ -48,7 +49,7 @@ namespace Rosettes.Modules.Commands
             await RespondAsync(embed: embed.Build());
         }
 
-        [SlashCommand("admin", "To be used for administrative/developer functions.")]
+        [SlashCommand("devcmd", "Developer command.")]
         public async Task AdminMenu(string function)
         {
             if (!Global.CheckSnep(Context.User.Id))
@@ -56,14 +57,31 @@ namespace Rosettes.Modules.Commands
                 await ReplyAsync("This command is snep exclusive.");
                 return;
             }
-            if (function == "halt")
+            if (function is "halt" or "restart")
             {
+                await ReplyAsync("Syncing cache data with database...");
                 UserEngine.SyncWithDatabase();
                 GuildEngine.SyncWithDatabase();
-                await RespondAsync("Disconnecting from Discord...");
                 Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
                 var client = ServiceManager.GetService<DiscordSocketClient>();
                 await client.SetActivityAsync(game);
+
+                if (function is "restart")
+                {
+                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
+                }
+                else
+                {
+                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
+                }
+
+                int success = await Global.RunBash("../startRosettes.sh");
+
+                if (success == 0)
+                {
+                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes succesfully restarted.");
+                }
+
                 Environment.Exit(0);
             }
         }
