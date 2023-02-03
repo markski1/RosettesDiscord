@@ -30,7 +30,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, mainpet FROM users";
+            var sql = @"SELECT id, namecache, exp, mainpet FROM users";
 
             try
             {
@@ -64,7 +64,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = @"SELECT id, namecache, mainpet FROM users WHERE id=@id";
+            var sql = @"SELECT id, namecache, exp, mainpet FROM users WHERE id=@id";
 
             try
             {
@@ -100,12 +100,12 @@ namespace Rosettes.Database
             var db = DBConnection();
 
             var sql = @"UPDATE users
-                        SET id=@Id, namecache=@NameCache, mainpet=@MainPet
+                        SET id=@Id, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
                         WHERE id = @Id";
 
             try
             {
-                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet })) > 0;
+                return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet, user.Exp })) > 0;
             }
             catch (Exception ex)
             {

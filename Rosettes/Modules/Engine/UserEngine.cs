@@ -85,8 +85,9 @@ namespace Rosettes.Modules.Engine
 
     public class User
     {
-        public ulong Id { get; set; }
-        public int MainPet { get; set; }
+        public ulong Id { get; }
+        public int MainPet { get; set;  }
+        public int Exp { get; set; }
 
         // Contains if the user's data in memory has changed since last syncing to database.
         public bool SyncUpToDate { get; set; }
@@ -114,16 +115,18 @@ namespace Rosettes.Modules.Engine
             SyncUpToDate = true;
             LastFished = 0;
             MainPet = 0;
+            Exp = 0;
         }
 
         // database constructor, used on loading users
-        public User(ulong id, string namecache, int mainpet)
+        public User(ulong id, string namecache, int exp, int mainpet)
         {
             Id = id;
             SyncUpToDate = true;
             LastFished = 0;
             NameCache = namecache;
             MainPet = mainpet;
+            Exp = exp;
         }
 
         public bool IsValid()
@@ -169,6 +172,41 @@ namespace Rosettes.Modules.Engine
         {
             MainPet = id;
             SyncUpToDate = false;
+        }
+
+        // returns 0 unless adding exp resulted in a level up, in which case returns the level.
+        public string AddExp(int amount)
+        {
+            int level = GetLevel();
+            Exp += amount;
+            SyncUpToDate = false;
+            if (GetLevel() > level)
+            {
+                return $"+{amount} exp, leveled up";
+            }
+            return $"+{amount} exp";
+        }
+
+        public int GetLevel()
+        {
+            int count = Exp;
+            float requirement = 100.0f;
+            int level = 1;
+
+            while (count > 0)
+            {
+                if (count >= requirement)
+                {
+                    count -= (int)requirement;
+                    requirement *= 1.1f;
+                    level += 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return level;
         }
     }
 }

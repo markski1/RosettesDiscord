@@ -108,15 +108,16 @@ namespace Rosettes.Modules.Commands
                 _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
                 response = await _client.GetStringAsync(tweetUrl);
             }
-            catch
+            catch (Exception ex)
             {
-                await RespondAsync("Could not fetch tweet data.", ephemeral: true);
+                await RespondAsync("Sorry, I could not fetch tweet data. [E1]", ephemeral: true);
+                Global.GenerateErrorMessage("twtvid", $"{ex}");
                 return;
             }
             
             if (response is null)
             {
-                await RespondAsync("Could not fetch tweet data.", ephemeral: true);
+                await RespondAsync("Sorry, I could not fetch tweet data. [E2]", ephemeral: true);
                 return;
             }
 

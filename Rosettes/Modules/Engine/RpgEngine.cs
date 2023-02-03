@@ -85,7 +85,7 @@ namespace Rosettes.Modules.Engine
 
                 embed.Footer = new EmbedFooterBuilder()
                 {
-                    Text = $"added to inventory."
+                    Text = $"{dbUser.AddExp(20)} | added to inventory."
                 };
             }
 
@@ -440,22 +440,36 @@ namespace Rosettes.Modules.Engine
 
             Random rand = new();
             int caught = rand.Next(100);
-            string fishingCatch = caught switch
+            string fishingCatch;
+
+            int expIncrease;
+
+            switch (caught)
             {
-                (<= 35) => "fish",
-                (> 35 and <= 55) => "uncommonfish",
-                (> 55 and <= 65) => "rarefish",
-                (> 65 and < 85) => "shrimp",
-                _ => "garbage"
-            };
+                case (<= 35):
+                    fishingCatch = "fish";
+                    expIncrease = 10;
+                    break;
+                case (> 35 and <= 55):
+                    fishingCatch = "uncommonfish";
+                    expIncrease = 15;
+                    break;
+                case (> 55 and <= 65):
+                    fishingCatch = "rarefish";
+                    expIncrease = 18;
+                    break;
+                case (> 65 and < 85):
+                    fishingCatch = "shrimp";
+                    expIncrease = 12;
+                    break;
+                default:
+                    fishingCatch = "garbage";
+                    expIncrease = 8;
+                    break;
+            }
 
             fishField.Name = "You caught:";
             fishField.Value = RpgEngine.GetItemName(fishingCatch);
-
-            embed.Footer = new EmbedFooterBuilder()
-            {
-                Text = $"added to inventory."
-            };
 
             RpgEngine.ModifyItem(dbUser, fishingCatch, +1);
 
@@ -464,7 +478,15 @@ namespace Rosettes.Modules.Engine
             if (foundPet > 0)
             {
                 embed.AddField("You found a pet!", $"While fishing, you found a friendly {PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+                expIncrease *= 5;
+                expIncrease /= 2;
             }
+
+            embed.Footer = new EmbedFooterBuilder()
+            {
+                Text = $"{dbUser.AddExp(expIncrease)} | added to inventory."
+            };
 
             await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
@@ -483,7 +505,7 @@ namespace Rosettes.Modules.Engine
 
             List<string> fieldsToList = new();
 
-            EmbedFooterBuilder footer = new() { Text = $"Wallet: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+            EmbedFooterBuilder footer = new() { Text = $"{dbUser.Exp} experience | {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
 
             embed.Footer = footer;
 

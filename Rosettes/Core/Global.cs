@@ -62,6 +62,7 @@ namespace Rosettes.Core
                     {
                         authorEmbed.Name += $" | with {RpgEngine.PetEmojis(dbUser.MainPet)} pet";
                     }
+                    authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
                 }
             }
             
