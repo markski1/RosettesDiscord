@@ -13,10 +13,6 @@ namespace Rosettes.Database
         Task<bool> CheckUserExists(IUser user);
         Task<bool> InsertUser(User user);
         Task<bool> UpdateUser(User user);
-        Task<int> FetchInventoryItem(User user, string item);
-        Task<string> FetchInventoryStringItem(User user, string item);
-        Task<bool> ModifyInventoryItem(User user, string item, int amount);
-        Task<bool> ModifyStrInventoryItem(User user, string item, string newValue);
     }
 
     public class UserRepository : IUserRepository
@@ -110,74 +106,6 @@ namespace Rosettes.Database
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<int> FetchInventoryItem(User user, string item)
-        {
-            var db = DBConnection();
-
-            var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
-
-            try
-            {
-                return await db.QueryFirstOrDefaultAsync<int>(sql, new { id = user.Id });
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
-                return -1;
-            }
-        }
-
-        public async Task<string> FetchInventoryStringItem(User user, string item)
-        {
-            var db = DBConnection();
-
-            var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
-
-            try
-            {
-                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id });
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
-                return "invalid";
-            }
-        }
-
-        public async Task<bool> ModifyInventoryItem(User user, string item, int amount)
-        {
-            var db = DBConnection();
-
-            var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
-
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { amount, id = user.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
-        {
-            var db = DBConnection();
-
-            var sql = $"UPDATE users_inventory SET `{item}` = '{newValue}' WHERE id=@id";
-
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { id = user.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
                 return false;
             }
         }

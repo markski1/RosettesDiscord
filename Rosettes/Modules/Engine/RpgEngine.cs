@@ -2,11 +2,14 @@
 using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
+using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine
 {
     public static class RpgEngine
     {
+        public static readonly RpgRepository _interface = new();
+
         public static string GetItemName(string choice)
         {
             return choice switch
@@ -15,9 +18,6 @@ namespace Rosettes.Modules.Engine
                 "uncommonfish" => "🐟 Uncommon fish",
                 "rarefish" => "🐠 Rare fish",
                 "shrimp" => "🦐 Shrimp",
-                "sushi" => "🍣 Sushi",
-                "rice" => "🍙 Rice",
-                "shrimprice" => "🍚 Shrimp Fried Rice",
                 "garbage" => "🗑 Garbage",
                 "dabloons" => "🐾 Dabloons",
                 _ => "invalid item"
@@ -26,22 +26,22 @@ namespace Rosettes.Modules.Engine
 
         public static async void ModifyItem(User dbUser, string choice, int amount)
         {
-            await UserEngine._interface.ModifyInventoryItem(dbUser, choice, amount);
+            await _interface.ModifyInventoryItem(dbUser, choice, amount);
         }
 
         public static async void ModifyStrItem(User dbUser, string choice, string newValue)
         {
-            await UserEngine._interface.ModifyStrInventoryItem(dbUser, choice, newValue);
+            await _interface.ModifyStrInventoryItem(dbUser, choice, newValue);
         }
 
         public static async Task<int> GetItem(User dbUser, string name)
         {
-            return await UserEngine._interface.FetchInventoryItem(dbUser, name);
+            return await _interface.FetchInventoryItem(dbUser, name);
         }
 
         public static async Task<string> GetStrItem(User dbUser, string name)
         {
-            return await UserEngine._interface.FetchInventoryStringItem(dbUser, name);
+            return await _interface.FetchInventoryStringItem(dbUser, name);
         }
 
         public static async Task<string> CanuseRPGCommand(SocketInteractionContext context)
@@ -62,104 +62,9 @@ namespace Rosettes.Modules.Engine
             return "yes";
         }
 
-        public static async Task CraftAction(SocketMessageComponent component)
-        {
-            var dbUser = await UserEngine.GetDBUser(component.User);
-            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-            string choice = component.Data.Values.Last();
-
-            string ingredientsOrSuccess = await RpgEngine.HasIngredients(dbUser, choice);
-            if (ingredientsOrSuccess != "success")
-            {
-                embed.Title = "Not enough materials.";
-                embed.Description = $"You need at least {ingredientsOrSuccess} to make {RpgEngine.GetItemName(choice)}.";
-            }
-            else
-            {
-                embed.Title = "Crafted new item.";
-
-                ingredientsOrSuccess = RpgEngine.MakeItem(dbUser, choice);
-
-                embed.AddField("Spent:", ingredientsOrSuccess);
-                embed.AddField("Made:", RpgEngine.GetItemName(choice));
-
-                embed.Footer = new EmbedFooterBuilder()
-                {
-                    Text = $"{dbUser.AddExp(20)} | added to inventory."
-                };
-            }
-
-            await component.RespondAsync(embed: embed.Build());
-        }
-
-        public static async Task<string> HasIngredients(User dbUser, string item)
-        {
-            switch (item)
-            {
-                case "sushi":
-                    if (await GetItem(dbUser, "fish") >= 2 && await GetItem(dbUser, "uncommonfish") >= 1 && await GetItem(dbUser, "rice") >= 1)
-                    {
-                        return "success";
-                    }
-                    break;
-                case "shrimprice":
-                    if (await GetItem(dbUser, "shrimp") >= 2 && await GetItem(dbUser, "rice") >= 1)
-                    {
-                        return "success";
-                    }
-                    break;
-            }
-            return GetCraftingCost(item);
-        }
-
-        public static string MakeItem(User dbUser, string item)
-        {
-            switch (item)
-            {
-                case "sushi":
-                    ModifyItem(dbUser, "fish", -2);
-                    ModifyItem(dbUser, "uncommonfish", -1);
-                    ModifyItem(dbUser, "rice", -1);
-                    ModifyItem(dbUser, "sushi", +1);
-                    break;
-                case "shrimprice":
-                    ModifyItem(dbUser, "shrimp", -2);
-                    ModifyItem(dbUser, "rice", -1);
-                    ModifyItem(dbUser, "shrimprice", +1);
-                    break;
-            }
-            return GetCraftingCost(item);
-        }
-
-        public static string GetCraftingCost(string item)
-        {
-            switch (item)
-            {
-                case "sushi":
-                    return $"2 {GetItemName("fish")}, 1 {GetItemName("uncommonfish")} and 1 {GetItemName("rice")}";
-                case "shrimprice":
-                    return $"2 {GetItemName("shrimp")} and 1 {GetItemName("rice")}";
-                default:
-                    break;
-            }
-            return "error";
-        }
-
-        public static bool IsValidMakeChoice(string choice)
-        {
-            string[] choices = { "sushi", "shrimprice" };
-            return choices.Contains(choice);
-        }
-
         public static bool IsValidGiveChoice(string choice)
         {
             string[] choices = { "sushi", "shrimprice" };
-            return choices.Contains(choice);
-        }
-
-        public static bool IsValidUseChoice(string choice)
-        {
-            string[] choices = { "sushi", "shrimprice", "garbage" };
             return choices.Contains(choice);
         }
 
@@ -492,6 +397,60 @@ namespace Rosettes.Modules.Engine
             await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 
+        public static async Task ShowFarm(SocketInteraction interaction, IUser user)
+        {
+            User dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = $"Farm";
+            embed.Description = "Loading farm...";
+
+            await interaction.RespondAsync(embed: embed.Build());
+
+            List<string> fieldsToList = new();
+
+            EmbedFooterBuilder footer = new() { Text = $"{dbUser.Exp} experience | {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+
+            embed.Footer = footer;
+
+            fieldsToList.Add("garbage");
+            fieldsToList.Add("rice");
+
+            embed.AddField(
+                $"Items",
+                await ListItems(dbUser, fieldsToList),
+                false
+            );
+
+            fieldsToList.Clear();
+            fieldsToList.Add("fish");
+            fieldsToList.Add("uncommonfish");
+            fieldsToList.Add("rarefish");
+            fieldsToList.Add("shrimp");
+
+            embed.AddField(
+                $"Catch",
+                await ListItems(dbUser, fieldsToList),
+                true
+            );
+
+            embed.Description = null;
+
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+        }
+
         public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
         {
             User dbUser = await UserEngine.GetDBUser(user);
@@ -530,16 +489,6 @@ namespace Rosettes.Modules.Engine
                 true
             );
 
-            fieldsToList.Clear();
-            fieldsToList.Add("sushi");
-            fieldsToList.Add("shrimprice");
-
-            embed.AddField(
-                $"Finished Goods",
-                await ListItems(dbUser, fieldsToList),
-                true
-            );
-
             embed.Description = null;
 
             await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
@@ -548,16 +497,6 @@ namespace Rosettes.Modules.Engine
 
             ActionRowBuilder buttonRow = new();
 
-            SelectMenuBuilder craftMenu = new()
-            {
-                Placeholder = "Craft menu",
-                CustomId = "make"
-            };
-            craftMenu.AddOption(label: RpgEngine.GetItemName("sushi"), description: RpgEngine.GetCraftingCost("sushi"), value: "sushi");
-            craftMenu.AddOption(label: RpgEngine.GetItemName("shrimprice"), description: RpgEngine.GetCraftingCost("shrimprice"), value: "shrimprice");
-            craftMenu.MaxValues = 1;
-
-            comps.WithSelectMenu(craftMenu);
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
             buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
             buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);

@@ -121,17 +121,13 @@ namespace Rosettes.Core
             if (component.Data.CustomId is "buy" or "sell") {
                 await RpgEngine.ShopAction(component);
             }
-            if (component.Data.CustomId is "make")
-            {
-                await RpgEngine.CraftAction(component);
-            }
             if (component.Data.CustomId is "defaultPet")
             {
                 await RpgEngine.SetDefaultPet(component);
             }
         }
 
-        private Task OnCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+        private Task OnCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
         {
             return Task.CompletedTask;
         }

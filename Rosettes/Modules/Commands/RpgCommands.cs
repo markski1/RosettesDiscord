@@ -89,71 +89,8 @@ namespace Rosettes.Modules.Commands
                 return;
             }
         }
-
-        [SlashCommand("use", "Use an item, optionally with another user.")]
-        public async Task ItemUse(string option = "none", IUser? user = null)
-        {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
-            if (isAllowed != "yes")
-            {
-                await RespondAsync(isAllowed, ephemeral: true);
-                return;
-            }
-
-            var dbUser = await UserEngine.GetDBUser(Context.User);
-
-            string choice = option.ToLower();
-
-            if (choice == "sushi" || choice == "shrimprice")
-            {
-                if (await RpgEngine.GetItem(dbUser, choice) < 1)
-                {
-                    await RespondAsync($"You don't have any {RpgEngine.GetItemName(choice)} to use.");
-                    return;
-                }
-
-                RpgEngine.ModifyItem(dbUser, choice, -1);
-
-                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-                embed.Title = "Item consumed.";
-
-                if (user is null)
-                {
-                    embed.Description = $"Has eaten {RpgEngine.GetItemName(choice)}";
-                }
-                else
-                {
-                    embed.Description = $"Has eaten {RpgEngine.GetItemName(choice)}, and shared some with {user.Mention}.";
-                }
-
-                await RespondAsync(embed: embed.Build());
-            }
-            if (choice == "garbage")
-            {
-                if (await RpgEngine.GetItem(dbUser, "garbage") < 1)
-                {
-                    await RespondAsync($"You don't have any {RpgEngine.GetItemName(choice)} to use.");
-                    return;
-                }
-
-                if (user is null)
-                {
-                    await RespondAsync($"'Using' garbage requires tagging another member to throw the trash at.", ephemeral: true);
-                }
-                else
-                {
-                    RpgEngine.ModifyItem(dbUser, "garbage", -1);
-                    await RespondAsync($"[{Context.User.Username}] has thrown some {RpgEngine.GetItemName("garbage")} at {user.Mention}. Well done!");
-                }
-            }
-            else
-            {
-                await RespondAsync("Valid things to use: sushi, shrimprice, garbage", ephemeral: true);
-                return;
-            }
-        }
-
-        [SlashCommand("food-leader", "Leaderbord by amount of food made.")]
+        
+        [SlashCommand("top", "Leaderbord by experience.")]
         public async Task FoodLeaderboard()
         {
             string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
@@ -170,48 +107,24 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            /*
-             * Regarding the horrors ahead:
-             * 
-             * In any other scenario in the world, the following should be a single SQL query.
-             * However, because one of the most important objectives of Rosettes is to not store more personal data than necesary,
-             * and this includes not having to store what guilds a given user is in, this operation must happen in memory.
-             * So we need to fetch sushi and shrimp of every user in the guild indivdiually in order to rank them.
-             * This is very slow, but the database is always cached in memory and runs locally, so not a real as far as performance goes.
-             * 
-             */
-            var getSushiTasks = users.Select(x => RpgEngine.GetItem(x, "sushi")).ToList();
-            var getShrimpRiceTasks = users.Select(x => RpgEngine.GetItem(x, "shrimprice")).ToList();
-            var userSushi = await Task.WhenAll(getSushiTasks);
-            var userShrimpRice = await Task.WhenAll(getShrimpRiceTasks);
-            var usersWithSushi = users.Zip(userSushi, (User, Sushi) => (User, Sushi));
-            var usersWithSushiAndShrimp = usersWithSushi.Zip(userShrimpRice, (User, Shrimp) => (User, Shrimp));
-            var topUsers = usersWithSushiAndShrimp.OrderByDescending(x => x.User.Sushi + x.Shrimp).Take(10);
+            var topUsers = users.OrderByDescending(x => x.Exp).Take(10);
 
-            string topList = "Top 10 by combined finished food count: ```";
-            topList += $"User                                    🍣    🍚\n\n";
+            string topList = "Top 10 by experience: ```";
+            topList += $"User                               Level and experience\n\n";
             var spaceStr = "";
             var space = 30;
 
             foreach (var anUser in topUsers)
             {
                 spaceStr = "";
-                space = 32 - (await anUser.User.User.GetName(false)).Length;
+                space = 32 - (await anUser.GetName(false)).Length;
                 for (int i = 0; i < space; i++)
                 {
                     spaceStr += " ";
                 }
-                var spaceBetweenStuff = "   ";
-                if (anUser.User.Sushi < 100)
-                {
-                    spaceBetweenStuff += " ";
-                    if (anUser.User.Sushi < 10)
-                    {
-                        spaceBetweenStuff += " ";
-                    }
-                }
                 
-                topList += $"{await anUser.User.User.GetName(false)} {spaceStr}|       {anUser.User.Sushi}{spaceBetweenStuff}{anUser.Shrimp}\n";
+                
+                topList += $"{await anUser.GetName(false)} {spaceStr}|   Level {anUser.GetLevel()}; {anUser.Exp}xp\n";
             }
 
             topList += "```";
