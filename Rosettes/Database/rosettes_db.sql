@@ -1,5 +1,5 @@
 -- --------------------------------------------------------
--- Host:                         [ROSETTES PRODUCTION SERVER]
+-- Host:                         gateway.markski.ar
 -- Versión del servidor:         10.6.7-MariaDB-1:10.6.7+maria~focal - mariadb.org binary distribution
 -- SO del servidor:              debian-linux-gnu
 -- HeidiSQL Versión:             12.0.0.6468
@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS `guilds` (
   `settings` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '1111111111',
   `ownerid` bigint(20) unsigned NOT NULL DEFAULT 0,
   `defaultrole` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `logchan` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `rpgchan` bigint(20) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -128,12 +130,30 @@ CREATE TABLE IF NOT EXISTS `roles` (
 CREATE TABLE IF NOT EXISTS `users` (
   `id` bigint(20) unsigned NOT NULL DEFAULT 0,
   `namecache` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'rosettes_unset',
-  `fishcount` int(11) DEFAULT 0,
-  `rarefishcount` int(11) DEFAULT 0,
-  `garbagecount` int(11) DEFAULT 0,
+  `exp` int(11) NOT NULL DEFAULT 0,
+  `mainpet` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- La exportación de datos fue deseleccionada.
+
+-- Volcando estructura para tabla bot_db.users_inventory
+CREATE TABLE IF NOT EXISTS `users_inventory` (
+  `id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `dabloons` int(11) NOT NULL DEFAULT 10,
+  `fish` int(11) NOT NULL DEFAULT 0,
+  `uncommonfish` int(11) NOT NULL DEFAULT 0,
+  `rarefish` int(11) NOT NULL DEFAULT 0,
+  `shrimp` int(11) NOT NULL DEFAULT 0,
+  `rice` int(11) NOT NULL DEFAULT 0,
+  `garbage` int(11) NOT NULL DEFAULT 0,
+  `sushi` int(11) NOT NULL DEFAULT 0,
+  `shrimprice` int(11) NOT NULL DEFAULT 0,
+  `pets` varchar(21) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '00000000000000000000' COMMENT 'Where each digit represents if the user has a given pet or not.',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `id` (`id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- La exportación de datos fue deseleccionada.
 

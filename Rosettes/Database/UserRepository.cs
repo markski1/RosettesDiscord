@@ -118,7 +118,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = $"SELECT `{item}` FROM users WHERE id=@id";
+            var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
             try
             {
@@ -135,7 +135,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = $"SELECT `{item}` FROM users WHERE id=@id";
+            var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
             try
             {
@@ -152,7 +152,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = $"UPDATE users SET {item} = {item} + @amount WHERE id=@id";
+            var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
 
             try
             {
@@ -169,7 +169,7 @@ namespace Rosettes.Database
         {
             var db = DBConnection();
 
-            var sql = $"UPDATE users SET `{item}` = '{newValue}' WHERE id=@id";
+            var sql = $"UPDATE users_inventory SET `{item}` = '{newValue}' WHERE id=@id";
 
             try
             {
