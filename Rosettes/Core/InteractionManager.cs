@@ -56,6 +56,15 @@ namespace Rosettes.Core
                 case "pets":
                     await RpgEngine.ShowPets(component, component.User);
                     break;
+                case "farm":
+                    await RpgEngine.ShowFarm(component, component.User);
+                    break;
+
+                case "crops_plant":
+                case "crops_harvest":
+                case "crops_water":
+                    await component.RespondAsync("Sorry, I'm still making the farm bits!");
+                    break;
 
 
                 // music stuff

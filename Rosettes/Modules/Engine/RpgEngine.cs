@@ -3,6 +3,7 @@ using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Modules.Engine.RPG;
 
 namespace Rosettes.Modules.Engine
 {
@@ -16,6 +17,7 @@ namespace Rosettes.Modules.Engine
             {
                 "fish" => "🐡 Common fish",
                 "uncommonfish" => "🐟 Uncommon fish",
+                "rice" => "🍙 Rice",
                 "rarefish" => "🐠 Rare fish",
                 "shrimp" => "🦐 Shrimp",
                 "garbage" => "🗑 Garbage",
@@ -407,47 +409,80 @@ namespace Rosettes.Modules.Engine
 
             await interaction.RespondAsync(embed: embed.Build());
 
-            List<string> fieldsToList = new();
+            List<Crop> fieldsToList = (await _interface.GetUserCrops(dbUser)).ToList();
 
-            EmbedFooterBuilder footer = new() { Text = $"{dbUser.Exp} experience | {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+            int plots = await _interface.FetchInventoryItem(dbUser, "plots");
 
-            embed.Footer = footer;
+            embed.Description = $"Your farm has {plots} plot{((plots != 1) ? 's' : null)} of land.";
 
-            fieldsToList.Add("garbage");
-            fieldsToList.Add("rice");
+            bool anyCanBePlanted = false;
+            bool anyCanBeWatered = false;
+            bool anyCanBeHarvested = false;
 
-            embed.AddField(
-                $"Items",
-                await ListItems(dbUser, fieldsToList),
-                false
-            );
+            int currentUnix = Global.CurrentUnix();
 
-            fieldsToList.Clear();
-            fieldsToList.Add("fish");
-            fieldsToList.Add("uncommonfish");
-            fieldsToList.Add("rarefish");
-            fieldsToList.Add("shrimp");
+            for (int i = 1; i <= plots; i++)
+            {
+                Crop? currentCrop = fieldsToList.Find(x => x.plotId == i);
+                if (currentCrop is null)
+                {
+                    embed.AddField($"Plot {i}", "There is nothing growing in this plot.", inline: true);
+                    anyCanBePlanted = true;
+                }
+                else
+                {
+                    bool canBeHarvested = false;
+                    bool canBeWatered = false;
+                    if (currentCrop.unixGrowth < currentUnix)
+                    {
+                        canBeHarvested = true;
+                        anyCanBeHarvested = true;
+                    }
+                    else if (currentCrop.unixNextWater < currentUnix)
+                    {
+                        canBeWatered = true;
+                        anyCanBeWatered = true;
+                    }
 
-            embed.AddField(
-                $"Catch",
-                await ListItems(dbUser, fieldsToList),
-                true
-            );
+                    if (canBeWatered)
+                    {
+                        embed.AddField($"Plot {i}", $"There is {currentCrop.cropType} growing in this plot. It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                    }
+                    else if (canBeHarvested)
+                    {
+                        embed.AddField($"Plot {i}", $"{currentCrop.cropType} has grown in this plot. It can be harvested right now.");
+                    }
+                    else
+                    {
+                        embed.AddField($"Plot {i}", $"There is {currentCrop.cropType} growing in this plot. It can be watered again <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                    }
+                    embed.AddField($"Plot {i}", $"{currentCrop.cropType} has grown in this plot. It can be harvested now.");
+                }
+            }
 
-            embed.Description = null;
-
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
+            EmbedFooterBuilder footer = new() { Text = $"TODO: Seeds" };
 
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
 
-            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
-            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
-            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+            if (anyCanBeHarvested)
+            {
+                buttonRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+            }
+            if (anyCanBePlanted)
+            {
+                buttonRow.WithButton(label: "Plant crops", customId: "crops_plant", style: ButtonStyle.Primary);
+            }
+            if (anyCanBeWatered)
+            {
+                buttonRow.WithButton(label: "Water crops", customId: "crops_water", style: ButtonStyle.Primary);
+            }
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Secondary);
 
             comps.AddRow(buttonRow);
 
+            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
             await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 
@@ -498,6 +533,7 @@ namespace Rosettes.Modules.Engine
             ActionRowBuilder buttonRow = new();
 
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Primary);
             buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
             buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
 

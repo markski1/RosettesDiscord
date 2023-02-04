@@ -59,28 +59,36 @@ namespace Rosettes.Modules.Commands
             }
             if (function is "halt" or "restart")
             {
-                await ReplyAsync("Syncing cache data with database...");
+                await RespondAsync("Syncing cache data with database...");
                 UserEngine.SyncWithDatabase();
                 GuildEngine.SyncWithDatabase();
                 Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
                 var client = ServiceManager.GetService<DiscordSocketClient>();
                 await client.SetActivityAsync(game);
 
+
                 if (function is "restart")
                 {
                     await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
+                    try
+                    {
+                        int success = await Global.RunBash("../startRosettes.sh");
+                        if (success == 0)
+                        {
+                            await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes succesfully restarted.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await ModifyOriginalResponseAsync(msg => msg.Content = $"Rosettes failed to restart. {ex}");
+                    }
                 }
                 else
                 {
                     await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
                 }
 
-                int success = await Global.RunBash("../startRosettes.sh");
-
-                if (success == 0)
-                {
-                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes succesfully restarted.");
-                }
+                
 
                 Environment.Exit(0);
             }

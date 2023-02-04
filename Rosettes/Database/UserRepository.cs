@@ -80,8 +80,11 @@ namespace Rosettes.Database
             var sql = @"INSERT INTO users (id, namecache, mainpet)
                         VALUES(@Id, @NameCache, @MainPet)";
 
+            var sql2 = @"INSERT INTO users_inventory (id) VALUES(@Id)";
+
             try
             {
+                await db.ExecuteAsync(sql2, new { user.Id });
                 return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet })) > 0;
             }
             catch (Exception ex)

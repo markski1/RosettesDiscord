@@ -36,6 +36,19 @@ namespace Rosettes.Modules.Commands
             await RpgEngine.ShowInventoryFunc(Context.Interaction, Context.User);
         }
 
+        [SlashCommand("farm", "View your farm")]
+        public async Task RpgFarm()
+        {
+            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            if (isAllowed != "yes")
+            {
+                await RespondAsync(isAllowed, ephemeral: true);
+                return;
+            }
+
+            await RpgEngine.ShowFarm(Context.Interaction, Context.User);
+        }
+
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
         public async Task RpgShop()
         {
@@ -110,7 +123,7 @@ namespace Rosettes.Modules.Commands
             var topUsers = users.OrderByDescending(x => x.Exp).Take(10);
 
             string topList = "Top 10 by experience: ```";
-            topList += $"User                               Level and experience\n\n";
+            topList += $"User                                 Level & Experience\n\n";
             var spaceStr = "";
             var space = 30;
 

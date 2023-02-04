@@ -9,14 +9,16 @@
     {
         public int plotId;
         public ulong userId;
-        public int unixGrowth;
+        public uint unixGrowth;
+        public uint unixNextWater;
         public int cropType;
 
-        public Crop(int plot_id, ulong user_id, int unix_growth, int crop_type)
+        public Crop(int plot_id, ulong user_id, uint unix_growth, uint unix_next_water, int crop_type)
         {
             plotId = plot_id;
             userId = user_id;
             unixGrowth = unix_growth;
+            unixNextWater = unix_next_water;
             cropType = crop_type;
         }
     }
