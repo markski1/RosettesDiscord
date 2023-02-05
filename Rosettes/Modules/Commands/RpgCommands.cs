@@ -62,14 +62,18 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("give", "Give an item to another user.")]
-        public async Task GiveItem(IUser user, string option = "none")
+        public async Task GiveItem(IUser user, string option = "none", int amount = 1)
         {
-            await RespondAsync("As part of a future update, giving items is currently disabled.");
-            /*
             string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
+                return;
+            }
+
+            if (user == Context.User)
+            {
+                await RespondAsync("That's you! Give stuff to someone else!", ephemeral: true);
                 return;
             }
 
@@ -80,29 +84,27 @@ namespace Rosettes.Modules.Commands
                 var dbUser = await UserEngine.GetDBUser(Context.User);
                 var receiver = await UserEngine.GetDBUser(user);
 
-                if (await RpgEngine.GetItem(dbUser, choice) < 1)
+                if (await RpgEngine.GetItem(dbUser, choice) < amount)
                 {
-                    await RespondAsync($"You don't have any {RpgEngine.GetItemName(choice)} to give.");
+                    await RespondAsync($"You don't have {amount} {RpgEngine.GetItemName(choice)} to give.");
                     return;
                 }
 
-                RpgEngine.ModifyItem(receiver, choice, +1);
+                RpgEngine.ModifyItem(receiver, choice, +amount);
 
-                RpgEngine.ModifyItem(dbUser, choice, -1);
+                RpgEngine.ModifyItem(dbUser, choice, -amount);
 
                 EmbedBuilder embed = await Global.MakeRosettesEmbed();
                 embed.Title = "Item given.";
-
-                embed.AddField(Context.User.Mention, $"Given {RpgEngine.GetItemName(choice)} to {user.Mention}!");
+                embed.Description = $"Gave {amount} {RpgEngine.GetItemName(choice)} to {user.Mention}.";
 
                 await RespondAsync(embed: embed.Build());
             }
             else
             {
-                await RespondAsync("Valid things to give: sushi", ephemeral: true);
+                await RespondAsync("Valid things to give:\n >>> \"fish\",\r\n\"uncommonfish\",\r\n\"rarefish\",\r\n\"shrimp\",\r\n\"dabloons\",\r\n\"garbage\",\r\n\"tomato\",\r\n\"carrot\",\r\n\"potato\",\r\n\"seedbag\"", ephemeral: true);
                 return;
             }
-            */
         }
         
         [SlashCommand("top", "Leaderbord by experience.")]

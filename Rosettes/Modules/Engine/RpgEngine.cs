@@ -72,7 +72,20 @@ namespace Rosettes.Modules.Engine
 
         public static bool IsValidGiveChoice(string choice)
         {
-            string[] choices = { "sushi" };
+            
+            string[] choices = 
+                {
+                    "fish",
+                    "uncommonfish",
+                    "rarefish",
+                    "shrimp",
+                    "dabloons",
+                    "garbage",
+                    "tomato",
+                    "carrot",
+                    "potato",
+                    "seedbag"
+                };
             return choices.Contains(choice);
         }
 
@@ -667,11 +680,26 @@ namespace Rosettes.Modules.Engine
                     count++;
                 }
             }
-            embed.Footer = new EmbedFooterBuilder() { Text = $"{count} plot{((count != 1) ? 's' : null)} watered." };
-
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
+
+            int expIncrease = 5 * count;
+
+            if (count > 0)
+            {
+                int foundPet = await RollForPet(dbUser);
+
+                if (foundPet > 0)
+                {
+                    embed.AddField("You found a pet!", $"While watering your crops, you found a friendly {PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                    buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+                    expIncrease *= 5;
+                    expIncrease /= 2;
+                }
+            }
+
+            embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} watered." };
 
             buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Secondary);
             buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
@@ -691,6 +719,8 @@ namespace Rosettes.Modules.Engine
             int count = 0;
             Random rand = new();
 
+            int expIncrease = 0;
+
             List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
             {
@@ -705,15 +735,29 @@ namespace Rosettes.Modules.Engine
                     string harvest = Farm.GetHarvest(crop.cropType);
                     int earnings = 3 + rand.Next(4) * 3 + rand.Next(4) * 3;
                     ModifyItem(dbUser, harvest, +earnings);
+                    expIncrease += earnings;
                     embed.AddField($"Plot {crop.plotId} harvested!", $"You have obtained {earnings} {GetItemName(harvest)}.");
                     count++;
                 }
             }
-            embed.Footer = new EmbedFooterBuilder() { Text = $"{count} plot{((count != 1) ? 's' : null)} harvested." };
-
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
+
+            if (count > 0)
+            {
+                int foundPet = await RollForPet(dbUser);
+
+                if (foundPet > 0)
+                {
+                    embed.AddField("You found a pet!", $"While harvesting your crops, you found a friendly {PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                    buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+                    expIncrease *= 5;
+                    expIncrease /= 2;
+                }
+            }
+
+            embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} harvested." };
 
             buttonRow.WithButton(label: "Back to farm", customId: "farm", style: ButtonStyle.Secondary);
             buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
