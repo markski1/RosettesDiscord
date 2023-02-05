@@ -699,7 +699,14 @@ namespace Rosettes.Modules.Engine
 
             Random rand = new();
 
-            var plantedCrops = await Farm.InsertCropsInPlot(dbUser, rand.Next(3)+1 ,plot_id);
+            int roll = rand.Next(55);
+            int type;
+
+            if (roll < 10) type = 1; // tomatoes
+            else if (roll < 30) type = 2; // carrots
+            else type = 3; // potatos
+
+            var plantedCrops = await Farm.InsertCropsInPlot(dbUser, type, plot_id);
 
             if (plantedCrops is null)
             {
