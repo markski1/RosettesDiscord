@@ -119,9 +119,16 @@ namespace Rosettes.Modules.Engine
                         case "buy2":
                             if (await GetItem(dbUser, "dabloons") >= 5)
                             {
-                                ModifyItem(dbUser, "dabloons", -5);
-                                SetItem(dbUser, "fishpole", 100);
-                                embed.Description = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
+                                if (await GetItem(dbUser, "fishpole") >= 25)
+                                {
+                                    embed.Description = $"Your current {GetItemName("fishpole")} are still in good shape.";
+                                }
+                                else
+                                {
+                                    ModifyItem(dbUser, "dabloons", -5);
+                                    SetItem(dbUser, "fishpole", 100);
+                                    embed.Description = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
+                                }
                             }
                             else
                             {
@@ -132,9 +139,16 @@ namespace Rosettes.Modules.Engine
                             embed.Title = "Purchase";
                             if (await GetItem(dbUser, "dabloons") >= 10)
                             {
-                                ModifyItem(dbUser, "dabloons", -10);
-                                SetItem(dbUser, "farmtools", 100);
-                                embed.Description = $"You have purchased {GetItemName("uncommonfish")} for 10 {GetItemName("dabloons")}";
+                                if (await GetItem(dbUser, "farmtools") >= 25)
+                                {
+                                    embed.Description = $"Your current {GetItemName("farmtools")} are still in good shape.";
+                                }
+                                else
+                                {
+                                    ModifyItem(dbUser, "dabloons", -10);
+                                    SetItem(dbUser, "farmtools", 100);
+                                    embed.Description = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
+                                }
                             }
                             else
                             {
@@ -257,6 +271,10 @@ namespace Rosettes.Modules.Engine
             }
 
             await component.RespondAsync(text: component.Data.Value, embed: embed.Build());
+            
+            await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+
+            await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
         }
 
         public static async Task SetDefaultPet(SocketMessageComponent component)
@@ -445,8 +463,8 @@ namespace Rosettes.Modules.Engine
 
             if (poleStatus <= 0)
             {
-                embed.Title = "Fishing pole broken!";
-                embed.Description = "Your fishing pole broke, you need a new one.";
+                embed.Title = $"{GetItemName("fishpole")} broken!";
+                embed.Description = $"Your {GetItemName("fishpole")} broke, you need a new one.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
             }
@@ -520,7 +538,7 @@ namespace Rosettes.Modules.Engine
 
             if (poleStatus <= 0)
             {
-                embed.AddField("Fishing pole destroyed.", "Your fishing pole broke during this cast, you must get a new one.");
+                embed.AddField($"{GetItemName("fishpole")} destroyed.", $"Your {GetItemName("fishpole")} broke during this activity, you must get a new one.");
             }
 
             embed.Footer = new EmbedFooterBuilder()
@@ -642,8 +660,8 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.Title = "Farming tools broken!";
-                embed.Description = "Your farming tools are broken, you need new ones.";
+                embed.Title = $"{GetItemName("farmtools")} broken!";
+                embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
             }
@@ -733,7 +751,7 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.AddField("Farming tools destroyed.", "Your farming tools broke during this activity, you must get new ones.");
+                embed.AddField($"{GetItemName("farmtools")} destroyed.", $"Your {GetItemName("farmtools")} broke during this activity, you must get new ones.");
             }
 
             if (originalMsg is not null)
@@ -836,8 +854,8 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.Title = "Farming tools broken!";
-                embed.Description = "Your farming tools are broken, you need new ones.";
+                embed.Title = $"{GetItemName("farmtools")} broken!";
+                embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
             }
@@ -896,7 +914,7 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.AddField("Farming tools destroyed.", "Your farming tools broke during this activity, you must get new ones.");
+                embed.AddField($"{GetItemName("farmtools")} destroyed.", $"Your {GetItemName("farmtools")} broke during this activity, you must get new ones.");
             }
 
             if (originalMsg is not null)
@@ -1055,12 +1073,19 @@ namespace Rosettes.Modules.Engine
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
 
-            var comps = new ComponentBuilder();
+            var comps = GetShopComponents();
 
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        private static ComponentBuilder GetShopComponents()
+        {
             SelectMenuBuilder buyMenu = new()
             {
                 Placeholder = "Buy...",
-                CustomId = "buy"
+                CustomId = "buy",
+                MinValues = 1,
+                MaxValues = 1
             };
             buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("seedbag")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
             buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fishpole")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
@@ -1072,7 +1097,9 @@ namespace Rosettes.Modules.Engine
             SelectMenuBuilder sellMenu = new()
             {
                 Placeholder = "Sell...",
-                CustomId = "sell"
+                CustomId = "sell",
+                MinValues = 1,
+                MaxValues = 1
             };
             sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("fish")}", description: $"3 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
             sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
@@ -1083,17 +1110,13 @@ namespace Rosettes.Modules.Engine
             sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("garbage")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "sell7");
             sellMenu.MaxValues = 1;
 
-            comps.WithSelectMenu(buyMenu, 0);
-            comps.WithSelectMenu(sellMenu, 0);
-
-
             ActionRowBuilder buttonRow = new();
 
             AddStandardButtons(ref buttonRow, except: "shop");
 
-            comps.AddRow(buttonRow);
-
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            return new ComponentBuilder().WithSelectMenu(buyMenu, 0)
+                .WithSelectMenu(sellMenu, 0)
+                .AddRow(buttonRow);
         }
 
         private static SocketUserMessage? GetOriginalMessage(SocketInteraction interaction, User dbUser)
