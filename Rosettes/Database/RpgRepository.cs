@@ -17,6 +17,7 @@ namespace Rosettes.Database
         Task<bool> InsertCrop(Crop crop);
         Task<bool> ModifyInventoryItem(User user, string item, int amount);
         Task<bool> ModifyStrInventoryItem(User user, string item, string newValue);
+        Task<bool> SetInventoryItem(User user, string item, int newValue);
         Task<bool> UpdateCrop(Crop crop);
     }
 
@@ -133,6 +134,23 @@ namespace Rosettes.Database
             try
             {
                 return (await db.ExecuteAsync(sql, new { amount, id = user.Id })) > 0;
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SetInventoryItem(User user, string item, int newValue)
+        {
+            var db = DBConnection();
+
+            var sql = $"UPDATE users_inventory SET {item} = @newValue WHERE id=@id";
+
+            try
+            {
+                return (await db.ExecuteAsync(sql, new { newValue, id = user.Id })) > 0;
             }
             catch (Exception ex)
             {

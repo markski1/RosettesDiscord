@@ -37,6 +37,11 @@ namespace Rosettes.Modules.Engine
             await _interface.ModifyInventoryItem(dbUser, choice, amount);
         }
 
+        public static async void SetItem(User dbUser, string choice, int newValue)
+        {
+            await _interface.SetInventoryItem(dbUser, choice, newValue);
+        }
+
         public static async void ModifyStrItem(User dbUser, string choice, string newValue)
         {
             await _interface.ModifyStrInventoryItem(dbUser, choice, newValue);
@@ -116,7 +121,7 @@ namespace Rosettes.Modules.Engine
                             if (await GetItem(dbUser, "dabloons") >= 5)
                             {
                                 ModifyItem(dbUser, "dabloons", -5);
-                                ModifyItem(dbUser, "fishpole", +1);
+                                SetItem(dbUser, "fishpole", 100);
                                 embed.Description = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
                             }
                             else
@@ -129,7 +134,7 @@ namespace Rosettes.Modules.Engine
                             if (await GetItem(dbUser, "dabloons") >= 10)
                             {
                                 ModifyItem(dbUser, "dabloons", -10);
-                                ModifyItem(dbUser, "farmtools", +1);
+                                SetItem(dbUser, "farmtools", 100);
                                 embed.Description = $"You have purchased {GetItemName("uncommonfish")} for 10 {GetItemName("dabloons")}";
                             }
                             else
@@ -364,7 +369,7 @@ namespace Rosettes.Modules.Engine
         {
             Random rand = new();
 
-            if (rand.Next(50) == 0)
+            if (rand.Next(40) == 0)
             {
                 int pet;
                 int attempts = 0;
@@ -397,7 +402,7 @@ namespace Rosettes.Modules.Engine
         public static async Task CatchFishFunc(SocketInteraction interaction, IUser user)
         {
             var dbUser = await UserEngine.GetDBUser(user);
-            
+
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             ComponentBuilder comps = new();
@@ -417,6 +422,16 @@ namespace Rosettes.Modules.Engine
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
                 return;
+            }
+
+            var poleStatus = await GetItem(dbUser, "fishpole");
+
+            if (poleStatus <= 0)
+            {
+                embed.Title = "Fishing pole broken!";
+                embed.Description = "Your fishing pole broke, you need a new one.";
+
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
             }
 
             embed.Title = "Fishing! 🎣";
@@ -480,6 +495,17 @@ namespace Rosettes.Modules.Engine
                 expIncrease /= 2;
             }
 
+            int damage = 5 + rand.Next(8);
+
+            poleStatus -= damage;
+
+            ModifyItem(dbUser, "fishpole", -damage);
+
+            if (poleStatus <= 0)
+            {
+                embed.AddField("Fishing pole destroyed.", "Your fishing pole broke during this cast, you must get a new one.");
+            }
+
             embed.Footer = new EmbedFooterBuilder()
             {
                 Text = $"{dbUser.AddExp(expIncrease)} | added to inventory."
@@ -495,9 +521,8 @@ namespace Rosettes.Modules.Engine
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Farm";
-            embed.Description = "Loading farm...";
 
-            await interaction.RespondAsync(embed: embed.Build());
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             List<Crop> fieldsToList = (await _interface.GetUserCrops(dbUser)).ToList();
 
@@ -544,7 +569,7 @@ namespace Rosettes.Modules.Engine
                     }
                     else
                     {
-                        embed.AddField($"Plot {i}", $"There is {GetItemName(Farm.GetHarvest(currentCrop.cropType))} growing in this plot.\n It can be watered again <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                        embed.AddField($"Plot {i}", $"There is {GetItemName(Farm.GetHarvest(currentCrop.cropType))} growing in this plot.\n It can be watered <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
                     }
                 }
             }
@@ -568,11 +593,22 @@ namespace Rosettes.Modules.Engine
                 buttonRow.WithButton(label: "Water crops", customId: "crops_water", style: ButtonStyle.Primary);
             }
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Refresh", customId: "farm", style: ButtonStyle.Secondary);
 
             comps.AddRow(buttonRow);
 
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
         }
 
         public static async Task PlantPlot(SocketInteraction interaction, IUser user)
@@ -581,6 +617,25 @@ namespace Rosettes.Modules.Engine
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Plant plot";
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Return to farm", customId: "farm", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            var toolStatus = await GetItem(dbUser, "farmtools");
+
+            if (toolStatus <= 0)
+            {
+                embed.Title = "Farming tools broken!";
+                embed.Description = "Your farming tools are broken, you need new ones.";
+
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
 
             List<Crop> fieldsToList = (await _interface.GetUserCrops(dbUser)).ToList();
 
@@ -592,6 +647,8 @@ namespace Rosettes.Modules.Engine
                 await interaction.RespondAsync(embed: embed.Build());
                 return;
             }
+
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             int seeds = await _interface.FetchInventoryItem(dbUser, "seedbag");
 
@@ -618,6 +675,17 @@ namespace Rosettes.Modules.Engine
             int plot_id = 1;
             while (occupiedPlots.Contains(plot_id)) plot_id++;
 
+            if (plot_id > plots)
+            {
+                if (toolStatus <= 0)
+                {
+                    embed.Title = "No space to plant.";
+                    embed.Description = "All your plots of land are currently occupied.";
+
+                    await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+                }
+            }
+
             Random rand = new();
 
             var plantedCrops = await Farm.InsertCropsInPlot(dbUser, rand.Next(3)+1 ,plot_id);
@@ -639,16 +707,27 @@ namespace Rosettes.Modules.Engine
             ModifyItem(dbUser, "seedbag", -1);
             embed.Footer = new EmbedFooterBuilder() { Text = $"1 {GetItemName("seedbag")} used." };
 
-            ComponentBuilder comps = new();
+            int damage = 5 + rand.Next(8);
 
-            ActionRowBuilder buttonRow = new();
+            toolStatus -= damage;
 
-            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Secondary);
-            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+            ModifyItem(dbUser, "farmtools", -damage);
 
-            comps.AddRow(buttonRow);
+            if (toolStatus <= 0)
+            {
+                embed.AddField("Farming tools destroyed.", "Your farming tools broke during this activity, you must get new ones.");
+            }
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
         }
 
         public static async Task WaterPlots(SocketInteraction interaction, IUser user)
@@ -660,6 +739,8 @@ namespace Rosettes.Modules.Engine
 
             int count = 0;
             Random rand = new();
+
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
@@ -706,7 +787,16 @@ namespace Rosettes.Modules.Engine
 
             comps.AddRow(buttonRow);
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
         }
 
         public static async Task HarvestPlots(SocketInteraction interaction, IUser user)
@@ -716,8 +806,29 @@ namespace Rosettes.Modules.Engine
 
             embed.Title = $"Harvesting crops";
 
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Return to farm", customId: "farm", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            var toolStatus = await GetItem(dbUser, "farmtools");
+
+            if (toolStatus <= 0)
+            {
+                embed.Title = "Farming tools broken!";
+                embed.Description = "Your farming tools are broken, you need new ones.";
+
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
+
             int count = 0;
             Random rand = new();
+
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             int expIncrease = 0;
 
@@ -740,9 +851,6 @@ namespace Rosettes.Modules.Engine
                     count++;
                 }
             }
-            ComponentBuilder comps = new();
-
-            ActionRowBuilder buttonRow = new();
 
             if (count > 0)
             {
@@ -764,7 +872,27 @@ namespace Rosettes.Modules.Engine
 
             comps.AddRow(buttonRow);
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            int damage = 5 + rand.Next(8);
+
+            toolStatus -= damage;
+
+            ModifyItem(dbUser, "farmtools", -damage);
+
+            if (toolStatus <= 0)
+            {
+                embed.AddField("Farming tools destroyed.", "Your farming tools broke during this activity, you must get new ones.");
+            }
+
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
         }
 
         public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
@@ -819,8 +947,6 @@ namespace Rosettes.Modules.Engine
 
             embed.Description = null;
 
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
-
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
@@ -832,7 +958,8 @@ namespace Rosettes.Modules.Engine
 
             comps.AddRow(buttonRow);
 
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+            await interaction.ModifyOriginalResponseAsync(x => x.Components = comps.Build());
         }
 
         public static async Task ShowPets(SocketInteraction interaction, IUser user)
@@ -841,10 +968,8 @@ namespace Rosettes.Modules.Engine
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Pets";
-            embed.Description = "Loading pets...";
 
-            await interaction.RespondAsync(embed: embed.Build());
-
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             string petString = "";
             List<int> petList = new();
@@ -872,8 +997,6 @@ namespace Rosettes.Modules.Engine
 
             embed.Description = null;
 
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Embed = embed.Build());
-
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
@@ -893,11 +1016,21 @@ namespace Rosettes.Modules.Engine
 
             comps.WithSelectMenu(craftMenu);
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Primary);
             buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
 
             comps.AddRow(buttonRow);
 
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
         }
 
         public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
@@ -908,6 +1041,8 @@ namespace Rosettes.Modules.Engine
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Rosettes shop!";
             embed.Description = $"The shop allows for buying and selling items for dabloons.";
+
+            SocketUserMessage? originalMsg = GetOriginalMessage(interaction);
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
 
@@ -944,11 +1079,31 @@ namespace Rosettes.Modules.Engine
             ActionRowBuilder buttonRow = new();
 
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Primary);
             buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
 
             comps.AddRow(buttonRow);
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            if (originalMsg is not null)
+            {
+                await originalMsg.ModifyAsync(x => x.Embed = embed.Build());
+                await originalMsg.ModifyAsync(x => x.Components = comps.Build());
+                await interaction.DeferAsync();
+            }
+            else
+            {
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+            }
+        }
+
+        private static SocketUserMessage? GetOriginalMessage(SocketInteraction interaction)
+        {
+            if (interaction is SocketMessageComponent)
+            {
+                SocketMessageComponent? inter = interaction as SocketMessageComponent;
+                if (inter is not null) return inter.Message;
+            }
+            return null;
         }
     }
 }
