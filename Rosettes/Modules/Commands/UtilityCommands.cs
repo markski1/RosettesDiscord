@@ -2,8 +2,8 @@
 using Rosettes.Modules.Engine;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
-using Rosettes.Modules.Commands.EmojiDownloader;
 using Discord;
+using MetadataExtractor.Util;
 
 namespace Rosettes.Modules.Commands
 {
@@ -87,57 +87,14 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
             }
             // in case such a thing is pasted...
-            tweetUrl = tweetUrl.Replace("vxtwitter.com", "gateway.markski.ar:42069");
-            tweetUrl = tweetUrl.Replace("fxtwitter.com", "gateway.markski.ar:42069");
-            tweetUrl = tweetUrl.Replace("sxtwitter.com", "gateway.markski.ar:42069");
+            tweetUrl = tweetUrl.Replace("https://vxtwitter.com", "https://d.fxtwitter.com");
+            tweetUrl = tweetUrl.Replace("https://fxtwitter.com", "https://d.fxtwitter.com");
+            tweetUrl = tweetUrl.Replace("https://sxtwitter.com", "https://d.fxtwitter.com");
             // normal replace
-            tweetUrl = tweetUrl.Replace("twitter.com", "gateway.markski.ar:42069");
-            // internal domain so no need for SSL
-            tweetUrl = tweetUrl.Replace("https:/", "http:/");
+            tweetUrl = tweetUrl.Replace("https://twitter.com", "https://d.fxtwitter.com");
             // remove non-embed gt and lt signs if applicable
             tweetUrl = tweetUrl.Replace("<", string.Empty);
             tweetUrl = tweetUrl.Replace(">", string.Empty);
-
-            string? response = null;
-
-            // now try and get a response off the python thing
-            try
-            {
-                using HttpClient _client = new();
-                _client.DefaultRequestHeaders.UserAgent.Clear();
-                _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
-                response = await _client.GetStringAsync(tweetUrl);
-            }
-            catch (Exception ex)
-            {
-                await RespondAsync("Sorry, I could not fetch tweet data. [E1]", ephemeral: true);
-                Global.GenerateErrorMessage("twtvid", $"{ex}");
-                return;
-            }
-            
-            if (response is null)
-            {
-                await RespondAsync("Sorry, I could not fetch tweet data. [E2]", ephemeral: true);
-                return;
-            }
-
-            // if we do get something back, it'll be embedded in an HTML, so now just sccrape the video url out of it.
-            if (!response.Contains("twitter:player:stream"))
-            {
-                await RespondAsync("Could not find a video in that tweet.", ephemeral: true);
-                return;
-            }
-
-            response = response.Substring(response.IndexOf("twitter:player:stream"), 200);
-
-            int begin = response.IndexOf("https");
-            int end = response.IndexOf(".mp4") + 4;
-            if (end == -1)
-            {
-                await RespondAsync("A video was found in that tweet, but I could not extract it.", ephemeral: true);
-                return;
-            }
-            string videoLink = response[begin..end];
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
@@ -158,12 +115,31 @@ namespace Rosettes.Modules.Commands
             {
                 Directory.CreateDirectory("./temp/twtvid/");
             }
-            
+
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
-            using var videoStream = await Global.HttpClient.GetStreamAsync(videoLink);
+            using var videoStream = await Global.HttpClient.GetStreamAsync(tweetUrl);
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await videoStream.CopyToAsync(fileStream);
             fileStream.Close();
+            using var checkFileStream = new FileStream(fileName, FileMode.Open);
+            FileType fileType = FileType.Unknown;
+            if (checkFileStream is not null)
+            {
+                fileType = FileTypeDetector.DetectFileType(checkFileStream);
+                checkFileStream.Close();
+            }
+
+            if (!File.Exists(fileName) || (fileType is not FileType.QuickTime && fileType is not FileType.Mp4))
+            {
+                await DeferAsync();
+                downloadField.Value = "Failed.";
+
+                uploadField.Value = $"Won't be uploaded, failed to fetch valid video file. Format: {fileType}";
+
+                await mid.ModifyAsync(x => x.Embed = embed.Build());
+
+                return;
+            }
 
             downloadField.Value = "Done.";
 
@@ -176,14 +152,26 @@ namespace Rosettes.Modules.Commands
             // check if the guild supports a file this large, otherwise fail.
             if (Context.Guild == null || Context.Guild.MaxUploadLimit > size)
             {
-                await RespondWithFileAsync(fileName);
-                _ = mid.DeleteAsync();
+                try
+                {
+                    await RespondWithFileAsync(fileName);
+                    _ = mid.DeleteAsync();
+                }
+                catch
+                {
+                    await DeferAsync();
+
+                    uploadField.Value = "Failed.";
+
+                    await mid.ModifyAsync(x => x.Embed = embed.Build());
+                    return;
+                }
             } 
             else
             {
                 _ = mid.DeleteAsync();
                 uploadField.Value = "Failed.";
-                embed.AddField("Video was too large.", $"Instead, have a [Direct link]({videoLink}).");
+                embed.AddField("Video was too large.", $"Instead, have a [Direct link]({tweetUrl}).");
                 await RespondAsync(embed: embed.Build());
             }
         }
