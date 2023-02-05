@@ -1,6 +1,6 @@
 ﻿using Rosettes.Core;
 
-namespace Rosettes.Modules.Engine.RPG
+namespace Rosettes.Modules.Engine.Subdeps
 {
     public static class Farm
     {
@@ -12,7 +12,7 @@ namespace Rosettes.Modules.Engine.RPG
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);
 
-            bool success = await RpgEngine._interface.InsertCrop(newCrop);
+            bool success = await FarmEngine._interface.InsertCrop(newCrop);
 
             if (success)
             {

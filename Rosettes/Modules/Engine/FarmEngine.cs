@@ -3,11 +3,11 @@ using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
-using Rosettes.Modules.Engine.RPG;
+using Rosettes.Modules.Engine.Subdeps;
 
 namespace Rosettes.Modules.Engine
 {
-    public static class RpgEngine
+    public static class FarmEngine
     {
         public static readonly RpgRepository _interface = new();
 
@@ -56,7 +56,7 @@ namespace Rosettes.Modules.Engine
             return await _interface.FetchInventoryStringItem(dbUser, name);
         }
 
-        public static async Task<string> CanuseRPGCommand(SocketInteractionContext context)
+        public static async Task<string> CanUseFarmCommand(SocketInteractionContext context)
         {
             if (context.Guild is null)
             {
@@ -339,16 +339,16 @@ namespace Rosettes.Modules.Engine
                 {
                     if (amount <= 0)
                     {
-                        list += $"{RpgEngine.GetItemName(item)}: broken\n";
+                        list += $"{FarmEngine.GetItemName(item)}: broken\n";
                     }
                     else
                     {
-                        list += $"{RpgEngine.GetItemName(item)}: `{amount}% status`\n";
+                        list += $"{FarmEngine.GetItemName(item)}: `{amount}% status`\n";
                     }
                 }
                 else if (amount != 0)
                 {
-                    list += $"{RpgEngine.GetItemName(item)}: {amount}\n";
+                    list += $"{FarmEngine.GetItemName(item)}: {amount}\n";
                 }
             }
 
@@ -537,9 +537,9 @@ namespace Rosettes.Modules.Engine
             }
 
             fishField.Name = "You caught:";
-            fishField.Value = RpgEngine.GetItemName(fishingCatch);
+            fishField.Value = FarmEngine.GetItemName(fishingCatch);
 
-            RpgEngine.ModifyItem(dbUser, fishingCatch, +1);
+            FarmEngine.ModifyItem(dbUser, fishingCatch, +1);
 
             int foundPet = await RollForPet(dbUser);
 
@@ -917,7 +917,7 @@ namespace Rosettes.Modules.Engine
 
             List<string> fieldsToList = new();
 
-            EmbedFooterBuilder footer = new() { Text = $"{await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")} | {await RpgEngine.GetItem(dbUser, "seedbag")} {RpgEngine.GetItemName("seedbag")}\n{dbUser.Exp} experience" };
+            EmbedFooterBuilder footer = new() { Text = $"{await FarmEngine.GetItem(dbUser, "dabloons")} {FarmEngine.GetItemName("dabloons")} | {await FarmEngine.GetItem(dbUser, "seedbag")} {FarmEngine.GetItemName("seedbag")}\n{dbUser.Exp} experience" };
 
             embed.Footer = footer;
 
@@ -1036,7 +1036,7 @@ namespace Rosettes.Modules.Engine
             embed.Title = "Rosettes shop!";
             embed.Description = $"The shop allows for buying and selling items for dabloons.";
 
-            embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+            embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await FarmEngine.GetItem(dbUser, "dabloons")} {FarmEngine.GetItemName("dabloons")}" };
 
             var comps = GetShopComponents();
 
@@ -1052,11 +1052,11 @@ namespace Rosettes.Modules.Engine
                 MinValues = 1,
                 MaxValues = 1
             };
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("seedbag")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fishpole")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("farmtools")}", description: $"10 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
+            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("seedbag")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy1");
+            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("fishpole")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy2");
+            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("farmtools")}", description: $"10 {FarmEngine.GetItemName("dabloons")}", value: "buy3");
 
-            buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {RpgEngine.GetItemName("dabloons")}", value: "buy4");
+            buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {FarmEngine.GetItemName("dabloons")}", value: "buy4");
             buyMenu.MaxValues = 1;
 
             SelectMenuBuilder sellMenu = new()
@@ -1066,14 +1066,14 @@ namespace Rosettes.Modules.Engine
                 MinValues = 1,
                 MaxValues = 1
             };
-            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("fish")}", description: $"3 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
-            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell3");
-            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("shrimp")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell4");
-            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("tomato")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell5");
-            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("carrot")}", description: $"4 {RpgEngine.GetItemName("dabloons")}", value: "sell6");
-            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("potato")}", description: $"3 {RpgEngine.GetItemName("dabloons")}", value: "sell7");
-            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("garbage")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "sell8");
+            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("fish")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell1");
+            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("uncommonfish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell2");
+            sellMenu.AddOption(label: $"1 {FarmEngine.GetItemName("rarefish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell3");
+            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("shrimp")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell4");
+            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("tomato")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell5");
+            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("carrot")}", description: $"4 {FarmEngine.GetItemName("dabloons")}", value: "sell6");
+            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("potato")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell7");
+            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("garbage")}", description: $"2 {FarmEngine.GetItemName("dabloons")}", value: "sell8");
             sellMenu.MaxValues = 1;
 
             ActionRowBuilder buttonRow = new();

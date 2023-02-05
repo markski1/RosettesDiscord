@@ -45,29 +45,29 @@ namespace Rosettes.Core
             {
                 // rpg stuff
                 case "fish":
-                    await RpgEngine.CatchFishFunc(component, component.User);
+                    await FarmEngine.CatchFishFunc(component, component.User);
                     break;
                 case "inventory":
-                    await RpgEngine.ShowInventoryFunc(component, component.User);
+                    await FarmEngine.ShowInventoryFunc(component, component.User);
                     break;
                 case "shop":
-                    await RpgEngine.ShowShopFunc(component, component.User);
+                    await FarmEngine.ShowShopFunc(component, component.User);
                     break;
                 case "pets":
-                    await RpgEngine.ShowPets(component, component.User);
+                    await FarmEngine.ShowPets(component, component.User);
                     break;
                 case "farm":
-                    await RpgEngine.ShowFarm(component, component.User);
+                    await FarmEngine.ShowFarm(component, component.User);
                     break;
 
                 case "crops_plant":
-                    await RpgEngine.PlantPlot(component, component.User);
+                    await FarmEngine.PlantPlot(component, component.User);
                     break;
                 case "crops_water":
-                    await RpgEngine.WaterPlots(component, component.User);
+                    await FarmEngine.WaterPlots(component, component.User);
                     break;
                 case "crops_harvest":
-                    await RpgEngine.HarvestPlots(component, component.User);
+                    await FarmEngine.HarvestPlots(component, component.User);
                     break;
 
 
@@ -132,11 +132,11 @@ namespace Rosettes.Core
         private async Task OnMenuSelectionMade(SocketMessageComponent component)
         {
             if (component.Data.CustomId is "buy" or "sell") {
-                await RpgEngine.ShopAction(component);
+                await FarmEngine.ShopAction(component);
             }
             if (component.Data.CustomId is "defaultPet")
             {
-                await RpgEngine.SetDefaultPet(component);
+                await FarmEngine.SetDefaultPet(component);
             }
         }
 

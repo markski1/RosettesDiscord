@@ -4,7 +4,7 @@ using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.RPG;
+using Rosettes.Modules.Engine.Subdeps;
 
 namespace Rosettes.Database
 {

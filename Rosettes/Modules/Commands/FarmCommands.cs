@@ -7,64 +7,64 @@ using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
-    [Group("rpg", "RPG system commands")]
-    public class RpgCommands : InteractionModuleBase<SocketInteractionContext>
+    [Group("farm", "Farming system commands")]
+    public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("fish", "Try to catch a fish")]
         public async Task CatchFish()
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
-            await RpgEngine.CatchFishFunc(Context.Interaction, Context.User);
+            await FarmEngine.CatchFishFunc(Context.Interaction, Context.User);
         }
 
         [SlashCommand("inventory", "Check your inventory")]
-        public async Task RpgInventory()
+        public async Task FarmInventory()
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
-            await RpgEngine.ShowInventoryFunc(Context.Interaction, Context.User);
+            await FarmEngine.ShowInventoryFunc(Context.Interaction, Context.User);
         }
 
-        [SlashCommand("farm", "View your farm")]
+        [SlashCommand("view", "View your farm")]
         public async Task RpgFarm()
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
 
-            await RpgEngine.ShowFarm(Context.Interaction, Context.User);
+            await FarmEngine.ShowFarm(Context.Interaction, Context.User);
         }
 
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
-        public async Task RpgShop()
+        public async Task FarmShop()
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
                 return;
             }
             
-            await RpgEngine.ShowShopFunc(Context.Interaction, Context.User);
+            await FarmEngine.ShowShopFunc(Context.Interaction, Context.User);
         }
 
         [SlashCommand("give", "Give an item to another user.")]
         public async Task GiveItem(IUser user, string option = "none", int amount = 1)
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
@@ -77,26 +77,32 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
+            if (amount < 1)
+            {
+                await RespondAsync("You must give at least 1 of any item.", ephemeral: true);
+                return;
+            }
+
             string choice = option.ToLower();
 
-            if (RpgEngine.IsValidGiveChoice(choice))
+            if (FarmEngine.IsValidGiveChoice(choice))
             {
                 var dbUser = await UserEngine.GetDBUser(Context.User);
                 var receiver = await UserEngine.GetDBUser(user);
 
-                if (await RpgEngine.GetItem(dbUser, choice) < amount)
+                if (await FarmEngine.GetItem(dbUser, choice) < amount)
                 {
-                    await RespondAsync($"You don't have {amount} {RpgEngine.GetItemName(choice)} to give.");
+                    await RespondAsync($"You don't have {amount} {FarmEngine.GetItemName(choice)} to give.");
                     return;
                 }
 
-                RpgEngine.ModifyItem(receiver, choice, +amount);
+                FarmEngine.ModifyItem(receiver, choice, +amount);
 
-                RpgEngine.ModifyItem(dbUser, choice, -amount);
+                FarmEngine.ModifyItem(dbUser, choice, -amount);
 
                 EmbedBuilder embed = await Global.MakeRosettesEmbed();
                 embed.Title = "Item given.";
-                embed.Description = $"Gave {amount} {RpgEngine.GetItemName(choice)} to {user.Mention}.";
+                embed.Description = $"Gave {amount} {FarmEngine.GetItemName(choice)} to {user.Mention}.";
 
                 await RespondAsync(embed: embed.Build());
             }
@@ -110,7 +116,7 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("top", "Leaderbord by experience.")]
         public async Task FoodLeaderboard()
         {
-            string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
             if (isAllowed != "yes")
             {
                 await RespondAsync(isAllowed, ephemeral: true);
