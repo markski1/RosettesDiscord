@@ -61,9 +61,13 @@ namespace Rosettes.Core
                     break;
 
                 case "crops_plant":
-                case "crops_harvest":
+                    await RpgEngine.PlantPlot(component, component.User);
+                    break;
                 case "crops_water":
-                    await component.RespondAsync("Sorry, I'm still making the farm bits!");
+                    await RpgEngine.WaterPlots(component, component.User);
+                    break;
+                case "crops_harvest":
+                    await RpgEngine.HarvestPlots(component, component.User);
                     break;
 
 

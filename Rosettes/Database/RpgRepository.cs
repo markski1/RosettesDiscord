@@ -2,6 +2,7 @@
 using Discord;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.RPG;
 
@@ -9,6 +10,7 @@ namespace Rosettes.Database
 {
     public interface IRpgRepository
     {
+        Task<bool> DeleteCrop(Crop crop);
         Task<int> FetchInventoryItem(User user, string item);
         Task<string> FetchInventoryStringItem(User user, string item);
         Task<IEnumerable<Crop>> GetUserCrops(User user);
@@ -58,7 +60,7 @@ namespace Rosettes.Database
 
             var sql = @"UPDATE users_crops
                         SET plot_id=@plotId, user_id=@userId, unix_growth=@unixGrowth, unix_next_water=@unixNextWater, crop_type=@cropType
-                        WHERE id = @plotId AND user_id = @userId";
+                        WHERE plot_id = @plotId AND user_id = @userId";
 
             try
             {
@@ -67,6 +69,23 @@ namespace Rosettes.Database
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteCrop(Crop crop)
+        {
+            var db = DBConnection();
+
+            var sql = @"DELETE FROM users_crops
+                        WHERE user_id = @userId AND plot_id = @plotId";
+            try
+            {
+                return (await db.ExecuteAsync(sql, new { crop.userId, crop.plotId })) > 0;
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-deletecrop", $"sqlException code {ex.Message}");
                 return false;
             }
         }

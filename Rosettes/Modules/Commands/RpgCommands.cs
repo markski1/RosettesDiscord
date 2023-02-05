@@ -10,7 +10,6 @@ namespace Rosettes.Modules.Commands
     [Group("rpg", "RPG system commands")]
     public class RpgCommands : InteractionModuleBase<SocketInteractionContext>
     {
-
         [SlashCommand("fish", "Try to catch a fish")]
         public async Task CatchFish()
         {
@@ -65,6 +64,8 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("give", "Give an item to another user.")]
         public async Task GiveItem(IUser user, string option = "none")
         {
+            await RespondAsync("As part of a future update, giving items is currently disabled.");
+            /*
             string isAllowed = await RpgEngine.CanuseRPGCommand(Context);
             if (isAllowed != "yes")
             {
@@ -98,9 +99,10 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("Valid things to give: sushi, shrimprice", ephemeral: true);
+                await RespondAsync("Valid things to give: sushi", ephemeral: true);
                 return;
             }
+            */
         }
         
         [SlashCommand("top", "Leaderbord by experience.")]

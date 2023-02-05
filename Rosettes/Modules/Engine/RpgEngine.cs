@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Modules.Engine.RPG;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Rosettes.Modules.Engine
 {
@@ -17,11 +18,16 @@ namespace Rosettes.Modules.Engine
             {
                 "fish" => "🐡 Common fish",
                 "uncommonfish" => "🐟 Uncommon fish",
-                "rice" => "🍙 Rice",
                 "rarefish" => "🐠 Rare fish",
                 "shrimp" => "🦐 Shrimp",
-                "garbage" => "🗑 Garbage",
                 "dabloons" => "🐾 Dabloons",
+                "garbage" => "🗑 Garbage",
+                "tomato" => "🍅 Tomato",
+                "carrot" => "🥕 Carrot",
+                "potato" => "🥔 Potato",
+                "seedbag" => "🌱 Seed bag",
+                "fishpole" => "🎣 Fishing pole",
+                "farmtools" => "🧰 Farming tools",
                 _ => "invalid item"
             };
         }
@@ -66,7 +72,7 @@ namespace Rosettes.Modules.Engine
 
         public static bool IsValidGiveChoice(string choice)
         {
-            string[] choices = { "sushi", "shrimprice" };
+            string[] choices = { "sushi" };
             return choices.Contains(choice);
         }
 
@@ -85,37 +91,37 @@ namespace Rosettes.Modules.Engine
                             if (await GetItem(dbUser, "dabloons") >= 5)
                             {
                                 ModifyItem(dbUser, "dabloons", -5);
-                                ModifyItem(dbUser, "rice", +2);
-                                embed.Description = $"You have purchased 2 {GetItemName("rice")} for 5 {GetItemName("dabloons")}";
+                                ModifyItem(dbUser, "seedbag", +1);
+                                embed.Description = $"You have purchased {GetItemName("seedbag")} for 5 {GetItemName("dabloons")}";
                             }
                             else
                             {
-                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                                embed.Description = $"You don't have 5 {GetItemName("dabloons")}";
                             }
                             break;
                         case "buy2":
-                            if (await GetItem(dbUser, "dabloons") >= 2)
+                            if (await GetItem(dbUser, "dabloons") >= 5)
                             {
-                                ModifyItem(dbUser, "dabloons", -2);
-                                ModifyItem(dbUser, "fish", +1);
-                                embed.Description = $"You have purchased 1 {GetItemName("fish")} for 2 {GetItemName("dabloons")}";
+                                ModifyItem(dbUser, "dabloons", -5);
+                                ModifyItem(dbUser, "fishpole", +1);
+                                embed.Description = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
                             }
                             else
                             {
-                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                                embed.Description = $"You don't have 5 {GetItemName("dabloons")}";
                             }
                             break;
                         case "buy3":
                             embed.Title = "Purchase";
-                            if (await GetItem(dbUser, "dabloons") >= 5)
+                            if (await GetItem(dbUser, "dabloons") >= 10)
                             {
-                                ModifyItem(dbUser, "dabloons", -5);
-                                ModifyItem(dbUser, "uncommonfish", +1);
-                                embed.Description = $"You have purchased 1 {GetItemName("uncommonfish")} for 5 {GetItemName("dabloons")}";
+                                ModifyItem(dbUser, "dabloons", -10);
+                                ModifyItem(dbUser, "farmtools", +1);
+                                embed.Description = $"You have purchased {GetItemName("uncommonfish")} for 10 {GetItemName("dabloons")}";
                             }
                             else
                             {
-                                embed.Description = $"You don't have enough {GetItemName("dabloons")}";
+                                embed.Description = $"You don't have 10 {GetItemName("dabloons")}";
                             }
                             break;
                     }
@@ -126,6 +132,30 @@ namespace Rosettes.Modules.Engine
                     switch (component.Data.Values.Last())
                     {
                         case "sell1":
+                            if (await GetItem(dbUser, "fish") >= 5)
+                            {
+                                ModifyItem(dbUser, "fish", -5);
+                                ModifyItem(dbUser, "dabloons", +5);
+                                embed.Description = $"You have sold 5 {GetItemName("fish")} for 3 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have 5 {GetItemName("fish")}";
+                            }
+                            break;
+                        case "sell2":
+                            if (await GetItem(dbUser, "uncommonfish") >= 5)
+                            {
+                                ModifyItem(dbUser, "uncommonfishfish", -5);
+                                ModifyItem(dbUser, "dabloons", +5);
+                                embed.Description = $"You have sold 5 {GetItemName("uncommonfish")} for 3 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have 5 {GetItemName("uncommonfish")}";
+                            }
+                            break;
+                        case "sell3":
                             if (await GetItem(dbUser, "rarefish") >= 1)
                             {
                                 ModifyItem(dbUser, "rarefish", -1);
@@ -134,19 +164,55 @@ namespace Rosettes.Modules.Engine
                             }
                             else
                             {
-                                embed.Description = $"You don't have enough {GetItemName("rarefish")}";
+                                embed.Description = $"You don't have a {GetItemName("rarefish")}";
                             }
                             break;
-                        case "sell2":
-                            if (await GetItem(dbUser, "garbage") >= 5)
+                        case "sell4":
+                            if (await GetItem(dbUser, "tomato") >= 10)
                             {
-                                ModifyItem(dbUser, "garbage", -5);
+                                ModifyItem(dbUser, "tomato", -10);
                                 ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 5 {GetItemName("garbage")} for 5 {GetItemName("dabloons")}";
+                                embed.Description = $"You have sold 10 {GetItemName("tomato")} for 5 {GetItemName("dabloons")}";
                             }
                             else
                             {
-                                embed.Description = $"You don't have enough {GetItemName("garbage")}";
+                                embed.Description = $"You don't have 10 {GetItemName("tomato")}";
+                            }
+                            break;
+                        case "sell5":
+                            if (await GetItem(dbUser, "carrot") >= 10)
+                            {
+                                ModifyItem(dbUser, "carrot", -10);
+                                ModifyItem(dbUser, "dabloons", +3);
+                                embed.Description = $"You have sold 10 {GetItemName("carrot")} for 4 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have 10 {GetItemName("carrot")}";
+                            }
+                            break;
+                        case "sell6":
+                            if (await GetItem(dbUser, "potato") >= 10)
+                            {
+                                ModifyItem(dbUser, "potato", -10);
+                                ModifyItem(dbUser, "dabloons", +3);
+                                embed.Description = $"You have sold 10 {GetItemName("potato")} for 3 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have 10 {GetItemName("potato")}";
+                            }
+                            break;
+                        case "sell7":
+                            if (await GetItem(dbUser, "garbage") >= 5)
+                            {
+                                ModifyItem(dbUser, "garbage", -5);
+                                ModifyItem(dbUser, "dabloons", +2);
+                                embed.Description = $"You have sold 5 {GetItemName("garbage")} for 2 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                embed.Description = $"You don't have 5 {GetItemName("garbage")}";
                             }
                             break;
                     }
@@ -202,7 +268,18 @@ namespace Rosettes.Modules.Engine
             {
                 int amount = await GetItem(user, item);
 
-                if (amount != 0)
+                if (item is "fishpole" or "farmtools")
+                {
+                    if (amount == 0)
+                    {
+                        list += $"{RpgEngine.GetItemName(item)}: broken\n";
+                    }
+                    else
+                    {
+                        list += $"{RpgEngine.GetItemName(item)}: `{amount}% status`\n";
+                    }
+                }
+                else if (amount != 0)
                 {
                     list += $"{RpgEngine.GetItemName(item)}: {amount}\n";
                 }
@@ -274,7 +351,7 @@ namespace Rosettes.Modules.Engine
         {
             Random rand = new();
 
-            if (rand.Next(25) == 0)
+            if (rand.Next(50) == 0)
             {
                 int pet;
                 int attempts = 0;
@@ -353,15 +430,15 @@ namespace Rosettes.Modules.Engine
 
             switch (caught)
             {
-                case (<= 35):
+                case (<= 40):
                     fishingCatch = "fish";
                     expIncrease = 10;
                     break;
-                case (> 35 and <= 55):
+                case (> 40 and <= 60):
                     fishingCatch = "uncommonfish";
                     expIncrease = 15;
                     break;
-                case (> 55 and <= 65):
+                case (> 60 and <= 65):
                     fishingCatch = "rarefish";
                     expIncrease = 18;
                     break;
@@ -446,17 +523,16 @@ namespace Rosettes.Modules.Engine
 
                     if (canBeWatered)
                     {
-                        embed.AddField($"Plot {i}", $"There is {currentCrop.cropType} growing in this plot. It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                        embed.AddField($"Plot {i}", $"There is {GetItemName(Farm.GetHarvest(currentCrop.cropType))} growing in this plot.\n It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
                     }
                     else if (canBeHarvested)
                     {
-                        embed.AddField($"Plot {i}", $"{currentCrop.cropType} has grown in this plot. It can be harvested right now.");
+                        embed.AddField($"Plot {i}", $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n It can be harvested right now.");
                     }
                     else
                     {
-                        embed.AddField($"Plot {i}", $"There is {currentCrop.cropType} growing in this plot. It can be watered again <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                        embed.AddField($"Plot {i}", $"There is {GetItemName(Farm.GetHarvest(currentCrop.cropType))} growing in this plot.\n It can be watered again <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
                     }
-                    embed.AddField($"Plot {i}", $"{currentCrop.cropType} has grown in this plot. It can be harvested now.");
                 }
             }
 
@@ -486,6 +562,167 @@ namespace Rosettes.Modules.Engine
             await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 
+        public static async Task PlantPlot(SocketInteraction interaction, IUser user)
+        {
+            User dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = $"Plant plot";
+
+            List<Crop> fieldsToList = (await _interface.GetUserCrops(dbUser)).ToList();
+
+            int plots = await _interface.FetchInventoryItem(dbUser, "plots");
+
+            if (fieldsToList.Count >= plots)
+            {
+                embed.Description = "You don't have any free plots to plant.";
+                await interaction.RespondAsync(embed: embed.Build());
+                return;
+            }
+
+            int seeds = await _interface.FetchInventoryItem(dbUser, "seedbag");
+
+            if (seeds <= 0) {
+                embed.Description = "You don't have any seeds, you may obtain them at the shop.";
+                ComponentBuilder failComps = new();
+
+                ActionRowBuilder failButtons = new();
+
+                failButtons.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Primary);
+                failButtons.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+                failComps.AddRow(failButtons);
+                await interaction.RespondAsync(embed: embed.Build(), components: failComps.Build());
+                return;
+            }
+
+            List<int> occupiedPlots = new();
+
+            foreach (var field in fieldsToList) {
+                occupiedPlots.Add(field.plotId);
+            }
+
+            int plot_id = 1;
+            while (occupiedPlots.Contains(plot_id)) plot_id++;
+
+            Random rand = new();
+
+            var plantedCrops = await Farm.InsertCropsInPlot(dbUser, rand.Next(3)+1 ,plot_id);
+
+            if (plantedCrops is null)
+            {
+                embed.Description = $"Sorry, there was an error in this operation. Not planted.";
+                await interaction.RespondAsync(embed: embed.Build());
+                return;
+            }
+
+            embed.Description = $"Seeds planted in plot {plot_id}";
+
+            embed.AddField("What now?", "Seeds are a mystery! You won't know what you just planted until it grows. Remember to check into your crops to water them, this will make them finish growing sooner.");
+
+            embed.AddField("Growth time", $"Without watering them, your crops will finish growing <t:{plantedCrops.unixGrowth}:R>", true);
+            embed.AddField("Water time", $"You will be able to water these crops <t:{plantedCrops.unixNextWater}:R>", true);
+
+            ModifyItem(dbUser, "seedbag", -1);
+            embed.Footer = new EmbedFooterBuilder() { Text = $"1 {GetItemName("seedbag")} used." };
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        public static async Task WaterPlots(SocketInteraction interaction, IUser user)
+        {
+            User dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = $"Watering crops";
+
+            int count = 0;
+            Random rand = new();
+
+            List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
+            foreach (var crop in cropsToList)
+            {
+                if (crop.unixNextWater < Global.CurrentUnix())
+                {
+                    crop.unixNextWater = Global.CurrentUnix() + 1800 + (1800 * rand.Next(4));
+                    crop.unixGrowth -= 3600 + (300 * rand.Next(4));
+                    await _interface.UpdateCrop(crop);
+                    if (crop.unixGrowth < Global.CurrentUnix())
+                    {
+                        embed.AddField($"Crops in plot {crop.plotId} watered!", $"The crops in this plot have finished growing!");
+                    }
+                    else
+                    {
+                        embed.AddField($"Crops in plot {crop.plotId} watered!", $"They will now finish growing <t:{crop.unixGrowth}:R>. You may water it again <t:{crop.unixNextWater}:R>");
+                    }
+                    count++;
+                }
+            }
+            embed.Footer = new EmbedFooterBuilder() { Text = $"{count} plot{((count != 1) ? 's' : null)} watered." };
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        public static async Task HarvestPlots(SocketInteraction interaction, IUser user)
+        {
+            User dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = $"Harvesting crops";
+
+            int count = 0;
+            Random rand = new();
+
+            List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
+            foreach (var crop in cropsToList)
+            {
+                if (crop.unixGrowth < Global.CurrentUnix())
+                {
+                    var success = await _interface.DeleteCrop(crop);
+                    if (success is false)
+                    {
+                        // quiet fail, but it will be reported above
+                        continue;
+                    }
+                    string harvest = Farm.GetHarvest(crop.cropType);
+                    int earnings = 3 + rand.Next(4) * 3 + rand.Next(4) * 3;
+                    ModifyItem(dbUser, harvest, +earnings);
+                    embed.AddField($"Plot {crop.plotId} harvested!", $"You have obtained {earnings} {GetItemName(harvest)}.");
+                    count++;
+                }
+            }
+            embed.Footer = new EmbedFooterBuilder() { Text = $"{count} plot{((count != 1) ? 's' : null)} harvested." };
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            buttonRow.WithButton(label: "Back to farm", customId: "farm", style: ButtonStyle.Secondary);
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
         public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
         {
             User dbUser = await UserEngine.GetDBUser(user);
@@ -499,12 +736,13 @@ namespace Rosettes.Modules.Engine
 
             List<string> fieldsToList = new();
 
-            EmbedFooterBuilder footer = new() { Text = $"{dbUser.Exp} experience | {await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")}" };
+            EmbedFooterBuilder footer = new() { Text = $"{await RpgEngine.GetItem(dbUser, "dabloons")} {RpgEngine.GetItemName("dabloons")} | {await RpgEngine.GetItem(dbUser, "seedbag")} {RpgEngine.GetItemName("seedbag")}\n{dbUser.Exp} experience" };
 
             embed.Footer = footer;
 
             fieldsToList.Add("garbage");
-            fieldsToList.Add("rice");
+            fieldsToList.Add("fishpole");
+            fieldsToList.Add("farmtools");
 
             embed.AddField(
                 $"Items",
@@ -520,6 +758,17 @@ namespace Rosettes.Modules.Engine
 
             embed.AddField(
                 $"Catch",
+                await ListItems(dbUser, fieldsToList),
+                true
+            );
+
+            fieldsToList.Clear();
+            fieldsToList.Add("tomato");
+            fieldsToList.Add("carrot");
+            fieldsToList.Add("potato");
+
+            embed.AddField(
+                $"Harvest",
                 await ListItems(dbUser, fieldsToList),
                 true
             );
@@ -625,9 +874,9 @@ namespace Rosettes.Modules.Engine
                 Placeholder = "Buy...",
                 CustomId = "buy"
             };
-            buyMenu.AddOption(label: $"2 {RpgEngine.GetItemName("rice")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fish")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("seedbag")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy1");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("fishpole")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "buy2");
+            buyMenu.AddOption(label: $"1 {RpgEngine.GetItemName("farmtools")}", description: $"10 {RpgEngine.GetItemName("dabloons")}", value: "buy3");
             buyMenu.MaxValues = 1;
 
             SelectMenuBuilder sellMenu = new()
@@ -635,8 +884,13 @@ namespace Rosettes.Modules.Engine
                 Placeholder = "Sell...",
                 CustomId = "sell"
             };
-            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("garbage")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
+            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("fish")}", description: $"3 {RpgEngine.GetItemName("dabloons")}", value: "sell1");
+            sellMenu.AddOption(label: $"5 {RpgEngine.GetItemName("uncommonfish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell2");
+            sellMenu.AddOption(label: $"1 {RpgEngine.GetItemName("rarefish")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell3");
+            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("tomato")}", description: $"5 {RpgEngine.GetItemName("dabloons")}", value: "sell4");
+            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("carrot")}", description: $"4 {RpgEngine.GetItemName("dabloons")}", value: "sell5");
+            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("potato")}", description: $"3 {RpgEngine.GetItemName("dabloons")}", value: "sell6");
+            sellMenu.AddOption(label: $"10 {RpgEngine.GetItemName("garbage")}", description: $"2 {RpgEngine.GetItemName("dabloons")}", value: "sell7");
             sellMenu.MaxValues = 1;
 
             comps.WithSelectMenu(buyMenu, 0);
