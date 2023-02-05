@@ -285,7 +285,7 @@ namespace Rosettes.Modules.Engine
 
             int petRequested = Int32.Parse(component.Data.Values.Last());
 
-            if (petRequested < 1 || petRequested > 19)
+            if (petRequested < 1 || petRequested > 23)
             {
                 dbUser.SetPet(0);
                 embed.Title = "Main pet removed.";
@@ -364,13 +364,17 @@ namespace Rosettes.Modules.Engine
                 10 => "🐸 Frog",
                 11 => "🦝 Raccoon",
                 12 => "🐼 Panda",
-                13 => "🐁 Mice",
+                13 => "🐁 Mouse",
                 14 => "🐊 Crocodile",
                 15 => "🐢 Turtle",
                 16 => "🦦 Otter",
                 17 => "🦜 Parrot",
                 18 => "🦨 Skunk",
                 19 => "🐿 Chipmunk",
+                20 => "🐼 Panda",
+                21 => "🦉 Owl",
+                22 => "🐺 Wolf",
+                23 => "🦈 Shark",
                 _ => "? Invalid Pet"
             };
         }
@@ -398,6 +402,10 @@ namespace Rosettes.Modules.Engine
                 17 => "🦜",
                 18 => "🦨",
                 19 => "🐿",
+                20 => "🐼",
+                21 => "🦉",
+                22 => "🐺",
+                23 => "🦈",
                 _ => "?"
             };
         }
@@ -406,13 +414,13 @@ namespace Rosettes.Modules.Engine
         {
             Random rand = new();
 
-            if (rand.Next(40) == 0)
+            if (rand.Next(33) == 0)
             {
                 int pet;
                 int attempts = 0;
                 while (true)
                 {
-                    pet = rand.Next(19);
+                    pet = rand.Next(23);
                     if (await HasPet(dbUser, pet) == false) break;
                     
                     // if after 5 attempts there's only repeated pets, don't get a pet.
