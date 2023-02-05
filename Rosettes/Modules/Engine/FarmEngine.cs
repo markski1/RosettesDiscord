@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Modules.Engine.Subdeps;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Modules.Engine
 {
@@ -97,7 +98,7 @@ namespace Rosettes.Modules.Engine
         {
             var dbUser = await UserEngine.GetDBUser(component.User);
 
-            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+            string text = "";
 
             switch (component.Data.CustomId)
             {
@@ -105,188 +106,148 @@ namespace Rosettes.Modules.Engine
                     switch (component.Data.Values.Last())
                     {
                         case "buy1":
-                            if (await GetItem(dbUser, "dabloons") >= 5)
-                            {
-                                ModifyItem(dbUser, "dabloons", -5);
-                                ModifyItem(dbUser, "seedbag", +1);
-                                embed.Description = $"You have purchased {GetItemName("seedbag")} for 5 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 5 {GetItemName("dabloons")}";
-                            }
+                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 1, cost: 5);
                             break;
                         case "buy2":
+                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 3, cost: 12);
+                            break;
+                        case "buy3":
                             if (await GetItem(dbUser, "dabloons") >= 5)
                             {
                                 if (await GetItem(dbUser, "fishpole") >= 25)
                                 {
-                                    embed.Description = $"Your current {GetItemName("fishpole")} are still in good shape.";
+                                    text = $"Your current {GetItemName("fishpole")} are still in good shape.";
                                 }
                                 else
                                 {
                                     ModifyItem(dbUser, "dabloons", -5);
                                     SetItem(dbUser, "fishpole", 100);
-                                    embed.Description = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
+                                    text = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
                                 }
                             }
                             else
                             {
-                                embed.Description = $"You don't have 5 {GetItemName("dabloons")}";
+                                text = $"You don't have 5 {GetItemName("dabloons")}";
                             }
                             break;
-                        case "buy3":
-                            embed.Title = "Purchase";
+                        case "buy4":
                             if (await GetItem(dbUser, "dabloons") >= 10)
                             {
                                 if (await GetItem(dbUser, "farmtools") >= 25)
                                 {
-                                    embed.Description = $"Your current {GetItemName("farmtools")} are still in good shape.";
+                                    text = $"Your current {GetItemName("farmtools")} are still in good shape.";
                                 }
                                 else
                                 {
                                     ModifyItem(dbUser, "dabloons", -10);
                                     SetItem(dbUser, "farmtools", 100);
-                                    embed.Description = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
+                                    text = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
                                 }
                             }
                             else
                             {
-                                embed.Description = $"You don't have 10 {GetItemName("dabloons")}";
+                                text = $"You don't have 10 {GetItemName("dabloons")}";
                             }
                             break;
-                        case "buy4":
-                            embed.Title = "Purchase";
+                        case "buy5":
                             if (await GetItem(dbUser, "dabloons") >= 200)
                             {
                                 if (await GetItem(dbUser, "plots") >= 3)
                                 {
-                                    embed.Description = $"For the time being, you may not own more than 3 plots of land!";
+                                    text = $"For the time being, you may not own more than 3 plots of land!";
                                 }
                                 else
                                 {
                                     ModifyItem(dbUser, "dabloons", -200);
                                     ModifyItem(dbUser, "plots", +1);
-                                    embed.Description = $"You have purchased a plot of land for 200 {GetItemName("dabloons")}";
+                                    text = $"You have purchased a plot of land for 200 {GetItemName("dabloons")}";
                                 }
                             }
                             else
                             {
-                                embed.Description = $"You don't have 200 {GetItemName("dabloons")}";
+                                text = $"You don't have 200 {GetItemName("dabloons")}";
                             }
                             break;
                     }
                     break;
 
                 case "sell":
-                    embed.Title = "Sale";
                     switch (component.Data.Values.Last())
                     {
                         case "sell1":
-                            if (await GetItem(dbUser, "fish") >= 5)
-                            {
-                                ModifyItem(dbUser, "fish", -5);
-                                ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 5 {GetItemName("fish")} for 3 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 5 {GetItemName("fish")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "fish", amount: 5, cost: 3);
                             break;
                         case "sell2":
-                            if (await GetItem(dbUser, "uncommonfish") >= 5)
-                            {
-                                ModifyItem(dbUser, "uncommonfish", -5);
-                                ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 5 {GetItemName("uncommonfish")} for 3 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 5 {GetItemName("uncommonfish")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "uncommonfish", amount: 5, cost: 6);
                             break;
                         case "sell3":
-                            if (await GetItem(dbUser, "rarefish") >= 1)
-                            {
-                                ModifyItem(dbUser, "rarefish", -1);
-                                ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 1 {GetItemName("rarefish")} for 5 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have a {GetItemName("rarefish")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "rarefish", amount: 1, cost: 5);
                             break;
                         case "sell4":
-                            if (await GetItem(dbUser, "shrimp") >= 5)
-                            {
-                                ModifyItem(dbUser, "shrimp", -5);
-                                ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 5 {GetItemName("shrimp")} for 3 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 5 {GetItemName("shrimp")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 3);
                             break;
                         case "sell5":
-                            if (await GetItem(dbUser, "tomato") >= 10)
-                            {
-                                ModifyItem(dbUser, "tomato", -10);
-                                ModifyItem(dbUser, "dabloons", +5);
-                                embed.Description = $"You have sold 10 {GetItemName("tomato")} for 5 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 10 {GetItemName("tomato")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 5);
                             break;
                         case "sell6":
-                            if (await GetItem(dbUser, "carrot") >= 10)
-                            {
-                                ModifyItem(dbUser, "carrot", -10);
-                                ModifyItem(dbUser, "dabloons", +3);
-                                embed.Description = $"You have sold 10 {GetItemName("carrot")} for 4 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 10 {GetItemName("carrot")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 4);
                             break;
                         case "sell7":
-                            if (await GetItem(dbUser, "potato") >= 10)
-                            {
-                                ModifyItem(dbUser, "potato", -10);
-                                ModifyItem(dbUser, "dabloons", +3);
-                                embed.Description = $"You have sold 10 {GetItemName("potato")} for 3 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 10 {GetItemName("potato")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 3);
                             break;
                         case "sell8":
-                            if (await GetItem(dbUser, "garbage") >= 5)
-                            {
-                                ModifyItem(dbUser, "garbage", -5);
-                                ModifyItem(dbUser, "dabloons", +2);
-                                embed.Description = $"You have sold 5 {GetItemName("garbage")} for 2 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                embed.Description = $"You don't have 5 {GetItemName("garbage")}";
-                            }
+                            text = await ItemSell(dbUser, selling: "garbage", amount: 5, cost: 3);
                             break;
                     }
                     break;
             }
 
-            await component.RespondAsync(text: component.Data.Value, embed: embed.Build());
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Description = text;
+
+            bool fail = text.Contains("don't");
+
+            await component.RespondAsync(embed: embed.Build(), ephemeral: fail);
             
             await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
 
             await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
+        }
+
+        public static async Task<string> ItemBuy(User dbUser, string buying, int amount, int cost, bool setType = false)
+        {
+            if (await GetItem(dbUser, "dabloons") >= cost)
+            {
+                ModifyItem(dbUser, "dabloons", -cost);
+                if (setType)
+                {
+                    SetItem(dbUser, buying, amount);
+                }
+                else
+                {
+                    ModifyItem(dbUser, buying, +amount);
+                }
+                return $"You have purchased {amount} {GetItemName("seedbag")} for {cost} {GetItemName("dabloons")}";
+            }
+            else
+            {
+                return $"You don't have {cost} {GetItemName("dabloons")}";
+            }
+        }
+
+        public static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost)
+        {
+            if (await GetItem(dbUser, selling) >= amount)
+            {
+                ModifyItem(dbUser, selling, -amount);
+                ModifyItem(dbUser, "dabloons", +cost);
+                return $"You have sold {amount} {GetItemName(selling)} for {cost} {GetItemName("dabloons")}";
+            }
+            else
+            {
+                return $"You don't have {amount} {GetItemName(selling)}";
+            }
         }
 
         public static async Task SetDefaultPet(SocketMessageComponent component)
@@ -551,7 +512,7 @@ namespace Rosettes.Modules.Engine
                 expIncrease /= 2;
             }
 
-            int damage = 5 + rand.Next(8);
+            int damage = 3 + rand.Next(4);
 
             poleStatus -= damage;
 
@@ -613,18 +574,26 @@ namespace Rosettes.Modules.Engine
                         anyCanBeWatered = true;
                     }
 
+                    string plotText = "";
+
                     if (canBeWatered)
                     {
-                        embed.AddField($"Plot {i}", $"Crops are growing in this plot.\n It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                        plotText = $"Crops are growing in this plot.\n It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
                     else if (canBeHarvested)
                     {
-                        embed.AddField($"Plot {i}", $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n It can be harvested right now.");
+                        plotText = $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n It can be harvested right now.";
                     }
                     else
                     {
-                        embed.AddField($"Plot {i}", $"Crops are growing in this plot.\n It can be watered <t:{currentCrop.unixNextWater}:R>. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>");
+                        plotText = $"Crops are growing in this plot.\n";
+                        if (currentCrop.unixGrowth > currentCrop.unixNextWater)
+                        {
+                            plotText += "They can be watered <t:{currentCrop.unixNextWater}:R>. ";
+                        }
+                        plotText += "They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
+                    embed.AddField($"Plot {i}", plotText, true);
                 }
             }
 
@@ -754,7 +723,7 @@ namespace Rosettes.Modules.Engine
             ModifyItem(dbUser, "seedbag", -1);
             embed.Footer = new EmbedFooterBuilder() { Text = $"1 {GetItemName("seedbag")} used." };
 
-            int damage = 5 + rand.Next(8);
+            int damage = 3 + rand.Next(2);
 
             toolStatus -= damage;
 
@@ -778,6 +747,8 @@ namespace Rosettes.Modules.Engine
             int count = 0;
             Random rand = new();
 
+            bool cropsToHarvest = false;
+
             List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
             {
@@ -789,6 +760,7 @@ namespace Rosettes.Modules.Engine
                     if (crop.unixGrowth < Global.CurrentUnix())
                     {
                         embed.AddField($"Crops in plot {crop.plotId} watered!", $"The crops in this plot have finished growing!");
+                        cropsToHarvest = true;
                     }
                     else
                     {
@@ -800,6 +772,8 @@ namespace Rosettes.Modules.Engine
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
+
+            if (cropsToHarvest) buttonRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
 
             int expIncrease = 5 * count;
 
@@ -891,7 +865,7 @@ namespace Rosettes.Modules.Engine
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} harvested." };
 
-            int damage = 5 + rand.Next(8);
+            int damage = 3 + rand.Next(2);
 
             toolStatus -= damage;
 
@@ -1053,10 +1027,10 @@ namespace Rosettes.Modules.Engine
                 MaxValues = 1
             };
             buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("seedbag")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("fishpole")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("farmtools")}", description: $"10 {FarmEngine.GetItemName("dabloons")}", value: "buy3");
-
-            buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {FarmEngine.GetItemName("dabloons")}", value: "buy4");
+            buyMenu.AddOption(label: $"3 {FarmEngine.GetItemName("seedbag")}", description: $"12 {FarmEngine.GetItemName("dabloons")}", value: "buy2");
+            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("fishpole")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy3");
+            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("farmtools")}", description: $"10 {FarmEngine.GetItemName("dabloons")}", value: "buy4");
+            buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {FarmEngine.GetItemName("dabloons")}", value: "buy5");
             buyMenu.MaxValues = 1;
 
             SelectMenuBuilder sellMenu = new()
@@ -1067,13 +1041,13 @@ namespace Rosettes.Modules.Engine
                 MaxValues = 1
             };
             sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("fish")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("uncommonfish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell2");
+            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("uncommonfish")}", description: $"6 {FarmEngine.GetItemName("dabloons")}", value: "sell2");
             sellMenu.AddOption(label: $"1 {FarmEngine.GetItemName("rarefish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell3");
             sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("shrimp")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell4");
             sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("tomato")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell5");
             sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("carrot")}", description: $"4 {FarmEngine.GetItemName("dabloons")}", value: "sell6");
             sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("potato")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell7");
-            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("garbage")}", description: $"2 {FarmEngine.GetItemName("dabloons")}", value: "sell8");
+            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("garbage")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell8");
             sellMenu.MaxValues = 1;
 
             ActionRowBuilder buttonRow = new();
