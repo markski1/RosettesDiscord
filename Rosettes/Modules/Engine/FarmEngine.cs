@@ -9,7 +9,7 @@ namespace Rosettes.Modules.Engine
 {
     public static class FarmEngine
     {
-        public static readonly RpgRepository _interface = new();
+        public static readonly FarmRepository _interface = new();
 
         public static string GetItemName(string choice)
         {
@@ -470,21 +470,21 @@ namespace Rosettes.Modules.Engine
 
             comps.AddRow(buttonRow);
 
-            if (!dbUser.CanFish())
-            {
-                embed.Title = "Can't fish yet.";
-                embed.Description = $"You may fish again <t:{dbUser.LastFished}:R>";
-
-                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
-                return;
-            }
-
             var poleStatus = await GetItem(dbUser, "fishpole");
 
             if (poleStatus <= 0)
             {
                 embed.Title = $"{GetItemName("fishpole")} broken!";
                 embed.Description = $"Your {GetItemName("fishpole")} broke, you need a new one.";
+
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+                return;
+            }
+
+            if (!dbUser.CanFish())
+            {
+                embed.Title = "Can't fish yet.";
+                embed.Description = $"You may fish again <t:{dbUser.LastFished}:R>";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
                 return;

@@ -21,7 +21,7 @@ namespace Rosettes.Database
         Task<bool> UpdateCrop(Crop crop);
     }
 
-    public class RpgRepository : IRpgRepository
+    public class FarmRepository : IRpgRepository
     {
         private static MySqlConnection DBConnection()
         {
