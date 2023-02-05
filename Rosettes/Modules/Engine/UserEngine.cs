@@ -168,6 +168,11 @@ namespace Rosettes.Modules.Engine
             return false;
         }
 
+        public int GetFishTime()
+        {
+            return LastFished;
+        }
+
         public void SetPet(int id)
         {
             MainPet = id;
