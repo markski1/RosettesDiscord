@@ -27,6 +27,12 @@ namespace Rosettes.Core
             }
         }
 
+        public static void WriteToFs(ref FileStream fs, string text)
+        {
+            Byte[] textAsBytes = new UTF8Encoding(true).GetBytes(text);
+            fs.Write(textAsBytes, 0, textAsBytes.Length);
+        }
+
         public static async Task<EmbedBuilder> MakeRosettesEmbed(User? dbUser = null)
         {
             EmbedBuilder embed = new()
