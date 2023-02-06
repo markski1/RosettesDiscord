@@ -156,7 +156,7 @@ namespace Rosettes.Modules.Engine
             return NameCache;
         }
 
-        // rpg stuff
+        // farm stuff
 
         public bool CanFish()
         {

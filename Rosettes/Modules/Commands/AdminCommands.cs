@@ -172,7 +172,7 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("setrpgchan", "Sets the channel where RPG commands may be used. Use 'disable: true' to disable.")]
+        [SlashCommand("setfarmchan", "Sets the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
         public async Task SetRpgChan(string disable = "false")
         {
             if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
@@ -186,13 +186,13 @@ namespace Rosettes.Modules.Commands
             {
                 dbGuild.RpgChannel = Context.Channel.Id;
 
-                await RespondAsync("Got it, Rosettes will now only allow RPG commands in this channel.");
+                await RespondAsync("Got it, Rosettes will now only allow Farm/Fishing commands in this channel.");
             }
             else
             {
                 dbGuild.RpgChannel = 0;
 
-                await RespondAsync("Got it, Rosettes will now allow RPG commands anywhere in the guild (unless disabled from the web panel).");
+                await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless disabled from the web panel).");
             }
         }
     }

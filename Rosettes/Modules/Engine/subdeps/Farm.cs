@@ -7,8 +7,9 @@ namespace Rosettes.Modules.Engine.Subdeps
         public static async Task<Crop?> InsertCropsInPlot(User dbUser, int cropType, int plot_id)
         {
             Random rand = new();
-            int growTime = Global.CurrentUnix() + (3600 * 2) + (3600 * rand.Next(3));
-            int waterTime = Global.CurrentUnix() + 1800;
+            // 5 second buffers on each to print a rounded-up time.
+            int growTime = Global.CurrentUnix() + (3600 * 2) + (3600 * rand.Next(3)) + 5;
+            int waterTime = Global.CurrentUnix() + 1800 + 5;
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);
 

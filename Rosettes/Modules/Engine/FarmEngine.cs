@@ -61,16 +61,16 @@ namespace Rosettes.Modules.Engine
         {
             if (context.Guild is null)
             {
-                return "RPG Commands do not work in direct messages.";
+                return "Farming/Fishing Commands do not work in direct messages.";
             }
             var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
             if (!dbGuild.AllowsRPG())
             {
-                return "This guild does not allow RPG commands.";
+                return "This guild does not allow Farming/Fishing commands.";
             }
             if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
             {
-                return "RPG commands are not allowed in this channel, please use the RPG/bot channel.";
+                return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
             }
             return "yes";
         }
@@ -184,16 +184,16 @@ namespace Rosettes.Modules.Engine
                             text = await ItemSell(dbUser, selling: "rarefish", amount: 1, cost: 5);
                             break;
                         case "sell4":
-                            text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 3);
+                            text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 5);
                             break;
                         case "sell5":
-                            text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 5);
+                            text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 6);
                             break;
                         case "sell6":
-                            text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 4);
+                            text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 5);
                             break;
                         case "sell7":
-                            text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 3);
+                            text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 4);
                             break;
                         case "sell8":
                             text = await ItemSell(dbUser, selling: "garbage", amount: 5, cost: 3);
@@ -210,7 +210,7 @@ namespace Rosettes.Modules.Engine
 
             await component.RespondAsync(embed: embed.Build(), ephemeral: fail);
             
-            await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+            await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());
 
             await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
         }
@@ -300,7 +300,7 @@ namespace Rosettes.Modules.Engine
                 {
                     if (amount <= 0)
                     {
-                        list += $"{FarmEngine.GetItemName(item)}: broken\n";
+                        list += $"{FarmEngine.GetItemName(item)}: `broken`\n";
                     }
                     else
                     {
@@ -578,20 +578,20 @@ namespace Rosettes.Modules.Engine
 
                     if (canBeWatered)
                     {
-                        plotText = $"Crops are growing in this plot.\n It can be watered right now. It'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                        plotText = $"Crops are growing in this plot.\n They can be watered right now. They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
                     else if (canBeHarvested)
                     {
-                        plotText = $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n It can be harvested right now.";
+                        plotText = $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n They can be harvested right now.";
                     }
                     else
                     {
                         plotText = $"Crops are growing in this plot.\n";
                         if (currentCrop.unixGrowth > currentCrop.unixNextWater)
                         {
-                            plotText += "They can be watered <t:{currentCrop.unixNextWater}:R>. ";
+                            plotText += $"They can be watered <t:{currentCrop.unixNextWater}:R>.";
                         }
-                        plotText += "They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                        plotText += $"They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
                     embed.AddField($"Plot {i}", plotText, true);
                 }
@@ -636,7 +636,7 @@ namespace Rosettes.Modules.Engine
             User dbUser = await UserEngine.GetDBUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-            embed.Title = $"Plant plot";
+            embed.Title = $"Planting crops";
 
             ComponentBuilder comps = new();
 
@@ -764,7 +764,12 @@ namespace Rosettes.Modules.Engine
                     }
                     else
                     {
-                        embed.AddField($"Crops in plot {crop.plotId} watered!", $"They will now finish growing <t:{crop.unixGrowth}:R>. You may water it again <t:{crop.unixNextWater}:R>");
+                        string text = $"They will now finish growing <t:{crop.unixGrowth}:R>.";
+                        if (crop.unixGrowth > crop.unixNextWater)
+                        {
+                            text += " You may water them again <t:{crop.unixNextWater}:R>";
+                        }
+                        embed.AddField($"Crops in plot {crop.plotId} watered!", text);
                     }
                     count++;
                 }
@@ -1017,7 +1022,7 @@ namespace Rosettes.Modules.Engine
             await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
         }
 
-        private static ComponentBuilder GetShopComponents()
+        private static ComponentBuilder GetShopComponents(bool empty = false)
         {
             SelectMenuBuilder buyMenu = new()
             {
@@ -1026,11 +1031,18 @@ namespace Rosettes.Modules.Engine
                 MinValues = 1,
                 MaxValues = 1
             };
-            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("seedbag")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"3 {FarmEngine.GetItemName("seedbag")}", description: $"12 {FarmEngine.GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("fishpole")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy3");
-            buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("farmtools")}", description: $"10 {FarmEngine.GetItemName("dabloons")}", value: "buy4");
-            buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {FarmEngine.GetItemName("dabloons")}", value: "buy5");
+            if (!empty)
+            {
+                buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("seedbag")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy1");
+                buyMenu.AddOption(label: $"3 {FarmEngine.GetItemName("seedbag")}", description: $"12 {FarmEngine.GetItemName("dabloons")}", value: "buy2");
+                buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("fishpole")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "buy3");
+                buyMenu.AddOption(label: $"1 {FarmEngine.GetItemName("farmtools")}", description: $"10 {FarmEngine.GetItemName("dabloons")}", value: "buy4");
+                buyMenu.AddOption(label: $"1 🌿 plot of land", description: $"200 {FarmEngine.GetItemName("dabloons")}", value: "buy5");
+            }
+            else
+            {
+                buyMenu.AddOption(label: $"Please wait...", value: "NULL");
+            }
             buyMenu.MaxValues = 1;
 
             SelectMenuBuilder sellMenu = new()
@@ -1040,14 +1052,21 @@ namespace Rosettes.Modules.Engine
                 MinValues = 1,
                 MaxValues = 1
             };
-            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("fish")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("uncommonfish")}", description: $"6 {FarmEngine.GetItemName("dabloons")}", value: "sell2");
-            sellMenu.AddOption(label: $"1 {FarmEngine.GetItemName("rarefish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell3");
-            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("shrimp")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell4");
-            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("tomato")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell5");
-            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("carrot")}", description: $"4 {FarmEngine.GetItemName("dabloons")}", value: "sell6");
-            sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("potato")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell7");
-            sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("garbage")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell8");
+            if (!empty)
+            {
+                sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("fish")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell1");
+                sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("uncommonfish")}", description: $"6 {FarmEngine.GetItemName("dabloons")}", value: "sell2");
+                sellMenu.AddOption(label: $"1 {FarmEngine.GetItemName("rarefish")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell3");
+                sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("shrimp")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell4");
+                sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("tomato")}", description: $"6 {FarmEngine.GetItemName("dabloons")}", value: "sell5");
+                sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("carrot")}", description: $"5 {FarmEngine.GetItemName("dabloons")}", value: "sell6");
+                sellMenu.AddOption(label: $"10 {FarmEngine.GetItemName("potato")}", description: $"4 {FarmEngine.GetItemName("dabloons")}", value: "sell7");
+                sellMenu.AddOption(label: $"5 {FarmEngine.GetItemName("garbage")}", description: $"3 {FarmEngine.GetItemName("dabloons")}", value: "sell8");
+            }
+            else
+            {
+                sellMenu.AddOption(label: $"Please wait...", value: "NULL");
+            }
             sellMenu.MaxValues = 1;
 
             ActionRowBuilder buttonRow = new();

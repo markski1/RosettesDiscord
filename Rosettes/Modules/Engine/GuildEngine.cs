@@ -124,7 +124,7 @@ namespace Rosettes.Modules.Engine
         // - Char 1: Music Command toggle
         // - Char 2: Random Command toggle
         // - Char 3: Dumb Command toggle
-        // - Char 4: RPG Command toggle
+        // - Char 4: Farm Command toggle
         //
         public string Settings;
 

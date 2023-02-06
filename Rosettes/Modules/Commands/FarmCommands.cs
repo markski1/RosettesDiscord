@@ -100,7 +100,7 @@ namespace Rosettes.Modules.Commands
 
                 FarmEngine.ModifyItem(dbUser, choice, -amount);
 
-                EmbedBuilder embed = await Global.MakeRosettesEmbed();
+                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
                 embed.Title = "Item given.";
                 embed.Description = $"Gave {amount} {FarmEngine.GetItemName(choice)} to {user.Mention}.";
 

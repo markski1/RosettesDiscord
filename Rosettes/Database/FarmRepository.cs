@@ -8,7 +8,7 @@ using Rosettes.Modules.Engine.Subdeps;
 
 namespace Rosettes.Database
 {
-    public interface IRpgRepository
+    public interface IFarmRepository
     {
         Task<bool> DeleteCrop(Crop crop);
         Task<int> FetchInventoryItem(User user, string item);
@@ -21,7 +21,7 @@ namespace Rosettes.Database
         Task<bool> UpdateCrop(Crop crop);
     }
 
-    public class FarmRepository : IRpgRepository
+    public class FarmRepository : IFarmRepository
     {
         private static MySqlConnection DBConnection()
         {

@@ -43,7 +43,7 @@ namespace Rosettes.Core
 
             switch (action)
             {
-                // rpg stuff
+                // farm stuff
                 case "fish":
                     await FarmEngine.CatchFishFunc(component, component.User);
                     break;
