@@ -205,9 +205,7 @@ namespace Rosettes.Modules.Engine
 
             embed.Description = text;
 
-            bool fail = text.Contains("don't");
-
-            await component.RespondAsync(embed: embed.Build(), ephemeral: fail);
+            await component.RespondAsync(embed: embed.Build(), ephemeral: true);
             
             await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());
 
@@ -1003,10 +1001,9 @@ namespace Rosettes.Modules.Engine
             if (dbUser is null) return;
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-            embed.Title = "Rosettes shop!";
             embed.Description = $"The shop allows for buying and selling items for dabloons.";
 
-            embed.Footer = new EmbedFooterBuilder() { Text = $"[{user.Username}] has: {await FarmEngine.GetItem(dbUser, "dabloons")} {FarmEngine.GetItemName("dabloons")}" };
+            embed.Footer = new EmbedFooterBuilder() { Text = $"You have: {await FarmEngine.GetItem(dbUser, "dabloons")} {FarmEngine.GetItemName("dabloons")}" };
 
             var comps = GetShopComponents();
 

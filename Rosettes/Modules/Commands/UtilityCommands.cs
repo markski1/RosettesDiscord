@@ -171,11 +171,26 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
         public async Task TweetVideo(string tweetUrl)
         {
+            await TweetVideoFunc(tweetUrl);
+            return;
+        }
+
+        [MessageCommand("DL Twitter video")]
+        public async Task TweetVideoMsg(IMessage message)
+        {
+            string url = Global.GrabURLFromText(message.Content);
+            if (url != "0") await TweetVideoFunc(url);
+            else await RespondAsync("No URL found in this message.", ephemeral: true);
+        }
+
+        public async Task TweetVideoFunc(string tweetUrl)
+        {
             string originalTweet = tweetUrl;
             // From the received URL, generate a URL to the python thing I'm running to parse tweet data.
             if (!tweetUrl.Contains("twitter.com"))
             {
                 await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
+                return;
             }
             // in case such a thing is pasted...
             tweetUrl = tweetUrl.Replace("https://vxtwitter.com", "https://d.fxtwitter.com");
@@ -257,7 +272,7 @@ namespace Rosettes.Modules.Commands
                     await mid.ModifyAsync(x => x.Embed = embed.Build());
                     return;
                 }
-            } 
+            }
             else
             {
                 _ = mid.DeleteAsync();
