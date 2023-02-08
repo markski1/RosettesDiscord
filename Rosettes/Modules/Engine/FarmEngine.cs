@@ -111,18 +111,15 @@ namespace Rosettes.Modules.Engine
                             text = await ItemBuy(dbUser, buying: "seedbag", amount: 3, cost: 12);
                             break;
                         case "buy3":
-                            if (await GetItem(dbUser, "dabloons") >= 5)
+                            if (await GetItem(dbUser, "fishpole") >= 25)
                             {
-                                if (await GetItem(dbUser, "fishpole") >= 25)
-                                {
-                                    text = $"Your current {GetItemName("fishpole")} are still in good shape.";
-                                }
-                                else
-                                {
-                                    ModifyItem(dbUser, "dabloons", -5);
-                                    SetItem(dbUser, "fishpole", 100);
-                                    text = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
-                                }
+                                text = $"Your current {GetItemName("fishpole")} are still in good shape.";
+                            }
+                            else if (await GetItem(dbUser, "dabloons") >= 5)
+                            {
+                                ModifyItem(dbUser, "dabloons", -5);
+                                SetItem(dbUser, "fishpole", 100);
+                                text = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
                             }
                             else
                             {
@@ -130,18 +127,15 @@ namespace Rosettes.Modules.Engine
                             }
                             break;
                         case "buy4":
-                            if (await GetItem(dbUser, "dabloons") >= 10)
+                            if (await GetItem(dbUser, "farmtools") >= 25)
                             {
-                                if (await GetItem(dbUser, "farmtools") >= 25)
-                                {
-                                    text = $"Your current {GetItemName("farmtools")} are still in good shape.";
-                                }
-                                else
-                                {
-                                    ModifyItem(dbUser, "dabloons", -10);
-                                    SetItem(dbUser, "farmtools", 100);
-                                    text = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
-                                }
+                                text = $"Your current {GetItemName("farmtools")} are still in good shape.";
+                            }
+                            else if (await GetItem(dbUser, "dabloons") >= 10)
+                            {
+                                ModifyItem(dbUser, "dabloons", -10);
+                                SetItem(dbUser, "farmtools", 100);
+                                text = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
                             }
                             else
                             {
