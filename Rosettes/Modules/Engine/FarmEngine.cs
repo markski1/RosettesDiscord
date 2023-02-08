@@ -561,11 +561,11 @@ namespace Rosettes.Modules.Engine
 
                     if (canBeWatered)
                     {
-                        plotText = $"Crops are growing in this plot.\n They can be watered right now. They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                        plotText = $"Crops are growing in this plot.\n They can be watered right now.\nThey'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
                     else if (canBeHarvested)
                     {
-                        plotText = $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\n They can be harvested right now.";
+                        plotText = $"{GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\nThey can be harvested right now.";
                     }
                     else
                     {
@@ -574,7 +574,7 @@ namespace Rosettes.Modules.Engine
                         {
                             plotText += $"They can be watered <t:{currentCrop.unixNextWater}:R>.";
                         }
-                        plotText += $"They'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                        plotText += $"\nThey'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
                     }
                     embed.AddField($"🌿 Plot {i}", plotText, true);
                 }
@@ -798,8 +798,6 @@ namespace Rosettes.Modules.Engine
 
             ActionRowBuilder buttonRow = new();
 
-            AddStandardButtons(ref buttonRow);
-
             comps.AddRow(buttonRow);
 
             var toolStatus = await GetItem(dbUser, "farmtools");
@@ -808,6 +806,8 @@ namespace Rosettes.Modules.Engine
             {
                 embed.Title = $"{GetItemName("farmtools")} broken.";
                 embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
+
+                AddStandardButtons(ref buttonRow);
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
                 return;
@@ -858,6 +858,8 @@ namespace Rosettes.Modules.Engine
             {
                 buttonRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
             }
+
+            AddStandardButtons(ref buttonRow);
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} harvested." };
 

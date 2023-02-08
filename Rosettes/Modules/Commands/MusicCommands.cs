@@ -97,7 +97,7 @@ namespace Rosettes.Modules.Commands
             buttons.WithButton(label: "Play/Pause", customId: "music_toggle", style: ButtonStyle.Success);
             buttons.WithButton(label: "Skip", customId: "music_skip", style: ButtonStyle.Primary);
             buttons.WithButton(label: "Stop", customId: "music_stop", style: ButtonStyle.Danger);
-            buttons.WithButton(label: "Add to queue", customId: "music_add", style: ButtonStyle.Secondary);
+            buttons.WithButton(label: "Add song", customId: "music_add", style: ButtonStyle.Secondary);
 
             ComponentBuilder comps = new();
 

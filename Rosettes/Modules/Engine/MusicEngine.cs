@@ -239,8 +239,12 @@ namespace Rosettes.Modules.Engine
             if (channelPlayers.ContainsKey(channel))
             {
                 channelPlayers[channel].ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+                channelPlayers[channel] = userMessage;
             }
-            channelPlayers.Add(channel, userMessage);
+            else
+            {
+                channelPlayers.Add(channel, userMessage);
+            }
         }
     }
 }
