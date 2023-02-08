@@ -215,12 +215,23 @@ namespace Rosettes.Modules.Engine
 
             if (!playa.Vueue.TryDequeue(out var queueable)) return;
         
+            var playerEmbed = GetPlayer(playa.TextChannel);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+            embed.Title = "Music player";
+
             if (queueable is not LavaTrack track)
             {
+                embed.Description = $"No songs left to play in queue.";
+                await playerEmbed.ModifyAsync(x => x.Embed = embed.Build());
                 return;
             }
 
             await playa.PlayAsync(track);
+            if (playerEmbed is not null)
+            {
+                embed.Description = $"**Playing next song**: `{playa.Track}`";
+                await playerEmbed.ModifyAsync(x => x.Embed = embed.Build());
+            }
         }
 
         static readonly Dictionary<IChannel, IUserMessage> channelPlayers = new();
