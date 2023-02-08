@@ -20,9 +20,10 @@ namespace Rosettes.Modules.Commands
             if (await CheckMusicConditions(Context) == false) return;
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-            embed.Title = "Start playback";
+            embed.Title = "Music playback";
             embed.Description = await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, urlOrSearch);
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
+            MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
 
         [SlashCommand("stop", "Stops playing music.")]
@@ -34,6 +35,7 @@ namespace Rosettes.Modules.Commands
             embed.Title = "Stop playback";
             embed.Description = await MusicEngine.StopAsync(Context.Guild);
             await RespondAsync(embed: embed.Build());
+            MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
 
         [SlashCommand("skip", "Skip to the next song in the queue.")]
@@ -45,6 +47,7 @@ namespace Rosettes.Modules.Commands
             embed.Title = "Skip song";
             embed.Description = await MusicEngine.SkipTrackAsync(Context.Guild);
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
+            MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
 
         [SlashCommand("toggle", "Pauses and resumes the currently playing song.")]
@@ -56,6 +59,7 @@ namespace Rosettes.Modules.Commands
             embed.Title = "Toggle playback";
             embed.Description = await MusicEngine.ToggleAsync(Context.Guild);
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
+            MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
 
         [SlashCommand("leave", "Make the bot leave VC.")]
@@ -91,8 +95,9 @@ namespace Rosettes.Modules.Commands
             var buttons = new ActionRowBuilder();
 
             buttons.WithButton(label: "Play/Pause", customId: "music_toggle", style: ButtonStyle.Success);
-            buttons.WithButton(label: "Skip", customId: "music_skip", style: ButtonStyle.Secondary);
+            buttons.WithButton(label: "Skip", customId: "music_skip", style: ButtonStyle.Primary);
             buttons.WithButton(label: "Stop", customId: "music_stop", style: ButtonStyle.Danger);
+            buttons.WithButton(label: "Add to queue", customId: "music_add", style: ButtonStyle.Secondary);
 
             ComponentBuilder comps = new();
 

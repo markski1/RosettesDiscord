@@ -3,6 +3,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
+using System.ComponentModel;
+using System;
 using System.Reflection;
 
 namespace Rosettes.Core
@@ -72,7 +74,7 @@ namespace Rosettes.Core
 
 
                 // music stuff
-                case "music_toggle": case "music_skip": case "music_stop":
+                case "music_toggle": case "music_skip": case "music_stop": case "music_add":
                     if (component.GuildId is ulong guild_id)
                     {
                         var dbGuild = GuildEngine.GetDBGuildById(guild_id);
@@ -87,18 +89,29 @@ namespace Rosettes.Core
                                 if (action == "music_toggle")
                                 {
                                     embed.Description = await MusicEngine.ToggleAsync(guild);
-                                    await component.RespondAsync(embed: embed.Build(), components: MusicCommands.GetMusicButtons());
                                 }
                                 if (action == "music_skip")
                                 {
                                     embed.Description = await MusicEngine.SkipTrackAsync(guild);
-                                    await component.RespondAsync(embed: embed.Build(), components: MusicCommands.GetMusicButtons());
                                 }
                                 if (action == "music_stop")
                                 {
                                     embed.Description = await MusicEngine.StopAsync(guild);
-                                    await component.RespondAsync(embed: embed.Build());
+                                    await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
                                 }
+                                if (action == "music_add")
+                                {
+                                    ModalBuilder modal = new()
+                                    {
+                                        Title = "Add song to queue",
+                                        CustomId = "music_add"
+                                    };
+                                    modal.AddTextInput("Enter song name or URL", "song");
+                                    await component.RespondWithModalAsync(modal.Build());
+                                    return;
+                                }
+                                await component.Message.ModifyAsync(x => x.Embed = embed.Build());
+                                await component.DeferAsync();
                             }
                         }
                     }
@@ -115,10 +128,9 @@ namespace Rosettes.Core
 
         private async Task OnModalSubmitted(SocketModal modal)
         {
+            List<SocketMessageComponentData> components = modal.Data.Components.ToList();
             if (modal.Data.CustomId == "pollMaker")
             {
-                List<SocketMessageComponentData> components = modal.Data.Components.ToList();
-
                 string question = components.First(x => x.CustomId == "question").Value;
                 string option1 = components.First(x => x.CustomId == "option1").Value;
                 string option2 = components.First(x => x.CustomId == "option2").Value;
@@ -126,6 +138,37 @@ namespace Rosettes.Core
                 string option4 = components.First(x => x.CustomId == "option4").Value;
 
                 await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
+                return;
+            }
+            
+            if (modal.Data.CustomId == "music_add")
+            {
+                if (modal.GuildId is ulong guild_id)
+                {
+                    var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+                    if (dbGuild != null)
+                    {
+                        var guild = dbGuild.GetDiscordSocketReference();
+                        if (guild != null)
+                        {
+                            var dbUser = await UserEngine.GetDBUser(modal.User);
+                            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+                            embed.Title = "Music player";
+                            if (modal.User is not SocketGuildUser _socketUser || modal.User is not IVoiceState _voiceState || modal.Channel is not ITextChannel _textChannel)
+                            {
+                                return;
+                            }
+                            embed.Description = await MusicEngine.PlayAsync(_socketUser, guild, _voiceState, _textChannel, components.First(x => x.CustomId == "song").Value);
+                            var ogMessage = MusicEngine.GetPlayer(modal.Channel);
+                            if (ogMessage is not null)
+                            {
+                                await ogMessage.ModifyAsync(x => x.Embed = embed.Build());
+                            }
+
+                            await modal.DeferAsync();
+                        }
+                    }
+                }
             }
         }
 

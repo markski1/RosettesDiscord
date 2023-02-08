@@ -90,11 +90,11 @@ namespace Rosettes.Modules.Engine
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
                     player.Vueue.Enqueue(track);
-                    return $"{track.Title} - Added to queue.";
+                    return $"**Added to queue**: `{track.Title}`";
                 }
 
                 await player.PlayAsync(track);
-                return $"{track.Title} - Now playing.";
+                return $"**Now playing**: `{track.Title}`";
             }
             catch (Exception ex)
             {
@@ -147,7 +147,7 @@ namespace Rosettes.Modules.Engine
                     try
                     {
                         await player.SkipAsync();
-                        return "Skipped to next song.";
+                        return $"Skipped to next song: `{player.Track.Title}`";
                     }
                     catch
                     {
@@ -217,12 +217,30 @@ namespace Rosettes.Modules.Engine
         
             if (queueable is not LavaTrack track)
             {
-                await playa.TextChannel.SendMessageAsync("The next item in the queue is invalid.");
                 return;
             }
 
             await playa.PlayAsync(track);
-            await playa.TextChannel.SendMessageAsync($"Playing: {track.Title}");
+        }
+
+        static readonly Dictionary<IChannel, IUserMessage> channelPlayers = new();
+
+        public static IUserMessage? GetPlayer(IChannel channel)
+        {
+            if (channelPlayers.ContainsKey(channel))
+            {
+                return channelPlayers[channel];
+            }
+            return null;
+        }
+
+        public static void SetChannelPlayer(ISocketMessageChannel channel, IUserMessage userMessage)
+        {
+            if (channelPlayers.ContainsKey(channel))
+            {
+                channelPlayers[channel].ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+            }
+            channelPlayers.Add(channel, userMessage);
         }
     }
 }
