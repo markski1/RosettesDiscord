@@ -8,7 +8,7 @@ namespace Rosettes.Modules.Engine.Subdeps
         {
             Random rand = new();
             // 5 second buffers on each to print a rounded-up time.
-            int growTime = Global.CurrentUnix() + (3600 * 2) + (3600 * rand.Next(3)) + 5;
+            int growTime = Global.CurrentUnix() + (3600 * 3) + (3600 * rand.Next(4)) + 5;
             int waterTime = Global.CurrentUnix() + 1800 + 5;
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);

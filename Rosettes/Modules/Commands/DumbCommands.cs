@@ -148,7 +148,7 @@ namespace Rosettes.Modules.Commands
             if (unspoilered == "false")
             {
                 embed.Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.";
-                embed.Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s!";
+                embed.Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s.";
             } 
             else
             {

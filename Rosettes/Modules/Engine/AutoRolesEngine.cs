@@ -29,7 +29,7 @@ namespace Rosettes.Modules.Engine
             }
             catch
             {
-                return "Autoroles!";
+                return "Autoroles.";
             }
         }
 

@@ -147,7 +147,7 @@ namespace Rosettes.Modules.Engine
                             {
                                 if (await GetItem(dbUser, "plots") >= 3)
                                 {
-                                    text = $"For the time being, you may not own more than 3 plots of land!";
+                                    text = $"For the time being, you may not own more than 3 plots of land.";
                                 }
                                 else
                                 {
@@ -426,7 +426,7 @@ namespace Rosettes.Modules.Engine
 
             if (poleStatus <= 0)
             {
-                embed.Title = $"{GetItemName("fishpole")} broken!";
+                embed.Title = $"{GetItemName("fishpole")} broken.";
                 embed.Description = $"Your {GetItemName("fishpole")} broke, you need a new one.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
@@ -488,7 +488,7 @@ namespace Rosettes.Modules.Engine
 
             if (foundPet > 0)
             {
-                embed.AddField("You found a pet!", $"While fishing, you found a friendly {PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                embed.AddField("You found a pet.", $"While fishing, you found a friendly {PetNames(foundPet)}, who chased you about. It has been added to your pets.");
                 buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
                 expIncrease *= 5;
                 expIncrease /= 2;
@@ -601,7 +601,7 @@ namespace Rosettes.Modules.Engine
             }
             if (anyCanBePlanted)
             {
-                buttonRow.WithButton(label: "Plant crops", customId: "crops_plant", style: ButtonStyle.Success);
+                buttonRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
             }
             if (anyCanBeWatered)
             {
@@ -619,7 +619,7 @@ namespace Rosettes.Modules.Engine
             User dbUser = await UserEngine.GetDBUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-            embed.Title = $"Planting crops";
+            embed.Title = $"Planting seeds";
 
             ComponentBuilder comps = new();
 
@@ -633,7 +633,7 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.Title = $"{GetItemName("farmtools")} broken!";
+                embed.Title = $"{GetItemName("farmtools")} broken.";
                 embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
@@ -698,7 +698,7 @@ namespace Rosettes.Modules.Engine
 
             embed.Description = $"Seeds planted in plot {plot_id}";
 
-            embed.AddField("What now?", "Seeds are a mystery! You won't know what you just planted until it grows. Remember to check into your crops to water them, this will make them finish growing sooner.");
+            embed.AddField("What now?", "Seeds are a mystery. You won't know what you just planted until it grows. Remember to check into your crops to water them, this will make them grow faster.");
 
             embed.AddField("Growth time", $"Without watering them, your crops will finish growing <t:{plantedCrops.unixGrowth}:R>", true);
             embed.AddField("Water time", $"You will be able to water these crops <t:{plantedCrops.unixNextWater}:R>", true);
@@ -738,11 +738,11 @@ namespace Rosettes.Modules.Engine
                 if (crop.unixNextWater < Global.CurrentUnix())
                 {
                     crop.unixNextWater = Global.CurrentUnix() + 1800 + (300 * rand.Next(4));
-                    crop.unixGrowth -= 3600 + (300 * rand.Next(4));
+                    crop.unixGrowth -= 3600;
                     await _interface.UpdateCrop(crop);
                     if (crop.unixGrowth < Global.CurrentUnix())
                     {
-                        embed.AddField($"🌿 Plot {crop.plotId} watered!", $"The crops in this plot have finished growing!");
+                        embed.AddField($"🌿 Plot {crop.plotId} watered.", $"The crops in this plot have finished growing.");
                         cropsToHarvest = true;
                     }
                     else
@@ -752,7 +752,7 @@ namespace Rosettes.Modules.Engine
                         {
                             text += $" You may water them again <t:{crop.unixNextWater}:R>";
                         }
-                        embed.AddField($"🌿 Plot {crop.plotId} watered!", text);
+                        embed.AddField($"🌿 Plot {crop.plotId} watered.", text);
                     }
                     count++;
                 }
@@ -806,7 +806,7 @@ namespace Rosettes.Modules.Engine
 
             if (toolStatus <= 0)
             {
-                embed.Title = $"{GetItemName("farmtools")} broken!";
+                embed.Title = $"{GetItemName("farmtools")} broken.";
                 embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
@@ -817,6 +817,8 @@ namespace Rosettes.Modules.Engine
             Random rand = new();
 
             int expIncrease = 0;
+
+            bool plotsWereHarvested = false;
 
             List<Crop> cropsToList = (await _interface.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
@@ -833,8 +835,9 @@ namespace Rosettes.Modules.Engine
                     int earnings = 9 + rand.Next(4) * 3 + rand.Next(4) * 3;
                     ModifyItem(dbUser, harvest, +earnings);
                     expIncrease += earnings;
-                    embed.AddField($"🌿 Plot {crop.plotId} harvested!", $"You have obtained {earnings} {GetItemName(harvest)}.");
+                    embed.AddField($"🌿 Plot {crop.plotId} harvested.", $"You have obtained {earnings} {GetItemName(harvest)}.");
                     count++;
+                    plotsWereHarvested = true;
                 }
             }
 
@@ -849,6 +852,11 @@ namespace Rosettes.Modules.Engine
                     expIncrease *= 5;
                     expIncrease /= 2;
                 }
+            }
+
+            if (plotsWereHarvested)
+            {
+                buttonRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
             }
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} harvested." };

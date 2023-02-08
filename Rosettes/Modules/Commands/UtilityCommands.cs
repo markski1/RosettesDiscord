@@ -339,7 +339,7 @@ namespace Rosettes.Modules.Commands
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-            embed.Title = "Alarm set!";
+            embed.Title = "Alarm set.";
             embed.Description = $"An alarm has been. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
 
             embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
