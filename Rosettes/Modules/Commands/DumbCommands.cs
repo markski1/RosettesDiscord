@@ -1,5 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
+using MetadataExtractor.Util;
+using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
@@ -16,6 +18,25 @@ namespace Rosettes.Modules.Commands
             if (difficulty < 1 || difficulty > 3)
             {
                 await RespondAsync("Difficulty must be from 1 to 3", ephemeral: true);
+                return;
+            }
+
+            Emote emoji;
+
+            try
+            {
+                Emote.Parse(anEmoji);
+            }
+            catch
+            {
+                try
+                {
+                    Emoji.Parse(anEmoji);
+                }
+                catch
+                {
+                    await RespondAsync("Invalid emoji entered", ephemeral: true);
+                }
                 return;
             }
 
@@ -158,6 +179,87 @@ namespace Rosettes.Modules.Commands
             await RespondAsync(embed: embed.Build());
             // if the difficulty is 3, we send the first chunk of the board first.
             await Context.Channel.SendMessageAsync(board);
+        }
+
+        [SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
+        public async Task ThrowBrick(string anEmoji)
+        {
+            Emote emote;
+            try
+            {
+                emote = Emote.Parse(anEmoji);
+            }
+            catch
+            {
+                await RespondAsync("No valid emoji used.");
+                return;
+            }
+
+            await DoBrickThrow(emote.Url);
+        }
+
+        [MessageCommand("Throw Brick")]
+        public async Task ThrowBrick(IMessage message)
+        {
+            string getUrl = Global.GrabURLFromText(message.Content);
+            if (message.Attachments.Any())
+            {
+                string fileType = message.Attachments.First().ContentType.ToLower();
+                if (!fileType.Contains("image"))
+                {
+                    await RespondAsync("That message does not contain a valid image.", ephemeral: true);
+                    return;
+                }
+                await DoBrickThrow(message.Attachments.First().Url);
+            }
+            else if (getUrl != "0")
+            {
+                await DoBrickThrow(getUrl);
+            }
+            else if (message.Stickers.Any())
+            {
+                await RespondAsync("Sorry, generating brick throw with images doesn't work yet.", ephemeral: true);
+            }
+            else
+            {
+                await RespondAsync("No images or stickers in this message.", ephemeral: true);
+            }
+        }
+
+        public async Task DoBrickThrow(string url)
+        {
+            Random rand = new();
+            string randomValue = $"{rand.Next(100)}";
+            if (!Directory.Exists("/var/www/html/brickthrow/emojiCache/"))
+            {
+                Directory.CreateDirectory("/var/www/html/brickthrow/emojiCache/");
+            }
+            if (!Directory.Exists("/var/www/html/brickthrow/generated/"))
+            {
+                Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
+            }
+            string fileName = $"/var/www/html/brickthrow/emojiCache/{randomValue}.png";
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            using (var stream = await Global.HttpClient.GetStreamAsync(url))
+            {
+                
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+            }
+            fileName = $"/var/www/html☺/brickthrow/generated/{randomValue}.gif";
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/brickthrow.php?emojiNum={randomValue}"))
+            {
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+            }
+            await RespondWithFileAsync(fileName);
         }
 
         [SlashCommand("urban", "Returns an UrbanDictionary definition for the provided word.")]
