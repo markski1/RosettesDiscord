@@ -10,6 +10,19 @@ namespace Rosettes.Modules.Commands
     [Group("farm", "Farming system commands")]
     public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     {
+        [SlashCommand("view", "View your farm")]
+        public async Task RpgFarm()
+        {
+            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
+            if (isAllowed != "yes")
+            {
+                await RespondAsync(isAllowed, ephemeral: true);
+                return;
+            }
+
+            await FarmEngine.ShowFarm(Context.Interaction, Context.User);
+        }
+
         [SlashCommand("fish", "Try to catch a fish")]
         public async Task CatchFish()
         {
@@ -33,19 +46,6 @@ namespace Rosettes.Modules.Commands
             }
 
             await FarmEngine.ShowInventoryFunc(Context.Interaction, Context.User);
-        }
-
-        [SlashCommand("view", "View your farm")]
-        public async Task RpgFarm()
-        {
-            string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-            if (isAllowed != "yes")
-            {
-                await RespondAsync(isAllowed, ephemeral: true);
-                return;
-            }
-
-            await FarmEngine.ShowFarm(Context.Interaction, Context.User);
         }
 
         [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]

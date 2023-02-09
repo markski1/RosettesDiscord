@@ -13,7 +13,7 @@ namespace Rosettes.Modules.Commands
     public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
-        public async Task MakeSweeper(string anEmoji, int difficulty = 2, string hideZeros = "false", string unspoilered = "false")
+        public async Task MakeSweeper([Summary("emoji", "Emoji to be used as a mine.")] string anEmoji, [Summary("difficulty", "Difficulty of the resulting minesweeper, 1-3.")] int difficulty = 2, [Summary("hide-zeros", "Should zeros be hidden? true/false.")] string hideZeros = "false", [Summary("unspoilered", "Generate a field with no spoilers.")] string unspoilered = "false")
         {
             if (difficulty < 1 || difficulty > 3)
             {
@@ -180,28 +180,58 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
-        public async Task ThrowBrick(string anEmoji, string reverse = "false")
+        public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")]string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false")
         {
-            Emote emote;
-            try
+            Emote? emoteExtract;
+
+            string brickerUrl;
+
+            if (user != null)
             {
-                emote = Emote.Parse(anEmoji);
+                try
+                {
+                    if (user.GetDisplayAvatarUrl() is not null)
+                    {
+                        brickerUrl = user.GetDisplayAvatarUrl();
+                    }
+                    else
+                    {
+                        brickerUrl = user.GetDefaultAvatarUrl();
+                    }
+                }
+                catch
+                {
+                    await RespondAsync("No valid user provided.", ephemeral: true);
+                    return;
+                }
             }
-            catch
+            else if (emote != "none")
             {
-                await RespondAsync("No valid emoji used.");
+                try
+                {
+                    emoteExtract = Emote.Parse(emote);
+                    brickerUrl = emoteExtract.Url;
+                }
+                catch
+                {
+                    await RespondAsync("No valid user provided.", ephemeral: true);
+                    return;
+                }
+            }
+            else
+            {
+                await RespondAsync("You must provide either an Emote or a User.", ephemeral: true);
                 return;
             }
 
             if (reverse != "false")
             {
-                await DoBrickThrow(emote.Url, true);
+                await DoBrickThrow(brickerUrl, true);
             }
             else
             {
-                await DoBrickThrow(emote.Url);
+                await DoBrickThrow(brickerUrl);
             }
-            
         }
 
         [MessageCommand("Throw Brick")]
@@ -224,7 +254,7 @@ namespace Rosettes.Modules.Commands
             }
             else if (message.Stickers.Any())
             {
-                await RespondAsync("Sorry, generating brick throw with images doesn't work yet.", ephemeral: true);
+                await RespondAsync("Sorry, generating brick throw with stickers doesn't work yet.", ephemeral: true);
             }
             else
             {
@@ -279,7 +309,7 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("sus", "Sus an emoji of your choice")]
+        [SlashCommand("sus", "Generate a crewmate with emojis of your choice")]
         public async Task SusEmoji(string anEmoji, string glassEmoji = "🟦")
         {
             try

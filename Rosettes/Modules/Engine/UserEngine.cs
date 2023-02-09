@@ -70,6 +70,12 @@ namespace Rosettes.Modules.Engine
             return UserCache.First(item => item.Id == user);
         }
 
+        public static async Task<IUser> GetDiscordUserByID(ulong id)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            return await client.GetUserAsync(id);
+        }
+
         public static async Task<List<User>> GetAllUsersFromGuild(IGuild guild)
         {
             var users = await guild.GetUsersAsync();

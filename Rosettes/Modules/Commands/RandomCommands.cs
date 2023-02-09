@@ -74,7 +74,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-        public async Task CheckEm(string image = "false")
+        public async Task CheckEm([Summary("image", "Return a relevant checkem image? true/false")] string image = "false")
         {
             if (Context.Guild is null)
             {

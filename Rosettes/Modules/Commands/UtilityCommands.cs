@@ -304,7 +304,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
-        public async Task Alarm(int amount, string unit = "minute")
+        public async Task Alarm([Summary("amount", "Amount of time until alarm sounds. In minutes unless specified otherwise.")] int amount, [Summary("unit", "Unit of time for the amount of time provided. Can be minutes/hours/days")] string unit = "minute")
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {
