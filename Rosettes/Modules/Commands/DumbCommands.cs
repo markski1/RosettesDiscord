@@ -180,7 +180,7 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
-        public async Task ThrowBrick(string anEmoji)
+        public async Task ThrowBrick(string anEmoji, string reverse = "false")
         {
             Emote emote;
             try
@@ -193,7 +193,15 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            await DoBrickThrow(emote.Url);
+            if (reverse != "false")
+            {
+                await DoBrickThrow(emote.Url, true);
+            }
+            else
+            {
+                await DoBrickThrow(emote.Url);
+            }
+            
         }
 
         [MessageCommand("Throw Brick")]
@@ -224,7 +232,7 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        public async Task DoBrickThrow(string url)
+        public async Task DoBrickThrow(string url, bool reverse = false)
         {
             Random rand = new();
             string randomValue = $"{rand.Next(100)}";
@@ -251,16 +259,28 @@ namespace Rosettes.Modules.Commands
             {
                 File.Delete(fileName);
             }
+            if (reverse)
+            {
+                randomValue += "&reverse";
+            }
             using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/brickthrow.php?emojiNum={randomValue}"))
             {
                 using var fileStream = new FileStream(fileName, FileMode.Create);
                 await stream.CopyToAsync(fileStream);
             }
-            await RespondWithFileAsync(fileName);
+            ulong size = (ulong)new FileInfo(fileName).Length;
+            if (size > 10024)
+            {
+                await RespondWithFileAsync(fileName);
+            }
+            else
+            {
+                await RespondAsync("Sorry, I was unable to do that.", ephemeral: true); 
+            }
         }
 
         [SlashCommand("sus", "Sus an emoji of your choice")]
-        public async Task SusEmoji(string anEmoji, string glassEmoji = "\U0001f7e6")
+        public async Task SusEmoji(string anEmoji, string glassEmoji = "🟦")
         {
             try
             {
@@ -279,11 +299,10 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            await RespondAsync($"▪️▪️▪️▪️▪️▪️▪️⬛⬛⬛⬛▪️▪️▪️▪️▪️▪️\r\n▪️▪️▪️▪️▪️⬛⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛⬛▪️▪️▪️▪️\r\n▪️▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️▪️\r\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️\r\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛⬛▪️▪️\r\n▪️▪️⬛⬛{anEmoji}{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛▪️\r\n▪️⬛{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛▪️\r\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛▪️\r\n");
+            await RespondAsync($"▪️▪️▪️▪️▪️▪️▪️⬛⬛⬛\n▪️▪️▪️▪️▪️⬛⬛{anEmoji}{anEmoji}⬛⬛\n▪️▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛\n▪️▪️⬛⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n▪️⬛{anEmoji}⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛");
 
-            await ReplyAsync($"⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛⬛▪️▪️\r\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️\r\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️\r\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️");
-
-            await ReplyAsync($"\r\n▪️▪️⬛⬛{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛{anEmoji}{anEmoji}⬛▪️▪️\r\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️\r\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️\r\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️\r\n▪️▪️▪️⬛⬛⬛⬛⬛▪️▪️▪️⬛⬛⬛⬛▪️▪️");
+            await ReplyAsync($"⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️⬛{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️⬛⬛{anEmoji}{anEmoji}⬛⬛⬛⬛⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛⬛⬛⬛▪️▪️▪️⬛⬛⬛");
+        
         }
 
         [SlashCommand("urban", "Returns an UrbanDictionary definition for the provided word.")]
