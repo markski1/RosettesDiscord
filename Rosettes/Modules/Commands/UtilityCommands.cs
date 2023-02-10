@@ -385,7 +385,7 @@ namespace Rosettes.Modules.Commands
             await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implementer or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
         }
 
-        [MessageCommand("Reverse GIF")]
+        [MessageCommand("Reverse GIF [experimental]")]
         public async Task ReverseGIFMessageCMD(IMessage message)
         {
             string getUrl = Global.GrabURLFromText(message.Content);
@@ -413,7 +413,7 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("reversegif", "Reverse the gif in the provided URL.")]
+        [SlashCommand("reversegif", "[experimental] Reverse the gif in the provided URL.")]
         public async Task ReverseGIFSlashCMD(string gifUrl)
         {
             string getUrl = Global.GrabURLFromText(gifUrl);
@@ -439,7 +439,7 @@ namespace Rosettes.Modules.Commands
             {
                 System.IO.Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
             }
-            string fileName = $"/var/www/html/brickthrow/reverseCache/{randomValue}.png";
+            string fileName = $"/var/www/html/brickthrow/reverseCache/{randomValue}.gif";
             if (File.Exists(fileName))
             {
                 File.Delete(fileName);
