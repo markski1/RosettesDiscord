@@ -384,5 +384,90 @@ namespace Rosettes.Modules.Commands
 
             await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implementer or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
         }
+
+        [MessageCommand("Reverse GIF")]
+        public async Task ReverseGIFMessageCMD(IMessage message)
+        {
+            string getUrl = Global.GrabURLFromText(message.Content);
+            if (message.Attachments.Any())
+            {
+                string fileType = message.Attachments.First().ContentType.ToLower();
+                if (!fileType.Contains("/gif"))
+                {
+                    await RespondAsync("That message does not contain a valid gif.", ephemeral: true);
+                    return;
+                }
+                await ReverseGIF(message.Attachments.First().Url);
+            }
+            else if (getUrl != "0")
+            {
+                await ReverseGIF(getUrl);
+            }
+            else if (message.Stickers.Any())
+            {
+                await RespondAsync("Sorry, generating brick throw with stickers doesn't work yet.", ephemeral: true);
+            }
+            else
+            {
+                await RespondAsync("No images or stickers in this message.", ephemeral: true);
+            }
+        }
+
+        [SlashCommand("reversegif", "Reverse the gif in the provided URL.")]
+        public async Task ReverseGIFSlashCMD(string gifUrl)
+        {
+            string getUrl = Global.GrabURLFromText(gifUrl);
+            if (getUrl != "0")
+            {
+                await ReverseGIF(gifUrl);
+            }
+            else
+            {
+                await RespondAsync("No valid URL provided.", ephemeral: true);
+            }
+        }
+
+        public async Task ReverseGIF(string url)
+        {
+            Random rand = new();
+            string randomValue = $"{rand.Next(100)}";
+            if (!System.IO.Directory.Exists("/var/www/html/brickthrow/reverseCache/"))
+            {
+                System.IO.Directory.CreateDirectory("/var/www/html/brickthrow/reverseCache/");
+            }
+            if (!System.IO.Directory.Exists("/var/www/html/brickthrow/generated/"))
+            {
+                System.IO.Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
+            }
+            string fileName = $"/var/www/html/brickthrow/reverseCache/{randomValue}.png";
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            using (var stream = await Global.HttpClient.GetStreamAsync(url))
+            {
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+            }
+            fileName = $"/var/www/html/brickthrow/generated/{randomValue}.gif";
+            if (File.Exists(fileName))
+            {
+                File.Delete(fileName);
+            }
+            using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/reverse.php?imageNum={randomValue}"))
+            {
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+            }
+            ulong size = (ulong)new FileInfo(fileName).Length;
+            if (size > 1024)
+            {
+                await RespondWithFileAsync(fileName);
+            }
+            else
+            {
+                await RespondAsync("Sorry, I was unable to do that.", ephemeral: true);
+            }
+        }
     }
 }
