@@ -390,14 +390,14 @@ namespace Rosettes.Modules.Commands
         [MessageCommand("Reverse GIF [experimental]")]
         public async Task ReverseGIFMessageCMD(IMessage message)
         {
-            await RespondAsync("Please wait...", ephemeral: true);
+            await RespondAsync("Reversing, please wait...");
             string getUrl = Global.GrabURLFromText(message.Content);
             if (message.Attachments.Any())
             {
                 string fileType = message.Attachments.First().ContentType.ToLower();
                 if (!fileType.Contains("/gif"))
                 {
-                    await RespondAsync("That message does not contain a valid gif.", ephemeral: true);
+                    await ModifyOriginalResponseAsync(x => x.Content = "That message does not contain a valid gif.");
                     return;
                 }
                 await ReverseGIF(message.Attachments.First().Url);
@@ -413,17 +413,13 @@ namespace Rosettes.Modules.Commands
                     }
                     else
                     {
-                        await RespondAsync("Sorry, there was an error fetching the gif.", ephemeral: true);
+                        await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
                     }
                 }
                 else
                 {
                     await ReverseGIF(getUrl);
                 }
-            }
-            else if (message.Stickers.Any())
-            {
-                await RespondAsync("Sorry, generating brick throw with stickers doesn't work yet.", ephemeral: true);
             }
             else
             {
@@ -434,7 +430,7 @@ namespace Rosettes.Modules.Commands
                 }
                 catch
                 {
-                    await RespondAsync("No images or stickers in this message.", ephemeral: true);
+                    await ModifyOriginalResponseAsync(x => x.Content = "No images or animated emotes found in this message.");
                 }
             }
         }
@@ -442,10 +438,10 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("reversegif", "[experimental] Reverse the gif in the provided URL.")]
         public async Task ReverseGIFSlashCMD(string gifUrl)
         {
-            await RespondAsync("Please wait...", ephemeral: true);
             string getUrl = Global.GrabURLFromText(gifUrl);
             if (getUrl != "0")
             {
+                await RespondAsync("Reversing, please wait...");
                 if (getUrl.Contains("tenor.com"))
                 {
                     getUrl = await GetDirectTenorURL(getUrl);
@@ -455,7 +451,7 @@ namespace Rosettes.Modules.Commands
                     }
                     else
                     {
-                        await RespondAsync("Sorry, there was an error fetching the gif.", ephemeral: true);
+                        await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
                     }
                 }
                 else
@@ -465,7 +461,7 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("No valid URL provided.", ephemeral: true);
+                await RespondAsync("Not a valid url.", ephemeral: true);
             }
         }
 
