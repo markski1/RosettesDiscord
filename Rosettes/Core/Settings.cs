@@ -11,6 +11,7 @@ namespace Rosettes.Core
         public static readonly string SteamDevKey = LoadSetting("steam");
         public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
         public static readonly string RapidAPIKey = LoadSetting("rapidapi");
+        public static readonly string TenorKey = LoadSetting("tenor");
         public static readonly dynamic? LavaLinkData = LoadJsonSetting("lavalink");
         public static readonly dynamic? LavaLinkBackup = LoadJsonSetting("lavalinkbackup");
         public static readonly dynamic? LavaLinkBackup2 = LoadJsonSetting("lavalinkbackupbackup");

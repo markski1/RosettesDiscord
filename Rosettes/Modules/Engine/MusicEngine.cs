@@ -236,13 +236,11 @@ namespace Rosettes.Modules.Engine
 
         static readonly Dictionary<IChannel, IUserMessage> channelPlayers = new();
 
-        public static IUserMessage? GetPlayer(IChannel channel)
+        // we can make a safe assumption that channelPlayers will always contain a player message for a given channel.
+        // music cannot start playing without first assigning a message.
+        public static IUserMessage GetPlayer(IChannel channel)
         {
-            if (channelPlayers.ContainsKey(channel))
-            {
-                return channelPlayers[channel];
-            }
-            return null;
+            return channelPlayers[channel];
         }
 
         public static void SetChannelPlayer(ISocketMessageChannel channel, IUserMessage userMessage)

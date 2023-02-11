@@ -258,7 +258,15 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await RespondAsync("No images or stickers in this message.", ephemeral: true);
+                try
+                {
+                    Emote emote = Emote.Parse(message.Content);
+                    await DoBrickThrow(emote.Url);
+                }
+                catch
+                {
+                    await RespondAsync("No images or stickers in this message.", ephemeral: true);
+                }
             }
         }
 
