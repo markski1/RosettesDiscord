@@ -223,6 +223,27 @@ namespace Rosettes.Core
             return source.Task;
         }
 
+        public static bool CheckIsEmoteOrEmoji(string anEmoji)
+        {
+            try
+            {
+                Emote.Parse(anEmoji);
+                return true;
+            }
+            catch
+            {
+                try
+                {
+                    Emoji.Parse(anEmoji);
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
         public class MessageDeleter
         {
             private readonly System.Timers.Timer Timer = new();

@@ -11,17 +11,19 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("play", "Joins VC and plays the specified song. Can be a URL or a search term.")]
         public async Task PlayMusic(string urlOrSearch)
         {
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
             if (Context.User is not SocketGuildUser _socketUser || Context.User is not IVoiceState _voiceState || Context.Channel is not ITextChannel _textChannel)
             {
                 await Context.Channel.SendMessageAsync("Something went wrong.");
                 return;
             }
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
+
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Music playback";
             embed.Description = await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, urlOrSearch);
+
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
             MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
@@ -29,11 +31,13 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("stop", "Stops playing music.")]
         public async Task StopMusic()
         {
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
+
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Stop playback";
             embed.Description = await MusicEngine.StopAsync(Context.Guild);
+
             await RespondAsync(embed: embed.Build());
             MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
@@ -41,11 +45,13 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("skip", "Skip to the next song in the queue.")]
         public async Task SkipMusic()
         {
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
+
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Skip song";
             embed.Description = await MusicEngine.SkipTrackAsync(Context.Guild);
+
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
             MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
@@ -53,11 +59,13 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("toggle", "Pauses and resumes the currently playing song.")]
         public async Task ToggleMusic()
         {
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
+
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Toggle playback";
             embed.Description = await MusicEngine.ToggleAsync(Context.Guild);
+
             await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
             MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
         }
@@ -65,26 +73,27 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("leave", "Make the bot leave VC.")]
         public async Task LeaveMusic()
         {
-            if (await CheckMusicConditions(Context) == false) return;
+            if (await CheckMusicConditions() == false) return;
             var dbUser = await UserEngine.GetDBUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Leave VC";
             embed.Description = await MusicEngine.LeaveAsync(Context.Guild);
+
             await RespondAsync(embed: embed.Build());
         }
 
 
-        public static async Task<bool> CheckMusicConditions(Discord.Interactions.SocketInteractionContext Context)
+        public async Task<bool> CheckMusicConditions()
         {
             if (Context.Guild == null)
             {
-                await Context.Interaction.RespondAsync("This command won't run in my DM's, silly.");
+                await RespondAsync("This command won't run in my DM's, silly.");
                 return false;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (!dbGuild.AllowsMusic())
             {
-                await Context.Interaction.RespondAsync("Sorry, but the guild admins have disabled the use of music commands.", ephemeral: true);
+                await RespondAsync("Sorry, but the guild admins have disabled the use of music commands.", ephemeral: true);
                 return false;
             }
             return true;

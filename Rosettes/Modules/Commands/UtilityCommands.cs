@@ -188,22 +188,24 @@ namespace Rosettes.Modules.Commands
         public async Task TweetVideoFunc(string tweetUrl)
         {
             string originalTweet = tweetUrl;
-            // From the received URL, generate a URL to the python thing I'm running to parse tweet data.
-            if (!tweetUrl.Contains("twitter.com"))
+
+            int tldEnd = tweetUrl.IndexOf("twitter.com");
+
+            if (tldEnd == -1)
             {
                 await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
                 return;
             }
-            // in case such a thing is pasted...
-            tweetUrl = tweetUrl.Replace("https://vxtwitter.com", "https://d.fxtwitter.com");
-            tweetUrl = tweetUrl.Replace("https://fxtwitter.com", "https://d.fxtwitter.com");
-            tweetUrl = tweetUrl.Replace("https://sxtwitter.com", "https://d.fxtwitter.com");
-            // normal replace
-            tweetUrl = tweetUrl.Replace("https://twitter.com", "https://d.fxtwitter.com");
-            // remove non-embed gt and lt signs if applicable
-            tweetUrl = tweetUrl.Replace("<", string.Empty);
-            tweetUrl = tweetUrl.Replace(">", string.Empty);
 
+            // position this number in the location where "twitter.com" ends in the URL.
+            tldEnd += 11;
+
+            // remove anything before twitter.com (should also cover links from fxtwitter, sxtwitter etc)
+            tweetUrl = tweetUrl[tldEnd..tweetUrl.Length];
+
+            // form a link straight to FxTwitter's direct media backend.
+            tweetUrl = $"https://d.fxtwitter.com{tweetUrl}";
+            
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
             embed.Title = "Exporting twitter video.";
@@ -223,12 +225,13 @@ namespace Rosettes.Modules.Commands
             {
                 System.IO.Directory.CreateDirectory("./temp/twtvid/");
             }
-
             string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
             using var videoStream = await Global.HttpClient.GetStreamAsync(tweetUrl);
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await videoStream.CopyToAsync(fileStream);
             fileStream.Close();
+
+            // retrieve the video's format.
             using var checkFileStream = new FileStream(fileName, FileMode.Open);
             FileType fileType = FileType.Unknown;
             if (checkFileStream is not null)
@@ -237,6 +240,7 @@ namespace Rosettes.Modules.Commands
                 checkFileStream.Close();
             }
 
+            // ensure the file was downloaded correctly and is either MPEG4 or QuickTime encoded.
             if (!System.IO.File.Exists(fileName) || (fileType is not FileType.QuickTime && fileType is not FileType.Mp4))
             {
                 await DeferAsync();
@@ -277,10 +281,10 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                _ = mid.DeleteAsync();
                 uploadField.Value = "Failed.";
                 embed.AddField("Video was too large.", $"Instead, have a [Direct link]({tweetUrl}).");
                 await RespondAsync(embed: embed.Build());
+                _ = mid.DeleteAsync();
             }
         }
 
@@ -384,45 +388,39 @@ namespace Rosettes.Modules.Commands
             message += $"```{text}```";
             Global.GenerateNotification(message);
 
-            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implementer or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
+            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
         }
 
         [MessageCommand("Reverse GIF [experimental]")]
         public async Task ReverseGIFMessageCMD(IMessage message)
         {
             await RespondAsync("Reversing, please wait...");
+
             string getUrl = Global.GrabURLFromText(message.Content);
+
+            // first try to find a gif attached
             if (message.Attachments.Any())
             {
                 string fileType = message.Attachments.First().ContentType.ToLower();
-                if (!fileType.Contains("/gif"))
+                if (fileType.Contains("/gif"))
                 {
-                    await ModifyOriginalResponseAsync(x => x.Content = "That message does not contain a valid gif.");
-                    return;
+                    getUrl = message.Attachments.First().Url;
                 }
-                await ReverseGIF(message.Attachments.First().Url);
             }
-            else if (getUrl != "0")
+            // else, check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
+            else if (getUrl.Contains("tenor.com"))
             {
-                if (getUrl.Contains("tenor.com"))
-                {
-                    getUrl = await GetDirectTenorURL(getUrl);
-                    if (getUrl != "0")
-                    {
-                        await ReverseGIF(getUrl);
-                    }
-                    else
-                    {
-                        await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
-                    }
-                }
-                else
-                {
-                    await ReverseGIF(getUrl);
-                }
+                getUrl = await GetDirectTenorURL(getUrl);
+            }
+
+            // if we got a url to fetch, go for it.
+            if (getUrl != "0")
+            {
+                await ReverseGIF(getUrl);
             }
             else
             {
+                // else, last attempt to get something: try to fetch it out of an emote.
                 try
                 {
                     Emote emote = Emote.Parse(message.Content);
@@ -430,38 +428,30 @@ namespace Rosettes.Modules.Commands
                 }
                 catch
                 {
+                    // welp, we found nothing to work with.
                     await ModifyOriginalResponseAsync(x => x.Content = "No images or animated emotes found in this message.");
                 }
-            }
+            }         
         }
 
         [SlashCommand("reversegif", "[experimental] Reverse the gif in the provided URL.")]
         public async Task ReverseGIFSlashCMD(string gifUrl)
         {
             string getUrl = Global.GrabURLFromText(gifUrl);
+
+            // check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
+            if (getUrl.Contains("tenor.com"))
+            {
+                getUrl = await GetDirectTenorURL(getUrl);
+            }
+
             if (getUrl != "0")
             {
-                await RespondAsync("Reversing, please wait...");
-                if (getUrl.Contains("tenor.com"))
-                {
-                    getUrl = await GetDirectTenorURL(getUrl);
-                    if (getUrl != "0")
-                    {
-                        await ReverseGIF(getUrl);
-                    }
-                    else
-                    {
-                        await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
-                    }
-                }
-                else
-                {
-                    await ReverseGIF(getUrl);
-                }
+                await ReverseGIF(getUrl);
             }
             else
             {
-                await RespondAsync("Not a valid url.", ephemeral: true);
+                await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
             }
         }
 

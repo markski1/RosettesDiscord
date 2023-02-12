@@ -320,20 +320,11 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("sus", "Generate a crewmate with emojis of your choice")]
         public async Task SusEmoji(string anEmoji, string glassEmoji = "🟦")
         {
-            try
+            bool check = Global.CheckIsEmoteOrEmoji(anEmoji) && Global.CheckIsEmoteOrEmoji(glassEmoji);
+
+            if (!check)
             {
-                Emote.Parse(anEmoji);
-            }
-            catch
-            {
-                try
-                {
-                    Emoji.Parse(anEmoji);
-                }
-                catch
-                {
-                    await RespondAsync("Invalid emoji entered", ephemeral: true);
-                }
+                await RespondAsync("One of the entered parameters is not a valid emojte or emoji", ephemeral: true);
                 return;
             }
 
@@ -352,17 +343,6 @@ namespace Rosettes.Modules.Commands
                 return;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-            if (!dbGuild.AllowsDumb())
-            {
-                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.");
-                return;
-            }
-
-            if (query == "")
-            {
-                await RespondAsync($"Usage: `/urban <term>`");
-                return;
-            }
 
             if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
             {

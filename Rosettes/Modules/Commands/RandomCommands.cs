@@ -23,6 +23,7 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
             }
+
             if (num < 2)
             {
                 await RespondAsync("The number cannot be lower than 2.", ephemeral: true);
@@ -46,8 +47,8 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("coin", "Throw a coin! It'll fall on either face or tails. Alternatively, you can provide two custom faces.")]
-        public async Task CoinCommand(string face1 = "Tails", string face2 = "Face")
+        [SlashCommand("coin", "Throw a coin! You may provide two custom faces.")]
+        public async Task CoinCommand([Summary("face-1", "By default, Tails")]string face1 = "Tails", [Summary("face-2", "By default, Heads")] string face2 = "Face")
         {
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
             if (dbGuild is not null)
@@ -58,9 +59,8 @@ namespace Rosettes.Modules.Commands
                     return;
                 }
             }
-            string[] coinSides = new String[2];
-            coinSides[0] = face1;
-            coinSides[1] = face2;
+
+            string[] coinSides = { face1, face2 };
             Random rand = new();
 
             var dbUser = await UserEngine.GetDBUser(Context.User);
@@ -68,13 +68,13 @@ namespace Rosettes.Modules.Commands
             embed.Title = "A coin is thrown in the air...";
             embed.Description = $"{face1} in one side, {face2} in the other.";
 
-            embed.AddField("Result:", $"{coinSides[rand.Next(0, 1)]}");
+            embed.AddField("Result:", $"{coinSides[rand.Next(0, 2)]}");
 
             await RespondAsync(embed: embed.Build());
         }
 
         [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-        public async Task CheckEm([Summary("image", "Return a relevant checkem image? true/false")] string image = "false")
+        public async Task CheckEm([Summary("image", "Return a relevant checkem image? By default, false.")] string image = "false")
         {
             if (Context.Guild is null)
             {

@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
@@ -10,7 +11,6 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("csgo", "Status of Steam and CSGO matchmaking.")]
         public async Task CSGOStatus()
         {
-            string text;
             try
             {
                 var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ICSGOServers_730/GetGameServersStatus/v1/?key={Settings.SteamDevKey}");
@@ -25,29 +25,32 @@ namespace Rosettes.Modules.Commands
 
                 TimeSpan WaitTime = TimeSpan.FromSeconds(Convert.ToDouble(result.matchmaking.search_seconds_avg));
 
-                text =
-                    $"```\n" +
-                    $"Steam Status:\n" +
-                    $"================\n" +
-                    $"Logon Service   : {result.services.SessionsLogon}\n" +
-                    $"Steam Community : {result.services.SteamCommunity}\n" +
-                    $"================\n" +
-                    $"\n" +
-                    $"CSGO Status:\n" +
-                    $"================\n" +
-                    $"Matchmaking     : {result.matchmaking.scheduler}\n" +
-                    $"Online players  : {result.matchmaking.online_players:N0}\n" +
-                    $"Online servers  : {result.matchmaking.online_servers:N0}\n" +
-                    $"Searching game  : {result.matchmaking.searching_players:N0}\n" +
-                    $"Average wait    : {WaitTime.Minutes} minute{((WaitTime.Minutes != 1) ? 's' : null)}, {WaitTime.Seconds} seconds.\n" +
-                    $"================\n" +
-                    $"```";
+                EmbedBuilder steamStatus = await Global.MakeRosettesEmbed();
+
+                steamStatus.Title = "Steam Status";
+
+                steamStatus.AddField("Logon service", result.services.SessionsLogon, true);
+
+                steamStatus.AddField("Steam Community", result.services.SteamCommunity, true);
+
+                EmbedBuilder csgoStatus = await Global.MakeRosettesEmbed();
+
+                csgoStatus.Title = "CS:GO Status";
+
+                csgoStatus.AddField("Matchmaking", result.matchmaking.scheduler, true);
+                csgoStatus.AddField("Online players", $"{result.matchmaking.online_players:N0}", true);
+                csgoStatus.AddField("Online servers", $"{result.matchmaking.online_servers:N0}", true);
+                csgoStatus.AddField("Searching game", $"{result.matchmaking.searching_players:N0}", true);
+                csgoStatus.AddField("Average wait", $"{WaitTime.Minutes} minute{((WaitTime.Minutes != 1) ? 's' : null)}, {WaitTime.Seconds} seconds.\n", true);
+
+                Embed[] embeds = { steamStatus.Build(), csgoStatus.Build() };
+
+                await RespondAsync(embeds: embeds);
             }
             catch
             {
-                text = "Failed to fetch status data. This might mean steam is down.";
+                await RespondAsync("Failed to fetch status data. This might mean steam is down.");
             }
-            await RespondAsync(text);
         }
 
         [SlashCommand("ffxiv", "Status of FFXIV servers.")]
@@ -94,6 +97,7 @@ namespace Rosettes.Modules.Commands
 
                 var datacenterObj = JObject.Parse(datacenterData);
                 var worldObj = JObject.Parse(worldData);
+
                 if (datacenterObj == null || worldObj == null)
                 {
                     await RespondAsync("Failed to retrieve datacenter data.", ephemeral: true);
