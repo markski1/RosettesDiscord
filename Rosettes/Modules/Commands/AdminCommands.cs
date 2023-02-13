@@ -45,7 +45,7 @@ namespace Rosettes.Modules.Commands
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
             embed.Title = question;
-            embed.Description = "Choose one:";
+            embed.Footer = new EmbedFooterBuilder() { Text = "Choose one option, it cannot be changed.\nVoting is anonymous." };
 
             var comps = new ComponentBuilder();
 
