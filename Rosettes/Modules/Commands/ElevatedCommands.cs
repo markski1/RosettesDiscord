@@ -54,7 +54,7 @@ namespace Rosettes.Modules.Commands
         {
             if (!Global.CheckSnep(Context.User.Id))
             {
-                await ReplyAsync("This command is snep exclusive.");
+                await RespondAsync("This command is snep exclusive.");
                 return;
             }
             if (function is "halt" or "restart")

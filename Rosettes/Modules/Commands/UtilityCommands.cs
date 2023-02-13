@@ -437,6 +437,8 @@ namespace Rosettes.Modules.Commands
         [SlashCommand("reversegif", "[experimental] Reverse the gif in the provided URL.")]
         public async Task ReverseGIFSlashCMD(string gifUrl)
         {
+            await RespondAsync("Reversing, please wait...");
+
             string getUrl = Global.GrabURLFromText(gifUrl);
 
             // check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
@@ -459,7 +461,7 @@ namespace Rosettes.Modules.Commands
 
         public async Task TenorParse(string url)
         {
-            if (!url.Contains("tenor.com"))
+            if (!url.Contains("/tenor.com"))
             {
                 await RespondAsync("Not a valid tenor url");
                 return;
@@ -480,6 +482,12 @@ namespace Rosettes.Modules.Commands
 
         public static async Task<string> GetDirectTenorURL(string tenorUrl)
         {
+            // check it isn't a direct link already
+            if ((tenorUrl.Contains("/media.tenor") || tenorUrl.Contains("/c.tenor")) && tenorUrl.Contains(".gif"))
+            {
+                return tenorUrl;
+            }
+
             int ends = tenorUrl.Length;
 
             if (Char.IsNumber(tenorUrl[ends - 1]))
