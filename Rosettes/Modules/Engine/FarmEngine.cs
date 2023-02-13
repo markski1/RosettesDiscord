@@ -539,7 +539,7 @@ namespace Rosettes.Modules.Engine
                 Crop? currentCrop = fieldsToList.Find(x => x.plotId == i);
                 if (currentCrop is null)
                 {
-                    embed.AddField($"🌿 Plot {i}", "There is nothing growing in this plot.", inline: true);
+                    embed.AddField($"🌿 Plot {i}", "There is nothing growing in this plot.", inline: (i != 1)); // Plot 1 is not inline, anything after is
                     anyCanBePlanted = true;
                 }
                 else

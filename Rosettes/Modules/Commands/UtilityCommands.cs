@@ -55,7 +55,7 @@ namespace Rosettes.Modules.Commands
         */
 
         [MessageCommand("Get Metadata")]
-        public async Task GetMetadata(IMessage message)
+        public async Task GetMetadataCxt(IMessage message)
         {
             var dbUser = await UserEngine.GetDBUser(Context.User);
             var embed = await Global.MakeRosettesEmbed(dbUser);
@@ -170,22 +170,16 @@ namespace Rosettes.Modules.Commands
             await RespondAsync(embed: embed.Build());
         }
 
-        [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
-        public async Task TweetVideo(string tweetUrl)
-        {
-            await TweetVideoFunc(tweetUrl);
-            return;
-        }
-
         [MessageCommand("DL Twitter video")]
         public async Task TweetVideoMsg(IMessage message)
         {
             string url = Global.GrabURLFromText(message.Content);
-            if (url != "0") await TweetVideoFunc(url);
+            if (url != "0") await TweetVideo(url);
             else await RespondAsync("No URL found in this message.", ephemeral: true);
         }
 
-        public async Task TweetVideoFunc(string tweetUrl)
+        [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
+        public async Task TweetVideo(string tweetUrl)
         {
             string originalTweet = tweetUrl;
 
@@ -490,8 +484,11 @@ namespace Rosettes.Modules.Commands
 
             int ends = tenorUrl.Length;
 
+            // a valid tenor url will end with a number.
             if (Char.IsNumber(tenorUrl[ends - 1]))
             {
+                // the number in question is the post ID, which we must extract out of the url
+                // to do this, check where the number begins by working our way back until there's no more numbers.
                 int start = ends - 1;
                 try {
                     while (char.IsNumber(tenorUrl[start]))
@@ -504,11 +501,12 @@ namespace Rosettes.Modules.Commands
                     return "0";
                 }
                 start++;
+                // now that we know where the number begins and ends, extract it and use it to ask the API for the media url.
                 string id = tenorUrl[start..ends];
                 string requestUrl = $"https://tenor.googleapis.com/v2/posts?key={Settings.TenorKey}&ids={id}";
-                System.Console.WriteLine(requestUrl);
                 var data = await Global.HttpClient.GetStringAsync(requestUrl);
 
+                // deserialize it into a dynamic object.
                 var DeserialziedObject = JsonConvert.DeserializeObject(data);
                 if (DeserialziedObject == null)
                 {
@@ -520,8 +518,16 @@ namespace Rosettes.Modules.Commands
                 {
                     foreach (var result in results)
                     {
-                        System.Console.WriteLine(result.media_formats.gif.url);
-                        return result.media_formats.gif.url;
+                        // try to return a 'mediumgif' element, we can't really check that it's in the dynamic object though
+                        try
+                        {
+                            return result.media_formats.mediumgif.url;
+                        }
+                        // if there's no mediumgif we'll face an exception, in which case just return the base gif
+                        catch
+                        {
+                            return result.media_formats.gif.url;
+                        }
                     }
                 }
                 catch { return "0"; }
@@ -546,10 +552,14 @@ namespace Rosettes.Modules.Commands
             {
                 System.IO.File.Delete(fileName);
             }
-            Global.HttpClient.DefaultRequestHeaders.UserAgent.Clear();
-            Global.HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
+
             using (var stream = await Global.HttpClient.GetStreamAsync(url))
             {
+                if (stream.Length > 52428800)
+                {
+                    await FollowupAsync("The file in the provided URL is too large.");
+                    return;
+                }
                 using var fileStream = new FileStream(fileName, FileMode.Create);
                 await stream.CopyToAsync(fileStream);
             }
@@ -571,7 +581,7 @@ namespace Rosettes.Modules.Commands
             }
             else
             {
-                await FollowupAsync("Sorry, I was unable to do that.", ephemeral: true);
+                await FollowupAsync("The provided file was not a gif.", ephemeral: true);
             }
         }
     }
