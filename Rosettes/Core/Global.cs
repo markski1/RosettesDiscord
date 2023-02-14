@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Rosettes.Modules.Engine;
 using System.Diagnostics;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Core
 {
@@ -100,8 +101,9 @@ namespace Rosettes.Core
             _error = $"{DateTime.UtcNow} | There was an error at \"{source}\".\n{error}\n\n";
             try
             {
-                using var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                fileStream.Write(Encoding.UTF8.GetBytes($"{_error}\n"));
+                var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                WriteToFs(ref fileStream, _error);
+                fileStream.Close();
             }
             catch
             {

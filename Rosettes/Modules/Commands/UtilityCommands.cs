@@ -553,16 +553,27 @@ namespace Rosettes.Modules.Commands
                 System.IO.File.Delete(fileName);
             }
 
-            using (var stream = await Global.HttpClient.GetStreamAsync(url))
+            using (Stream stream = await Global.HttpClient.GetStreamAsync(url))
             {
-                if (stream.Length > 52428800)
-                {
-                    await FollowupAsync("The file in the provided URL is too large.");
-                    return;
-                }
                 using var fileStream = new FileStream(fileName, FileMode.Create);
-                await stream.CopyToAsync(fileStream);
+                var downloadTask = stream.CopyToAsync(fileStream);
+                int quarterSecondCount = 0;
+                while (!downloadTask.IsCompleted)
+                {
+                    Console.WriteLine("Downloading...");
+                    await Task.Delay(250);
+                    quarterSecondCount++;
+                    if (quarterSecondCount >= 20) // if the download takes more than 5 seconds it's probably not a very honest url
+                    {
+                        await FollowupAsync("Download took too long.");
+                        // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
+                        return;
+                    }
+                }
             }
+
+            await FollowupWithFileAsync(fileName);
+
             fileName = $"/var/www/html/brickthrow/generated/{randomValue}.gif";
             if (System.IO.File.Exists(fileName))
             {
@@ -583,6 +594,7 @@ namespace Rosettes.Modules.Commands
             {
                 await FollowupAsync("The provided file was not a gif.", ephemeral: true);
             }
+            System.IO.File.Delete(fileName);
         }
     }
 }

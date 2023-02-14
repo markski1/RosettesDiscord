@@ -572,9 +572,9 @@ namespace Rosettes.Modules.Engine
                         plotText = $"Crops are growing in this plot.\n";
                         if (currentCrop.unixGrowth > currentCrop.unixNextWater)
                         {
-                            plotText += $"They can be watered <t:{currentCrop.unixNextWater}:R>.";
+                            plotText += $"They can be watered <t:{currentCrop.unixNextWater}:R>\n";
                         }
-                        plotText += $"\nThey'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                        plotText += $"They can be harvested <t:{currentCrop.unixGrowth}:R>";
                     }
                     embed.AddField($"🌿 Plot {i}", plotText, true);
                 }
