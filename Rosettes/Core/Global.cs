@@ -167,8 +167,7 @@ namespace Rosettes.Core
                 end = text.Length;
             }
             string url = text[begin..end];
-            //remove any non-embed artifacts
-            url = url.Replace("<", string.Empty);
+            //remove anti-embed artifacts
             url = url.Replace(">", string.Empty);
             return url;
         }

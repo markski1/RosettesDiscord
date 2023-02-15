@@ -560,19 +560,16 @@ namespace Rosettes.Modules.Commands
                 int quarterSecondCount = 0;
                 while (!downloadTask.IsCompleted)
                 {
-                    Console.WriteLine("Downloading...");
                     await Task.Delay(250);
                     quarterSecondCount++;
                     if (quarterSecondCount >= 20) // if the download takes more than 5 seconds it's probably not a very honest url
                     {
-                        await FollowupAsync("Download took too long.");
+                        await FollowupAsync("Cancelled: GIF download took too long.");
                         // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
                         return;
                     }
                 }
             }
-
-            await FollowupWithFileAsync(fileName);
 
             fileName = $"/var/www/html/brickthrow/generated/{randomValue}.gif";
             if (System.IO.File.Exists(fileName))

@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Modules.Engine
 {
@@ -28,8 +29,7 @@ namespace Rosettes.Modules.Engine
                 return;
             }
             // profile pattern disabled until get profile info does something
-            if (/*messageText.Contains(@"steamcommunity.com/profiles/") || */
-            messageText.Contains(@"steamcommunity.com/id/"))
+            if (messageText.Contains(@"steamcommunity.com/profiles/") || messageText.Contains(@"steamcommunity.com/id/"))
             {
                 await GetProfileInfo(context);
                 return;
@@ -117,7 +117,7 @@ namespace Rosettes.Modules.Engine
             // If the length of the grabbed "format" is too long, we can assume the URL didn't specify a format.
             if (format.Length > 5) return;
 
-            await context.Channel.SendMessageAsync("Expiring URL detected. - I will now attempt to mirror it.");
+            await context.Channel.SendMessageAsync("This URL will expire. Attempting to mirror.");
 
             try
             {
@@ -155,7 +155,7 @@ namespace Rosettes.Modules.Engine
         public static async Task GetProfileInfo(SocketCommandContext context)
         {
             //extract steamID from url
-            string extractID = context.Message.Content;
+            string extractID = Global.GrabURLFromText(context.Message.Content);
             ulong steamID;
             // easy mode: if it's a "profiles" url, just extract the number off the url
             if (extractID.Contains("/profiles/"))
@@ -209,7 +209,82 @@ namespace Rosettes.Modules.Engine
                 if (result.success != 1) return;
                 steamID = result.steamid;
             }
-            await context.Channel.SendMessageAsync($"^ SteamID: {steamID}");
+
+            var moreData = await Global.HttpClient.GetStringAsync($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={Settings.SteamDevKey}&steamids={steamID}");
+
+            var deserializedMoreData = JsonConvert.DeserializeObject(moreData);
+            if (deserializedMoreData == null) return;
+            dynamic moreDataObj = ((dynamic)deserializedMoreData).response.players;
+
+            dynamic? player = null;
+
+            // only one player in the object, but this is an easier way to extract as json deserialized objects do not support LINQ
+            foreach (var extractPlayer in moreDataObj)
+            {
+                player = extractPlayer;
+            }
+
+            if (player is null) return;
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+            embed.Author = new EmbedAuthorBuilder() { Name = player.personaname, IconUrl = player.avatar };
+            embed.Description = $"Steam ID: {steamID}";
+
+            if (player.communityvisibilitystate is not null)
+            {
+                int switchElement = int.Parse((string)player.communityvisibilitystate);
+                string visibility = switchElement switch
+                {
+                    3 => "Public",
+                    _ => "Private",
+                };
+                embed.AddField("Profile visibility", visibility, true);
+            }
+
+            if (player.personastate is not null)
+            {
+                int switchElement = int.Parse((string)player.personastate);
+                string state = switchElement switch
+                {
+                    0 => "Offline (or private)",
+                    1 => "Online",
+                    2 => "Busy",
+                    3 => "Away",
+                    4 => "Snooze",
+                    5 => "Looking to trade",
+                    6 => "Looking to play",
+                    _ => "Unknown",
+                };
+
+                embed.AddField("Status", state, true);
+            }
+
+            if (player.gameextrainfo is not null)
+            {
+                string text = player.gameextrainfo;
+                if (player.gameserverip is not null)
+                {
+                    if (player.gameserverip != "0.0.0.0:0") text += $"\nServer IP: {player.gameserverip}";
+                }
+                embed.AddField("Playing game", text, false);
+            }
+            else
+            {
+                embed.AddField("Playing game", "Not playing", false);
+            }
+
+            if (player.lastlogoff is not null)
+            {
+                embed.AddField("Last seen", $"<t:{player.lastlogoff}:f>", true);
+            }
+
+            if (player.timecreated is not null)
+            {
+                embed.AddField("Account created", $"<t:{player.timecreated}:f>", true);
+            }   
+
+
+            await context.Channel.SendMessageAsync(embed: embed.Build());
         }
     }
 }
