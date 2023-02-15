@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using MetadataExtractor;
 using static System.Net.WebRequestMethods;
 using Newtonsoft.Json;
+using Discord.WebSocket;
 
 namespace Rosettes.Modules.Commands
 {
@@ -383,6 +384,24 @@ namespace Rosettes.Modules.Commands
             Global.GenerateNotification(message);
 
             await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
+        }
+
+        [SlashCommand("monitorvc", "Let Rosettes join your VC and inform who joins and leaves.")]
+        public async Task MonitorVCCommand()
+        {
+            if (Context.User is not SocketGuildUser _socketUser)
+            {
+                await RespondAsync("Sorry, something went wrong.", ephemeral: true);
+                return;
+            }
+            if (!JQMonitorEngine.IsMonitored(_socketUser.Guild))
+            {
+                await RespondAsync(await JQMonitorEngine.StartMonitoring(_socketUser));
+            }
+            else
+            {
+                await RespondAsync(JQMonitorEngine.StopMonitoring(_socketUser));
+            }
         }
 
         [MessageCommand("Reverse GIF [experimental]")]
