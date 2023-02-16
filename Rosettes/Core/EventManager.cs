@@ -37,6 +37,8 @@ namespace Rosettes.Core
             _client.UserJoined += OnUserJoin;
             _client.UserLeft += OnUserLeft;
 
+            _client.UserVoiceStateUpdated += JQMonitorEngine.UserVCUpdated;
+
             return Task.CompletedTask;
         }
 

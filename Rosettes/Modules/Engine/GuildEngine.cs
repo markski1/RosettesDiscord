@@ -125,6 +125,7 @@ namespace Rosettes.Modules.Engine
         // - Char 2: Random Command toggle
         // - Char 3: Dumb Command toggle
         // - Char 4: Farm Command toggle
+        // - Char 5: Monitor voicechat toggle
         //
         public string Settings;
 
@@ -239,6 +240,18 @@ namespace Rosettes.Modules.Engine
             return value == '1';
         }
 
+        public bool MonitorsVC()
+        {
+            char value = Settings[5];
+            return value == '1';
+        }
+
+        public void ChangeSetting(int id, int value)
+        {
+            var mutableSettings = Settings.ToCharArray();
+            mutableSettings[id] = Char.Parse($"{value}");
+            Settings = new string(mutableSettings);
+        }
 
         public async void SetRoleForEveryone(ulong roleid)
         {
