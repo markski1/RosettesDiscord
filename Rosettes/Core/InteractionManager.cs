@@ -214,7 +214,7 @@ namespace Rosettes.Core
                 return;
             }
 
-            if (component.Data.CustomId is "buy" or "sell") {
+            if (component.Data.CustomId is "buy" or "sell" or "sell_e") {
                 await FarmEngine.ShopAction(component);
             }
             if (component.Data.CustomId is "defaultPet")

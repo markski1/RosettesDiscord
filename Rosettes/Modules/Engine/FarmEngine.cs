@@ -166,32 +166,34 @@ namespace Rosettes.Modules.Engine
                     }
                     break;
 
+                case "sell_e":
                 case "sell":
+                    bool sell_e = component.Data.CustomId.Contains("_e");
                     switch (component.Data.Values.Last())
                     {
                         case "sell1":
-                            text = await ItemSell(dbUser, selling: "fish", amount: 5, cost: 3);
+                            text = await ItemSell(dbUser, selling: "fish", amount: 5, cost: 3, everything: sell_e);
                             break;
                         case "sell2":
-                            text = await ItemSell(dbUser, selling: "uncommonfish", amount: 5, cost: 6);
+                            text = await ItemSell(dbUser, selling: "uncommonfish", amount: 5, cost: 6, everything: sell_e);
                             break;
                         case "sell3":
-                            text = await ItemSell(dbUser, selling: "rarefish", amount: 1, cost: 5);
+                            text = await ItemSell(dbUser, selling: "rarefish", amount: 1, cost: 5, everything: sell_e);
                             break;
                         case "sell4":
-                            text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 5);
+                            text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 5, everything: sell_e);
                             break;
                         case "sell5":
-                            text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 6);
+                            text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 6, everything: sell_e);
                             break;
                         case "sell6":
-                            text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 5);
+                            text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 5, everything: sell_e);
                             break;
                         case "sell7":
-                            text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 4);
+                            text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 4, everything: sell_e);
                             break;
                         case "sell8":
-                            text = await ItemSell(dbUser, selling: "garbage", amount: 5, cost: 3);
+                            text = await ItemSell(dbUser, selling: "garbage", amount: 5, cost: 3, everything: sell_e);
                             break;
                     }
                     break;
@@ -229,13 +231,30 @@ namespace Rosettes.Modules.Engine
             }
         }
 
-        public static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost)
+        public static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost, bool everything)
         {
-            if (await GetItem(dbUser, selling) >= amount)
+            int availableAmount = await GetItem(dbUser, selling);
+            if (availableAmount >= amount)
             {
-                ModifyItem(dbUser, selling, -amount);
-                ModifyItem(dbUser, "dabloons", +cost);
-                return $"You have sold {amount} {GetItemName(selling)} for {cost} {GetItemName("dabloons")}";
+                if (everything)
+                {
+                    int timesToSell = availableAmount / amount;
+                    int totalSold = 0; int totalEarned = 0;
+                    for (int i = 0; i < timesToSell; i++)
+                    {
+                        ModifyItem(dbUser, selling, -amount);
+                        ModifyItem(dbUser, "dabloons", +cost);
+                        totalSold += amount;
+                        totalEarned += cost;
+                    }
+                    return $"You have sold {totalSold} {GetItemName(selling)} for {totalEarned} {GetItemName("dabloons")}";
+                }
+                else
+                {
+                    ModifyItem(dbUser, selling, -amount);
+                    ModifyItem(dbUser, "dabloons", +cost);
+                    return $"You have sold {amount} {GetItemName(selling)} for {cost} {GetItemName("dabloons")}";
+                }
             }
             else
             {
@@ -794,6 +813,11 @@ namespace Rosettes.Modules.Engine
                     expIncrease /= 2;
                 }
             }
+            else
+            {
+                await interaction.RespondAsync("Nothing to water.", ephemeral: true);
+                return;
+            }
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} watered." };
 
@@ -867,6 +891,11 @@ namespace Rosettes.Modules.Engine
                     expIncrease *= 5;
                     expIncrease /= 2;
                 }
+            }
+            else
+            {
+                await interaction.RespondAsync("Nothing to harvest.", ephemeral: true);
+                return;
             }
 
             ActionRowBuilder actionRow = new();
@@ -1081,12 +1110,39 @@ namespace Rosettes.Modules.Engine
             }
             sellMenu.MaxValues = 1;
 
+            SelectMenuBuilder sellAllMenu = new()
+            {
+                Placeholder = "Sell everything of...",
+                CustomId = "sell_e",
+                MinValues = 1,
+                MaxValues = 1
+            };
+            if (!empty)
+            {
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("fish"), description: $"3 {FarmEngine.GetItemName("dabloons")} per every 5", value: "sell1");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("uncommonfish"), description: $"6 {FarmEngine.GetItemName("dabloons")} per every 5", value: "sell2");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("rarefish"), description: $"5 {FarmEngine.GetItemName("dabloons")} per every 1", value: "sell3");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("shrimp"), description: $"5 {FarmEngine.GetItemName("dabloons")} per every 5", value: "sell4");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("tomato"), description: $"6 {FarmEngine.GetItemName("dabloons")} per every 10", value: "sell5");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("carrot"), description: $"5 {FarmEngine.GetItemName("dabloons")} per every 10", value: "sell6");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("potato"), description: $"4 {FarmEngine.GetItemName("dabloons")} per every 10", value: "sell7");
+                sellAllMenu.AddOption(label: FarmEngine.GetItemName("garbage"), description: $"3 {FarmEngine.GetItemName("dabloons")} per every 5", value: "sell8");
+            }
+            else
+            {
+                sellAllMenu.AddOption(label: $"Please wait...", value: "NULL");
+            }
+            sellAllMenu.MaxValues = 1;
+
             ActionRowBuilder buttonRow = new();
 
             AddStandardButtons(ref buttonRow, except: "shop");
 
-            return new ComponentBuilder().WithSelectMenu(buyMenu, 0)
+            return 
+                new ComponentBuilder()
+                .WithSelectMenu(buyMenu, 0)
                 .WithSelectMenu(sellMenu, 0)
+                .WithSelectMenu(sellAllMenu, 0)
                 .AddRow(buttonRow);
         }
 
