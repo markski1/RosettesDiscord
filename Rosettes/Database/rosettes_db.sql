@@ -1,10 +1,3 @@
--- --------------------------------------------------------
--- Host:                         gateway.markski.ar
--- Versión del servidor:         10.6.7-MariaDB-1:10.6.7+maria~focal - mariadb.org binary distribution
--- SO del servidor:              debian-linux-gnu
--- HeidiSQL Versión:             12.0.0.6468
--- --------------------------------------------------------
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
@@ -138,19 +131,35 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 -- La exportación de datos fue deseleccionada.
 
+-- Volcando estructura para tabla bot_db.users_crops
+CREATE TABLE IF NOT EXISTS `users_crops` (
+  `plot_id` int(11) NOT NULL,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `unix_growth` int(10) DEFAULT NULL,
+  `unix_next_water` int(10) DEFAULT NULL,
+  `crop_type` int(10) DEFAULT NULL,
+  PRIMARY KEY (`user_id`,`plot_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- La exportación de datos fue deseleccionada.
+
 -- Volcando estructura para tabla bot_db.users_inventory
 CREATE TABLE IF NOT EXISTS `users_inventory` (
-  `id` bigint(20) unsigned NOT NULL DEFAULT 0,
+  `id` bigint(20) unsigned NOT NULL,
   `dabloons` int(11) NOT NULL DEFAULT 10,
   `fish` int(11) NOT NULL DEFAULT 0,
   `uncommonfish` int(11) NOT NULL DEFAULT 0,
   `rarefish` int(11) NOT NULL DEFAULT 0,
   `shrimp` int(11) NOT NULL DEFAULT 0,
-  `rice` int(11) NOT NULL DEFAULT 0,
   `garbage` int(11) NOT NULL DEFAULT 0,
-  `sushi` int(11) NOT NULL DEFAULT 0,
-  `shrimprice` int(11) NOT NULL DEFAULT 0,
-  `pets` varchar(21) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '00000000000000000000' COMMENT 'Where each digit represents if the user has a given pet or not.',
+  `pets` varchar(31) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '000000000000000000000000000000' COMMENT 'Where each digit represents if the user has a given pet or not.',
+  `plots` int(10) NOT NULL DEFAULT 1,
+  `tomato` int(11) NOT NULL DEFAULT 0,
+  `carrot` int(11) NOT NULL DEFAULT 0,
+  `potato` int(11) NOT NULL DEFAULT 0,
+  `seedbag` int(11) NOT NULL DEFAULT 0,
+  `fishpole` int(11) NOT NULL DEFAULT 50,
+  `farmtools` int(11) NOT NULL DEFAULT 50,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `id` (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
