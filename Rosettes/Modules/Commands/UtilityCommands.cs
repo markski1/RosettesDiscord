@@ -306,7 +306,7 @@ namespace Rosettes.Modules.Commands
         {
             if (AlarmManager.CheckUserHasAlarm(Context.User))
             {
-                await RespondAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with $cancelalarm.", ephemeral: true);
+                await RespondAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with /cancelalarm.", ephemeral: true);
                 return;
             }
 

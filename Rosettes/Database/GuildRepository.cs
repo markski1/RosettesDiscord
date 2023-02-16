@@ -12,6 +12,7 @@ namespace Rosettes.Database
         Task<IEnumerable<Guild>> GetAllGuildsAsync();
         Task<Guild> GetGuildData(SocketGuild guild);
         Task<string> GetGuildSettings(Guild guild);
+        Task<bool> SetGuildSettings(Guild guild);
         Task<bool> CheckGuildExists(ulong guildId);
         Task<bool> InsertGuild(Guild guild);
         Task<bool> UpdateGuild(Guild guild);
@@ -91,6 +92,25 @@ namespace Rosettes.Database
             {
                 Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
                 return "1111111111";
+            }
+        }
+
+        public async Task<bool> SetGuildSettings(Guild guild)
+        {
+            var db = DBConnection();
+
+            var sql = @"UPDATE guilds
+                        SET settings = @Settings
+                        WHERE id = @Id";
+
+            try
+            {
+                return (await db.ExecuteAsync(sql, new { guild.Settings, guild.Id })) > 0;
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("sql-updateguild", $"sqlException code {ex.Message}");
+                return false;
             }
         }
 

@@ -43,6 +43,15 @@ namespace Rosettes.Core
         {
             string action = component.Data.CustomId;
 
+            if (action.Contains("null_")) return;
+
+            // settings stuff
+            if (action.Contains("toggle_"))
+            {
+                AdminHelper.ChangeSettings(component);
+                return;
+            }
+
             switch (action)
             {
                 // farm stuff

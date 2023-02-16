@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Google.Api;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 
@@ -9,7 +10,6 @@ namespace Rosettes.Modules.Commands
     public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("makepoll", "Provides an UI to create your own custom poll.")]
-
         public async Task MakePoll()
         {
             if (Context.Guild is null)
@@ -92,7 +92,7 @@ namespace Rosettes.Modules.Commands
             }
             if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
             {
-                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
+                await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
                 return;
             }
 
@@ -153,7 +153,7 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
             {
-                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
+                await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             }
 
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
@@ -173,11 +173,11 @@ namespace Rosettes.Modules.Commands
         }
 
         [SlashCommand("setfarmchan", "Sets the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
-        public async Task SetRpgChan(string disable = "false")
+        public async Task SetFarmChan(string disable = "false")
         {
             if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
             {
-                await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
+                await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             }
 
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
@@ -193,6 +193,119 @@ namespace Rosettes.Modules.Commands
                 dbGuild.RpgChannel = 0;
 
                 await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless disabled from the web panel).");
+            }
+        }
+
+        [SlashCommand("settings", "Change guild settings")]
+        public async Task ShowSettings()
+        {
+            if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+            {
+                await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+            }
+
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+
+            var component = AdminHelper.GetGuildSettingsButtons(dbGuild);
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+
+            embed.Title = $"{dbGuild.NameCache} | Settings";
+
+            embed.Footer = new EmbedFooterBuilder() { Text = "You may also use the web panel for more comprehensive settings,\nsuch as setting up AutoRoles.\nhttps://snep.markski.ar/rosettes" };
+
+            await RespondAsync(embed: embed.Build(), components: component);
+
+            dbGuild.cacheSettingsMsg = await GetOriginalResponseAsync();
+        }
+    }
+
+    public static class AdminHelper
+    {
+        public static MessageComponent GetGuildSettingsButtons(Guild dbGuild)
+        {
+            string enabledText;
+
+            ActionRowBuilder firstRow = new();
+            enabledText = (dbGuild.MessageAnalysis() == 1) ? "Enabled" : "Disabled";
+            firstRow.WithButton($"Message parsing: {enabledText}", "toggle_msg");
+
+            enabledText = (dbGuild.AllowsMusic()) ? "Enabled" : "Disabled";
+            firstRow.WithButton($"Music commands: {enabledText}", "toggle_music");
+
+            ActionRowBuilder secondRow = new();
+            enabledText = (dbGuild.AllowsRPG()) ? "Enabled" : "Disabled";
+            secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
+
+            enabledText = (dbGuild.AllowsRandom()) ? "Enabled" : "Disabled";
+            secondRow.WithButton($"Gambling commands: {enabledText}", "toggle_gambling");
+
+            ActionRowBuilder thirdRow = new();
+            enabledText = (dbGuild.MonitorsVC()) ? "Enabled" : "Disabled";
+            thirdRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
+
+            // \n .
+
+            ActionRowBuilder fourthRow = new();
+            fourthRow.WithButton("/setfarmchan - Sets channel for farm minigame", "null_1", style: ButtonStyle.Secondary, disabled: true);
+            fourthRow.WithButton("/setlogchan - Sets channel to report users joining and leaving the guild", "null_2", style: ButtonStyle.Secondary, disabled: true);
+
+            ComponentBuilder comps = new();
+
+            comps
+                .AddRow(firstRow)
+                .AddRow(secondRow)
+                .AddRow(thirdRow)
+                .AddRow(fourthRow);
+
+
+            return comps.Build();
+        }
+
+        public static async void ChangeSettings(SocketMessageComponent component)
+        {
+            if (component.GuildId is ulong guild_id)
+            {
+                var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+                var guildRef = dbGuild.GetDiscordSocketReference();
+                if (guildRef is null) return;
+                if (guildRef.OwnerId != component.User.Id && !Global.CheckSnep(component.User.Id))
+                {
+                    await component.RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+                }
+
+                string action = component.Data.CustomId;
+
+                switch (action) {
+                    case "toggle_msg":
+                        dbGuild.ToggleSetting(0);
+                        break;
+                    case "toggle_music":
+                        dbGuild.ToggleSetting(1);
+                        break;
+                    case "toggle_farm":
+                        dbGuild.ToggleSetting(4);
+                        break;
+                    case "toggle_gambling":
+                        dbGuild.ToggleSetting(2);
+                        break;
+                    case "toggle_monitorvc":
+                        dbGuild.ToggleSetting(5);
+                        break;
+                }
+
+                var buttonComponent = AdminHelper.GetGuildSettingsButtons(dbGuild);
+
+                if (dbGuild.cacheSettingsMsg is not null)
+                {
+                    await dbGuild.cacheSettingsMsg.ModifyAsync(x => x.Components = buttonComponent);
+                    await component.DeferAsync();
+                }
+                else
+                {
+                    await component.RespondAsync(components: buttonComponent);
+                    dbGuild.cacheSettingsMsg = await component.GetOriginalResponseAsync();
+                }
             }
         }
     }

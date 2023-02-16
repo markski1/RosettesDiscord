@@ -250,11 +250,15 @@ namespace Rosettes.Modules.Engine
             return value == '1';
         }
 
-        public void ChangeSetting(int id, int value)
+        public void ToggleSetting(int id)
         {
             var mutableSettings = Settings.ToCharArray();
-            mutableSettings[id] = Char.Parse($"{value}");
+            char newSetting;
+            if (mutableSettings[id] == '0') newSetting = '1';
+            else newSetting = '0';
+            mutableSettings[id] = newSetting;
             Settings = new string(mutableSettings);
+            _ = GuildEngine._interface.SetGuildSettings(this);
         }
 
         public async void SetRoleForEveryone(ulong roleid)
@@ -343,5 +347,7 @@ namespace Rosettes.Modules.Engine
                 await chan.SendMessageAsync(embed: embed.Build());
             }
         }
+
+        public IUserMessage? cacheSettingsMsg;
     }
 }
