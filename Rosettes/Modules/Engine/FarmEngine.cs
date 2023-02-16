@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Modules.Engine.Subdeps;
+using System.Reflection;
 
 namespace Rosettes.Modules.Engine
 {
@@ -67,6 +68,7 @@ namespace Rosettes.Modules.Engine
             {
                 return "This guild does not allow Farming/Fishing commands.";
             }
+
             if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
             {
                 return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";

@@ -6,6 +6,7 @@ using Rosettes.Modules.Engine;
 using System.ComponentModel;
 using System;
 using System.Reflection;
+using Google.Api;
 
 namespace Rosettes.Core
 {
@@ -44,6 +45,16 @@ namespace Rosettes.Core
             string action = component.Data.CustomId;
 
             if (action.Contains("null_")) return;
+
+            try
+            {
+                await component.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                await component.RespondAsync("I don't have access to this channel.", ephemeral: true);
+                return;
+            }
 
             // settings stuff
             if (action.Contains("toggle_"))
@@ -137,6 +148,16 @@ namespace Rosettes.Core
 
         private async Task OnModalSubmitted(SocketModal modal)
         {
+            try
+            {
+                await modal.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                await modal.RespondAsync("I don't have access to this channel.", ephemeral: true);
+                return;
+            }
+
             List<SocketMessageComponentData> components = modal.Data.Components.ToList();
             if (modal.Data.CustomId == "pollMaker")
             {
@@ -183,6 +204,16 @@ namespace Rosettes.Core
 
         private async Task OnMenuSelectionMade(SocketMessageComponent component)
         {
+            try
+            {
+                await component.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                await component.RespondAsync("I don't have access to this channel.", ephemeral: true);
+                return;
+            }
+
             if (component.Data.CustomId is "buy" or "sell") {
                 await FarmEngine.ShopAction(component);
             }

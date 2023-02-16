@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Google.Api;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using System.Threading.Channels;
 
 namespace Rosettes.Modules.Commands
 {
@@ -204,6 +205,16 @@ namespace Rosettes.Modules.Commands
                 await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             }
 
+            try
+            {
+                await Context.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                await RespondAsync("I don't have access to this channel.", ephemeral: true);
+                return;
+            }
+
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
 
             var component = AdminHelper.GetGuildSettingsButtons(dbGuild);
@@ -243,8 +254,6 @@ namespace Rosettes.Modules.Commands
             ActionRowBuilder thirdRow = new();
             enabledText = (dbGuild.MonitorsVC()) ? "Enabled" : "Disabled";
             thirdRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
-
-            // \n .
 
             ActionRowBuilder fourthRow = new();
             fourthRow.WithButton("/setfarmchan - Sets channel for farm minigame", "null_1", style: ButtonStyle.Secondary, disabled: true);
