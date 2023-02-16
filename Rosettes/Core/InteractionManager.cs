@@ -3,10 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
-using System.ComponentModel;
-using System;
 using System.Reflection;
-using Google.Api;
 
 namespace Rosettes.Core
 {
@@ -46,20 +43,10 @@ namespace Rosettes.Core
 
             if (action.Contains("null_")) return;
 
-            try
-            {
-                await component.Channel.GetPinnedMessagesAsync();
-            }
-            catch
-            {
-                await component.RespondAsync("I don't have access to this channel.", ephemeral: true);
-                return;
-            }
-
             // settings stuff
             if (action.Contains("toggle_"))
             {
-                AdminHelper.ChangeSettings(component);
+                await AdminHelper.ChangeSettings(component);
                 return;
             }
 
@@ -106,6 +93,7 @@ namespace Rosettes.Core
                                 var dbUser = await UserEngine.GetDBUser(component.User);
                                 EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
                                 embed.Title = "Music Player";
+                                bool stop = false;
                                 if (action == "music_toggle")
                                 {
                                     embed.Description = await MusicEngine.ToggleAsync(guild);
@@ -117,7 +105,7 @@ namespace Rosettes.Core
                                 if (action == "music_stop")
                                 {
                                     embed.Description = await MusicEngine.StopAsync(guild);
-                                    await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+                                    stop = true;
                                 }
                                 if (action == "music_add")
                                 {
@@ -130,8 +118,16 @@ namespace Rosettes.Core
                                     await component.RespondWithModalAsync(modal.Build());
                                     return;
                                 }
-                                await component.Message.ModifyAsync(x => x.Embed = embed.Build());
-                                await component.DeferAsync();
+                                try
+                                {
+                                    await component.Message.ModifyAsync(x => x.Embed = embed.Build());
+                                    if (stop) await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
+                                    await component.DeferAsync();
+                                }
+                                catch
+                                {
+                                    await component.RespondAsync("I can't update the player because I don't have access to this channel.\nPlease tell an admin, or use me somewhere else!", ephemeral: true);
+                                }
                             }
                         }
                     }
@@ -148,16 +144,6 @@ namespace Rosettes.Core
 
         private async Task OnModalSubmitted(SocketModal modal)
         {
-            try
-            {
-                await modal.Channel.GetPinnedMessagesAsync();
-            }
-            catch
-            {
-                await modal.RespondAsync("I don't have access to this channel.", ephemeral: true);
-                return;
-            }
-
             List<SocketMessageComponentData> components = modal.Data.Components.ToList();
             if (modal.Data.CustomId == "pollMaker")
             {
@@ -192,9 +178,16 @@ namespace Rosettes.Core
                             var ogMessage = MusicEngine.GetPlayer(modal.Channel);
                             if (ogMessage is not null)
                             {
-                                await ogMessage.ModifyAsync(x => x.Embed = embed.Build());
+                                try
+                                {
+                                    await ogMessage.ModifyAsync(x => x.Embed = embed.Build());
+                                }
+                                catch
+                                {
+                                    await modal.RespondAsync("I don't have access to this channel, please tell an admin!", ephemeral: true);
+                                    return;
+                                }
                             }
-
                             await modal.DeferAsync();
                         }
                     }
@@ -204,16 +197,6 @@ namespace Rosettes.Core
 
         private async Task OnMenuSelectionMade(SocketMessageComponent component)
         {
-            try
-            {
-                await component.Channel.GetPinnedMessagesAsync();
-            }
-            catch
-            {
-                await component.RespondAsync("I don't have access to this channel.", ephemeral: true);
-                return;
-            }
-
             if (component.Data.CustomId is "buy" or "sell" or "sell_e") {
                 await FarmEngine.ShopAction(component);
             }

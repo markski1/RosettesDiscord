@@ -1,10 +1,8 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Google.Api;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using System.Threading.Channels;
 
 namespace Rosettes.Modules.Commands
 {
@@ -251,9 +249,8 @@ namespace Rosettes.Modules.Commands
             enabledText = (dbGuild.AllowsRandom()) ? "Enabled" : "Disabled";
             secondRow.WithButton($"Gambling commands: {enabledText}", "toggle_gambling");
 
-            ActionRowBuilder thirdRow = new();
             enabledText = (dbGuild.MonitorsVC()) ? "Enabled" : "Disabled";
-            thirdRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
+            secondRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
 
             ActionRowBuilder fourthRow = new();
             fourthRow.WithButton("/setfarmchan - Sets channel for farm minigame", "null_1", style: ButtonStyle.Secondary, disabled: true);
@@ -264,14 +261,14 @@ namespace Rosettes.Modules.Commands
             comps
                 .AddRow(firstRow)
                 .AddRow(secondRow)
-                .AddRow(thirdRow)
+             // .AddRow(thirdRow)
                 .AddRow(fourthRow);
 
 
             return comps.Build();
         }
 
-        public static async void ChangeSettings(SocketMessageComponent component)
+        public static async Task ChangeSettings(SocketMessageComponent component)
         {
             if (component.GuildId is ulong guild_id)
             {
@@ -305,15 +302,22 @@ namespace Rosettes.Modules.Commands
 
                 var buttonComponent = AdminHelper.GetGuildSettingsButtons(dbGuild);
 
-                if (dbGuild.cacheSettingsMsg is not null)
+                try
                 {
-                    await dbGuild.cacheSettingsMsg.ModifyAsync(x => x.Components = buttonComponent);
-                    await component.DeferAsync();
+                    if (dbGuild.cacheSettingsMsg is not null)
+                    {
+                        await component.DeferAsync(ephemeral: true);
+                        await dbGuild.cacheSettingsMsg.ModifyAsync(x => x.Components = buttonComponent);
+                    }
+                    else
+                    {
+                        await component.RespondAsync(components: buttonComponent);
+                        dbGuild.cacheSettingsMsg = await component.GetOriginalResponseAsync();
+                    }
                 }
-                else
+                catch
                 {
-                    await component.RespondAsync(components: buttonComponent);
-                    dbGuild.cacheSettingsMsg = await component.GetOriginalResponseAsync();
+                    await component.RespondAsync("There was an error, I might not have access to the channel.", ephemeral: true);
                 }
             }
         }

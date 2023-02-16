@@ -3,7 +3,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
-using System;
 
 namespace Rosettes.Modules.Engine
 {

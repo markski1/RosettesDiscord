@@ -1,6 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Rosettes.Core;
+﻿using Discord.WebSocket;
 using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Engine
@@ -18,7 +16,7 @@ namespace Rosettes.Modules.Engine
                 if (newState.VoiceChannel is null)
                     action = "left";
             }
-            if (newState.VoiceChannel is not null)
+            else if (newState.VoiceChannel is not null)
             {
                 channel = newState.VoiceChannel;
 
@@ -32,29 +30,20 @@ namespace Rosettes.Modules.Engine
                 if (!dbGuild.MonitorsVC()) return;
                 ChannelInform(user, channel, action);
             }
-
-            return;
         }
 
         public static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)
         {
-            dynamic? guildUser = user as SocketGuildUser;
-            guildUser ??= user;
-            // First we send a message plainly saying that a user joined or left. 
-            // That way users who have a VC or stream window open see a notification with the plain text.
-            string cleanName;
-            try
+            string name;
+            if (user is SocketGuildUser guildUser)
             {
-                cleanName = guildUser.DisplayName.Replace(" ", "");
+                name = guildUser.DisplayName.Replace(" ", "");
             }
-            catch
+            else
             {
-                cleanName = guildUser.Username.Replace(" ", "");
+                name = user.Username.Replace(" ", "");
             }
-            Regex rgx = new("[^a-zA-Z0-9 -]");
-            cleanName = rgx.Replace(cleanName, "");
-            cleanName += $"#{user.Discriminator}";
-            await channel.SendMessageAsync($"{cleanName} {action} the channel.");
+            await channel.SendMessageAsync($"{name} {action} the channel.");
         }
     }
 }

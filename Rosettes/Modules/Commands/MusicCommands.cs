@@ -91,6 +91,15 @@ namespace Rosettes.Modules.Commands
                 return false;
             }
             var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            try
+            {
+                await Context.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                await RespondAsync("This command won't run in my DM's, silly.", ephemeral: true);
+                return false;
+            }
             if (!dbGuild.AllowsMusic())
             {
                 await RespondAsync("Sorry, but the guild admins have disabled the use of music commands.", ephemeral: true);

@@ -92,7 +92,14 @@ namespace Rosettes.Modules.Engine
                     comps.WithButton(label: $"{pollResult.Option4} - {pollResult.Count4} votes", customId: "4", row: 3);
                 }
 
-                await pollMessage.ModifyAsync(msg => msg.Components = comps.Build());
+                try
+                {
+                    await pollMessage.ModifyAsync(msg => msg.Components = comps.Build());
+                }
+                catch
+                {
+                    return "Your vote was counted, but I can't update the poll results because I don't have permissions to this channel. Please tell an admin!";
+                }
             }
 
             return "Your vote has been counted.";

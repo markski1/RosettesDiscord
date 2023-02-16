@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Modules.Engine.Subdeps;
-using System.Reflection;
+using System.ComponentModel;
 
 namespace Rosettes.Modules.Engine
 {
@@ -68,7 +68,14 @@ namespace Rosettes.Modules.Engine
             {
                 return "This guild does not allow Farming/Fishing commands.";
             }
-
+            try
+            {
+                await context.Channel.GetPinnedMessagesAsync();
+            }
+            catch
+            {
+                return "Rosettes does not have access to that channel.";
+            }
             if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
             {
                 return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
@@ -205,9 +212,15 @@ namespace Rosettes.Modules.Engine
 
             await component.RespondAsync(embed: embed.Build(), ephemeral: true);
             
-            await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());
-
-            await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
+            try
+            {
+                await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());
+                await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
+            }
+            catch
+            {
+                // nothing we can do at this point, just don't crash.
+            }
         }
 
         public static async Task<string> ItemBuy(User dbUser, string buying, int amount, int cost, bool setType = false)
@@ -288,7 +301,14 @@ namespace Rosettes.Modules.Engine
                 embed.Description = $"You do not have a {PetNames(petRequested)}";
             }
 
-            await component.RespondAsync(embed: embed.Build());
+            try
+            {
+                await component.RespondAsync(embed: embed.Build());
+            }
+            catch
+            {
+                await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+            }
         }
 
         public static async Task<bool> HasPet(User dbUser, int id)
@@ -450,7 +470,7 @@ namespace Rosettes.Modules.Engine
                 embed.Title = $"{GetItemName("fishpole")} broken.";
                 embed.Description = $"Your {GetItemName("fishpole")} broke, you need a new one.";
 
-                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
                 return;
             }
 
@@ -459,7 +479,7 @@ namespace Rosettes.Modules.Engine
                 embed.Title = "Can't fish yet.";
                 embed.Description = $"You may fish again <t:{dbUser.LastFished}:R>";
 
-                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+                await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
                 return;
             }
 
@@ -532,8 +552,6 @@ namespace Rosettes.Modules.Engine
             };
 
             await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
-            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-            await interaction.ModifyOriginalResponseAsync(msg => msg.Components = comps.Build());
         }
 
         public static async Task ShowFarm(SocketInteraction interaction, IUser user)
@@ -986,8 +1004,15 @@ namespace Rosettes.Modules.Engine
 
             comps.AddRow(buttonRow);
 
-            await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-            await interaction.ModifyOriginalResponseAsync(x => x.Components = comps.Build());
+            try
+            {
+                await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+                await interaction.ModifyOriginalResponseAsync(x => x.Components = comps.Build());
+            }
+            catch
+            {
+                // can't do anything at this point, just do not crash the whole thing.
+            }
         }
 
         public static async Task ShowPets(SocketInteraction interaction, IUser user)
