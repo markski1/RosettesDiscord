@@ -219,21 +219,25 @@ namespace Rosettes.Modules.Engine
             char value = Settings[0];
             return (int)(value - '0');
         }
+
         public bool AllowsMusic()
         {
             char value = Settings[1];
             return value == '1';
         }
+
         public bool AllowsRandom()
         {
             char value = Settings[2];
             return value == '1';
         }
+
         public bool AllowsDumb()
         {
             char value = Settings[3];
             return value == '1';
         }
+
         public bool AllowsRPG()
         {
             char value = Settings[4];

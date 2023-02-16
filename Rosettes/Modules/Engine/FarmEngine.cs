@@ -595,18 +595,25 @@ namespace Rosettes.Modules.Engine
 
             ActionRowBuilder buttonRow = new();
 
-            if (anyCanBeHarvested)
+            ActionRowBuilder actionRow = new();
+
+            if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered)
             {
-                buttonRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+                if (anyCanBeHarvested)
+                {
+                    actionRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+                }
+                if (anyCanBePlanted)
+                {
+                    actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
+                }
+                if (anyCanBeWatered)
+                {
+                    actionRow.WithButton(label: "Water crops", customId: "crops_water", style: ButtonStyle.Success);
+                }
+                comps.AddRow(actionRow);
             }
-            if (anyCanBePlanted)
-            {
-                buttonRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
-            }
-            if (anyCanBeWatered)
-            {
-                buttonRow.WithButton(label: "Water crops", customId: "crops_water", style: ButtonStyle.Success);
-            }
+
             AddStandardButtons(ref buttonRow);
 
             comps.AddRow(buttonRow);
@@ -761,9 +768,17 @@ namespace Rosettes.Modules.Engine
 
             ActionRowBuilder buttonRow = new();
 
-            if (cropsToHarvest) buttonRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+            ActionRowBuilder actionRow = new();
+
+            if (cropsToHarvest)
+            {
+                actionRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+                comps.AddRow(actionRow);
+            }
 
             int expIncrease = 5 * count;
+
+            AddStandardButtons(ref buttonRow);
 
             if (count > 0)
             {
@@ -779,8 +794,6 @@ namespace Rosettes.Modules.Engine
             }
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{((count != 1) ? 's' : null)} watered." };
-
-            AddStandardButtons(ref buttonRow);
 
             comps.AddRow(buttonRow);
 
@@ -798,8 +811,6 @@ namespace Rosettes.Modules.Engine
 
             ActionRowBuilder buttonRow = new();
 
-            comps.AddRow(buttonRow);
-
             var toolStatus = await GetItem(dbUser, "farmtools");
 
             if (toolStatus <= 0)
@@ -808,6 +819,8 @@ namespace Rosettes.Modules.Engine
                 embed.Description = $"Your {GetItemName("farmtools")} are broken, you need new ones.";
 
                 AddStandardButtons(ref buttonRow);
+
+                comps.AddRow(buttonRow);
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
                 return;
@@ -854,10 +867,15 @@ namespace Rosettes.Modules.Engine
                 }
             }
 
+            ActionRowBuilder actionRow = new();
+
             if (plotsWereHarvested)
             {
-                buttonRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
+                actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
+                comps.AddRow(actionRow);
             }
+
+            comps.AddRow(buttonRow);
 
             AddStandardButtons(ref buttonRow);
 

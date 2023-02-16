@@ -1,4 +1,6 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
+using Rosettes.Core;
 using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Engine
@@ -36,11 +38,20 @@ namespace Rosettes.Modules.Engine
 
         public static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)
         {
+            // First we send a message plainly saying that a user joined or left. 
+            // That way users who have a VC or stream window open see a notification with the plain text.
             string cleanName = user.Username.Replace(" ", "");
             Regex rgx = new("[^a-zA-Z0-9 -]");
             cleanName = rgx.Replace(cleanName, "");
             cleanName += $"#{user.Discriminator}";
-            await channel.SendMessageAsync($"{cleanName} has {action} the channel.");
+            var message = await channel.SendMessageAsync($"{cleanName} has {action} the channel.");
+
+            // We then change it for a proper embed and quickly delete the old one for people who open the chat.
+            var dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+            embed.Description = $"has {action} the channel";
+            _ = message.DeleteAsync();
+            await channel.SendMessageAsync(embed: embed.Build());
         }
     }
 }
