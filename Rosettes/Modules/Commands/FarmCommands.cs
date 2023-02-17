@@ -4,10 +4,11 @@ using Discord.WebSocket;
 using Microsoft.VisualBasic;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Farming;
 
 namespace Rosettes.Modules.Commands
 {
-	[Group("farm", "Farming system commands")]
+    [Group("farm", "Farming system commands")]
 	public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("view", "View your farm")]

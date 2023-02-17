@@ -3,11 +3,12 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using Rosettes.Managers;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosettes.Modules.Engine
 {
-	public static class MessageEngine
+    public static class MessageEngine
 	{
 		private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
 		public static async Task HandleMessage(SocketCommandContext context)
@@ -15,7 +16,7 @@ namespace Rosettes.Modules.Engine
 			if (!NoMessageChannel(context)) return;
 			var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
 			// if a guild's message analysis level is 0, don't parse messages at all.
-			if (dbGuild.MessageAnalysis() == 0)
+			if (!dbGuild.MessageAnalysis())
 			{
 				return;
 			}

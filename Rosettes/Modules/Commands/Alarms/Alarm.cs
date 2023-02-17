@@ -3,10 +3,11 @@ using Rosettes.Database;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Discord;
+using Rosettes.Managers;
 
 namespace Rosettes.Modules.Commands.Alarms
 {
-	public static class AlarmManager
+    public static class AlarmManager
 	{
 		private static List<Alarm> ActiveAlarms = new();
 		public static readonly AlarmRepository _interface = new();

@@ -5,10 +5,11 @@ using Rosettes.Modules.Engine;
 using Microsoft.Extensions.DependencyInjection;
 using Victoria.Node;
 using Microsoft.Extensions.Logging.Abstractions;
+using Rosettes.Managers;
 
 namespace Rosettes.Core
 {
-	public class RosettesMain
+    public class RosettesMain
 	{
 		private readonly DiscordSocketClient Client;
 		private readonly InteractionService Commands;

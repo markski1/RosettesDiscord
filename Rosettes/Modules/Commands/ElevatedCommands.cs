@@ -5,12 +5,13 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands
 {
-	public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
+    public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("about", "About rosettes.")]
 		public async Task GetMemory()

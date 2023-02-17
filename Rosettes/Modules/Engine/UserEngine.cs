@@ -2,10 +2,11 @@
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Managers;
 
 namespace Rosettes.Modules.Engine
 {
-	public static class UserEngine
+    public static class UserEngine
 	{
 		private static List<User> UserCache = new();
 		public static readonly UserRepository _interface = new();
@@ -70,13 +71,15 @@ namespace Rosettes.Modules.Engine
 			return UserCache.First(item => item.Id == user);
 		}
 
-		public static async Task<IUser> GetDiscordUserByID(ulong id)
-		{
-			var client = ServiceManager.GetService<DiscordSocketClient>();
-			return await client.GetUserAsync(id);
-		}
+        public static async Task<IUser> GetUserReferenceByID(ulong id)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            IUser user = client.GetUser(id);
+            user ??= await client.GetUserAsync(id);
+            return user;
+        }
 
-		public static async Task<List<User>> GetAllUsersFromGuild(IGuild guild)
+        public static async Task<List<User>> GetAllUsersFromGuild(IGuild guild)
 		{
 			var users = await guild.GetUsersAsync();
 			List<User> userList = new();
@@ -143,8 +146,7 @@ namespace Rosettes.Modules.Engine
 
 		public async Task<IUser> GetDiscordReference()
 		{
-			var client = ServiceManager.GetService<DiscordSocketClient>();
-			return await client.GetUserAsync(Id);
+			return await UserEngine.GetUserReferenceByID(Id);
 		}
 
 		public async Task<string> GetName(bool full = true)

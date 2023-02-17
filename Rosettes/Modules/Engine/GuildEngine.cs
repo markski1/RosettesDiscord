@@ -1,12 +1,13 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Managers;
+using System;
 
 namespace Rosettes.Modules.Engine
 {
-	public static class GuildEngine
+    public static class GuildEngine
 	{
 		private static List<Guild> GuildCache = new();
 		public static readonly GuildRepository _interface = new();
@@ -56,6 +57,12 @@ namespace Rosettes.Modules.Engine
 				}
 			}
 			return Task.CompletedTask;
+		}
+
+		public static void RemoveGuildFromCache(ulong guildid)
+		{
+			var guildObj = GuildCache.Find(item => item.Id == guildid);
+			if (guildObj is not null) GuildCache.Remove(guildObj);
 		}
 
 		public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
@@ -171,33 +178,19 @@ namespace Rosettes.Modules.Engine
 			return Id != 0;
 		}
 
-		public async Task<RestGuild?> GetDiscordRestReference()
+		public async Task<RestGuild> GetDiscordRestReference()
 		{
 			DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
 			var foundGuild = await _client.Rest.GetGuildAsync(Id);
 			return foundGuild;
 		}
 
-		public SocketGuild? GetDiscordSocketReference()
+		public SocketGuild GetDiscordSocketReference()
 		{
 			if (CachedReference is not null) return CachedReference;
 			var client = ServiceManager.GetService<DiscordSocketClient>();
 			var foundGuild = client.GetGuild(Id);
-			if (foundGuild is not null)
-			{
-				CachedReference = foundGuild;
-			}
-			else
-			{
-				foreach (var guild in client.Guilds)
-				{
-					if (guild.Id == Id)
-					{
-						CachedReference = guild;
-						break;
-					}
-				}
-			}
+			CachedReference = foundGuild;
 			return CachedReference;
 		}
 
@@ -213,10 +206,10 @@ namespace Rosettes.Modules.Engine
 			Members = (ulong)reference.MemberCount;
 		}
 
-		public int MessageAnalysis()
+		public bool MessageAnalysis()
 		{
 			char value = Settings[0];
-			return (int)(value - '0');
+			return value == '1';
 		}
 
 		public bool AllowsMusic()
@@ -274,17 +267,15 @@ namespace Rosettes.Modules.Engine
 		}
 
 		// returns either a SocketGuildUser or a RestGuildUser, depending on wether cached or not.
-		public async Task<dynamic?> GetGuildUser(ulong userid)
+		public async Task<dynamic> GetGuildUser(ulong userid)
 		{
 			var dref = GetDiscordSocketReference();
-			if (dref is null) return null;
 			dynamic user;
 			user = dref.GetUser(userid);
 			// if null, not cached, pick it up through rest
 			if (user is null)
 			{
 				var restSelf = await GetDiscordRestReference();
-				if (restSelf is null) return null;
 				user = await restSelf.GetUserAsync(userid);
 			}
 			return user;

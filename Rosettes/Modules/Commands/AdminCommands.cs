@@ -236,7 +236,7 @@ namespace Rosettes.Modules.Commands
 			string enabledText;
 
 			ActionRowBuilder firstRow = new();
-			enabledText = (dbGuild.MessageAnalysis() == 1) ? "Enabled" : "Disabled";
+			enabledText = (dbGuild.MessageAnalysis()) ? "Enabled" : "Disabled";
 			firstRow.WithButton($"Message parsing: {enabledText}", "toggle_msg");
 
 			enabledText = (dbGuild.AllowsMusic()) ? "Enabled" : "Disabled";

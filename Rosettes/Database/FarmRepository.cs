@@ -4,11 +4,11 @@ using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Subdeps;
+using Rosettes.Modules.Engine.Farming;
 
 namespace Rosettes.Database
 {
-	public interface IFarmRepository
+    public interface IFarmRepository
 	{
 		Task<bool> DeleteCrop(Crop crop);
 		Task<int> FetchInventoryItem(User user, string item);

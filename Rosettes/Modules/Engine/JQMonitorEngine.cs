@@ -7,21 +7,27 @@ namespace Rosettes.Modules.Engine
 	{
 		public static async Task UserVCUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
 		{
-			SocketVoiceChannel? channel = null;
-			string? action = null;
-			if (oldState.VoiceChannel is not null)
+			SocketVoiceChannel? channel = null; SocketVoiceChannel? channel2 = null;
+			string? action = null; string? action2 = null;
+			if (oldState.VoiceChannel is not null && newState.VoiceChannel is not null)
+			{
+				if (oldState.VoiceChannel != newState.VoiceChannel)
+				{
+					channel = oldState.VoiceChannel;
+					channel2 = newState.VoiceChannel;
+					action = "left";
+					action2 = "joined";
+				}
+			}
+			else if (oldState.VoiceChannel is not null)
 			{
 				channel = oldState.VoiceChannel;
-
-				if (newState.VoiceChannel is null)
-					action = "left";
+				action = "left";
 			}
 			else if (newState.VoiceChannel is not null)
 			{
 				channel = newState.VoiceChannel;
-
-				if (oldState.VoiceChannel is null)
-					action = "joined";
+				action = "joined";
 			}
 
 			if (channel is not null && action is not null)
@@ -29,6 +35,8 @@ namespace Rosettes.Modules.Engine
 				var dbGuild = await GuildEngine.GetDBGuild(channel.Guild);
 				if (!dbGuild.MonitorsVC()) return;
 				ChannelInform(user, channel, action);
+				if (channel2 is not null && action2 is not null)
+					ChannelInform(user, channel, action);
 			}
 		}
 
