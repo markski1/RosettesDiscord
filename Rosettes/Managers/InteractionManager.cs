@@ -72,13 +72,13 @@ namespace Rosettes.Managers
                     break;
 
                 case "crops_plant":
-                    await FarmEngine.PlantPlot(component, component.User);
+                    await Farm.PlantSeed(component, component.User);
                     break;
                 case "crops_water":
-                    await FarmEngine.WaterPlots(component, component.User);
+                    await Farm.WaterCrops(component, component.User);
                     break;
                 case "crops_harvest":
-                    await FarmEngine.HarvestPlots(component, component.User);
+                    await Farm.HarvestCrops(component, component.User);
                     break;
 
 

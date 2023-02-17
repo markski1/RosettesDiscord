@@ -232,26 +232,33 @@ namespace Rosettes.Core
 				}
 			}
 		}
-
-		public class MessageDeleter
-		{
-			private readonly System.Timers.Timer Timer = new();
-			private readonly Discord.Rest.RestUserMessage message;
-
-			public MessageDeleter(Discord.Rest.RestUserMessage _message, int seconds)
-			{
-				Timer.Elapsed += DeleteMessage;
-				Timer.Interval = seconds * 1000;
-				message = _message;
-				Timer.Enabled = true;
-			}
-
-			public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
-			{
-				message.DeleteAsync();
-				Timer.Stop();
-				Timer.Dispose();
-			}
-		}
 	}
+
+    public class MessageDeleter
+    {
+        private readonly System.Timers.Timer Timer = new();
+        private readonly IMessage message;
+
+        public MessageDeleter(IMessage _message, int seconds)
+        {
+            Timer.Elapsed += DeleteMessage;
+            Timer.Interval = seconds * 1000;
+            message = _message;
+            Timer.Enabled = true;
+        }
+
+        public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                message.DeleteAsync();
+            }
+            catch
+            {
+                // nothing to do if lacking perms at this point, just don't crash.
+            }
+            Timer.Stop();
+            Timer.Dispose();
+        }
+    }
 }

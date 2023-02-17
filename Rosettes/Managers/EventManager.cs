@@ -110,7 +110,7 @@ namespace Rosettes.Managers
                 return;
             }
 
-            await MessageEngine.HandleMessage(context);
+            await MessageManager.HandleMessage(context);
         }
 
         private static async Task<Task> OnJoinGuild(SocketGuild guild)
