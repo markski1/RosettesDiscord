@@ -7,7 +7,7 @@ using Rosettes.Modules.Engine;
 
 namespace Rosettes.Managers
 {
-    public static class MessageEngine
+    public static class MessageManager
     {
         private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
         public static async Task HandleMessage(SocketCommandContext context)

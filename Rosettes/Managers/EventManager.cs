@@ -88,35 +88,38 @@ namespace Rosettes.Managers
         }
 
         // fired when a message is received
-        private static async Task OnMessageReceived(SocketMessage arg)
+        private static Task OnMessageReceived(SocketMessage arg)
         {
-            SocketUserMessage? message;
-            SocketCommandContext? context;
-            try
+            _ = Task.Run(async () =>
             {
-                message = arg as SocketUserMessage;
-                context = new SocketCommandContext(_client, message);
-            }
-            catch
-            {
-                // means the message can't be parsed and is likely a system message.
-                // rosettes don't handle those, so
-                return;
-            }
+                SocketUserMessage? message;
+                SocketCommandContext? context;
+                try
+                {
+                    message = arg as SocketUserMessage;
+                    context = new SocketCommandContext(_client, message);
+                }
+                catch
+                {
+                    // means the message can't be parsed and is likely a system message.
+                    // rosettes don't handle those, so
+                    return;
+                }
 
-            // halt if it's not a valid user message.
-            if (message == null || message.Author.IsBot)
-            {
-                return;
-            }
+                // halt if it's not a valid user message.
+                if (message == null || message.Author.IsBot)
+                {
+                    return;
+                }
 
-            await MessageManager.HandleMessage(context);
+                await MessageManager.HandleMessage(context);
+            });
+
+            return Task.CompletedTask;
         }
 
         private static async Task<Task> OnJoinGuild(SocketGuild guild)
         {
-            // Inform of guild join.
-            Global.GenerateNotification($"Rosettes has joined a new guild. **{guild.Name}**:*{guild.Id}*");
             await GuildEngine.GetDBGuild(guild);
 
             // cache users to memory
@@ -138,7 +141,6 @@ namespace Rosettes.Managers
 
         private static Task OnLeftGuild(SocketGuild guild)
         {
-            Global.GenerateNotification($"Rosettes has left a guild. **{guild.Name}**:*{guild.Id}* - {guild.MemberCount} members.");
             GuildEngine.RemoveGuildFromCache(guild.Id);
             return Task.CompletedTask;
         }

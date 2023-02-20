@@ -1,7 +1,5 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
-using Microsoft.VisualBasic;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Farming;
@@ -21,7 +19,7 @@ namespace Rosettes.Modules.Commands
 				return;
 			}
 
-			await FarmEngine.ShowFarm(Context.Interaction, Context.User);
+			await Farm.ShowFarm(Context.Interaction, Context.User);
 		}
 
 		[SlashCommand("fish", "Try to catch a fish")]

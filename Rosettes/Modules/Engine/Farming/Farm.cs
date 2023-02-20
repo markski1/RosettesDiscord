@@ -38,6 +38,112 @@ namespace Rosettes.Modules.Engine.Farming
             };
         }
 
+        public static async Task ShowFarm(SocketInteraction interaction, IUser user)
+        {
+            User dbUser = await UserEngine.GetDBUser(user);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            embed.Title = $"Farm";
+
+            List<Crop> fieldsToList = (await FarmEngine._interface.GetUserCrops(dbUser)).ToList();
+
+            int plots = await FarmEngine._interface.FetchInventoryItem(dbUser, "plots");
+
+            embed.Description = $"Your farm has {plots} plot{(plots != 1 ? 's' : null)} of land.";
+
+            bool anyCanBePlanted = false;
+            bool anyCanBeWatered = false;
+            bool anyCanBeHarvested = false;
+
+            int currentUnix = Global.CurrentUnix();
+
+            for (int i = 1; i <= plots; i++)
+            {
+                Crop? currentCrop = fieldsToList.Find(x => x.plotId == i);
+                if (currentCrop is null)
+                {
+                    embed.AddField($"🌿 Plot {i}", "There is nothing growing in this plot.", inline: i != 1); // Plot 1 is not inline, anything after is
+                    anyCanBePlanted = true;
+                }
+                else
+                {
+                    bool canBeHarvested = false;
+                    bool canBeWatered = false;
+                    if (currentCrop.unixGrowth < currentUnix)
+                    {
+                        canBeHarvested = true;
+                        anyCanBeHarvested = true;
+                    }
+                    else if (currentCrop.unixNextWater < currentUnix)
+                    {
+                        canBeWatered = true;
+                        anyCanBeWatered = true;
+                    }
+
+                    string plotText = "";
+
+                    if (canBeWatered)
+                    {
+                        plotText = $"Crops are growing in this plot.\n They can be watered right now.\nThey'll be ready to harvest <t:{currentCrop.unixGrowth}:R>";
+                    }
+                    else if (canBeHarvested)
+                    {
+                        plotText = $"{FarmEngine.GetItemName(Farm.GetHarvest(currentCrop.cropType))} has grown in this plot.\nThey can be harvested right now.";
+                    }
+                    else
+                    {
+                        plotText = $"Crops are growing in this plot.\n";
+                        if (currentCrop.unixGrowth > currentCrop.unixNextWater)
+                        {
+                            plotText += $"They can be watered <t:{currentCrop.unixNextWater}:R>\n";
+                        }
+                        plotText += $"They can be harvested <t:{currentCrop.unixGrowth}:R>";
+                    }
+                    embed.AddField($"🌿 Plot {i}", plotText, inline: i != 1);
+                }
+            }
+
+            if (dbUser.GetFishTime() < Global.CurrentUnix())
+            {
+                embed.AddField("💦 Fishing Pond", "You may fish right now.");
+            }
+            else
+            {
+                embed.AddField("💦 Fishing Pond", $"You may fish again <t:{dbUser.GetFishTime()}:R>.");
+            }
+
+            EmbedFooterBuilder footer = new() { Text = $"TODO: Seeds" };
+
+            ComponentBuilder comps = new();
+
+            ActionRowBuilder buttonRow = new();
+
+            ActionRowBuilder actionRow = new();
+
+            if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered)
+            {
+                if (anyCanBeHarvested)
+                {
+                    actionRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
+                }
+                if (anyCanBePlanted)
+                {
+                    actionRow.WithButton(label: "Plant a seed", customId: "crops_plant", style: ButtonStyle.Success);
+                }
+                if (anyCanBeWatered)
+                {
+                    actionRow.WithButton(label: "Water crops", customId: "crops_water", style: ButtonStyle.Success);
+                }
+                comps.AddRow(actionRow);
+            }
+
+            FarmEngine.AddStandardButtons(ref buttonRow);
+
+            comps.AddRow(buttonRow);
+
+            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
         public static async Task PlantSeed(SocketInteraction interaction, IUser user)
         {
             User dbUser = await UserEngine.GetDBUser(user);
@@ -124,7 +230,7 @@ namespace Rosettes.Modules.Engine.Farming
             if (fieldsToList.Count + 1 < plots)
             {
                 ActionRowBuilder actionRow = new();
-                actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
+                actionRow.WithButton(label: "Plant another seed", customId: "crops_plant", style: ButtonStyle.Success);
                 comps.AddRow(actionRow);
             }
 
@@ -309,7 +415,7 @@ namespace Rosettes.Modules.Engine.Farming
 
             if (plotsWereHarvested)
             {
-                actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
+                actionRow.WithButton(label: "Plant a seed", customId: "crops_plant", style: ButtonStyle.Success);
                 comps.AddRow(actionRow);
             }
 
