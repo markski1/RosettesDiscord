@@ -116,7 +116,7 @@ namespace Rosettes.Modules.Engine.Farming
                             text = await ItemBuy(dbUser, buying: "seedbag", amount: 1, cost: 5);
                             break;
                         case "buy2":
-                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 3, cost: 12);
+                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 5, cost: 20);
                             break;
                         case "buy3":
                             if (await GetItem(dbUser, "fishpole") >= 25)
@@ -301,7 +301,7 @@ namespace Rosettes.Modules.Engine.Farming
 
             try
             {
-                await component.RespondAsync(embed: embed.Build());
+                await component.RespondAsync(embed: embed.Build(), ephemeral: true);
             }
             catch
             {
@@ -424,7 +424,7 @@ namespace Rosettes.Modules.Engine.Farming
                 while (true)
                 {
                     pet = rand.Next(23);
-                    if (await HasPet(dbUser, pet) == false) break;
+                    if (await HasPet(dbUser, pet + 1) == false) break;
 
                     // if after 5 attempts there's only repeated pets, don't get a pet.
                     attempts++;
@@ -708,7 +708,7 @@ namespace Rosettes.Modules.Engine.Farming
             if (!empty)
             {
                 buyMenu.AddOption(label: $"1 {GetItemName("seedbag")}", description: $"5 {GetItemName("dabloons")}", value: "buy1");
-                buyMenu.AddOption(label: $"3 {GetItemName("seedbag")}", description: $"12 {GetItemName("dabloons")}", value: "buy2");
+                buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"20 {GetItemName("dabloons")}", value: "buy2");
                 buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"5 {GetItemName("dabloons")}", value: "buy3");
                 buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"10 {GetItemName("dabloons")}", value: "buy4");
                 buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "buy5");

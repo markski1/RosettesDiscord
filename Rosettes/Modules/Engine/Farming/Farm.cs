@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using Discord;
 using Rosettes.Core;
+using System.Linq;
 
 namespace Rosettes.Modules.Engine.Farming
 {
@@ -128,7 +129,7 @@ namespace Rosettes.Modules.Engine.Farming
                 }
                 if (anyCanBePlanted)
                 {
-                    actionRow.WithButton(label: "Plant a seed", customId: "crops_plant", style: ButtonStyle.Success);
+                    actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
                 }
                 if (anyCanBeWatered)
                 {
@@ -199,10 +200,7 @@ namespace Rosettes.Modules.Engine.Farming
                 occupiedPlots.Add(field.plotId);
             }
 
-            int plot_id = 1;
-            while (occupiedPlots.Contains(plot_id)) plot_id++;
-
-            if (plot_id > plots)
+            if (occupiedPlots.Count >= plots)
             {
                 embed.Title = "No space to plant.";
                 embed.Description = "All your plots of land are currently occupied.";
@@ -211,51 +209,76 @@ namespace Rosettes.Modules.Engine.Farming
                 return;
             }
 
-            int roll = rand.Next(55);
-            int type;
+            int freePlots = plots - occupiedPlots.Count;
 
-            if (roll < 10) type = 1; // tomatoes
-            else if (roll < 30) type = 2; // carrots
-            else type = 3; // potatos
+            List<Crop> plantedCrops = new();
 
-            var plantedCrops = await Farm.InsertCropsInPlot(dbUser, type, plot_id);
+            bool ranOutSeeds = false;
+            bool toolsBroken = true;
 
-            if (plantedCrops is null)
+            for (int i = 0; i < freePlots; i++)
             {
-                embed.Description = $"Sorry, there was an error in this operation. Not planted.";
-                await interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
-                return;
-            }
+                if (seeds == 0)
+                {
+                    ranOutSeeds = true;
+                    break;
+                }
 
-            if (fieldsToList.Count + 1 < plots)
-            {
-                ActionRowBuilder actionRow = new();
-                actionRow.WithButton(label: "Plant another seed", customId: "crops_plant", style: ButtonStyle.Success);
-                comps.AddRow(actionRow);
+                int plot_id = 1;
+                while (occupiedPlots.Contains(plot_id)) plot_id++;
+
+                int roll = rand.Next(55);
+                int type;
+
+                if (roll < 10) type = 1; // tomatoes
+                else if (roll < 30) type = 2; // carrots
+                else type = 3; // potatos
+
+                var plantedCrop = await Farm.InsertCropsInPlot(dbUser, type, plot_id);
+
+                if (plantedCrop is null)
+                {
+                    embed.Description = $"Sorry, there was an error in this operation. Not planted.";
+                    await interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                    return;
+                }
+
+                plantedCrops.Add(plantedCrop);
+
+                FarmEngine.ModifyItem(dbUser, "seedbag", -1);
+                seeds--;
+
+                int damage = 3 + rand.Next(3);
+                toolStatus -= damage;
+                FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
+
+                if (toolStatus <= 0)
+                {
+                    toolsBroken = true;
+                    break;
+                }
             }
 
             FarmEngine.AddStandardButtons(ref buttonRow);
             comps.AddRow(buttonRow);
 
-            embed.Description = $"Seeds planted in plot {plot_id}";
+            embed.Description = $"Seeds planted.";
 
-            embed.AddField("You'll know what your crops are when they grow.", "Remember to check into your crops to water them, this will make them grow faster.");
+            foreach (var Plot in plantedCrops)
+            {
+                embed.AddField($"🌿 Plot {Plot.plotId}", $"Finishes growing <t:{Plot.unixGrowth}:R>\nCan be watered <t:{Plot.unixNextWater}:R>");
+            }
+            
+            embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(plantedCrops.Count * 5)} | {plantedCrops.Count} {FarmEngine.GetItemName("seedbag")} used." };
 
-            embed.AddField("Growth time", $"Without watering them, your crops will finish growing <t:{plantedCrops.unixGrowth}:R>", true);
-            embed.AddField("Water time", $"You will be able to water these crops <t:{plantedCrops.unixNextWater}:R>", true);
-
-            FarmEngine.ModifyItem(dbUser, "seedbag", -1);
-            embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(5)} | 1 {FarmEngine.GetItemName("seedbag")} used." };
-
-            int damage = 3 + rand.Next(3);
-
-            toolStatus -= damage;
-
-            FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
-
-            if (toolStatus <= 0)
+            if (toolsBroken)
             {
                 embed.AddField($"{FarmEngine.GetItemName("farmtools")} destroyed.", $"Your {FarmEngine.GetItemName("farmtools")} broke during this activity, you must get new ones.");
+            }
+
+            if (ranOutSeeds)
+            {
+                embed.AddField($"Ran out of {FarmEngine.GetItemName("seedbag")}.", $"One or more plots were left unplanted because you ran out of seed bags.");
             }
 
             await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
@@ -415,7 +438,7 @@ namespace Rosettes.Modules.Engine.Farming
 
             if (plotsWereHarvested)
             {
-                actionRow.WithButton(label: "Plant a seed", customId: "crops_plant", style: ButtonStyle.Success);
+                actionRow.WithButton(label: "Plant seeds", customId: "crops_plant", style: ButtonStyle.Success);
                 comps.AddRow(actionRow);
             }
 
