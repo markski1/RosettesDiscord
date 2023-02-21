@@ -179,8 +179,8 @@ namespace Rosettes.Modules.Engine.Farming
             if (seeds <= 0)
             {
                 embed.Description = "You don't have any seeds, you may obtain them at the shop.";
-                ComponentBuilder failComps = new();
 
+                ComponentBuilder failComps = new();
                 ActionRowBuilder failButtons = new();
 
                 failButtons.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Primary);
@@ -214,7 +214,7 @@ namespace Rosettes.Modules.Engine.Farming
             List<Crop> plantedCrops = new();
 
             bool ranOutSeeds = false;
-            bool toolsBroken = true;
+            bool toolsBroken = false;
 
             for (int i = 0; i < freePlots; i++)
             {
@@ -226,6 +226,10 @@ namespace Rosettes.Modules.Engine.Farming
 
                 int plot_id = 1;
                 while (occupiedPlots.Contains(plot_id)) plot_id++;
+
+                occupiedPlots.Add(plot_id);
+
+                if (plot_id > plots) break;
 
                 int roll = rand.Next(55);
                 int type;
@@ -261,8 +265,6 @@ namespace Rosettes.Modules.Engine.Farming
 
             FarmEngine.AddStandardButtons(ref buttonRow);
             comps.AddRow(buttonRow);
-
-            embed.Description = $"Seeds planted.";
 
             foreach (var Plot in plantedCrops)
             {
