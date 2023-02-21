@@ -59,10 +59,13 @@ namespace Rosettes.Managers
             if (Settings.ConnectToDatabase())
             {
                 await UserEngine.LoadAllUsersFromDatabase();
-                GuildEngine.LoadAllGuildsFromDatabase();
-                _ = AutoRolesEngine.SyncWithDatabase();
-                AlarmManager.LoadAllAlarmsFromDatabase();
-                RequestEngine.Initialize();
+                _ = Task.Run(async () =>
+                {
+                    GuildEngine.LoadAllGuildsFromDatabase();
+                    AlarmManager.LoadAllAlarmsFromDatabase();
+                    RequestEngine.Initialize();
+                    await AutoRolesEngine.SyncWithDatabase();
+                });
             }
             else
             {
