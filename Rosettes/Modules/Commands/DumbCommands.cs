@@ -180,7 +180,7 @@ namespace Rosettes.Modules.Commands
 		}
 
 		[SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
-		public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")]string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false")
+		public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")]string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false", string parry = "false")
 		{
 			Emote? emoteExtract;
 
@@ -224,14 +224,7 @@ namespace Rosettes.Modules.Commands
 				return;
 			}
 
-			if (reverse != "false")
-			{
-				await DoBrickThrow(brickerUrl, true);
-			}
-			else
-			{
-				await DoBrickThrow(brickerUrl);
-			}
+            await DoBrickThrow(brickerUrl, (reverse != "false"), (parry != "false"));
 		}
 
 		[MessageCommand("Throw Brick")]
@@ -270,7 +263,7 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		public async Task DoBrickThrow(string url, bool reverse = false)
+		public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
 		{
 			Random rand = new();
 			string randomValue = $"{rand.Next(100)}";
