@@ -93,6 +93,11 @@ namespace Rosettes.Modules.Commands
 
 				Environment.Exit(0);
 			}
+			if (function is "lavalink")
+			{
+				await MusicEngine.RotateLavanode();
+				await RespondAsync("Lavalink rotated", ephemeral: true);
+            }
 		}
 
 		[SlashCommand("keygen", "Generates a unique key for logging into the Rosettes admin panel.")]

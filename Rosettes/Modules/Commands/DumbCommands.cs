@@ -294,6 +294,10 @@ namespace Rosettes.Modules.Commands
 			{
 				randomValue += "&reverse";
 			}
+			if (parry)
+			{
+				randomValue += "&parry";
+			}
 			using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/brickthrow.php?emojiNum={randomValue}"))
 			{
 				using var fileStream = new FileStream(fileName, FileMode.Create);

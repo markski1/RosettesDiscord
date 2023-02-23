@@ -42,51 +42,13 @@ namespace Rosettes.Core
 
 			ServiceManager.SetProvider(collection);
 
-			if (Settings.LavaLinkData is not null &&
-				Settings.LavaLinkBackup is not null &&
-				Settings.LavaLinkBackup2 is not null)
+			try
 			{
-				try
-				{
-					NodeConfiguration lavaNodeConfig = new()
-					{
-						SelfDeaf = true,
-						Hostname = Settings.LavaLinkData.Host,
-						Port = Settings.LavaLinkData.Port,
-						Authorization = Settings.LavaLinkData.Password,
-						IsSecure = false
-					};
-
-					NodeConfiguration lavaNodeConfigBackup = new()
-					{
-						SelfDeaf = true,
-						Hostname = Settings.LavaLinkBackup.Host,
-						Port = Settings.LavaLinkBackup.Port,
-						Authorization = Settings.LavaLinkBackup.Password,
-						IsSecure = false
-					};
-
-					NodeConfiguration lavaNodeConfigBackupBackup = new()
-					{
-						SelfDeaf = true,
-						Hostname = Settings.LavaLinkBackup2.Host,
-						Port = Settings.LavaLinkBackup2.Port,
-						Authorization = Settings.LavaLinkBackup2.Password,
-						IsSecure = false
-					};
-
-					NullLogger<LavaNode> nothing = new();
-
-					LavaNode lavaNode = new(Client, lavaNodeConfig, nothing);
-					LavaNode lavaNodeBackup = new(Client, lavaNodeConfigBackup, nothing);
-					LavaNode lavaNodeBackup2 = new(Client, lavaNodeConfigBackupBackup, nothing);
-
-					MusicEngine.SetMusicEngine(lavaNode, lavaNodeBackup, lavaNodeBackup2);
-				}
-				catch (Exception ex)
-				{
-					Global.GenerateErrorMessage("RosettesMain-LavalinkStartFail", $"{ex.Message}");
-				}
+				MusicEngine.SetMusicEngine(Client);
+			}
+			catch (Exception ex)
+			{
+				Global.GenerateErrorMessage("RosettesMain-LavalinkStartFail", $"{ex.Message}");
 			}
 		}
 

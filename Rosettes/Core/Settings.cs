@@ -14,7 +14,6 @@ namespace Rosettes.Core
 		public static readonly string TenorKey = LoadSetting("tenor");
 		public static readonly dynamic? LavaLinkData = LoadJsonSetting("lavalink");
 		public static readonly dynamic? LavaLinkBackup = LoadJsonSetting("lavalinkbackup");
-		public static readonly dynamic? LavaLinkBackup2 = LoadJsonSetting("lavalinkbackupbackup");
 		public static readonly MySqlConnectionStringBuilder Database = new();
 
 		#if DEBUG
