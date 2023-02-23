@@ -22,10 +22,33 @@ namespace Rosettes.Modules.Commands
 			var dbUser = await UserEngine.GetDBUser(Context.User);
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 			embed.Title = "Music playback";
-			embed.Description = await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, urlOrSearch);
 
-			await RespondAsync(embed: embed.Build(), components: GetMusicButtons());
-			MusicEngine.SetChannelPlayer(Context.Channel, await GetOriginalResponseAsync());
+			embed.Description = "Initializing music playback, please wait...";
+
+            await RespondAsync(embed: embed.Build());
+
+            try
+			{
+				embed.Description = await MusicEngine.PlayAsync(_socketUser, Context.Guild, _voiceState, _textChannel, urlOrSearch);
+			}
+			catch
+			{
+				embed.Description = "Sorry, there was an error initializing the music player.";
+			}
+
+			var response = await GetOriginalResponseAsync();
+
+			try
+			{
+				await response.ModifyAsync(x => x.Embed = embed.Build());
+                await response.ModifyAsync(x => x.Components = GetMusicButtons());
+            }
+			catch
+			{
+				await Context.User.SendMessageAsync("I don't have permissions in that channel to execute the music player!");
+			}
+
+			MusicEngine.SetChannelPlayer(Context.Channel, response);
 		}
 
 		[SlashCommand("stop", "Stops playing music.")]
@@ -91,15 +114,6 @@ namespace Rosettes.Modules.Commands
 				return false;
 			}
 			var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-			try
-			{
-				await Context.Channel.GetPinnedMessagesAsync();
-			}
-			catch
-			{
-				await RespondAsync("This command won't run in my DM's, silly.", ephemeral: true);
-				return false;
-			}
 			if (!dbGuild.AllowsMusic())
 			{
 				await RespondAsync("Sorry, but the guild admins have disabled the use of music commands.", ephemeral: true);

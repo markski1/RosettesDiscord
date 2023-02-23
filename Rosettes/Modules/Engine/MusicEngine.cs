@@ -85,8 +85,6 @@ namespace Rosettes.Modules.Engine
             _lavaNode.OnTrackEnd += TrackEnded;
             _lavaNode.OnWebSocketClosed += LavanodeDisconnect;
 
-			await _lavaNode.ConnectAsync();
-
 			return;
         }
 
@@ -95,19 +93,9 @@ namespace Rosettes.Modules.Engine
 			if (_lavaNode is null) return "Music playback hasn't initialized yet.";
 			if (user.VoiceChannel is null) return "You are not in VC.";
 
-			if (!_lavaNode.IsConnected)
-			{
-				try
-				{
-                    await _lavaNode.ConnectAsync();
-                }
-				catch
-				{
-					await RotateLavanode();
-				}
-			}
+            await _lavaNode.ConnectAsync();
 
-			if (!_lavaNode.HasPlayer(guild))
+            if (!_lavaNode.HasPlayer(guild))
 			{
 				try
 				{
@@ -155,9 +143,8 @@ namespace Rosettes.Modules.Engine
 			catch (Exception ex)
 			{
 				Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
-				backupState++;
-				if (backupState > 2) backupState = 0;
-				return "There was an error trying to fetch the song, please try again.";
+                await RotateLavanode();
+                return "There was an error trying to fetch the song, please try again.";
 			}
 		}
 
