@@ -64,8 +64,15 @@ namespace Rosettes.Modules.Engine
 
             if (_lavaNode is not null)
             {
-                await _lavaNode.DisconnectAsync();
-                await _lavaNode.DisposeAsync();
+				try
+				{
+					await _lavaNode.DisconnectAsync();
+					await _lavaNode.DisposeAsync();
+				}
+				catch
+				{
+					// doesn't matter, we're overriding lavaNode anyways, continue
+				}
             }
 
             var client = ServiceManager.GetService<DiscordSocketClient>();
@@ -93,7 +100,14 @@ namespace Rosettes.Modules.Engine
 			if (_lavaNode is null) return "Music playback hasn't initialized yet.";
 			if (user.VoiceChannel is null) return "You are not in VC.";
 
-            await _lavaNode.ConnectAsync();
+			try
+			{
+				await _lavaNode.ConnectAsync();
+			}
+			catch
+			{
+				// probably already connected, move on
+			}
 
             if (!_lavaNode.HasPlayer(guild))
 			{

@@ -58,6 +58,13 @@ namespace Rosettes.Managers
                     return;
                 }
 
+                // image conversion
+                if (action.Contains("CONVERT"))
+                {
+                    await UtilityHelper.ContinueImageConversion(component);
+                    return;
+                }
+
                 switch (action)
                 {
                     // farm stuff

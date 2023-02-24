@@ -7,6 +7,8 @@ using MetadataExtractor.Util;
 using MetadataExtractor;
 using Newtonsoft.Json;
 using Discord.WebSocket;
+using System;
+using Victoria.Node;
 
 namespace Rosettes.Modules.Commands
 {
@@ -290,7 +292,91 @@ namespace Rosettes.Modules.Commands
 			await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
 		}
 
-		[MessageCommand("Reverse GIF")]
+        [MessageCommand("Convert Image")]
+        public async Task ConvertImage(IMessage message)
+        {
+            string getUrl = Global.GrabURLFromText(message.Content);
+
+            // first try to find any image attached
+            if (message.Attachments.Any())
+            {
+                string fileType = message.Attachments.First().ContentType.ToLower();
+                if (fileType.Contains("image/"))
+                {
+                    getUrl = message.Attachments.First().Url;
+                }
+            }
+
+			// if still no luck, try to grab an emote.
+			if (getUrl == "0")
+			{
+                try
+                {
+                    Emote emote = Emote.Parse(message.Content);
+					getUrl = emote.Url;
+                }
+				catch
+				{
+                    await RespondAsync("No images or emotes found in this message.", ephemeral: true);
+					return;
+                }
+            }
+
+            Random rand = new();
+            string randomValue = $"{rand.Next(90) + 10}";
+            if (!System.IO.Directory.Exists("/var/www/html/brickthrow/convertQueue/"))
+            {
+                System.IO.Directory.CreateDirectory("/var/www/html/brickthrow/convertQueue/");
+            }
+            if (!System.IO.Directory.Exists("/var/www/html/brickthrow/generated/"))
+            {
+                System.IO.Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
+            }
+            string fileName = $"/var/www/html/brickthrow/convertQueue/{randomValue}.image";
+            if (System.IO.File.Exists(fileName))
+            {
+                System.IO.File.Delete(fileName);
+            }
+
+            using (Stream stream = await Global.HttpClient.GetStreamAsync(getUrl))
+            {
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                var downloadTask = stream.CopyToAsync(fileStream);
+                int quarterSecondCount = 0;
+                while (!downloadTask.IsCompleted)
+                {
+                    await Task.Delay(250);
+                    quarterSecondCount++;
+                    if (quarterSecondCount >= 20) // if the download takes more than 5 seconds it's probably not a very honest url
+                    {
+                        await RespondAsync("Cancelled: Image download took too long.", ephemeral: true);
+                        // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
+                        return;
+                    }
+                }
+            }
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+
+            embed.Title = "Image converter";
+            embed.Description = "Choose what format you wanna convert to:";
+
+            var buttons = new ActionRowBuilder();
+
+            buttons.WithButton(label: "PNG", customId: $"CONVERT {randomValue} 1", style: ButtonStyle.Primary);
+            buttons.WithButton(label: "JPG", customId: $"CONVERT {randomValue} 2", style: ButtonStyle.Primary);
+            buttons.WithButton(label: "GIF", customId: $"CONVERT {randomValue} 3", style: ButtonStyle.Primary);
+            buttons.WithButton(label: "WEBP", customId: $"CONVERT {randomValue} 4", style: ButtonStyle.Primary);
+            buttons.WithButton(label: "BMP", customId: $"CONVERT {randomValue} 5", style: ButtonStyle.Primary);
+
+            ComponentBuilder comps = new();
+
+            comps.AddRow(buttons);
+
+            await RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+        }
+
+        [MessageCommand("Reverse GIF")]
 		public async Task ReverseGIFMessageCMD(IMessage message)
 		{
 			await RespondAsync("Reversing, please wait...");
@@ -498,5 +584,66 @@ namespace Rosettes.Modules.Commands
 			}
 			System.IO.File.Delete(fileName);
 		}
+	}
+
+	public static class UtilityHelper
+	{
+		public static async Task ContinueImageConversion(SocketMessageComponent component)
+		{
+            string action = component.Data.CustomId;
+
+			char type = action[11];
+
+			char imageLoc = action[8];
+			char imageLoc2 = action[9];
+
+			string format = type switch {
+				'1' => "png",
+                '2' => "jpg",
+                '3' => "gif",
+				'4' => "webp",
+				'5' => "bmp",
+				_ => "no"
+            };
+
+			if (format == "no")
+			{
+				await component.RespondAsync("There was an error trying to convert the image.", ephemeral: true);
+				return;
+			}
+
+			var dbUser = await UserEngine.GetDBUser(component.User);
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			embed.Author.Name = $"Requested by {embed.Author.Name}";
+
+			embed.Title = "Image conversion";
+			embed.Description = $"Converting image to {format}\nIn progress...";
+
+			await component.RespondAsync(embed: embed.Build());
+
+            var fileName = $"/var/www/html/brickthrow/generated/{imageLoc}.{format}";
+
+            using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/convert.php?imageNum={imageLoc}{imageLoc2}&format={format}"))
+            {
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                await stream.CopyToAsync(fileStream);
+            }
+            ulong size = (ulong)new FileInfo(fileName).Length;
+
+            if (size > 1024)
+            {
+                await component.FollowupWithFileAsync(fileName);
+
+                embed.Description = $"Image converted to {format}";
+                await component.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+            }
+            else
+            {
+                embed.Description = $"Converting image to {format}\nThere was an error.";
+                await component.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+            }
+        }
 	}
 }
