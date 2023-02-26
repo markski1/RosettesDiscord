@@ -180,7 +180,7 @@ namespace Rosettes.Modules.Commands
 		}
 
 		[SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
-		public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")]string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false", string parry = "false")
+		public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")]string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("image-url", "Provide a URL to use in the GIF.")]string imageUrl = "none", [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false", string parry = "false")
 		{
 			Emote? emoteExtract;
 
@@ -205,6 +205,10 @@ namespace Rosettes.Modules.Commands
 					return;
 				}
 			}
+			else if (imageUrl != "none")
+			{
+				brickerUrl = imageUrl;
+            }
 			else if (emote != "none")
 			{
 				try
@@ -220,7 +224,7 @@ namespace Rosettes.Modules.Commands
 			}
 			else
 			{
-				await RespondAsync("You must provide either an Emote or a User.", ephemeral: true);
+				await RespondAsync("You must provide an Emote, an Image Url or a User.", ephemeral: true);
 				return;
 			}
 

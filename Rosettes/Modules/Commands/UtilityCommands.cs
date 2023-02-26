@@ -503,7 +503,7 @@ namespace Rosettes.Modules.Commands
 		}
 
         [MessageCommand("Convert Image")]
-        public async Task ConvertImage(IMessage message)
+        public async Task ConvertImageCtx(IMessage message)
         {
             string getUrl = Global.GrabURLFromText(message.Content);
 
@@ -532,6 +532,12 @@ namespace Rosettes.Modules.Commands
                 }
             }
 
+			await ConvertImage(getUrl);
+        }
+
+		[SlashCommand("convert", "Convert an image to a desired format.")]
+		public async Task ConvertImage(string getUrl)
+		{
             Random rand = new();
             string randomValue = $"{rand.Next(90) + 10}";
             if (!System.IO.Directory.Exists("/var/www/html/brickthrow/convertQueue/"))
@@ -557,7 +563,7 @@ namespace Rosettes.Modules.Commands
                 {
                     await Task.Delay(250);
                     quarterSecondCount++;
-                    if (quarterSecondCount >= 20) // if the download takes more than 5 seconds it's probably not a very honest url
+                    if (quarterSecondCount > 10) // if the download takes more than 2.5 seconds it's probably not a very honest url
                     {
                         await RespondAsync("Cancelled: Image download took too long.", ephemeral: true);
                         // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
