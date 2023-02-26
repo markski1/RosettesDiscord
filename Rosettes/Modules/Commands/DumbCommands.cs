@@ -227,42 +227,6 @@ namespace Rosettes.Modules.Commands
             await DoBrickThrow(brickerUrl, (reverse != "false"), (parry != "false"));
 		}
 
-		[MessageCommand("Throw Brick")]
-		public async Task ThrowBrick(IMessage message)
-		{
-			string getUrl = Global.GrabURLFromText(message.Content);
-			if (message.Attachments.Any())
-			{
-				string fileType = message.Attachments.First().ContentType.ToLower();
-				if (!fileType.Contains("image"))
-				{
-					await RespondAsync("That message does not contain a valid image.", ephemeral: true);
-					return;
-				}
-				await DoBrickThrow(message.Attachments.First().Url);
-			}
-			else if (getUrl != "0")
-			{
-				await DoBrickThrow(getUrl);
-			}
-			else if (message.Stickers.Any())
-			{
-				await RespondAsync("Sorry, generating brick throw with stickers doesn't work yet.", ephemeral: true);
-			}
-			else
-			{
-				try
-				{
-					Emote emote = Emote.Parse(message.Content);
-					await DoBrickThrow(emote.Url);
-				}
-				catch
-				{
-					await RespondAsync("No images or stickers in this message.", ephemeral: true);
-				}
-			}
-		}
-
 		public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
 		{
 			Random rand = new();

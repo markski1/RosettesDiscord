@@ -12,6 +12,7 @@ namespace Rosettes.Core
 		public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
 		public static readonly string RapidAPIKey = LoadSetting("rapidapi");
 		public static readonly string TenorKey = LoadSetting("tenor");
+		public static readonly string SauceNAO = LoadSetting("saucenao");
 		public static readonly dynamic? LavaLinkData = LoadJsonSetting("lavalink");
 		public static readonly dynamic? LavaLinkBackup = LoadJsonSetting("lavalinkbackup");
 		public static readonly MySqlConnectionStringBuilder Database = new();
