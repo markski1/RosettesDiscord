@@ -619,7 +619,7 @@ namespace Rosettes.Modules.Engine.Farming
             }
             catch
             {
-                // can't do anything at this point, just do not crash the whole thing.
+                _ = Task.Run(async () => { await user.SendMessageAsync("I don't have permission to send or edit messages in that channel, can't complete show inventory."); });
             }
         }
 

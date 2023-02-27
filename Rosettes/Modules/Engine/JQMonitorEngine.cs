@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
-using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Engine
 {
@@ -53,8 +52,15 @@ namespace Rosettes.Modules.Engine
 			{
 				name = user.Username.Replace(" ", "");
 			}
-			IMessage message = await channel.SendMessageAsync($"{name} {action} the channel.");
-			_ = new MessageDeleter(message, 60);
+			try
+			{
+				IMessage message = await channel.SendMessageAsync($"{name} {action} the channel.");
+				_ = new MessageDeleter(message, 60);
+			}
+			catch
+			{
+				// nothing to handle, means we have no access, just don't crash.
+			}
 		}
 	}
 }

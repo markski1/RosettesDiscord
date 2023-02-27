@@ -61,7 +61,7 @@ namespace Rosettes.Managers
                 // image conversion
                 if (action.Contains("CONVERT"))
                 {
-                    await UtilityHelper.ContinueImageConversion(component);
+                    await ImageHelper.ContinueImageConversion(component);
                     return;
                 }
 

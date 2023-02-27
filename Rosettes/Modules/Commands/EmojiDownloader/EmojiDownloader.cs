@@ -73,7 +73,15 @@ namespace Rosettes.Modules.Commands.EmojiDownloader
 				if (progress % 3 == 0)
 				{
 					statusField.Value = $"Progress: `{progress}/{emoteAmount}`";
-					await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+					try
+					{
+                        await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+                    }
+					catch
+					{
+						_ = Task.Run(async () => { await ServerContext.User.SendMessageAsync("I don't have permission to send or edit messasges in that channel, can't complete emoji export."); } );
+						return;
+					}
 				}
 			}
 			// done, update message.
