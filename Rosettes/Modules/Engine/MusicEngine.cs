@@ -16,36 +16,36 @@ namespace Rosettes.Modules.Engine
 	{
 		private static int backupState = 0;
 
-        static readonly NodeConfiguration lavaNodeConfig = new()
-        {
-            SelfDeaf = true,
-            Hostname = Settings.LavaLinkData.Host,
-            Port = Settings.LavaLinkData.Port,
-            Authorization = Settings.LavaLinkData.Password,
-            IsSecure = false
-        };
+		static readonly NodeConfiguration lavaNodeConfig = new()
+		{
+			SelfDeaf = true,
+			Hostname = Settings.LavaLinkData.Host,
+			Port = Settings.LavaLinkData.Port,
+			Authorization = Settings.LavaLinkData.Password,
+			IsSecure = false
+		};
 
-        static readonly NodeConfiguration lavaNodeConfigBackup = new()
-        {
-            SelfDeaf = true,
-            Hostname = Settings.LavaLinkBackup.Host,
-            Port = Settings.LavaLinkBackup.Port,
-            Authorization = Settings.LavaLinkBackup.Password,
-            IsSecure = false
-        };
+		static readonly NodeConfiguration lavaNodeConfigBackup = new()
+		{
+			SelfDeaf = true,
+			Hostname = Settings.LavaLinkBackup.Host,
+			Port = Settings.LavaLinkBackup.Port,
+			Authorization = Settings.LavaLinkBackup.Password,
+			IsSecure = false
+		};
 
-        private static LavaNode? _lavaNode;
+		private static LavaNode? _lavaNode;
 
 		public static void SetMusicEngine(DiscordSocketClient client)
 		{
-            NullLogger<LavaNode> nothing = new();
-            _lavaNode = new(client, lavaNodeConfig, nothing);
-            _lavaNode.OnTrackEnd += TrackEnded;
+			NullLogger<LavaNode> nothing = new();
+			_lavaNode = new(client, lavaNodeConfig, nothing);
+			_lavaNode.OnTrackEnd += TrackEnded;
 			_lavaNode.OnWebSocketClosed += LavanodeDisconnect;
 		}
 
-        private static async Task LavanodeDisconnect(WebSocketClosedEventArg arg)
-        {
+		private static async Task LavanodeDisconnect(WebSocketClosedEventArg arg)
+		{
 			try
 			{
 				await _lavaNode.ConnectAsync();
@@ -55,15 +55,15 @@ namespace Rosettes.Modules.Engine
 				_ = RotateLavanode();
 			}
 
-            return;
-        }
+			return;
+		}
 
-        public static async Task RotateLavanode()
-        {
-            NullLogger<LavaNode> nothing = new();
+		public static async Task RotateLavanode()
+		{
+			NullLogger<LavaNode> nothing = new();
 
-            if (_lavaNode is not null)
-            {
+			if (_lavaNode is not null)
+			{
 				try
 				{
 					await _lavaNode.DisconnectAsync();
@@ -73,29 +73,29 @@ namespace Rosettes.Modules.Engine
 				{
 					// doesn't matter, we're overriding lavaNode anyways, continue
 				}
-            }
+			}
 
-            var client = ServiceManager.GetService<DiscordSocketClient>();
+			var client = ServiceManager.GetService<DiscordSocketClient>();
 
-            switch (backupState)
-            {
-                case 0:
-                    _lavaNode = new(client, lavaNodeConfigBackup, nothing);
-                    backupState++;
-                    break;
-                default:
-                    _lavaNode = new(client, lavaNodeConfig, nothing);
-                    backupState = 0;
-                    break;
-            }
+			switch (backupState)
+			{
+				case 0:
+					_lavaNode = new(client, lavaNodeConfigBackup, nothing);
+					backupState++;
+					break;
+				default:
+					_lavaNode = new(client, lavaNodeConfig, nothing);
+					backupState = 0;
+					break;
+			}
 
-            _lavaNode.OnTrackEnd += TrackEnded;
-            _lavaNode.OnWebSocketClosed += LavanodeDisconnect;
+			_lavaNode.OnTrackEnd += TrackEnded;
+			_lavaNode.OnWebSocketClosed += LavanodeDisconnect;
 
 			return;
-        }
+		}
 
-        public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
+		public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
 		{
 			if (_lavaNode is null) return "Music playback hasn't initialized yet.";
 			if (user.VoiceChannel is null) return "You are not in VC.";
@@ -109,7 +109,7 @@ namespace Rosettes.Modules.Engine
 				// probably already connected, move on
 			}
 
-            if (!_lavaNode.HasPlayer(guild))
+			if (!_lavaNode.HasPlayer(guild))
 			{
 				try
 				{
@@ -117,8 +117,8 @@ namespace Rosettes.Modules.Engine
 				}
 				catch (Exception ex)
 				{
-                    await RotateLavanode();
-                    Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex.Message}");
+					await RotateLavanode();
+					Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex.Message}");
 					return "Error joining the channel, please try again later.";
 				}
 			}
@@ -157,8 +157,8 @@ namespace Rosettes.Modules.Engine
 			catch (Exception ex)
 			{
 				Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
-                await RotateLavanode();
-                return "There was an error trying to fetch the song, please try again.";
+				await RotateLavanode();
+				return "There was an error trying to fetch the song, please try again.";
 			}
 		}
 

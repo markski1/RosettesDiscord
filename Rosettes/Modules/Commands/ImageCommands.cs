@@ -50,7 +50,7 @@ namespace Rosettes.Modules.Commands
 		[SlashCommand("saucenao", "Use SauceNAO to try and find the source of a provided image url.")]
 		public async Task SauceNAO(string url)
 		{
-			string getUrl = $"https://saucenao.com/search.php?db=999&output_type=2&numres=1&api_key={Settings.SauceNAO}&url={url}";
+			string getUrl = $"https://saucenao.com/search.php?db=999&output_type=2&numres=1&dbmaski=25986063&api_key={Settings.SauceNAO}&url={url}";
 
 			var response = await Global.HttpClient.GetStringAsync(getUrl);
 
@@ -357,109 +357,109 @@ namespace Rosettes.Modules.Commands
 		}
 
 
-        [SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
-        public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")] string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("image-url", "Provide a URL to use in the GIF.")] string imageUrl = "none", [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false", string parry = "false")
-        {
-            Emote? emoteExtract;
+		[SlashCommand("throwbrick", "Generate a GIF of a provided emote throwing a brick.")]
+		public async Task ThrowBrick([Summary("emote", "Provide an emote to use in the GIF.")] string emote = "none", [Summary("user", "Provide a user to use their avatar in the GIF.")] IGuildUser? user = null, [Summary("image-url", "Provide a URL to use in the GIF.")] string imageUrl = "none", [Summary("reverse", "Use \"true\" to reverse the GIF.")] string reverse = "false", string parry = "false")
+		{
+			Emote? emoteExtract;
 
-            string brickerUrl;
+			string brickerUrl;
 
-            if (user != null)
-            {
-                try
-                {
-                    if (user.GetDisplayAvatarUrl() is not null)
-                    {
-                        brickerUrl = user.GetDisplayAvatarUrl();
-                    }
-                    else
-                    {
-                        brickerUrl = user.GetDefaultAvatarUrl();
-                    }
-                }
-                catch
-                {
-                    await RespondAsync("No valid user provided.", ephemeral: true);
-                    return;
-                }
-            }
-            else if (imageUrl != "none")
-            {
-                brickerUrl = imageUrl;
-            }
-            else if (emote != "none")
-            {
-                try
-                {
-                    emoteExtract = Emote.Parse(emote);
-                    brickerUrl = emoteExtract.Url;
-                }
-                catch
-                {
-                    await RespondAsync("No valid user provided.", ephemeral: true);
-                    return;
-                }
-            }
-            else
-            {
-                await RespondAsync("You must provide an Emote, an Image Url or a User.", ephemeral: true);
-                return;
-            }
+			if (user != null)
+			{
+				try
+				{
+					if (user.GetDisplayAvatarUrl() is not null)
+					{
+						brickerUrl = user.GetDisplayAvatarUrl();
+					}
+					else
+					{
+						brickerUrl = user.GetDefaultAvatarUrl();
+					}
+				}
+				catch
+				{
+					await RespondAsync("No valid user provided.", ephemeral: true);
+					return;
+				}
+			}
+			else if (imageUrl != "none")
+			{
+				brickerUrl = imageUrl;
+			}
+			else if (emote != "none")
+			{
+				try
+				{
+					emoteExtract = Emote.Parse(emote);
+					brickerUrl = emoteExtract.Url;
+				}
+				catch
+				{
+					await RespondAsync("No valid user provided.", ephemeral: true);
+					return;
+				}
+			}
+			else
+			{
+				await RespondAsync("You must provide an Emote, an Image Url or a User.", ephemeral: true);
+				return;
+			}
 
-            await DoBrickThrow(brickerUrl, (reverse != "false"), (parry != "false"));
-        }
+			await DoBrickThrow(brickerUrl, (reverse != "false"), (parry != "false"));
+		}
 
-        public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
-        {
-            Random rand = new();
-            string randomValue = $"{rand.Next(100)}";
-            if (!Directory.Exists("/var/www/html/brickthrow/emojiCache/"))
-            {
-                Directory.CreateDirectory("/var/www/html/brickthrow/emojiCache/");
-            }
-            if (!Directory.Exists("/var/www/html/brickthrow/generated/"))
-            {
-                Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
-            }
-            string fileName = $"/var/www/html/brickthrow/emojiCache/{randomValue}.png";
-            if (File.Exists(fileName))
-            {
-                File.Delete(fileName);
-            }
-            using (var stream = await Global.HttpClient.GetStreamAsync(url))
-            {
-                using var fileStream = new FileStream(fileName, FileMode.Create);
-                await stream.CopyToAsync(fileStream);
-            }
-            fileName = $"/var/www/html/brickthrow/generated/{randomValue}.gif";
-            if (File.Exists(fileName))
-            {
-                File.Delete(fileName);
-            }
-            if (reverse)
-            {
-                randomValue += "&reverse";
-            }
-            if (parry)
-            {
-                randomValue += "&parry";
-            }
-            using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/brickthrow.php?emojiNum={randomValue}"))
-            {
-                using var fileStream = new FileStream(fileName, FileMode.Create);
-                await stream.CopyToAsync(fileStream);
-            }
-            ulong size = (ulong)new FileInfo(fileName).Length;
-            if (size > 10024)
-            {
-                await RespondWithFileAsync(fileName);
-            }
-            else
-            {
-                await RespondAsync("Sorry, I was unable to do that.", ephemeral: true);
-            }
-        }
-    }
+		public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
+		{
+			Random rand = new();
+			string randomValue = $"{rand.Next(100)}";
+			if (!Directory.Exists("/var/www/html/brickthrow/emojiCache/"))
+			{
+				Directory.CreateDirectory("/var/www/html/brickthrow/emojiCache/");
+			}
+			if (!Directory.Exists("/var/www/html/brickthrow/generated/"))
+			{
+				Directory.CreateDirectory("/var/www/html/brickthrow/generated/");
+			}
+			string fileName = $"/var/www/html/brickthrow/emojiCache/{randomValue}.png";
+			if (File.Exists(fileName))
+			{
+				File.Delete(fileName);
+			}
+			using (var stream = await Global.HttpClient.GetStreamAsync(url))
+			{
+				using var fileStream = new FileStream(fileName, FileMode.Create);
+				await stream.CopyToAsync(fileStream);
+			}
+			fileName = $"/var/www/html/brickthrow/generated/{randomValue}.gif";
+			if (File.Exists(fileName))
+			{
+				File.Delete(fileName);
+			}
+			if (reverse)
+			{
+				randomValue += "&reverse";
+			}
+			if (parry)
+			{
+				randomValue += "&parry";
+			}
+			using (var stream = await Global.HttpClient.GetStreamAsync($"https://snep.markski.ar/brickthrow/brickthrow.php?emojiNum={randomValue}"))
+			{
+				using var fileStream = new FileStream(fileName, FileMode.Create);
+				await stream.CopyToAsync(fileStream);
+			}
+			ulong size = (ulong)new FileInfo(fileName).Length;
+			if (size > 10024)
+			{
+				await RespondWithFileAsync(fileName);
+			}
+			else
+			{
+				await RespondAsync("Sorry, I was unable to do that.", ephemeral: true);
+			}
+		}
+	}
 
 	public static class ImageHelper
 	{
