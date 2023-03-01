@@ -6,39 +6,44 @@ namespace Rosettes.Modules.Engine
 {
 	public static class JQMonitorEngine
 	{
-		public static async Task UserVCUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
+		public static Task UserVCUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
 		{
-			SocketVoiceChannel? channel = null; SocketVoiceChannel? channel2 = null;
-			string? action = null; string? action2 = null;
-			if (oldState.VoiceChannel is not null && newState.VoiceChannel is not null)
+			_ = Task.Run(async () =>
 			{
-				if (oldState.VoiceChannel != newState.VoiceChannel)
+				SocketVoiceChannel? channel = null; SocketVoiceChannel? channel2 = null;
+				string? action = null; string? action2 = null;
+				if (oldState.VoiceChannel is not null && newState.VoiceChannel is not null)
+				{
+					if (oldState.VoiceChannel != newState.VoiceChannel)
+					{
+						channel = oldState.VoiceChannel;
+						channel2 = newState.VoiceChannel;
+						action = "left";
+						action2 = "joined";
+					}
+				}
+				else if (oldState.VoiceChannel is not null)
 				{
 					channel = oldState.VoiceChannel;
-					channel2 = newState.VoiceChannel;
 					action = "left";
-					action2 = "joined";
 				}
-			}
-			else if (oldState.VoiceChannel is not null)
-			{
-				channel = oldState.VoiceChannel;
-				action = "left";
-			}
-			else if (newState.VoiceChannel is not null)
-			{
-				channel = newState.VoiceChannel;
-				action = "joined";
-			}
+				else if (newState.VoiceChannel is not null)
+				{
+					channel = newState.VoiceChannel;
+					action = "joined";
+				}
 
-			if (channel is not null && action is not null)
-			{
-				var dbGuild = await GuildEngine.GetDBGuild(channel.Guild);
-				if (!dbGuild.MonitorsVC()) return;
-				ChannelInform(user, channel, action);
-				if (channel2 is not null && action2 is not null)
+				if (channel is not null && action is not null)
+				{
+					var dbGuild = await GuildEngine.GetDBGuild(channel.Guild);
+					if (!dbGuild.MonitorsVC()) return;
 					ChannelInform(user, channel, action);
-			}
+					if (channel2 is not null && action2 is not null)
+						ChannelInform(user, channel, action);
+				}
+			});
+
+			return Task.CompletedTask;
 		}
 
 		public static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)

@@ -155,7 +155,7 @@ namespace Rosettes.Modules.Engine
 			Members = 0;
 			LogChannel = 0;
 			RpgChannel = 0;
-			Settings = "2111111111";
+			Settings = "1111111111";
 		}
 
 		// database constructor, used on loading all guilds
