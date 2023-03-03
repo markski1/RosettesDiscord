@@ -183,7 +183,7 @@ namespace Rosettes.Modules.Commands
 			embed.Title = "Minecraft server status";
 			embed.Description = addr;
 
-			embed.Footer = new EmbedFooterBuilder() { Text = "request made from gateway.markski.ar" };
+			embed.Footer = new EmbedFooterBuilder() { Text = "data by api.mcsrvstat.us" };
 
 			if (dataObj.online == "false")
 			{
