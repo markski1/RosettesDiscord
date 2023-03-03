@@ -183,13 +183,13 @@ namespace Rosettes.Modules.Commands
 
 			if (disable == "false")
 			{
-				dbGuild.RpgChannel = Context.Channel.Id;
+				dbGuild.FarmChannel = Context.Channel.Id;
 
 				await RespondAsync("Got it, Rosettes will now only allow Farm/Fishing commands in this channel.");
 			}
 			else
 			{
-				dbGuild.RpgChannel = 0;
+				dbGuild.FarmChannel = 0;
 
 				await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless disabled from the web panel).");
 			}
@@ -243,7 +243,7 @@ namespace Rosettes.Modules.Commands
 			firstRow.WithButton($"Music commands: {enabledText}", "toggle_music");
 
 			ActionRowBuilder secondRow = new();
-			enabledText = (dbGuild.AllowsRPG()) ? "Enabled" : "Disabled";
+			enabledText = (dbGuild.AllowsFarm()) ? "Enabled" : "Disabled";
 			secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
 
 			enabledText = (dbGuild.AllowsRandom()) ? "Enabled" : "Disabled";

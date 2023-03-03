@@ -117,7 +117,7 @@ namespace Rosettes.Modules.Engine
 		public ulong OwnerId;
 		public ulong DefaultRole;
 		public ulong LogChannel;
-		public ulong RpgChannel;
+		public ulong FarmChannel;
 		public SocketGuild? CachedReference;
 		public string NameCache;
 
@@ -154,7 +154,7 @@ namespace Rosettes.Modules.Engine
 			DefaultRole = 0;
 			Members = 0;
 			LogChannel = 0;
-			RpgChannel = 0;
+			FarmChannel = 0;
 			Settings = "1111111111";
 		}
 
@@ -169,7 +169,7 @@ namespace Rosettes.Modules.Engine
 			CachedReference = null;
 			DefaultRole = defaultrole;
 			LogChannel = logchan;
-			RpgChannel = rpgchan;
+			FarmChannel = rpgchan;
 		}
 
 		public bool IsValid()
@@ -230,7 +230,7 @@ namespace Rosettes.Modules.Engine
 			return value == '1';
 		}
 
-		public bool AllowsRPG()
+		public bool AllowsFarm()
 		{
 			char value = Settings[4];
 			return value == '1';

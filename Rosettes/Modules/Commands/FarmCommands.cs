@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Commands
 	public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("view", "View your farm")]
-		public async Task RpgFarm()
+		public async Task ViewFarm()
 		{
 			string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
 			if (isAllowed != "yes")

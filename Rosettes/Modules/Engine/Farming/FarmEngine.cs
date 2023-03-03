@@ -63,7 +63,7 @@ namespace Rosettes.Modules.Engine.Farming
 				return "Farming/Fishing Commands do not work in direct messages.";
 			}
 			var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
-			if (!dbGuild.AllowsRPG())
+			if (!dbGuild.AllowsFarm())
 			{
 				return "This guild does not allow Farming/Fishing commands.";
 			}

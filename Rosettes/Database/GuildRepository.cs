@@ -158,7 +158,7 @@ namespace Rosettes.Database
 						WHERE id = @Id";
 			try
 			{
-				return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.RpgChannel })) > 0;
+				return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.FarmChannel })) > 0;
 			}
 			catch (Exception ex)
 			{
