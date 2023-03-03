@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
+using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
@@ -154,6 +155,95 @@ namespace Rosettes.Modules.Commands
 				$"================\n" +
 				$"```";
 			await RespondAsync(text);
+		}
+
+		[SlashCommand("minecraft", "Check the status of a given Minecraft server IP, Java or Bedrock.")]
+		public async Task MinecraftCheck([Summary("address", "IP Address or URL of the server, optionally with port.")]string addr, [Summary("bedrock", "Specify 'true' if you're checking for a bedrock server.")]string bedrock = "false", [Summary("list-players", "Specify 'true' if you want a list of players.")] string listPlayers = "false")
+		{
+			string checkReq;
+			if (bedrock == "false")
+			{
+				checkReq = $"https://api.mcsrvstat.us/2/{addr}";
+			}
+			else
+			{
+				checkReq = $"https://api.mcsrvstat.us/bedrock/2/{addr}";
+			}
+
+			var response = await Global.HttpClient.GetStringAsync(checkReq);
+
+			var data = JsonConvert.DeserializeObject(response);
+			if (data == null) return;
+			dynamic dataObj = ((dynamic)data);
+
+			var dbUser = await UserEngine.GetDBUser(Context.User);
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			embed.Title = "Minecraft server status";
+			embed.Description = addr;
+
+			embed.Footer = new EmbedFooterBuilder() { Text = "request made from gateway.markski.ar" };
+
+			if (dataObj.online == "false")
+			{
+				embed.AddField("Status", "Server is offline.");
+			}
+			else
+			{
+				embed.AddField("Status", "Server is online");
+				
+				if (dataObj.players is not null)
+					embed.AddField("Players", $"{dataObj.players.online}/{dataObj.players.max}", true);
+
+				if (listPlayers != "false" && dataObj.players.list is not null)
+				{
+					string playerList = "";
+					foreach (dynamic item in dataObj.motd.clean)
+					{
+						if (playerList == "")
+						{
+							playerList = item;
+						}
+						else
+						{
+							playerList += $"\n{item}";
+						}
+					}
+					embed.AddField("Player list", playerList);
+				}
+
+				embed.AddField("Version", dataObj.version, true);
+				
+				string serverName = "";
+				foreach (dynamic item in dataObj.motd.clean)
+				{
+					if (serverName == "")
+					{
+						serverName = item;
+					}
+					else
+					{
+						serverName += $" | {item}";
+					}
+				}
+				embed.AddField("Name", serverName);
+				
+				if (dataObj.software is not null)
+					embed.AddField("Software", dataObj.software, true);
+
+				if (dataObj.plugins is not null && dataObj.plugins.raw is not null)
+				{
+					embed.AddField("Plugins", dataObj.plugins.raw.Count, true);
+				}
+
+				if (dataObj.mods is not null && dataObj.mods.raw is not null)
+				{
+					embed.AddField("Mods", dataObj.plugins.mods.Count, true);
+				}
+			}
+
+			await RespondAsync(embed: embed.Build());
 		}
 	}
 }
