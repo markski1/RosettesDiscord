@@ -279,46 +279,6 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		[SlashCommand("checkurl", "Check if a given website URL is online.")]
-		public async Task CheckURL(string url)
-		{
-			var request = new HttpRequestMessage
-			{
-				Method = HttpMethod.Head,
-				RequestUri = new Uri(url)
-			};
-
-			EmbedBuilder embed = await Global.MakeRosettesEmbed();
-			embed.Title = "Checking status";
-			embed.Description = $"Checking `{url}`";
-			await RespondAsync(embed: embed.Build());
-
-			embed.Title = "Status";
-
-			// try to get a response off the url
-			try
-			{
-				using var response = await Global.HttpClient.SendAsync(request);
-				response.EnsureSuccessStatusCode();
-				embed.Description = $"{url} is online.";
-				embed.AddField("Status code", response.StatusCode);
-			}
-			catch
-			{
-				embed.Description = $"{url} is offline.";
-			}
-
-			// report the error by updating the original response. if we don't have access to modify, send it as a follow-up.
-			try
-			{
-				await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-			}
-			catch
-			{
-				await FollowupAsync("Sending as follow-up, because I don't have message access in this channel.", embed: embed.Build());
-			}
-		}
-
 		[SlashCommand("feedback", "To send suggestions, feedback, bug reports, complaints or anything else to the bot developers.")]
 		public async Task SendFeedback(string text)
 		{

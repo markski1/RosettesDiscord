@@ -154,7 +154,7 @@ namespace Rosettes.Database
 			var db = DBConnection();
 
 			var sql = @"UPDATE guilds
-						SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@RpgChannel
+						SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@FarmChannel
 						WHERE id = @Id";
 			try
 			{

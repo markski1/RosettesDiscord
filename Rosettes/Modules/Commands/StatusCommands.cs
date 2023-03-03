@@ -4,12 +4,14 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using System.Net.NetworkInformation;
 
 namespace Rosettes.Modules.Commands
 {
-	public class GameCommands : InteractionModuleBase<SocketInteractionContext>
+	[Group("status", "Status checking commands")]
+	public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
 	{
-		[SlashCommand("csgo", "Status of Steam and CSGO matchmaking.")]
+		[SlashCommand("csgo", "Check the status of Steam and CSGO matchmaking.")]
 		public async Task CSGOStatus()
 		{
 			try
@@ -54,8 +56,8 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		[SlashCommand("ffxiv", "Status of FFXIV servers.")]
-		public async Task XIVCheck(string checkServer = "NOTSPECIFIED")
+		[SlashCommand("ffxiv", "Check the status of FFXIV servers.")]
+		public async Task XIVCheck([Summary("datacenter", "Optionally, specify a datacenter to check it's servers.")]string checkServer = "NOTSPECIFIED")
 		{
 			string lobbyData;
 			try
@@ -157,7 +159,7 @@ namespace Rosettes.Modules.Commands
 			await RespondAsync(text);
 		}
 
-		[SlashCommand("minecraft", "Check the status of a given Minecraft server IP, Java or Bedrock.")]
+		[SlashCommand("minecraft", "Check the status of a given Minecraft server, Java or Bedrock.")]
 		public async Task MinecraftCheck([Summary("address", "IP Address or URL of the server, optionally with port.")]string addr, [Summary("bedrock", "Specify 'true' if you're checking for a bedrock server.")]string bedrock = "false", [Summary("list-players", "Specify 'true' if you want a list of players.")] string listPlayers = "false")
 		{
 			string checkReq;
@@ -242,6 +244,90 @@ namespace Rosettes.Modules.Commands
 					embed.AddField("Mods", dataObj.plugins.mods.Count, true);
 				}
 			}
+
+			await RespondAsync(embed: embed.Build());
+		}
+
+		[SlashCommand("website", "Check if a given website is online and responding to http requests.")]
+		public async Task CheckURL(string url)
+		{
+			if (!url.Contains("http"))
+			{
+				url = $"https://{url}";
+			}
+			var request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Head,
+				RequestUri = new Uri(url)
+			};
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed();
+			embed.Title = "Checking website status";
+			embed.Description = $"Checking `{url}`";
+			await RespondAsync(embed: embed.Build());
+
+			embed.Title = "Website status";
+
+			// try to get a response off the url
+			try
+			{
+				using var response = await Global.HttpClient.SendAsync(request);
+				if (((int)response.StatusCode) >= 400)
+				{
+					embed.Description = $"{url} is offline.";
+				}
+				else
+				{
+					embed.Description = $"{url} is reachable.";
+					embed.AddField("Status code", $"{response.StatusCode} ({((int)response.StatusCode)})");
+				}
+			}
+			catch
+			{
+				embed.Description = $"{url} is unreachable.";
+			}
+
+			// report the error by updating the original response. if we don't have access to modify, send it as a follow-up.
+			try
+			{
+				await ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+			}
+			catch
+			{
+				await FollowupAsync("Sending as follow-up, because I don't have message access in this channel.", embed: embed.Build());
+			}
+		}
+
+		[SlashCommand("ping", "Check if a given hostname or IP address is online.")]
+		public async Task CheckPing([Summary("address", "Hostname or IP address to ping.")]string address)
+		{
+			Ping ping = new();
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed();
+
+			embed.Title = "Ping";
+
+			embed.Description = $"Pinging {address}";
+
+			try
+			{
+				var reply = ping.Send(address, 2500);
+				if (reply is null)
+				{
+					embed.AddField("Status", "FAIL.\nNo 'pong' after 2500ms; might be offline.");
+				}
+				else
+				{
+					embed.AddField("Status", reply.Status);
+					embed.AddField("Roundtrip latency", $"{reply.RoundtripTime}ms");
+				}
+			}
+			catch
+			{
+				embed.AddField("Status", "FAIL.\nFailed to reach provided hostname or IP.");
+			}
+
+			embed.Footer = new EmbedFooterBuilder() { Text = "request sent from gateway.markski.ar" };
 
 			await RespondAsync(embed: embed.Build());
 		}
