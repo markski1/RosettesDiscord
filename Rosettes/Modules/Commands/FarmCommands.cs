@@ -138,13 +138,14 @@ namespace Rosettes.Modules.Commands
 
 			foreach (var anUser in topUsers)
 			{
+				if (anUser.Exp <= 0) continue;
+
 				spaceStr = "";
 				space = 32 - (await anUser.GetName(false)).Length;
 				for (int i = 0; i < space; i++)
 				{
 					spaceStr += " ";
 				}
-				
 				
 				topList += $"{await anUser.GetName(false)} {spaceStr}|   Level {anUser.GetLevel()}; {anUser.Exp}xp\n";
 			}

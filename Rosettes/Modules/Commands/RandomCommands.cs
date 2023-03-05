@@ -7,6 +7,7 @@ using System.Data;
 
 namespace Rosettes.Modules.Commands
 {
+	[Group("random", "Random number or \"gambling\" commands")]
 	public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
@@ -74,7 +75,7 @@ namespace Rosettes.Modules.Commands
 		}
 
 		[SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-		public async Task CheckEm([Summary("image", "Return a relevant checkem image? By default, false.")] string image = "false")
+		public async Task CheckEm([Summary("image", "Return a relevant checkem image. By default, false.")] string image = "false")
 		{
 			if (Context.Guild is null)
 			{

@@ -63,17 +63,13 @@ namespace Rosettes.Modules.Engine.Farming
 				return "Farming/Fishing Commands do not work in direct messages.";
 			}
 			var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
+			if (!Global.CanSendMessage(context))
+			{
+				return "I don't have access to this channel. Please let an admin know, or try using me in other channel.";
+			}
 			if (!dbGuild.AllowsFarm())
 			{
 				return "This guild does not allow Farming/Fishing commands.";
-			}
-			try
-			{
-				await context.Channel.GetPinnedMessagesAsync();
-			}
-			catch
-			{
-				return "Rosettes does not have access to that channel.";
 			}
 			if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
 			{
@@ -619,6 +615,7 @@ namespace Rosettes.Modules.Engine.Farming
 			}
 			catch
 			{
+				// throw any potential exception away if we can't message the user directly. we can only do so much at this point.
 				_ = Task.Run(async () => { await user.SendMessageAsync("I don't have permission to send or edit messages in that channel, can't complete show inventory."); });
 			}
 		}

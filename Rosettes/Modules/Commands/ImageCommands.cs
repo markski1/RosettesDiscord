@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Rosettes.Modules.Commands
 {
+	[Group("image", "Image manipulation commands")]
 	public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[MessageCommand("SauceNAO Search")]
@@ -274,7 +275,7 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		[SlashCommand("reversegif", "[experimental] Reverse the gif in the provided URL.")]
+		[SlashCommand("reverse-gif", "[experimental] Reverse the gif in the provided URL.")]
 		public async Task ReverseGIFSlashCMD(string gifUrl)
 		{
 			await RespondAsync("Reversing, please wait...");

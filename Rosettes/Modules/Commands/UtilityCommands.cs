@@ -11,6 +11,7 @@ using System;
 using Victoria.Node;
 using Newtonsoft.Json.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands
 {
@@ -191,7 +192,7 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		[SlashCommand("exportallemoji", "Generate a ZIP file containing every single emoji in the guild.")]
+		[SlashCommand("export-emoji", "Generate a ZIP file containing every single emoji in the guild.")]
 		public async Task ExportEmoji()
 		{
 			if (Context.Guild == null)
@@ -258,7 +259,7 @@ namespace Rosettes.Modules.Commands
 			AlarmManager.CreateAlarm((DateTime.Now + TimeSpan.FromMinutes(amount)), await UserEngine.GetDBUser(Context.User), Context.Channel, amount);
 		}
 
-		[SlashCommand("cancelalarm", "Cancels your current alarm.")]
+		[SlashCommand("alarm-cancel", "Cancels your current alarm.")]
 		public async Task CancelAlarm()
 		{
 			if (!AlarmManager.CheckUserHasAlarm(Context.User))
@@ -276,6 +277,94 @@ namespace Rosettes.Modules.Commands
 			else
 			{
 				await RespondAsync("There was an error deleting your alarm.");
+			}
+		}
+
+		[SlashCommand("urban", "Returns an UrbanDictionary definition for the provided word.")]
+		public async Task UrbanDefine(string query)
+		{
+			if (Context.Guild is null)
+			{
+				await RespondAsync("This command cannot be used in DM's.");
+				return;
+			}
+			var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+
+			if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
+			{
+				await RespondAsync($"The term must only contain letters and numbers.");
+				return;
+			}
+
+			var request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Get,
+				RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={query.ToLower()}"),
+				Headers =
+					{
+						{ "X-RapidAPI-Key", Settings.RapidAPIKey },
+						{ "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
+					},
+			};
+
+			try
+			{
+				using var response = await Global.HttpClient.SendAsync(request);
+				response.EnsureSuccessStatusCode();
+				var data = await response.Content.ReadAsStringAsync();
+				// obtain the definition from the API and parse it. Use "first" because it's all contained in a response object.
+				var definitionList = JObject.Parse(data).First;
+				if (definitionList is null)
+				{
+					await RespondAsync("Failed to fetch definitions.");
+					return;
+				}
+
+				// "first" again because the definitions are inside a list (and as stated above, the list inside a response object. very stupid).
+				definitionList = definitionList.First;
+
+				// if the list is null, we have no results.
+				if (definitionList is null)
+				{
+					await RespondAsync("No definition found for that word.");
+					return;
+				}
+
+				List<dynamic> parsedDefinitionList = new();
+				foreach (var aDefinition in definitionList)
+				{
+					dynamic? temp = JsonConvert.DeserializeObject(aDefinition.ToString());
+					if (temp is null) continue;
+					parsedDefinitionList.Add(temp);
+				}
+
+				var dbUser = await UserEngine.GetDBUser(Context.User);
+				EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+				embed.Title = $"Definition for: {query}";
+
+				if (parsedDefinitionList.Count > 0)
+				{
+					dynamic definition = parsedDefinitionList.OrderBy(def => def.thumbs_up - def.thumbs_down).Last();
+
+					embed.Description = definition.definition;
+
+					embed.AddField("Upvotes", $"{definition.thumbs_up}", inline: true);
+					embed.AddField("Downvotes", $"{definition.thumbs_down}", inline: true);
+					embed.AddField("Permalink", $"<{definition.permalink}>");
+				}
+				else
+				{
+					embed.Description = "Sorry, there does not seem to be any definition for that word.";
+				}
+
+
+				await RespondAsync(embed: embed.Build());
+			}
+			catch (Exception ex)
+			{
+				await RespondAsync("There was an error fetching the definition.", ephemeral: true);
+				Global.GenerateErrorMessage("urbanDictionary", ex.Message);
 			}
 		}
 

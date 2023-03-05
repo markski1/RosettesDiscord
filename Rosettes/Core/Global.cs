@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Rosettes.Database;
@@ -231,6 +232,26 @@ namespace Rosettes.Core
 					return false;
 				}
 			}
+		}
+
+		public static IGuildUser GetSelfGuildUser(SocketGuild guild)
+		{
+			ulong id;
+			#if DEBUG
+			id = 815231883944263681;
+			#else
+			id = 970176524110147605;
+			#endif
+
+			return guild.GetUser(id);
+		}
+
+		public static bool CanSendMessage(SocketInteractionContext context)
+		{
+			var selfUser = GetSelfGuildUser(context.Guild);
+			var access = selfUser.GetPermissions(context.Channel as IGuildChannel);
+
+			return access.SendMessages;
 		}
 	}
 

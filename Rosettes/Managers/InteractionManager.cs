@@ -206,7 +206,7 @@ namespace Rosettes.Managers
 									}
 									catch
 									{
-										await modal.RespondAsync("I don't have access to this channel, please tell an admin!", ephemeral: true);
+										await modal.RespondAsync("I don't have access to this channel. Please let an admin know, or try using me in other channel.", ephemeral: true);
 										return;
 									}
 								}

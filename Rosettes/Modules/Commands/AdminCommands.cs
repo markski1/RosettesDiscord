@@ -203,13 +203,9 @@ namespace Rosettes.Modules.Commands
 				await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
 			}
 
-			try
+			if (!Global.CanSendMessage(Context))
 			{
-				await Context.Channel.GetPinnedMessagesAsync();
-			}
-			catch
-			{
-				await RespondAsync("I don't have access to this channel.", ephemeral: true);
+				await RespondAsync("I don't have access to this channel. Please let an admin know, or try using me in other channel..", ephemeral: true);
 				return;
 			}
 

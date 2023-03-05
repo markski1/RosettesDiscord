@@ -6,6 +6,7 @@ using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands
 {
+	[Group("music", "Music control commands")]
 	public class MusicCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("play", "Joins VC and plays the specified song. Can be a URL or a search term.")]
@@ -111,6 +112,11 @@ namespace Rosettes.Modules.Commands
 			if (Context.Guild == null)
 			{
 				await RespondAsync("This command won't run in my DM's, silly.");
+				return false;
+			}
+			if (!Global.CanSendMessage(Context))
+			{
+				await RespondAsync("I don't have access to this channel. Please let an admin know, or try using me in other channel.", ephemeral: true);
 				return false;
 			}
 			var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
