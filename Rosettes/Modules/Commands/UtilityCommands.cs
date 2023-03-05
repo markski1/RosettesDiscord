@@ -192,7 +192,7 @@ namespace Rosettes.Modules.Commands
 			}
 		}
 
-		[SlashCommand("export-emoji", "Generate a ZIP file containing every single emoji in the guild.")]
+		[SlashCommand("exportemoji", "Generate a ZIP file containing every single emoji in the guild.")]
 		public async Task ExportEmoji()
 		{
 			if (Context.Guild == null)

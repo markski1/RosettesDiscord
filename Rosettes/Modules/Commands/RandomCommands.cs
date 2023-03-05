@@ -7,7 +7,6 @@ using System.Data;
 
 namespace Rosettes.Modules.Commands
 {
-	[Group("random", "Random number or \"gambling\" commands")]
 	public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
