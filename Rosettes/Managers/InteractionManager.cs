@@ -235,8 +235,20 @@ namespace Rosettes.Managers
 			return Task.CompletedTask;
 		}
 
-		private Task OnCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
+		private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
 		{
+			return Task.CompletedTask;
+		}
+
+		private Task OnGuildCommandExecuted(SocketSlashCommand arg)
+		{
+			// only handle guild-specific commands.
+			if (arg.GuildId is not ulong guild_id) return Task.CompletedTask;
+			if (arg.Type != InteractionType.ApplicationCommand) return Task.CompletedTask;
+
+			var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+			dbGuild.ExecuteCommand(arg);
+
 			return Task.CompletedTask;
 		}
 
@@ -254,7 +266,9 @@ namespace Rosettes.Managers
 
 			_client.ModalSubmitted += OnModalSubmitted;
 
-			_commands.SlashCommandExecuted += OnCommandExecuted;
+			_client.SlashCommandExecuted += OnGuildCommandExecuted;
+
+			_commands.SlashCommandExecuted += OnGlobalCommandExecuted;
 		}
 	}
 }

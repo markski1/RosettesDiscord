@@ -123,6 +123,7 @@ namespace Rosettes.Modules.Engine
 		public ulong FarmChannel;
 		public SocketGuild? CachedReference;
 		public string NameCache;
+		public List<GuildCommand> GuildCommands = new(); 
 
 		// settings contains 10 characters, each representative of the toggle state of a setting.
 		//
@@ -341,60 +342,77 @@ namespace Rosettes.Modules.Engine
 			}
 		}
 
+		public Task ExecuteCommand(SocketSlashCommand arg)
+		{
+			if (GuildCommands.Any(x => x.name == arg.Data.Name))
+			{
+				GuildCommand cmd = GuildCommands.First(x => x.name == arg.Data.Name);
+				cmd.Execute(arg);
+			}
+
+			return Task.CompletedTask;
+		}
+
 		public IUserMessage? cacheSettingsMsg;
 	}
 
 	public class GuildCommand
 	{
 		public ulong guild_id;
-		//public Guild dbGuild;
+		public Guild dbGuild;
 		public string name;
+		public string description;
 		public int action;
 		public bool ephemeral;
 		public string value;
 
-		GuildCommand(ulong guild_id, string name, int action, string value, int ephemeral)
+		public GuildCommand(ulong guild_id, string name, int action, string value, int ephemeral, string description)
 		{
 			this.guild_id = guild_id;
 			this.name = name;
 			this.action = action;
 			this.value = value;
 			this.ephemeral = ephemeral != 0;
-			//this.dbGuild = GuildEngine.GetDBGuildById(guild_id);
+			this.description = description;
+			this.dbGuild = GuildEngine.GetDBGuildById(guild_id);
 		}
 
 		public void BuildSelf()
 		{
-			//todo
+			SlashCommandBuilder command = (new SlashCommandBuilder()).
+				WithName(name).
+				WithDescription(description);
+
+			dbGuild.GetDiscordSocketReference().CreateApplicationCommandAsync(command.Build());
 		}
 
 		public async void Execute(SocketInteraction context) {
-			SocketGuildUser? guildUser = context.User as SocketGuildUser;
+			if (context.User is not SocketGuildUser guildUser)
+			{
+				Global.GenerateErrorMessage("customcmd-assign", $"Failed to obtain a guild-specific user object!\n Guild: {context.GuildId} ; User: {context.User.Id} ; For command: {name}");
+				return;
+			}
+
 			switch (action)
 			{
 				case 0: // message
 					await context.RespondAsync(value, ephemeral: ephemeral);
 					break;
 				case 1: // assign role
-					if (guildUser is null)
-					{
-						Global.GenerateErrorMessage("customcmd-assign", "Failed to obtain a guild-specific user object!");
-						return;
-					}
 					ulong roleId = ulong.Parse(value);
-					bool hasRole = (guildUser.Roles.Where(x => x.Id == roleId)).Any();
+					bool hasRole = guildUser.Roles.Any(x => x.Id == roleId);
 					try
 					{
 						if (hasRole)
 						{
-							var role = guildUser.Roles.Where(x => x.Id == roleId).First();
+							var role = guildUser.Roles.First(x => x.Id == roleId);
 							await guildUser.RemoveRoleAsync(role);
 							await context.RespondAsync($"Role `{role.Name}` removed.");
 						}
 						else
 						{
 							await guildUser.AddRoleAsync(roleId);
-							var role = guildUser.Roles.Where(x => x.Id == roleId).First();
+							var role = guildUser.Roles.First(x => x.Id == roleId);
 							await context.RespondAsync($"Role `{role.Name}` added.");
 						}
 					}
