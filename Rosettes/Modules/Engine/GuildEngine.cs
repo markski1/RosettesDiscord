@@ -1,9 +1,12 @@
 ﻿using Discord;
+using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
 using System;
+using System.Linq;
 
 namespace Rosettes.Modules.Engine
 {
@@ -339,5 +342,68 @@ namespace Rosettes.Modules.Engine
 		}
 
 		public IUserMessage? cacheSettingsMsg;
+	}
+
+	public class GuildCommand
+	{
+		public ulong guild_id;
+		//public Guild dbGuild;
+		public string name;
+		public int action;
+		public bool ephemeral;
+		public string value;
+
+		GuildCommand(ulong guild_id, string name, int action, string value, int ephemeral)
+		{
+			this.guild_id = guild_id;
+			this.name = name;
+			this.action = action;
+			this.value = value;
+			this.ephemeral = ephemeral != 0;
+			//this.dbGuild = GuildEngine.GetDBGuildById(guild_id);
+		}
+
+		public void BuildSelf()
+		{
+			//todo
+		}
+
+		public async void Execute(SocketInteraction context) {
+			SocketGuildUser? guildUser = context.User as SocketGuildUser;
+			switch (action)
+			{
+				case 0: // message
+					await context.RespondAsync(value, ephemeral: ephemeral);
+					break;
+				case 1: // assign role
+					if (guildUser is null)
+					{
+						Global.GenerateErrorMessage("customcmd-assign", "Failed to obtain a guild-specific user object!");
+						return;
+					}
+					ulong roleId = ulong.Parse(value);
+					bool hasRole = (guildUser.Roles.Where(x => x.Id == roleId)).Any();
+					try
+					{
+						if (hasRole)
+						{
+							var role = guildUser.Roles.Where(x => x.Id == roleId).First();
+							await guildUser.RemoveRoleAsync(role);
+							await context.RespondAsync($"Role `{role.Name}` removed.");
+						}
+						else
+						{
+							await guildUser.AddRoleAsync(roleId);
+							var role = guildUser.Roles.Where(x => x.Id == roleId).First();
+							await context.RespondAsync($"Role `{role.Name}` added.");
+						}
+					}
+					catch
+					{
+						await context.RespondAsync("Sorry, I don't have permission to add or remove roles in this guild. Please tell an admin.", ephemeral: true);
+					}
+					break;
+			}
+		}
 	}
 }

@@ -48,6 +48,7 @@ namespace Rosettes.Modules.Engine
 		{
 			try
 			{
+				if (_lavaNode is null) throw new Exception();
 				await _lavaNode.ConnectAsync();
 			}
 			catch
