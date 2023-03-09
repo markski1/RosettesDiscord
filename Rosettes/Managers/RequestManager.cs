@@ -50,7 +50,12 @@ namespace Rosettes.Managers
                     case 3:
                         Global.SendMessage(req.RelevantGuild, req.RelevantStringValue);
                         break;
-                }
+                    // req type 4: custom command updates
+                    case 4:
+						guild = GuildEngine.GetDBGuildById(req.RelevantGuild);
+                        await guild.UpdateCommands();
+                        break;
+				}
                 sql = @"DELETE FROM requests WHERE relevantguild=@RelevantGuild AND relevantvalue=@RelevantValue";
 
                 await db.ExecuteAsync(sql, new { req.RelevantGuild, req.RelevantValue });

@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using Discord;
 using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
@@ -18,6 +17,7 @@ namespace Rosettes.Database
 		Task<bool> UpdateGuild(Guild guild);
 		Task<bool> UpdateGuildRoles(Guild guild);
 		Task<ulong> GetGuildDefaultRole(Guild guild);
+		Task<IEnumerable<GuildCommand>> LoadGuildCommands(Guild guild);
 	}
 
 	public class GuildRepository : IGuildRepository
@@ -207,6 +207,23 @@ namespace Rosettes.Database
 			}
 
 			return true;
+		}
+
+		public async Task<IEnumerable<GuildCommand>> LoadGuildCommands(Guild guild)
+		{
+			var db = DBConnection();
+
+			var sql = @"SELECT guildid, name, description, ephemeral, action, value FROM custom_cmds";
+
+			try
+			{
+				return await db.QueryAsync<GuildCommand>(sql, new { });
+			}
+			catch (Exception ex)
+			{
+				Global.GenerateErrorMessage("sql-getallguildcommands", $"sqlException code {ex.Message}");
+				return new List<GuildCommand>();
+			}
 		}
 	}
 }

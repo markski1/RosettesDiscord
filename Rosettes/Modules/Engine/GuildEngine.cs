@@ -1,12 +1,9 @@
 ﻿using Discord;
-using Discord.Interactions;
 using Discord.Rest;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
-using System;
-using System.Linq;
 
 namespace Rosettes.Modules.Engine
 {
@@ -93,6 +90,7 @@ namespace Rosettes.Modules.Engine
 			foreach (Guild guild in GuildCache)
 			{
 				guild.UpdateRoles();
+				await guild.UpdateCommands();
 			}
 		}
 
@@ -353,6 +351,24 @@ namespace Rosettes.Modules.Engine
 			return Task.CompletedTask;
 		}
 
+		public async Task UpdateCommands()
+		{
+			var cmdsTemp = await GuildEngine._interface.LoadGuildCommands(this);
+
+			var dref = GetDiscordSocketReference();
+
+			if (dref is null) return;
+
+			GuildCommands.Clear();
+			await dref.DeleteApplicationCommandsAsync();
+
+			foreach (var cmd in cmdsTemp)
+			{
+				cmd.BuildSelf();
+				GuildCommands.Add(cmd);
+			}
+		}
+
 		public IUserMessage? cacheSettingsMsg;
 	}
 
@@ -366,9 +382,9 @@ namespace Rosettes.Modules.Engine
 		public bool ephemeral;
 		public string value;
 
-		public GuildCommand(ulong guild_id, string name, int action, string value, int ephemeral, string description)
+		public GuildCommand(ulong guildid, string name, string description, int ephemeral, int action, string value)
 		{
-			this.guild_id = guild_id;
+			this.guild_id = guildid;
 			this.name = name;
 			this.action = action;
 			this.value = value;
@@ -401,19 +417,18 @@ namespace Rosettes.Modules.Engine
 				case 1: // assign role
 					ulong roleId = ulong.Parse(value);
 					bool hasRole = guildUser.Roles.Any(x => x.Id == roleId);
+					var role = guildUser.Guild.GetRole(roleId);
 					try
 					{
 						if (hasRole)
 						{
-							var role = guildUser.Roles.First(x => x.Id == roleId);
 							await guildUser.RemoveRoleAsync(role);
-							await context.RespondAsync($"Role `{role.Name}` removed.");
+							await context.RespondAsync($"Role `{role.Name}` removed.", ephemeral: ephemeral);
 						}
 						else
 						{
-							await guildUser.AddRoleAsync(roleId);
-							var role = guildUser.Roles.First(x => x.Id == roleId);
-							await context.RespondAsync($"Role `{role.Name}` added.");
+							await guildUser.AddRoleAsync(role);
+							await context.RespondAsync($"Role `{role.Name}` added.", ephemeral: ephemeral);
 						}
 					}
 					catch

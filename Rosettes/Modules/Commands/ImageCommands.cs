@@ -4,11 +4,6 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rosettes.Modules.Commands
 {
