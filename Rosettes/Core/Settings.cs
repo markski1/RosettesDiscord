@@ -10,7 +10,7 @@ namespace Rosettes.Core
 		// DEBUG means my windows machine, otherwise it's production
 #if DEBUG
 		public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
-		public static readonly string keyLoc = "Y:/rosetteskeys";
+		public static readonly string keyLoc = "F:/rosetteskeys";
 #else
 		public static readonly LogSeverity LogSeverity = LogSeverity.Info;
 		public static readonly string keyLoc = "./keys";
