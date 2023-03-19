@@ -6,6 +6,7 @@ using PokeApiNet;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.RegularExpressions;
+using JikanDotNet;
 
 namespace Rosettes.Modules.Commands
 {
@@ -197,18 +198,24 @@ namespace Rosettes.Modules.Commands
             }
         }
 
-        [SlashCommand("anime", "Finds a summary for a specified Anime, and downloads.")]
-        public async Task FindAnime(string anime)
+        [SlashCommand("anime", "Finds a summary for a specified Anime.")]
+        public async Task FindAnime(string name)
         {
             JikanDotNet.PaginatedJikanResponse<ICollection<JikanDotNet.Anime>> results;
 
             try
             {
-                results = await Global.Jikan.SearchAnimeAsync(anime) ?? throw new Exception();
+                results = await Global.Jikan.SearchAnimeAsync(name) ?? throw new Exception();
             }
             catch
             {
                 await RespondAsync("Sorry, there was an error conducting the search, or there were no results", ephemeral: true);
+                return;
+            }
+
+            if (!results.Data.Any())
+            {
+                await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
                 return;
             }
 
@@ -257,6 +264,136 @@ namespace Rosettes.Modules.Commands
 
             if (result.Trailer is not null && result.Trailer.Url is not null)
                 comps.WithButton("Trailer", style: ButtonStyle.Link, url: result.Trailer.Url);
+
+            await RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        [SlashCommand("manga", "Finds a summary for a specified Manga.")]
+        public async Task FindManga(string name)
+        {
+            JikanDotNet.PaginatedJikanResponse<ICollection<JikanDotNet.Manga>> results;
+
+            try
+            {
+                results = await Global.Jikan.SearchMangaAsync(name) ?? throw new Exception();
+            }
+            catch
+            {
+                await RespondAsync("Sorry, there was an error conducting the search, or there were no results", ephemeral: true);
+                return;
+            }
+
+            if (!results.Data.Any())
+            {
+                await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
+                return;
+            }
+
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            var result = results.Data.OrderBy(x => x.ScoredBy).Last();
+
+            embed.Title = result.Titles.First().Title;
+
+            embed.ThumbnailUrl = result.Images.JPG.ImageUrl;
+
+            string genres = "";
+            foreach (var genre in result.Genres)
+            {
+                genres += $"{genre.Name}\n";
+            }
+            if (genres.Length > 0) embed.AddField("Genres", genres);
+
+            string themes = "";
+            foreach (var theme in result.Themes)
+            {
+                themes += $"{theme.Name}\n";
+            }
+            if (themes.Length > 0) embed.AddField("Themes", themes, true);
+
+            embed.AddField("Status", result.Status, true);
+
+            string authors = "";
+
+            foreach (var author in result.Authors)
+            {
+                authors += $"{author.Name}\n";
+            }
+
+            embed.AddField("Author(s)", authors);
+
+            if (result.Chapters is not null) embed.AddField("Chapters", result.Chapters, true);
+
+            ComponentBuilder comps = new();
+
+            comps.WithButton("MyAnimeList", style: ButtonStyle.Link, url: result.Url);
+
+            await RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        [SlashCommand("character", "Finds a summary for a specified character in media (Animated or Manga).")]
+        public async Task FindCharacter(string name)
+        {
+            JikanDotNet.PaginatedJikanResponse<ICollection<JikanDotNet.Character>> results;
+
+            try
+            {
+                results = await Global.Jikan.SearchCharacterAsync(name) ?? throw new Exception();
+            }
+            catch
+            {
+                await RespondAsync("Sorry, there was an error conducting the search, or there were no results.", ephemeral: true);
+                return;
+            }
+
+            if (!results.Data.Any())
+            {
+                await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
+                return;
+            }
+
+            var dbUser = await UserEngine.GetDBUser(Context.User);
+
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+            var result = results.Data.OrderBy(x => x.Favorites).Last();
+
+            embed.Title = result.Name;
+
+            if (result.Nicknames.Any())
+            {
+                string nicknames = "";
+                foreach (var nickname in result.Nicknames)
+                {
+                    if (result.Nicknames.First() != nickname) nicknames += "; ";
+                    nicknames += nickname;
+                }
+                embed.Description = $"Nicknames: {nicknames}";
+            }
+
+            embed.ThumbnailUrl = result.Images.JPG.ImageUrl;
+
+            if (result.About is not null && result.About.Length > 0)
+            {
+                string hygienizedAbout;
+
+                if (result.About.Length > 256)
+                {
+                    hygienizedAbout = $"{result.About[0..256]} [...]";
+                }
+                else
+                {
+                    hygienizedAbout = result.About;
+                }
+
+                embed.AddField("About", hygienizedAbout);
+            }
+
+            ComponentBuilder comps = new();
+
+            comps.WithButton("MyAnimeList", style: ButtonStyle.Link, url: result.Url);
 
             await RespondAsync(embed: embed.Build(), components: comps.Build());
         }
