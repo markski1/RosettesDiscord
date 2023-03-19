@@ -7,6 +7,7 @@ using Rosettes.Modules.Engine.Farming;
 using System.Diagnostics;
 using System.Text;
 using PokeApiNet;
+using JikanDotNet;
 
 namespace Rosettes.Core
 {
@@ -15,8 +16,9 @@ namespace Rosettes.Core
 		public static readonly RosettesMain RosettesMain = new();
 		public static readonly HttpClient HttpClient = new();
 		public static readonly PokeApiClient PokeClient = new();
+		public static readonly IJikan Jikan = new Jikan();
 
-		public static async void SendMessage(ulong id, string message)
+        public static async void SendMessage(ulong id, string message)
 		{
 			try
 			{
