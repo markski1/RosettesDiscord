@@ -1,14 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Rosettes.Database;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Farming;
 using System.Diagnostics;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
+using PokeApiNet;
 
 namespace Rosettes.Core
 {
@@ -16,6 +14,7 @@ namespace Rosettes.Core
 	{
 		public static readonly RosettesMain RosettesMain = new();
 		public static readonly HttpClient HttpClient = new();
+		public static readonly PokeApiClient PokeClient = new();
 
 		public static async void SendMessage(ulong id, string message)
 		{
