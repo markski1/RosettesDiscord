@@ -274,7 +274,7 @@ namespace Rosettes.Modules.Commands
 				using var response = await Global.HttpClient.SendAsync(request);
 				if (((int)response.StatusCode) >= 400)
 				{
-					embed.Description = $"{url} is offline.";
+					embed.Description = $"{url} is offline or unavailable.";
 				}
 				else
 				{
