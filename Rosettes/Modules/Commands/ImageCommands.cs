@@ -230,8 +230,6 @@ namespace Rosettes.Modules.Commands
 		[MessageCommand("Reverse GIF")]
 		public async Task ReverseGIFMessageCMD(IMessage message)
 		{
-			await RespondAsync("Reversing, please wait...");
-
 			string getUrl = Global.GrabURLFromText(message.Content);
 
 			// first try to find a gif attached
@@ -265,7 +263,7 @@ namespace Rosettes.Modules.Commands
 				catch
 				{
 					// welp, we found nothing to work with.
-					await ModifyOriginalResponseAsync(x => x.Content = "No images or animated emotes found in this message.");
+					await RespondAsync("No images or animated emotes found in this message.", ephemeral: true);
 				}
 			}
 		}
@@ -273,8 +271,6 @@ namespace Rosettes.Modules.Commands
 		[SlashCommand("reverse-gif", "[experimental] Reverse the gif in the provided URL.")]
 		public async Task ReverseGIFSlashCMD(string gifUrl)
 		{
-			await RespondAsync("Reversing, please wait...");
-
 			string getUrl = Global.GrabURLFromText(gifUrl);
 
 			// check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
@@ -289,7 +285,7 @@ namespace Rosettes.Modules.Commands
 			}
 			else
 			{
-				await ModifyOriginalResponseAsync(x => x.Content = "Sorry, there was an error fetching the gif.");
+				await RespondAsync("Sorry, there was an error fetching the gif.", ephemeral: true);
 			}
 		}
 
@@ -310,6 +306,8 @@ namespace Rosettes.Modules.Commands
 			{
 				System.IO.File.Delete(fileName);
 			}
+
+			await DeferAsync();
 
 			using (Stream stream = await Global.HttpClient.GetStreamAsync(url))
 			{
@@ -422,6 +420,7 @@ namespace Rosettes.Modules.Commands
 			{
 				File.Delete(fileName);
 			}
+			await DeferAsync();
 			using (var stream = await Global.HttpClient.GetStreamAsync(url))
 			{
 				using var fileStream = new FileStream(fileName, FileMode.Create);
@@ -448,11 +447,11 @@ namespace Rosettes.Modules.Commands
 			ulong size = (ulong)new FileInfo(fileName).Length;
 			if (size > 10024)
 			{
-				await RespondWithFileAsync(fileName);
+				await FollowupWithFileAsync(fileName);
 			}
 			else
 			{
-				await RespondAsync("Sorry, I was unable to do that.", ephemeral: true);
+				await FollowupAsync("Sorry, I was unable to do that.", ephemeral: true);
 			}
 		}
 	}

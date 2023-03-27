@@ -109,6 +109,8 @@ namespace Rosettes.Modules.Commands
 
 			// form a link straight to FxTwitter's direct media backend.
 			tweetUrl = $"https://d.fxtwitter.com{tweetUrl}";
+
+			await DeferAsync();
 			
 			EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
@@ -147,7 +149,6 @@ namespace Rosettes.Modules.Commands
 			// ensure the file was downloaded correctly and is either MPEG4 or QuickTime encoded.
 			if (!System.IO.File.Exists(fileName) || (fileType is not FileType.QuickTime && fileType is not FileType.Mp4))
 			{
-				await DeferAsync();
 				downloadField.Value = "Failed.";
 
 				uploadField.Value = $"Won't be uploaded, failed to fetch valid video file. Format: {fileType}";
@@ -170,13 +171,11 @@ namespace Rosettes.Modules.Commands
 			{
 				try
 				{
-					await RespondWithFileAsync(fileName);
+					await FollowupWithFileAsync(fileName);
 					_ = mid.DeleteAsync();
 				}
 				catch
 				{
-					await DeferAsync();
-
 					uploadField.Value = "Failed.";
 
 					await mid.ModifyAsync(x => x.Embed = embed.Build());

@@ -553,10 +553,7 @@ namespace Rosettes.Modules.Engine.Farming
 			User dbUser = await UserEngine.GetDBUser(user);
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-			embed.Title = $"Inventory";
-			embed.Description = "Loading inventory...";
-
-			await interaction.RespondAsync(embed: embed.Build());
+			await interaction.DeferAsync();
 
 			List<string> fieldsToList = new();
 
@@ -610,8 +607,7 @@ namespace Rosettes.Modules.Engine.Farming
 
 			try
 			{
-				await interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-				await interaction.ModifyOriginalResponseAsync(x => x.Components = comps.Build());
+				await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
 			}
 			catch
 			{

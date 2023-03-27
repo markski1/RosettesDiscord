@@ -24,9 +24,7 @@ namespace Rosettes.Modules.Commands
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 			embed.Title = "Music playback";
 
-			embed.Description = "Initializing music playback, please wait...";
-
-            await RespondAsync(embed: embed.Build());
+            await DeferAsync();
 
             try
 			{
@@ -34,19 +32,20 @@ namespace Rosettes.Modules.Commands
 			}
 			catch
 			{
-				embed.Description = "Sorry, there was an error initializing the music player.";
+				await RespondAsync("Sorry, there was an error initializing the music player.", ephemeral: true);
+				return;
 			}
 
-			var response = await GetOriginalResponseAsync();
+			IUserMessage response;
 
 			try
 			{
-				await response.ModifyAsync(x => x.Embed = embed.Build());
-                await response.ModifyAsync(x => x.Components = GetMusicButtons());
+				response = await FollowupAsync(embed: embed.Build(), components: GetMusicButtons());
             }
 			catch
 			{
 				await Context.User.SendMessageAsync("I don't have permissions in that channel to execute the music player!");
+				return;
 			}
 
 			MusicEngine.SetChannelPlayer(Context.Channel, response);
