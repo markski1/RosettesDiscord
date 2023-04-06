@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using System.ComponentModel;
+using System;
 
 namespace Rosettes.Modules.Engine.Farming
 {
@@ -599,11 +600,18 @@ namespace Rosettes.Modules.Engine.Farming
 			ComponentBuilder comps = new();
 
 			ActionRowBuilder buttonRow = new();
-
-			AddStandardButtons(ref buttonRow, except: "inventory");
+;
 			buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
 
+			AddStandardButtons(ref buttonRow, except: "inventory");
 			comps.AddRow(buttonRow);
+
+			if (dbUser.MainPet > 0)
+			{
+				ActionRowBuilder petRow = new();
+				petRow.WithButton(label: $"Pet {FarmEngine.PetNames(dbUser.MainPet)}", customId: $"pet_{dbUser.Id}", style: ButtonStyle.Secondary);
+				comps.AddRow(petRow);
+			}
 
 			try
 			{
@@ -672,6 +680,63 @@ namespace Rosettes.Modules.Engine.Farming
 			comps.AddRow(buttonRow);
 
 			await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+		}
+
+		public static async Task PetAPet(SocketMessageComponent component)
+		{
+			User dbUser = await UserEngine.GetDBUser(component.User);
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			embed.Title = $"*pets!\\*";
+
+			string action = component.Data.CustomId;
+
+			ulong id = ulong.Parse(action[4..]);
+
+			User receiverUser;
+
+			// In order to get guild display names...
+			SocketGuildUser userGuildRef;
+			SocketGuildUser receiverGuildRef;
+
+			try
+			{
+				receiverUser = UserEngine.GetDBUserById(id);
+				userGuildRef = component.User as SocketGuildUser;
+				receiverGuildRef = userGuildRef.Guild.GetUser(id);
+				if (userGuildRef is null || receiverGuildRef is null) throw new Exception("failed to get user references");
+				if (receiverUser.MainPet <= 0) throw new Exception("pet not set");
+			}
+			catch
+			{
+				await component.RespondAsync("Sorry, there was an error doing that.", ephemeral: false);
+				return;
+			}
+
+			if (receiverUser != dbUser)
+			{
+				embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildRef.Mention}'s pet {FarmEngine.PetNames(receiverUser.MainPet)}.";
+			}
+			else
+			{
+				embed.Description = $"{userGuildRef.Mention} has pet their own pet {FarmEngine.PetNames(receiverUser.MainPet)}.";
+			}
+			
+
+			ComponentBuilder comps = new();
+
+			ActionRowBuilder petRow = new();
+
+			
+
+			if (dbUser.MainPet > 0)
+			{
+				petRow.WithButton(label: $"Pet {userGuildRef.DisplayName}'s {FarmEngine.PetNames(dbUser.MainPet)}", customId: $"pet_{dbUser.Id}", style: ButtonStyle.Secondary);
+				if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildRef.DisplayName}'s {FarmEngine.PetNames(receiverUser.MainPet)}", customId: $"pet_{receiverUser.Id}", style: ButtonStyle.Secondary);
+				comps.AddRow(petRow);
+			}
+
+			await component.RespondAsync(embed: embed.Build(), components: comps.Build());
 		}
 
 		public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
@@ -779,5 +844,6 @@ namespace Rosettes.Modules.Engine.Farming
 			if (except != "shop") buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
 			if (except != "inventory") buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
 		}
+
 	}
 }

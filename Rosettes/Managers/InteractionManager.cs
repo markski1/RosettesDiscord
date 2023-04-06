@@ -58,6 +58,13 @@ namespace Rosettes.Managers
 					return;
 				}
 
+				// petting stuff
+				if (action.Contains("pet_"))
+				{
+					await FarmEngine.PetAPet(component);
+					return;
+				}
+
 				// image conversion
 				if (action.Contains("CONVERT"))
 				{
