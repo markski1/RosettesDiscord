@@ -5,6 +5,7 @@ using Rosettes.Core;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Farming;
+using Rosettes.Modules.Engine.Minigame;
 using System.Reflection;
 
 namespace Rosettes.Managers
@@ -61,7 +62,7 @@ namespace Rosettes.Managers
 				// petting stuff
 				if (action.Contains("pet_"))
 				{
-					await FarmEngine.PetAPet(component);
+					await PetEngine.PetAPet(component);
 					return;
 				}
 
@@ -85,7 +86,7 @@ namespace Rosettes.Managers
 						await FarmEngine.ShowShopFunc(component, component.User);
 						break;
 					case "pets":
-						await FarmEngine.ShowPets(component, component.User);
+						await PetEngine.ShowPets(component, component.User);
 						break;
 					case "farm":
 						await Farm.ShowFarm(component, component.User);
@@ -236,7 +237,7 @@ namespace Rosettes.Managers
 				}
 				if (component.Data.CustomId is "defaultPet")
 				{
-					await FarmEngine.SetDefaultPet(component);
+					await PetEngine.SetDefaultPet(component);
 				}
 			});
 			return Task.CompletedTask;

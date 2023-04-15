@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Text;
 using PokeApiNet;
 using JikanDotNet;
+using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Core
 {
@@ -75,7 +76,7 @@ namespace Rosettes.Core
 					}
 					if (dbUser.MainPet > 0)
 					{
-						authorEmbed.Name += $" | with {FarmEngine.PetEmojis(dbUser.MainPet)} pet";
+						authorEmbed.Name += $" | with {PetEngine.PetEmojis(dbUser.MainPet)} pet";
 					}
 					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
 				}

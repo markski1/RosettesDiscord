@@ -2,7 +2,7 @@
 using Discord.Interactions;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Farming;
+using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Modules.Commands
 {

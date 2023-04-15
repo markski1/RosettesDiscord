@@ -3,7 +3,7 @@ using Discord;
 using Rosettes.Core;
 using System.Linq;
 
-namespace Rosettes.Modules.Engine.Farming
+namespace Rosettes.Modules.Engine.Minigame
 {
     public static class Farm
     {
@@ -341,11 +341,11 @@ namespace Rosettes.Modules.Engine.Farming
 
             if (count > 0)
             {
-                int foundPet = await FarmEngine.RollForPet(dbUser);
+                int foundPet = await PetEngine.RollForPet(dbUser);
 
                 if (foundPet > 0)
                 {
-                    embed.AddField("You found a pet!", $"While watering your crops, you found a friendly {FarmEngine.PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                    embed.AddField("You found a pet!", $"While watering your crops, you found a friendly {PetEngine.PetNames(foundPet)}, who chased you about. It has been added to your pets.");
                     buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
                     expIncrease *= 5;
                     expIncrease /= 2;
@@ -420,11 +420,11 @@ namespace Rosettes.Modules.Engine.Farming
 
             if (count > 0)
             {
-                int foundPet = await FarmEngine.RollForPet(dbUser);
+                int foundPet = await PetEngine.RollForPet(dbUser);
 
                 if (foundPet > 0)
                 {
-                    embed.AddField("You found a pet!", $"While harvesting your crops, you found a friendly {FarmEngine.PetNames(foundPet)}, who chased you about. It has been added to your pets.");
+                    embed.AddField("You found a pet!", $"While harvesting your crops, you found a friendly {PetEngine.PetNames(foundPet)}, who chased you about. It has been added to your pets.");
                     buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
                     expIncrease *= 5;
                     expIncrease /= 2;
