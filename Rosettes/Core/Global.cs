@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Farming;
 using System.Diagnostics;
 using System.Text;
 using PokeApiNet;
@@ -74,11 +73,11 @@ namespace Rosettes.Core
 							authorEmbed.IconUrl = author.GetAvatarUrl();
 						}
 					}
+					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
 					if (dbUser.MainPet > 0)
 					{
-						authorEmbed.Name += $" | with {PetEngine.PetEmojis(dbUser.MainPet)} pet";
+						authorEmbed.Name += $" | with {PetEngine.PetEmojis(dbUser.MainPet)}";
 					}
-					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
 				}
 			}
 			

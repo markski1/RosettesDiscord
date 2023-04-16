@@ -4,6 +4,7 @@ using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Minigame;
+using System.Data.Common;
 
 namespace Rosettes.Database
 {
@@ -11,7 +12,7 @@ namespace Rosettes.Database
 	{
 		Task<IEnumerable<Pet>> GetAllPetsAsync();
 		Task<bool> CheckPetExists(ulong owner_id, int index);
-		Task<bool> InsertPet(Pet pet);
+		Task<int> InsertPet(Pet pet);
 		Task<bool> UpdatePet(Pet pet);
 	}
 
@@ -26,7 +27,7 @@ namespace Rosettes.Database
 		{
 			var db = DBConnection();
 
-			var sql = @"SELECT pet_id, index, owner_id, name, exp, times_pet FROM pets";
+			var sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet FROM pets";
 
 			try
 			{
@@ -43,7 +44,7 @@ namespace Rosettes.Database
 		{
 			var db = DBConnection();
 
-			var sql = @"SELECT count(1) FROM pets WHERE owner_id=@ownerId AND index=@index";
+			var sql = @"SELECT count(1) FROM pets WHERE owner_id=@ownerId AND pet_index=@index";
 
 			try
 			{
@@ -56,21 +57,26 @@ namespace Rosettes.Database
 			}
 		}
 
-		public async Task<bool> InsertPet(Pet pet)
+		public async Task<int> InsertPet(Pet pet)
 		{
 			var db = DBConnection();
 
-			var sql = @"INSERT INTO pets (pet_id, index, owner_id, name)
-						VALUES(@Id, @Index, @ownerId, @Name)";
+			var sql = @"INSERT INTO pets (pet_index, owner_id, pet_name)
+						VALUES(@Index, @ownerId, @Name)";
 
 			try
 			{
-				return (await db.ExecuteAsync(sql, new { pet.Id, pet.Index, pet.ownerId, pet.Name })) > 0;
+				await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, pet.Name });
+
+				sql = @"SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
+				var result = await db.QueryAsync<int>(sql,
+											  new { pet.ownerId, pet.Index });
+				return result.Single();
 			}
 			catch (Exception ex)
 			{
 				Global.GenerateErrorMessage("sql-insertpet", $"sqlException code {ex.Message}");
-				return false;
+				return -1;
 			}
 		}
 
@@ -79,7 +85,7 @@ namespace Rosettes.Database
 			var db = DBConnection();
 
 			var sql = @"UPDATE pets
-						SET name=@Name, times_pet=@timesPet
+						SET pet_name=@Name, times_pet=@timesPet
 						WHERE pet_id = @Id";
 
 			try

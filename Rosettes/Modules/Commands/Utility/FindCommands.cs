@@ -8,7 +8,7 @@ using Rosettes.Modules.Engine;
 using System.Text.RegularExpressions;
 using Rosettes.Modules.Engine.Guild;
 
-namespace Rosettes.Modules.Commands
+namespace Rosettes.Modules.Commands.Utility
 {
     [Group("find", "Commands to find certain things")]
     public class FindCommands : InteractionModuleBase<SocketInteractionContext>
@@ -54,7 +54,7 @@ namespace Rosettes.Modules.Commands
 
             embed.AddField("Height", $"{getPokemon.Height * 10} centimeters", true);
 
-            embed.AddField("Weight", $"{(float)(getPokemon.Weight * 100) / 1000f} kg", true);
+            embed.AddField("Weight", $"{getPokemon.Weight * 100 / 1000f} kg", true);
 
             embed.AddField("Species", $"{getPokemon.Species.Name}", true);
 

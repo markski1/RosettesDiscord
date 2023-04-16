@@ -12,6 +12,11 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		internal static async Task<Task> UpdateUserPets(User user)
 		{
+			if (user.MainPet > 0)
+			{
+				EnsurePetExists(user.Id, user.MainPet);
+			}
+
 			foreach (Pet pet in PetCache.Where(x => x.ownerId == user.Id))
 			{
 				await _interface.UpdatePet(pet);
@@ -25,6 +30,31 @@ namespace Rosettes.Modules.Engine.Minigame
 			IEnumerable<Pet> petCacheTemp;
 			petCacheTemp = await _interface.GetAllPetsAsync();
 			PetCache = petCacheTemp.ToList();
+		}
+
+		public static async void EnsurePetExists(ulong owner_id, int index)
+		{
+			bool check = await _interface.CheckPetExists(owner_id, index);
+
+			if (!check)
+			{
+				Pet newPet = new(index, owner_id, "[not named]");
+				PetCache.Add(newPet);
+				newPet.Id = await _interface.InsertPet(newPet);
+			}
+		}
+
+		public static Pet? GetUserPet(User user)
+		{
+			if (user.MainPet <= 0) return null;
+			try
+			{
+				return PetCache.Find(x => x.ownerId == user.Id && x.Index == user.MainPet);
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		public static string PetNames(int id)

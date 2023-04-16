@@ -186,6 +186,10 @@ namespace Rosettes.Modules.Engine
 		public void SetPet(int id)
 		{
 			MainPet = id;
+			if (MainPet > 0)
+			{
+				PetEngine.EnsurePetExists(Id, MainPet);
+			}
 			SyncUpToDate = false;
 		}
 
