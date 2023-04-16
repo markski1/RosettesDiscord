@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
+using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Managers
 {
@@ -61,7 +63,8 @@ namespace Rosettes.Managers
                 await UserEngine.LoadAllUsersFromDatabase();
                 _ = Task.Run(async () =>
                 {
-                    GuildEngine.LoadAllGuildsFromDatabase();
+                    PetEngine.LoadAllPetsFromDatabase();
+					GuildEngine.LoadAllGuildsFromDatabase();
                     AlarmManager.LoadAllAlarmsFromDatabase();
                     RequestManager.Initialize();
                     await AutoRolesEngine.SyncWithDatabase();

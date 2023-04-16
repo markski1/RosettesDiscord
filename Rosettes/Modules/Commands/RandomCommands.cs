@@ -3,11 +3,12 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
 using System.Data;
 
 namespace Rosettes.Modules.Commands
 {
-	public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
+    public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
 		public async Task Dice(int num)

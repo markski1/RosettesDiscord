@@ -5,12 +5,13 @@ using Rosettes.Core;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Farming;
+using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine.Minigame;
 using System.Reflection;
 
 namespace Rosettes.Managers
 {
-	public class InteractionManager
+    public class InteractionManager
 	{
 		private readonly DiscordSocketClient _client;
 		private readonly InteractionService _commands;

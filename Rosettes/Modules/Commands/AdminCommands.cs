@@ -3,10 +3,11 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Modules.Commands
 {
-	public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
+    public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("makepoll", "Provides an UI to create your own custom poll.")]
 		public async Task MakePoll()

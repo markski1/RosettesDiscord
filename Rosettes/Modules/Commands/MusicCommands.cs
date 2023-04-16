@@ -3,10 +3,11 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Modules.Commands
 {
-	[Group("music", "Music control commands")]
+    [Group("music", "Music control commands")]
 	public class MusicCommands : InteractionModuleBase<SocketInteractionContext>
 	{
 		[SlashCommand("play", "Joins VC and plays the specified song. Can be a URL or a search term.")]

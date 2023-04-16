@@ -7,6 +7,7 @@ using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands

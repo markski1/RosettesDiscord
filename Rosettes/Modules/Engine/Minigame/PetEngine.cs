@@ -1,17 +1,32 @@
 ﻿using Discord.WebSocket;
 using Discord;
 using Rosettes.Core;
-using Rosettes.Modules.Engine.Farming;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine.Minigame
 {
 	public static class PetEngine
 	{
+		private static List<Pet> PetCache = new();
+		public static readonly PetRepository _interface = new();
+
+		internal static async Task<Task> UpdateUserPets(User user)
+		{
+			foreach (Pet pet in PetCache.Where(x => x.ownerId == user.Id))
+			{
+				await _interface.UpdatePet(pet);
+			}
+			
+			return Task.CompletedTask;
+		}
+
+		public static async void LoadAllPetsFromDatabase()
+		{
+			IEnumerable<Pet> petCacheTemp;
+			petCacheTemp = await _interface.GetAllPetsAsync();
+			PetCache = petCacheTemp.ToList();
+		}
+
 		public static string PetNames(int id)
 		{
 			return id switch

@@ -2,11 +2,11 @@
 using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
-using Rosettes.Modules.Engine;  
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Database
 {
-	public interface IGuildRepository
+    public interface IGuildRepository
 	{
 		Task<IEnumerable<Guild>> GetAllGuildsAsync();
 		Task<Guild> GetGuildData(SocketGuild guild);

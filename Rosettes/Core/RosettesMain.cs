@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Victoria.Node;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rosettes.Managers;
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Core
 {

@@ -6,6 +6,7 @@ using PokeApiNet;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.RegularExpressions;
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Modules.Commands
 {

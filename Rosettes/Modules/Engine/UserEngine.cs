@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
+using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Modules.Engine
 {
@@ -27,6 +28,7 @@ namespace Rosettes.Modules.Engine
 				// calling the method updates name_cache, which is what we want before saving
 				await user.GetName();
 				await _interface.UpdateUser(user);
+				await PetEngine.UpdateUserPets(user);
 				user.SyncUpToDate = true;
 			}
 		}
@@ -214,10 +216,7 @@ namespace Rosettes.Modules.Engine
 					requirement *= 1.1f;
 					level += 1;
 				}
-				else
-				{
-					break;
-				}
+				else break;
 			}
 			return level;
 		}

@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
-using Rosettes.Modules.Engine;
+using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Managers
 {
