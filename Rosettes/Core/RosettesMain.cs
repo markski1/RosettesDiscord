@@ -7,6 +7,7 @@ using Victoria.Node;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine.Guild;
+using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Core
 {
@@ -75,6 +76,7 @@ namespace Rosettes.Core
 		public void FiveMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
 		{
 			UserEngine.SyncWithDatabase();
+			PetEngine.SyncWithDatabase();
 			GuildEngine.SyncWithDatabase();
 		}
 	}        

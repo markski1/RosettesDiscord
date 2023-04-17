@@ -8,6 +8,7 @@ using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
+using Rosettes.Modules.Engine.Minigame;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands
@@ -63,6 +64,7 @@ namespace Rosettes.Modules.Commands
 			{
 				await RespondAsync("Syncing cache data with database...");
 				UserEngine.SyncWithDatabase();
+				PetEngine.SyncWithDatabase();
 				GuildEngine.SyncWithDatabase();
 				Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
 				var client = ServiceManager.GetService<DiscordSocketClient>();

@@ -9,12 +9,13 @@ namespace Rosettes.Modules.Engine.Minigame
 	{
 		public int Id;
 		public int Index;
-		public int timesPet;
-		public int Exp;
+		private int timesPet;
+		private int Exp;
 		public ulong ownerId;
-		public string Name;
+		private string Name;
 
 		public int LastPet = 0;
+		public bool SyncUpToDate = false;
 
 		public Pet(int index, ulong owner_id, string name)
 		{
@@ -40,6 +41,18 @@ namespace Rosettes.Modules.Engine.Minigame
 			return PetEngine.PetEmojis(Index);
 		}
 
+		public bool CanBePet()
+		{
+			if (Global.CurrentUnix() > LastPet)
+			{
+				LastPet = Global.CurrentUnix() + 30;
+				timesPet++;
+				SyncUpToDate = false;
+				return true;
+			}
+			return false;
+		}
+
 		public string GetName()
 		{
 			if (Name != "[not named]")
@@ -52,14 +65,30 @@ namespace Rosettes.Modules.Engine.Minigame
 			}
 		}
 
-		public bool CanBePet()
+		public void AddExp(int exp)
 		{
-			if (Global.CurrentUnix() > LastPet)
-			{
-				LastPet = Global.CurrentUnix() + 30;
-				return true;
-			}
-			return false;
+			Exp += exp;
+		}
+
+		public int GetExp()
+		{
+			return Exp;
+		}
+
+		public int GetTimesPet()
+		{
+			return timesPet;
+		}
+
+		public string GetBareName()
+		{
+			return Name;
+		}
+
+		public void SetName(string newName)
+		{
+			Name = newName;
+			SyncUpToDate = false;
 		}
 	}
 }

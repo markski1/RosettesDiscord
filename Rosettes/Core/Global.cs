@@ -74,7 +74,7 @@ namespace Rosettes.Core
 						}
 					}
 					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
-					Pet? pet = PetEngine.GetUserPet(dbUser);
+					Pet? pet = await PetEngine.GetUserPet(dbUser);
 					if (pet is not null)
 					{
 						authorEmbed.Name += $" | [{pet.GetName()}]";

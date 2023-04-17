@@ -28,7 +28,6 @@ namespace Rosettes.Modules.Engine
 				// calling the method updates name_cache, which is what we want before saving
 				await user.GetName();
 				await _interface.UpdateUser(user);
-				await PetEngine.UpdateUserPets(user);
 				user.SyncUpToDate = true;
 			}
 		}
@@ -188,7 +187,7 @@ namespace Rosettes.Modules.Engine
 			MainPet = id;
 			if (MainPet > 0)
 			{
-				PetEngine.EnsurePetExists(Id, MainPet);
+				_ = PetEngine.EnsurePetExists(Id, MainPet);
 			}
 			SyncUpToDate = false;
 		}

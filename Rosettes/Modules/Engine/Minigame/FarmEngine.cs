@@ -463,18 +463,18 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			ActionRowBuilder buttonRow = new();
 ;
+			AddStandardButtons(ref buttonRow, except: "inventory");
 			buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
 
-			AddStandardButtons(ref buttonRow, except: "inventory");
 			comps.AddRow(buttonRow);
 
-			Pet? pet = PetEngine.GetUserPet(dbUser);
+			Pet? pet = await PetEngine.GetUserPet(dbUser);
 
 			if (pet is not null)
 			{
 				ActionRowBuilder petRow = new();
 				petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
-				petRow.WithButton(label: $"View pet", customId: $"pet_view", style: ButtonStyle.Secondary);
+				petRow.WithButton(label: $"{pet.GetName()} information", customId: $"pet_view", style: ButtonStyle.Secondary);
 				comps.AddRow(petRow);
 			}
 

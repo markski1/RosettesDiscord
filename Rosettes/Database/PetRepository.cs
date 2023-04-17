@@ -66,7 +66,7 @@ namespace Rosettes.Database
 
 			try
 			{
-				await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, pet.Name });
+				await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, Name = pet.GetBareName() });
 
 				sql = @"SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
 				var result = await db.QueryAsync<int>(sql,
@@ -90,7 +90,7 @@ namespace Rosettes.Database
 
 			try
 			{
-				return (await db.ExecuteAsync(sql, new { pet.Name, pet.timesPet, pet.Id })) > 0;
+				return (await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), timesPet = pet.GetTimesPet(), pet.Id })) > 0;
 			}
 			catch (Exception ex)
 			{

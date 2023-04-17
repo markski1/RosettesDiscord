@@ -12,21 +12,6 @@ namespace Rosettes.Modules.Engine.Minigame
 		private static List<Pet> PetCache = new();
 		public static readonly PetRepository _interface = new();
 
-		internal static async Task<Task> UpdateUserPets(User user)
-		{
-			if (user.MainPet > 0)
-			{
-				EnsurePetExists(user.Id, user.MainPet);
-			}
-
-			foreach (Pet pet in PetCache.Where(x => x.ownerId == user.Id))
-			{
-				await _interface.UpdatePet(pet);
-			}
-			
-			return Task.CompletedTask;
-		}
-
 		public static async void LoadAllPetsFromDatabase()
 		{
 			IEnumerable<Pet> petCacheTemp;
@@ -34,21 +19,31 @@ namespace Rosettes.Modules.Engine.Minigame
 			PetCache = petCacheTemp.ToList();
 		}
 
-		public static async void EnsurePetExists(ulong owner_id, int index)
+		public static async Task<Pet?> EnsurePetExists(ulong owner_id, int index)
 		{
-			bool check = await _interface.CheckPetExists(owner_id, index);
+			Pet? pet;
 
-			if (!check)
+			try
 			{
-				Pet newPet = new(index, owner_id, "[not named]");
-				PetCache.Add(newPet);
-				newPet.Id = await _interface.InsertPet(newPet);
+				pet = PetCache.Find(x => x.ownerId == owner_id && x.Index == index);
+				if (pet is null)
+				{
+					pet = new(index, owner_id, "[not named]");
+					PetCache.Add(pet);
+					pet.Id = await _interface.InsertPet(pet);
+				}
+				return pet;
+			}
+			catch
+			{
+				return null;
 			}
 		}
 
-		public static Pet? GetUserPet(User user)
+		public static async Task<Pet?> GetUserPet(User user)
 		{
 			if (user.MainPet <= 0) return null;
+			await EnsurePetExists(user.Id, user.MainPet);
 			try
 			{
 				return PetCache.Find(x => x.ownerId == user.Id && x.Index == user.MainPet);
@@ -126,21 +121,34 @@ namespace Rosettes.Modules.Engine.Minigame
 			User dbUser = await UserEngine.GetDBUser(user);
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
+			await interaction.DeferAsync();
+
 			embed.Title = $"Pets";
 
-			string petString = "";
-			List<int> petList = new();
+			string petString = "", petString2 = "";
+			List<Pet> petList = new();
 
 			string petsOwned = await FarmEngine.GetStrItem(dbUser, "pets");
 
 			int count = 1;
 
+			bool toggle = true;
 			foreach (char pet in petsOwned)
 			{
 				if (pet == '1')
 				{
-					petString += $"{PetEngine.PetNames(count)}\n";
-					petList.Add(count);
+					Pet? getPet = await EnsurePetExists(dbUser.Id, count);
+					if (getPet is not null)
+					{
+						petList.Add(getPet);
+
+						if (toggle) 
+							petString += $"{getPet.GetName()}\n";
+						else
+							petString2 += $"{getPet.GetName()}\n";
+
+						toggle = !toggle;
+					}
 				}
 				count++;
 			}
@@ -150,7 +158,12 @@ namespace Rosettes.Modules.Engine.Minigame
 				petString = "None. You can randomly find pets during activities such as fishing.";
 			}
 
-			embed.AddField("Pets in ownership:", petString);
+			embed.AddField("Pets in ownership:", petString, inline: true);
+
+			if (petString2 != "")
+			{
+				embed.AddField("=====", petString2, inline: true);
+			}
 
 			embed.Description = null;
 
@@ -160,13 +173,13 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			SelectMenuBuilder petMenu = new()
 			{
-				Placeholder = "Set default pet",
+				Placeholder = "Set equipped pet",
 				CustomId = "defaultPet"
 			};
 			petMenu.AddOption(label: "None", value: "0");
-			foreach (int pet in petList)
+			foreach (Pet pet in petList)
 			{
-				petMenu.AddOption(label: PetEngine.PetNames(pet), value: $"{pet}");
+				petMenu.AddOption(label: pet.GetName(), value: $"{pet.Index}");
 			}
 
 			petMenu.MaxValues = 1;
@@ -176,7 +189,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			comps.AddRow(buttonRow);
 
-			await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+			await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
 		}
 
 		public static async Task PetAPet(SocketMessageComponent component)
@@ -190,17 +203,11 @@ namespace Rosettes.Modules.Engine.Minigame
 			ulong id = ulong.Parse(action[6..]);
 
 			User receiverUser = UserEngine.GetDBUserById(id);
-			Pet? receivingPet = GetUserPet(receiverUser);
+			Pet? receivingPet = await GetUserPet(receiverUser);
 
 			if (receivingPet is null)
 			{
 				await component.RespondAsync("Sorry, there was an error finding that pet!", ephemeral: true);
-				return;
-			}
-
-			if (!receivingPet.CanBePet())
-			{
-				await component.RespondAsync("Sorry, pets can only be pet once every 30 seconds", ephemeral: true);
 				return;
 			}
 
@@ -210,23 +217,28 @@ namespace Rosettes.Modules.Engine.Minigame
 				await component.RespondAsync("Sorry, there was an error finding that pet's owner in the guild!", ephemeral: true);
 				return;
 			}
+
+			if (!receivingPet.CanBePet())
+			{
+				await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds", ephemeral: true);
+				return;
+			}
+
 			var receiverGuildUser = userGuildRef.Guild.GetUser(id);
 
 			if (receiverUser != dbUser)
 			{
-				embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildUser.Mention}'s pet {PetEngine.PetNames(receiverUser.MainPet)}.";
+				embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildUser.Mention}'s pet {receivingPet.GetName()}.";
 			}
 			else
 			{
-				embed.Description = $"{userGuildRef.Mention} has pet their own pet {PetEngine.PetNames(receiverUser.MainPet)}.";
+				embed.Description = $"{userGuildRef.Mention} has pet their own {receivingPet.GetName()}.";
 			}
-
-			receivingPet.timesPet++;
 
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
 
-			Pet? ownPet = GetUserPet(dbUser);
+			Pet? ownPet = await GetUserPet(dbUser);
 
 			if (ownPet is not null)
 			{
@@ -281,18 +293,18 @@ namespace Rosettes.Modules.Engine.Minigame
 			if (petRequested < 1 || petRequested > 23)
 			{
 				dbUser.SetPet(0);
-				embed.Title = "Main pet removed.";
-				embed.Description = "You no longer have a main pet.";
+				embed.Title = "Pet unequipped.";
+				embed.Description = "You no longer have a pet equipped.";
 			}
 			else if (await HasPet(dbUser, petRequested))
 			{
 				dbUser.SetPet(petRequested);
-				embed.Title = "Main pet set.";
-				embed.Description = $"Your main pet is now your {PetEngine.PetNames(petRequested)}";
+				embed.Title = "Pet equipped.";
+				embed.Description = $"Your equipped pet is now your {PetEngine.PetNames(petRequested)}";
 			}
 			else
 			{
-				embed.Title = "Main pet not set.";
+				embed.Title = "Pet not equipped.";
 				embed.Description = $"You do not have a {PetEngine.PetNames(petRequested)}";
 			}
 
@@ -318,21 +330,21 @@ namespace Rosettes.Modules.Engine.Minigame
 		public static async Task ViewPet(SocketInteraction interaction, IUser user)
 		{
 			var dbUser = await UserEngine.GetDBUser(user);
-			Pet? pet = PetEngine.GetUserPet(dbUser);
+			Pet? pet = await GetUserPet(dbUser);
 			if (pet is null)
 			{
-				await interaction.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				await interaction.RespondAsync("You don't have a pet equipped.", ephemeral: true);
 				return;
 			}
 
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
 			embed.Title = "Pet information";
-			embed.Description = $"Name: {pet.Name} \n Type: {PetEngine.PetNames(pet.Index)}";
+			embed.Description = $"**Name:** {pet.GetBareName()} \n **Type:** {PetEngine.PetNames(pet.Index)}";
 
-			embed.AddField("Times been pet", $"{pet.timesPet}", inline: true);
+			embed.AddField("Times been pet", $"{pet.GetTimesPet()}", inline: true);
 			embed.AddField("Happiness", $"100%", inline: true);
-			embed.AddField("Experience", $"{pet.Exp}xp");
+			embed.AddField("Experience", $"{pet.GetExp()}xp");
 
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
@@ -348,10 +360,10 @@ namespace Rosettes.Modules.Engine.Minigame
 		public static async void BeginNameChange(SocketMessageComponent component)
 		{
 			var dbUser = await UserEngine.GetDBUser(component.User);
-			Pet? pet = PetEngine.GetUserPet(dbUser);
+			Pet? pet = await GetUserPet(dbUser);
 			if (pet is null)
 			{
-				await component.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				await component.RespondAsync("You don't have a pet equipped.", ephemeral: true);
 				return;
 			}
 
@@ -369,10 +381,10 @@ namespace Rosettes.Modules.Engine.Minigame
 		public static async void SetPetName(SocketModal modal, string newName)
 		{
 			var dbUser = await UserEngine.GetDBUser(modal.User);
-			Pet? pet = PetEngine.GetUserPet(dbUser);
+			Pet? pet = await GetUserPet(dbUser);
 			if (pet is null)
 			{
-				await modal.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				await modal.RespondAsync("You don't have a pet equipped.", ephemeral: true);
 				return;
 			}
 
@@ -384,7 +396,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			FarmEngine.ModifyItem(dbUser, "dabloons", -25);
 
-			pet.Name = newName;
+			pet.SetName(newName);
 
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -403,6 +415,16 @@ namespace Rosettes.Modules.Engine.Minigame
 			embed.Footer = new EmbedFooterBuilder() { Text = $"Cost: 25 {FarmEngine.GetItemName("dabloons")}" };
 
 			await modal.RespondAsync(embed: embed.Build(), components: comps.Build());
+		}
+
+		public static async void SyncWithDatabase()
+		{
+			foreach (Pet pet in PetCache)
+			{
+				if (pet.SyncUpToDate) continue;
+				await _interface.UpdatePet(pet);
+				pet.SyncUpToDate = true;
+			}
 		}
 	}
 }
