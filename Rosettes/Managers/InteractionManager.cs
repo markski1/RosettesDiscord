@@ -61,7 +61,7 @@ namespace Rosettes.Managers
 				}
 
 				// petting stuff
-				if (action.Contains("pet_"))
+				if (action.Contains("doPet_"))
 				{
 					await PetEngine.PetAPet(component);
 					return;
@@ -101,6 +101,13 @@ namespace Rosettes.Managers
 						break;
 					case "crops_harvest":
 						await Farm.HarvestCrops(component, component.User);
+						break;
+
+					case "pet_view":
+						await PetEngine.ViewPet(component, component.User);
+						break;
+					case "pet_namechange":
+						PetEngine.BeginNameChange(component);
 						break;
 
 
@@ -186,6 +193,13 @@ namespace Rosettes.Managers
 
 					await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
 					return;
+				}
+
+				if (modal.Data.CustomId == "petNamechange")
+				{
+					string newName = components.First(x => x.CustomId == "newName").Value;
+
+					PetEngine.SetPetName(modal, newName);
 				}
 
 				if (modal.Data.CustomId == "music_add")

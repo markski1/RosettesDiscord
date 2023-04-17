@@ -14,6 +14,8 @@ namespace Rosettes.Modules.Engine.Minigame
 		public ulong ownerId;
 		public string Name;
 
+		public int LastPet = 0;
+
 		public Pet(int index, ulong owner_id, string name)
 		{
 			Index = index;
@@ -31,6 +33,33 @@ namespace Rosettes.Modules.Engine.Minigame
 			Name = pet_name;
 			timesPet = times_pet;
 			Exp = exp;
+		}
+
+		public string GetEmoji()
+		{
+			return PetEngine.PetEmojis(Index);
+		}
+
+		public string GetName()
+		{
+			if (Name != "[not named]")
+			{
+				return $"{PetEngine.PetEmojis(Index)} {Name}";
+			}
+			else
+			{
+				return PetEngine.PetNames(Index);
+			}
+		}
+
+		public bool CanBePet()
+		{
+			if (Global.CurrentUnix() > LastPet)
+			{
+				LastPet = Global.CurrentUnix() + 30;
+				return true;
+			}
+			return false;
 		}
 	}
 }

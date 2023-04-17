@@ -468,22 +468,17 @@ namespace Rosettes.Modules.Engine.Minigame
 			AddStandardButtons(ref buttonRow, except: "inventory");
 			comps.AddRow(buttonRow);
 
-			if (dbUser.MainPet > 0)
+			Pet? pet = PetEngine.GetUserPet(dbUser);
+
+			if (pet is not null)
 			{
 				ActionRowBuilder petRow = new();
-				petRow.WithButton(label: $"Pet {PetEngine.PetNames(dbUser.MainPet)}", customId: $"pet_{dbUser.Id}", style: ButtonStyle.Secondary);
+				petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+				petRow.WithButton(label: $"View pet", customId: $"pet_view", style: ButtonStyle.Secondary);
 				comps.AddRow(petRow);
 			}
 
-			try
-			{
-				await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
-			}
-			catch
-			{
-				// throw any potential exception away if we can't message the user directly. we can only do so much at this point.
-				_ = Task.Run(async () => { await user.SendMessageAsync("I don't have permission to send or edit messages in that channel, can't complete show inventory."); });
-			}
+			await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
 		}
 
 		public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)

@@ -57,7 +57,7 @@ namespace Rosettes.Core
 					SocketGuildUser? GuildUser = author as SocketGuildUser;
 					EmbedAuthorBuilder authorEmbed = new();
 					embed.Author = authorEmbed;
-					if (GuildUser is not null && GuildUser.Nickname is not null)
+					if (GuildUser is not null && GuildUser.DisplayName is not null)
 					{
 						authorEmbed.Name = GuildUser.DisplayName;
 						if (GuildUser.GetDisplayAvatarUrl() is not null)
@@ -74,9 +74,10 @@ namespace Rosettes.Core
 						}
 					}
 					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
-					if (dbUser.MainPet > 0)
+					Pet? pet = PetEngine.GetUserPet(dbUser);
+					if (pet is not null)
 					{
-						authorEmbed.Name += $" | with {PetEngine.PetEmojis(dbUser.MainPet)}";
+						authorEmbed.Name += $" | [{pet.GetName()}]";
 					}
 				}
 			}

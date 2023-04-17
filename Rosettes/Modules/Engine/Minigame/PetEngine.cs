@@ -2,6 +2,8 @@
 using Discord;
 using Rosettes.Core;
 using Rosettes.Database;
+using Microsoft.VisualBasic;
+using System.ComponentModel;
 
 namespace Rosettes.Modules.Engine.Minigame
 {
@@ -185,49 +187,51 @@ namespace Rosettes.Modules.Engine.Minigame
 			embed.Title = $"*pets!\\*";
 
 			string action = component.Data.CustomId;
+			ulong id = ulong.Parse(action[6..]);
 
-			ulong id = ulong.Parse(action[4..]);
+			User receiverUser = UserEngine.GetDBUserById(id);
+			Pet? receivingPet = GetUserPet(receiverUser);
 
-			User receiverUser;
-
-			// In order to get guild display names...
-			SocketGuildUser userGuildRef;
-			SocketGuildUser receiverGuildRef;
-
-			try
+			if (receivingPet is null)
 			{
-				receiverUser = UserEngine.GetDBUserById(id);
-				userGuildRef = component.User as SocketGuildUser;
-				receiverGuildRef = userGuildRef.Guild.GetUser(id);
-				if (userGuildRef is null || receiverGuildRef is null) throw new Exception("failed to get user references");
-				if (receiverUser.MainPet <= 0) throw new Exception("pet not set");
-			}
-			catch
-			{
-				await component.RespondAsync("Sorry, there was an error doing that.", ephemeral: false);
+				await component.RespondAsync("Sorry, there was an error finding that pet!", ephemeral: true);
 				return;
 			}
 
+			if (!receivingPet.CanBePet())
+			{
+				await component.RespondAsync("Sorry, pets can only be pet once every 30 seconds", ephemeral: true);
+				return;
+			}
+
+			// In order to get guild display names...
+			if (component.User is not SocketGuildUser userGuildRef)
+			{
+				await component.RespondAsync("Sorry, there was an error finding that pet's owner in the guild!", ephemeral: true);
+				return;
+			}
+			var receiverGuildUser = userGuildRef.Guild.GetUser(id);
+
 			if (receiverUser != dbUser)
 			{
-				embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildRef.Mention}'s pet {PetEngine.PetNames(receiverUser.MainPet)}.";
+				embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildUser.Mention}'s pet {PetEngine.PetNames(receiverUser.MainPet)}.";
 			}
 			else
 			{
 				embed.Description = $"{userGuildRef.Mention} has pet their own pet {PetEngine.PetNames(receiverUser.MainPet)}.";
 			}
 
+			receivingPet.timesPet++;
 
 			ComponentBuilder comps = new();
-
 			ActionRowBuilder petRow = new();
 
+			Pet? ownPet = GetUserPet(dbUser);
 
-
-			if (dbUser.MainPet > 0)
+			if (ownPet is not null)
 			{
-				petRow.WithButton(label: $"Pet {userGuildRef.DisplayName}'s {PetEngine.PetNames(dbUser.MainPet)}", customId: $"pet_{dbUser.Id}", style: ButtonStyle.Secondary);
-				if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildRef.DisplayName}'s {PetEngine.PetNames(receiverUser.MainPet)}", customId: $"pet_{receiverUser.Id}", style: ButtonStyle.Secondary);
+				petRow.WithButton(label: $"Pet {userGuildRef.DisplayName}'s {ownPet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Secondary);
+				if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildUser.DisplayName}'s {receivingPet.GetName()}", customId: $"doPet_{receiverUser.Id}", style: ButtonStyle.Secondary);
 				comps.AddRow(petRow);
 			}
 
@@ -309,6 +313,96 @@ namespace Rosettes.Modules.Engine.Minigame
 			string pets = await FarmEngine.GetStrItem(dbUser, "pets");
 
 			return pets != null && pets[id] == '1';
+		}
+
+		public static async Task ViewPet(SocketInteraction interaction, IUser user)
+		{
+			var dbUser = await UserEngine.GetDBUser(user);
+			Pet? pet = PetEngine.GetUserPet(dbUser);
+			if (pet is null)
+			{
+				await interaction.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				return;
+			}
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			embed.Title = "Pet information";
+			embed.Description = $"Name: {pet.Name} \n Type: {PetEngine.PetNames(pet.Index)}";
+
+			embed.AddField("Times been pet", $"{pet.timesPet}", inline: true);
+			embed.AddField("Happiness", $"100%", inline: true);
+			embed.AddField("Experience", $"{pet.Exp}xp");
+
+			ComponentBuilder comps = new();
+			ActionRowBuilder petRow = new();
+
+			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+			petRow.WithButton(label: "Change name", customId: "pet_namechange", style: ButtonStyle.Secondary);
+
+			comps.AddRow(petRow);
+
+			await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+		}
+
+		public static async void BeginNameChange(SocketMessageComponent component)
+		{
+			var dbUser = await UserEngine.GetDBUser(component.User);
+			Pet? pet = PetEngine.GetUserPet(dbUser);
+			if (pet is null)
+			{
+				await component.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				return;
+			}
+
+			ModalBuilder modal = new()
+			{
+				Title = $"Change the name of \"{pet.GetName()}\"",
+				CustomId = "petNamechange"
+			};
+
+			modal.AddTextInput($"Enter the new name.", "newName", placeholder: $"It will have a cost of 25 {FarmEngine.GetItemName("dabloons")}", minLength: 5, maxLength: 25);
+
+			await component.RespondWithModalAsync(modal.Build());
+		}
+
+		public static async void SetPetName(SocketModal modal, string newName)
+		{
+			var dbUser = await UserEngine.GetDBUser(modal.User);
+			Pet? pet = PetEngine.GetUserPet(dbUser);
+			if (pet is null)
+			{
+				await modal.RespondAsync("You don't have a main pet currently set.", ephemeral: true);
+				return;
+			}
+
+			if (await FarmEngine.GetItem(dbUser, "dabloons") >= 25)
+			{
+				await modal.RespondAsync($"You don't have 25 {FarmEngine.GetItemName("dabloons")} to change your pet's name.", ephemeral: true);
+				return;
+			}
+
+			FarmEngine.ModifyItem(dbUser, "dabloons", -25);
+
+			pet.Name = newName;
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			embed.Title = "Name changed!";
+			embed.Description = $"You have changed your pet's name to {pet.GetName()}";
+			
+
+			ComponentBuilder comps = new();
+			ActionRowBuilder petRow = new();
+
+			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+			petRow.WithButton(label: $"View pet", customId: $"pet_view", style: ButtonStyle.Secondary);
+
+			comps.AddRow(petRow);
+
+			embed.Footer = new EmbedFooterBuilder() { Text = $"Cost: 25 {FarmEngine.GetItemName("dabloons")}" };
+
+			await modal.RespondAsync(embed: embed.Build(), components: comps.Build());
 		}
 	}
 }
