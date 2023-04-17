@@ -376,7 +376,7 @@ namespace Rosettes.Modules.Engine.Minigame
 				return;
 			}
 
-			if (await FarmEngine.GetItem(dbUser, "dabloons") >= 25)
+			if (await FarmEngine.GetItem(dbUser, "dabloons") <= 25)
 			{
 				await modal.RespondAsync($"You don't have 25 {FarmEngine.GetItemName("dabloons")} to change your pet's name.", ephemeral: true);
 				return;
