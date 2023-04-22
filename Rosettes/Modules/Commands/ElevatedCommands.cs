@@ -45,7 +45,7 @@ namespace Rosettes.Modules.Commands
 			embed.AddField("Ping to Discord", $"{client.Latency}ms", inline: true);
 			embed.AddField("Learn about me", "<https://markski.ar/rosettes>");
 
-			EmbedFooterBuilder footer = new() { Text = "Developed and maintained by Markski. | https://markski.ar", IconUrl = "https://markski.ar/images/profileDesplacement.png" };
+			EmbedFooterBuilder footer = new() { Text = "Good morning, Dave." };
 
 			embed.Footer = footer;
 
@@ -76,10 +76,13 @@ namespace Rosettes.Modules.Commands
 					await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
 					try
 					{
+						// In the machine where Rosettes runs, the startRosettes.sh script located one directory above
+						// properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
+						// I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
 						int success = await Global.RunBash("../startRosettes.sh");
 						if (success == 0)
 						{
-							await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes succesfully restarted.");
+							await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes has restarted.\n\nGood morning, Dave.");
 						}
 					}
 					catch (Exception ex)

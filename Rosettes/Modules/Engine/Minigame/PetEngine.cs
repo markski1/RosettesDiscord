@@ -2,8 +2,18 @@
 using Discord;
 using Rosettes.Core;
 using Rosettes.Database;
-using Microsoft.VisualBasic;
-using System.ComponentModel;
+
+/*
+	The pet system is currently overcomplicated due to a lack of foresight when pets were first added.
+	As they were initially just collectibles that were treated as a commodity and couldn't be individually addressed
+	or interacted with, they were originally only stored as either a 0 or a 1 in a string field in the database.
+
+	As the pet system got further developed into becoming, well, a system, it became a necessity to append the new functionality
+	onto that rather janky foundation.
+
+	I will eventually rewrite this into a less messy state. It won't be hard, but it'll require like an hour or two of tedium.
+	For now, it is what it is.
+*/
 
 namespace Rosettes.Modules.Engine.Minigame
 {
@@ -133,9 +143,9 @@ namespace Rosettes.Modules.Engine.Minigame
 			int count = 1;
 
 			bool toggle = true;
-			foreach (char pet in petsOwned)
+			foreach (char aPet in petsOwned)
 			{
-				if (pet == '1')
+				if (aPet == '1')
 				{
 					Pet? getPet = await EnsurePetExists(dbUser.Id, count);
 					if (getPet is not null)
@@ -177,17 +187,27 @@ namespace Rosettes.Modules.Engine.Minigame
 				CustomId = "defaultPet"
 			};
 			petMenu.AddOption(label: "None", value: "0");
-			foreach (Pet pet in petList)
+			foreach (Pet aPet in petList)
 			{
-				petMenu.AddOption(label: pet.GetName(), value: $"{pet.Index}");
+				petMenu.AddOption(label: aPet.GetName(), value: $"{aPet.Index}");
 			}
 
 			petMenu.MaxValues = 1;
 
 			comps.WithSelectMenu(petMenu);
-			FarmEngine.AddStandardButtons(ref buttonRow);
+			FarmEngine.AddStandardButtons(ref buttonRow, "fish");
 
 			comps.AddRow(buttonRow);
+
+			Pet? pet = await PetEngine.GetUserPet(dbUser);
+
+			if (pet is not null)
+			{
+				ActionRowBuilder petRow = new();
+				petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+				petRow.WithButton(label: $"{pet.GetEmoji()} information", customId: $"pet_view", style: ButtonStyle.Secondary);
+				comps.AddRow(petRow);
+			}
 
 			await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
 		}
@@ -218,7 +238,7 @@ namespace Rosettes.Modules.Engine.Minigame
 				return;
 			}
 
-			if (!receivingPet.CanBePet())
+			if (!receivingPet.DoPet())
 			{
 				await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds", ephemeral: true);
 				return;
@@ -308,14 +328,56 @@ namespace Rosettes.Modules.Engine.Minigame
 				embed.Description = $"You do not have a {PetEngine.PetNames(petRequested)}";
 			}
 
+			await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+		}
+
+		public static async Task FeedAPet(SocketMessageComponent component)
+		{
+			var dbUser = await UserEngine.GetDBUser(component.User);
+
+			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+			string foodItem = component.Data.Values.Last();
+
+			int petId = int.Parse(component.Data.CustomId[8..]);
+
+			Pet pet;
+
 			try
 			{
-				await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+				pet = PetCache.First(x => x.Id == petId); // first() may throw an exception in some failure cases.
+				if (pet == null) { throw new Exception("pet not found"); } // if first() don't throw an exception but we failed all the same, force it.
 			}
 			catch
 			{
-				await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+				await component.RespondAsync("Sorry, there was an error finding that pet.", ephemeral: true);
+				return;
 			}
+
+			int happinessGained = pet.DoFeed(foodItem);
+
+			if (happinessGained < 0) {
+				if (happinessGained == -1) await component.RespondAsync("Pets may only be fed fish of any type, shrimps or carrots", ephemeral: true);
+				if (happinessGained == -2) await component.RespondAsync("Pets may only be fed once in a 5 minute window.", ephemeral: true);
+				return;
+			}
+
+			int foodAvailable = await FarmEngine.GetItem(dbUser, foodItem);
+
+			if (foodAvailable <= 0)
+			{
+				await component.RespondAsync($"You don't have any {FarmEngine.GetItemName(foodItem)}.", ephemeral: true);
+				return;
+			}
+
+			FarmEngine.ModifyItem(dbUser, foodItem, -1);
+
+			embed.Title = $"{pet.GetName()} has been fed.";
+			embed.Description = $"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!";
+
+			embed.Footer = new EmbedFooterBuilder() { Text = $"Pet has gained {happinessGained} happiness." };			
+
+			await component.RespondAsync(embed: embed.Build());
 		}
 
 		public static async Task<bool> HasPet(User dbUser, int id)
@@ -343,7 +405,8 @@ namespace Rosettes.Modules.Engine.Minigame
 			embed.Description = $"**Name:** {pet.GetBareName()} \n **Type:** {PetEngine.PetNames(pet.Index)}";
 
 			embed.AddField("Times been pet", $"{pet.GetTimesPet()}", inline: true);
-			embed.AddField("Happiness", $"100%", inline: true);
+			embed.AddField("Happiness", $"{pet.GetHappiness()}%", inline: true);
+			embed.AddField("Found", $"<t:{pet.GetFoundDate()}:R>");
 			embed.AddField("Experience", $"{pet.GetExp()}xp");
 
 			ComponentBuilder comps = new();
@@ -351,8 +414,24 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
 			petRow.WithButton(label: "Change name", customId: "pet_namechange", style: ButtonStyle.Secondary);
+			petRow.WithButton(label: "All pets", customId: "pets", style: ButtonStyle.Secondary);
 
-			comps.AddRow(petRow);
+			SelectMenuBuilder feedMenu = new()
+			{
+				Placeholder = $"Feed {pet.GetName()}...",
+				CustomId = $"petFeed_{pet.Id}",
+				MinValues = 1,
+				MaxValues = 1
+			};
+
+			feedMenu.AddOption(label: FarmEngine.GetItemName("fish"), value: "fish");
+			feedMenu.AddOption(label: FarmEngine.GetItemName("uncommonfish"), value: "uncommonfish");
+			feedMenu.AddOption(label: FarmEngine.GetItemName("shrimp"), value: "shrimp");
+			feedMenu.AddOption(label: FarmEngine.GetItemName("carrot"), value: "carrot");
+
+			feedMenu.MaxValues = 1;
+
+			comps.AddRow(petRow).WithSelectMenu(feedMenu);
 
 			await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
 		}
@@ -424,6 +503,41 @@ namespace Rosettes.Modules.Engine.Minigame
 				if (pet.SyncUpToDate) continue;
 				await _interface.UpdatePet(pet);
 				pet.SyncUpToDate = true;
+			}
+		}
+
+		public static bool AcceptablePetMeal(string foodItem)
+		{
+			string[] choices =
+				{
+					"fish",
+					"uncommonfish",
+					"rarefish",
+					"shrimp",
+					"carrot",
+				};
+			return choices.Contains(foodItem);
+		}
+
+		public static void TimedThings()
+		{
+			Random rand = new();
+			int happiness;
+			foreach (Pet pet in PetCache)
+			{
+				happiness = pet.GetHappiness();
+				if (happiness > 80)
+				{
+					pet.ModifyHappiness(-1);
+				}
+				else if (happiness > 40)
+				{
+					if (rand.Next(3) > 0) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
+				}
+				else
+				{
+					if (rand.Next(2) > 0) pet.ModifyHappiness(-1); // 50% chance of losing 1 happiness point
+				}
 			}
 		}
 	}

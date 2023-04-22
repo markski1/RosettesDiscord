@@ -254,6 +254,10 @@ namespace Rosettes.Managers
 				{
 					await PetEngine.SetDefaultPet(component);
 				}
+				if (component.Data.CustomId.Contains("petFeed_"))
+				{
+					await PetEngine.FeedAPet(component);
+				}
 			});
 			return Task.CompletedTask;
 		}

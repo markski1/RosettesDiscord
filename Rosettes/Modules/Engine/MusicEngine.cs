@@ -130,7 +130,7 @@ namespace Rosettes.Modules.Engine
 				{
 					return "I cannot connect to the channel.";
 				}
-
+				
 				SearchResponse search;
 
 				search = await _lavaNode.SearchAsync(Uri.IsWellFormedUriString(query, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, query);

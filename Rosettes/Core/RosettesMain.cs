@@ -76,8 +76,9 @@ namespace Rosettes.Core
 		public void FiveMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
 		{
 			UserEngine.SyncWithDatabase();
-			PetEngine.SyncWithDatabase();
 			GuildEngine.SyncWithDatabase();
+			PetEngine.TimedThings();
+			PetEngine.SyncWithDatabase();
 		}
 	}        
 }

@@ -27,7 +27,7 @@ namespace Rosettes.Database
 		{
 			var db = DBConnection();
 
-			var sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet FROM pets";
+			var sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
 
 			try
 			{
@@ -61,12 +61,12 @@ namespace Rosettes.Database
 		{
 			var db = DBConnection();
 
-			var sql = @"INSERT INTO pets (pet_index, owner_id, pet_name)
-						VALUES(@Index, @ownerId, @Name)";
+			var sql = @"INSERT INTO pets (pet_index, owner_id, pet_name, found_date)
+						VALUES(@Index, @ownerId, @Name, @FoundDate)";
 
 			try
 			{
-				await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, Name = pet.GetBareName() });
+				await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, Name = pet.GetBareName(), FoundDate = pet.GetFoundDate() });
 
 				sql = @"SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
 				var result = await db.QueryAsync<int>(sql,
@@ -85,12 +85,12 @@ namespace Rosettes.Database
 			var db = DBConnection();
 
 			var sql = @"UPDATE pets
-						SET pet_name=@Name, times_pet=@timesPet
+						SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness
 						WHERE pet_id = @Id";
 
 			try
 			{
-				return (await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), timesPet = pet.GetTimesPet(), pet.Id })) > 0;
+				return (await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), TimesPet = pet.GetTimesPet(), FoundDate = pet.GetFoundDate(), Happiness = pet.GetHappiness(), pet.Id })) > 0;
 			}
 			catch (Exception ex)
 			{

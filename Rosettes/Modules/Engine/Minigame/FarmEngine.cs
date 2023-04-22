@@ -82,7 +82,6 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		public static bool IsValidGiveChoice(string choice)
 		{
-
 			string[] choices =
 				{
 					"fish",
@@ -474,7 +473,7 @@ namespace Rosettes.Modules.Engine.Minigame
 			{
 				ActionRowBuilder petRow = new();
 				petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
-				petRow.WithButton(label: $"{pet.GetName()} information", customId: $"pet_view", style: ButtonStyle.Secondary);
+				petRow.WithButton(label: $"{pet.GetEmoji()} information", customId: $"pet_view", style: ButtonStyle.Secondary);
 				comps.AddRow(petRow);
 			}
 

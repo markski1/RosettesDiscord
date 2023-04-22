@@ -1,9 +1,4 @@
-﻿using Discord;
-using Discord.Interactions;
-using Discord.WebSocket;
-using Microsoft.VisualBasic;
-using Rosettes.Core;
-using Rosettes.Modules.Engine;
+﻿using Discord.Interactions;
 using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Modules.Commands.Minigame
