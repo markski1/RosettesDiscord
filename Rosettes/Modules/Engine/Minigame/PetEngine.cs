@@ -238,7 +238,9 @@ namespace Rosettes.Modules.Engine.Minigame
 				return;
 			}
 
-			if (!receivingPet.DoPet())
+			int happinessGained = receivingPet.DoPet();
+
+			if (happinessGained < 0)
 			{
 				await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds", ephemeral: true);
 				return;
@@ -257,15 +259,21 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
+			ActionRowBuilder buttonRow = new();
+			FarmEngine.AddStandardButtons(ref buttonRow, "shop");
+			comps.AddRow(buttonRow);
 
 			Pet? ownPet = await GetUserPet(dbUser);
 
 			if (ownPet is not null)
 			{
 				petRow.WithButton(label: $"Pet {userGuildRef.DisplayName}'s {ownPet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Secondary);
-				if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildUser.DisplayName}'s {receivingPet.GetName()}", customId: $"doPet_{receiverUser.Id}", style: ButtonStyle.Secondary);
-				comps.AddRow(petRow);
 			}
+
+			if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildUser.DisplayName}'s {receivingPet.GetName()}", customId: $"doPet_{receiverUser.Id}", style: ButtonStyle.Secondary);
+			comps.AddRow(petRow);
+
+			embed.Footer = new EmbedFooterBuilder() { Text = $"Pet has gained {happinessGained} happiness." };
 
 			await component.RespondAsync(embed: embed.Build(), components: comps.Build());
 		}
@@ -375,9 +383,21 @@ namespace Rosettes.Modules.Engine.Minigame
 			embed.Title = $"{pet.GetName()} has been fed.";
 			embed.Description = $"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!";
 
-			embed.Footer = new EmbedFooterBuilder() { Text = $"Pet has gained {happinessGained} happiness." };			
+			embed.Footer = new EmbedFooterBuilder() { Text = $"Pet has gained {happinessGained} happiness." };
 
-			await component.RespondAsync(embed: embed.Build());
+			ComponentBuilder comps = new();
+			ActionRowBuilder buttonRow = new();
+
+			FarmEngine.AddStandardButtons(ref buttonRow, "shop");
+			comps.AddRow(buttonRow);
+
+			ActionRowBuilder petRow = new();
+			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+			petRow.WithButton(label: "All pets", customId: "pets", style: ButtonStyle.Secondary);
+
+			comps.AddRow(petRow);
+
+			await component.RespondAsync(embed: embed.Build(), components: comps.Build());
 		}
 
 		public static async Task<bool> HasPet(User dbUser, int id)
@@ -411,6 +431,9 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
+			ActionRowBuilder buttonRow = new();
+			FarmEngine.AddStandardButtons(ref buttonRow);
+			comps.AddRow(buttonRow);
 
 			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
 			petRow.WithButton(label: "Change name", customId: "pet_namechange", style: ButtonStyle.Secondary);
@@ -485,6 +508,9 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
+			ActionRowBuilder buttonRow = new();
+			FarmEngine.AddStandardButtons(ref buttonRow);
+			comps.AddRow(buttonRow);
 
 			petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
 			petRow.WithButton(label: $"View pet", customId: $"pet_view", style: ButtonStyle.Secondary);
@@ -536,7 +562,7 @@ namespace Rosettes.Modules.Engine.Minigame
 				}
 				else
 				{
-					if (rand.Next(2) > 0) pet.ModifyHappiness(-1); // 50% chance of losing 1 happiness point
+					if (rand.Next(4) > 2) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
 				}
 			}
 		}

@@ -63,9 +63,9 @@ namespace Rosettes.Core
 			// start thy stuff
 			await EventManager.SetupAsync();
 
-			// FiveMinutyTimer(); defined below, runs every 5 minutes, or 300 seconds
-			FiveMinutyTimer.Elapsed += FiveMinutyThings;
-			FiveMinutyTimer.Interval = 300000;
+			// FiveMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
+			FiveMinutyTimer.Elapsed += TenMinutyThings;
+			FiveMinutyTimer.Interval = 600000;
 			FiveMinutyTimer.AutoReset = true;
 			FiveMinutyTimer.Enabled = true;
 
@@ -73,7 +73,7 @@ namespace Rosettes.Core
 			await Task.Delay(-1);
 		}
 
-		public void FiveMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
+		public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
 		{
 			UserEngine.SyncWithDatabase();
 			GuildEngine.SyncWithDatabase();

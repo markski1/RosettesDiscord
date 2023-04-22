@@ -54,21 +54,22 @@ namespace Rosettes.Modules.Engine.Minigame
 			return PetEngine.PetEmojis(Index);
 		}
 
-		// If the animal can be pet, apply the appropiate effects and return true.
-		// Otherwise return false.
-		public bool DoPet()
+		// If the animal can be pet, apply the appropiate effects and return the gained happiness.
+		// Otherwise return a negative.
+		public int DoPet()
 		{
 			if (Global.CurrentUnix() > LastPet)
 			{
 				Random Random = new();
 				LastPet = Global.CurrentUnix() + 30;
-				ModifyHappiness(+(Random.Next(10) + 5)); // add anywhere from 5 to 14% happiness
+				int happiness = (Random.Next(10) + 5);
+				ModifyHappiness(+happiness); // add anywhere from 5 to 14% happiness
 				AddExp(1);
 				TimesPet++;
 				SyncUpToDate = false;
-				return true;
+				return happiness;
 			}
-			return false;
+			return -1;
 		}
 
 		public int DoFeed(string foodItem)
