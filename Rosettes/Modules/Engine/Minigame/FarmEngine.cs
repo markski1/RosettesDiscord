@@ -172,33 +172,24 @@ namespace Rosettes.Modules.Engine.Minigame
 				case "sell_e":
 				case "sell":
 					bool sell_e = component.Data.CustomId.Contains("_e");
-					switch (component.Data.Values.Last())
+					var sellItems = new Dictionary<string, (string name, int amount, int cost)>
 					{
-						case "sell1":
-							text = await ItemSell(dbUser, selling: "fish", amount: 5, cost: 3, everything: sell_e);
-							break;
-						case "sell2":
-							text = await ItemSell(dbUser, selling: "uncommonfish", amount: 5, cost: 6, everything: sell_e);
-							break;
-						case "sell3":
-							text = await ItemSell(dbUser, selling: "rarefish", amount: 1, cost: 5, everything: sell_e);
-							break;
-						case "sell4":
-							text = await ItemSell(dbUser, selling: "shrimp", amount: 5, cost: 5, everything: sell_e);
-							break;
-						case "sell5":
-							text = await ItemSell(dbUser, selling: "tomato", amount: 10, cost: 6, everything: sell_e);
-							break;
-						case "sell6":
-							text = await ItemSell(dbUser, selling: "carrot", amount: 10, cost: 5, everything: sell_e);
-							break;
-						case "sell7":
-							text = await ItemSell(dbUser, selling: "potato", amount: 10, cost: 4, everything: sell_e);
-							break;
-						case "sell8":
-							text = await ItemSell(dbUser, selling: "garbage", amount: 5, cost: 3, everything: sell_e);
-							break;
+					//   instruct   name         amount cost
+						{ "sell1", ("fish",         5,   3) },
+						{ "sell2", ("uncommonfish", 5,   6) },
+						{ "sell3", ("rarefish",     1,   5) },
+						{ "sell4", ("shrimp",       5,   5) },
+						{ "sell5", ("tomato",       10,  6) },
+						{ "sell6", ("carrot",       10,  5) },
+						{ "sell7", ("potato",       10,  4) },
+						{ "sell8", ("garbage",      5,   3) }
+					};
+
+					if (sellItems.TryGetValue(component.Data.Values.Last(), out var values))
+					{
+						text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sell_e);
 					}
+
 					break;
 			}
 

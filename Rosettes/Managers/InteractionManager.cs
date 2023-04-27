@@ -155,6 +155,7 @@ namespace Rosettes.Managers
 									try
 									{
 										await component.Message.ModifyAsync(x => x.Embed = embed.Build());
+										// if "stop" is pushed, replace components by empty ones, to remove the buttons.
 										if (stop) await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
 										await component.DeferAsync();
 									}
