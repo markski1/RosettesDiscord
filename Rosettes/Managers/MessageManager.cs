@@ -123,8 +123,7 @@ namespace Rosettes.Managers
                 Stream data = await Global.HttpClient.GetStreamAsync(url);
 
                 if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-                Random Random = new();
-                string fileName = $"./temp/{Random.Next(20) + 1}.{format}";
+                string fileName = $"./temp/{Global.Randomize(20) + 1}.{format}";
 
                 if (File.Exists(fileName)) File.Delete(fileName);
 

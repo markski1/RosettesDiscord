@@ -166,8 +166,7 @@ namespace Rosettes.Modules.Commands.Utility
         [SlashCommand("convert", "Convert an image to a desired format.")]
         public async Task ConvertImage(string getUrl)
         {
-            Random rand = new();
-            string randomValue = $"{rand.Next(90) + 10}";
+            string randomValue = $"{Global.Randomize(90) + 10}";
             if (!Directory.Exists("/var/www/html/brickthrow/convertQueue/"))
             {
                 Directory.CreateDirectory("/var/www/html/brickthrow/convertQueue/");
@@ -291,8 +290,7 @@ namespace Rosettes.Modules.Commands.Utility
 
         public async Task ReverseGIF(string url)
         {
-            Random rand = new();
-            string randomValue = $"{rand.Next(100)}";
+            string randomValue = $"{Global.Randomize(100)}";
             if (!Directory.Exists("/var/www/html/brickthrow/reverseCache/"))
             {
                 Directory.CreateDirectory("/var/www/html/brickthrow/reverseCache/");
@@ -405,8 +403,7 @@ namespace Rosettes.Modules.Commands.Utility
 
         public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
         {
-            Random rand = new();
-            string randomValue = $"{rand.Next(100)}";
+            string randomValue = $"{Global.Randomize(100)}";
             if (!Directory.Exists("/var/www/html/brickthrow/emojiCache/"))
             {
                 Directory.CreateDirectory("/var/www/html/brickthrow/emojiCache/");
@@ -453,7 +450,8 @@ namespace Rosettes.Modules.Commands.Utility
             {
                 await FollowupAsync("Sorry, I was unable to do that.", ephemeral: true);
             }
-        }
+			File.Delete(fileName);
+		}
     }
 
     public static class ImageHelper
@@ -515,7 +513,8 @@ namespace Rosettes.Modules.Commands.Utility
                 embed.Description = $"Converting image to {format}\nThere was an error.";
                 await component.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             }
-        }
+			File.Delete(fileName);
+		}
 
 
         public static async Task<string> GetDirectTenorURL(string tenorUrl)

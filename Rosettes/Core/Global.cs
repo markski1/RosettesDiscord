@@ -17,6 +17,7 @@ namespace Rosettes.Core
 		public static readonly HttpClient HttpClient = new();
 		public static readonly PokeApiClient PokeClient = new();
 		public static readonly IJikan Jikan = new Jikan();
+		public static readonly Random Randomizer = new Random();
 
         public static async void SendMessage(ulong id, string message)
 		{
@@ -32,7 +33,15 @@ namespace Rosettes.Core
 			}
 		}
 
-		
+		public static int Randomize(int num)
+		{
+			return Randomizer.Next(num);
+		}
+
+		public static int Randomize(int minNum, int maxNum)
+		{
+			return Randomizer.Next(minNum, maxNum);
+		}
 
 		public static void WriteToFs(ref FileStream fs, string text)
 		{

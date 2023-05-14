@@ -124,14 +124,13 @@ namespace Rosettes.Modules.Commands
 						VALUES(@Id, @NewKey)";
 			}
 
-			Random rand = new();
 			int randNumba;
 			string NewKey = "";
 			char Character;
 			int offset;
 			for (int i = 0; i < 64; i++)
 			{
-				if (rand.Next(0, 2) == 0)
+				if (Global.Randomize(0, 2) == 0)
 				{
 					offset = 65;
 				}
@@ -139,7 +138,7 @@ namespace Rosettes.Modules.Commands
 				{
 					offset = 97;
 				}
-				randNumba = rand.Next(0, 26);
+				randNumba = Global.Randomize(0, 26);
 				Character = Convert.ToChar(randNumba + offset);
 				NewKey += Character;
 			}

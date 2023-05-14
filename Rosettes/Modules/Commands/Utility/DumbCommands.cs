@@ -63,8 +63,6 @@ namespace Rosettes.Modules.Commands.Utility
 
             int[,] playingField = new int[gridWidth, gridHeight];
 
-            Random rand = new();
-
             int i, j;
 
             // decide the position of every mine
@@ -74,8 +72,8 @@ namespace Rosettes.Modules.Commands.Utility
                 // avoid repeats by breaking out of the 'loop' only if the chosen square has no other mines.
                 while (true)
                 {
-                    x = rand.Next(gridWidth);
-                    y = rand.Next(gridHeight);
+                    x = Global.Randomize(gridWidth);
+                    y = Global.Randomize(gridHeight);
 
                     if (playingField[x, y] == -1) continue;
                     break;

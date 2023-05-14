@@ -280,15 +280,13 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		public static async Task<int> RollForPet(User dbUser)
 		{
-			Random rand = new();
-
-			if (rand.Next(33) == 0)
+			if (Global.Randomize(33) == 0)
 			{
 				int pet;
 				int attempts = 0;
 				while (true)
 				{
-					pet = rand.Next(23);
+					pet = Global.Randomize(23);
 					if (await HasPet(dbUser, pet + 1) == false) break;
 
 					// if after 5 attempts there's only repeated pets, don't get a pet.
@@ -547,7 +545,6 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		public static void TimedThings()
 		{
-			Random rand = new();
 			int happiness;
 			foreach (Pet pet in PetCache)
 			{
@@ -558,11 +555,11 @@ namespace Rosettes.Modules.Engine.Minigame
 				}
 				else if (happiness > 40)
 				{
-					if (rand.Next(3) > 0) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
+					if (Global.Randomize(3) > 0) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
 				}
 				else
 				{
-					if (rand.Next(4) > 2) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
+					if (Global.Randomize(4) > 2) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
 				}
 			}
 		}

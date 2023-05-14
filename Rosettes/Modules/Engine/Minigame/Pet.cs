@@ -60,9 +60,8 @@ namespace Rosettes.Modules.Engine.Minigame
 		{
 			if (Global.CurrentUnix() > LastPet)
 			{
-				Random Random = new();
 				LastPet = Global.CurrentUnix() + 30;
-				int happiness = (Random.Next(10) + 5);
+				int happiness = (Global.Randomize(10) + 5);
 				ModifyHappiness(+happiness); // add anywhere from 5 to 14% happiness
 				AddExp(1);
 				TimesPet++;
@@ -81,9 +80,8 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			if (Global.CurrentUnix() > LastFed)
 			{
-				Random Random = new();
 				LastFed = Global.CurrentUnix() + 300;
-				int happinessMod = (Random.Next(10) + 5);
+				int happinessMod = (Global.Randomize(10) + 5);
 				ModifyHappiness(+happinessMod); // add anywhere from 5 to 14% happiness
 				AddExp(1);
 				TimesPet++;

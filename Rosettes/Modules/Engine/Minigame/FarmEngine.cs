@@ -332,8 +332,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			embed.Title = "Fishing! 🎣";
 
-			Random rand = new();
-			int caught = rand.Next(100);
+			int caught = Global.Randomize(100);
 			string fishingCatch;
 
 			int expIncrease;
@@ -382,7 +381,7 @@ namespace Rosettes.Modules.Engine.Minigame
 				expIncrease /= 2;
 			}
 
-			int damage = 3 + rand.Next(4);
+			int damage = 3 + Global.Randomize(4);
 
 			poleStatus -= damage;
 

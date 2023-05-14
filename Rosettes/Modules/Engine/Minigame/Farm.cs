@@ -9,9 +9,8 @@ namespace Rosettes.Modules.Engine.Minigame
     {
         public static async Task<Crop?> InsertCropsInPlot(User dbUser, int cropType, int plot_id)
         {
-            Random rand = new();
             // 5 second buffers on each to print a rounded-up time.
-            int growTime = Global.CurrentUnix() + 3600 * 3 + 3600 * rand.Next(4) + 5;
+            int growTime = Global.CurrentUnix() + 3600 * 3 + 3600 * Global.Randomize(4) + 5;
             int waterTime = Global.CurrentUnix() + 1800 + 5;
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);
@@ -193,8 +192,6 @@ namespace Rosettes.Modules.Engine.Minigame
 
             List<int> occupiedPlots = new();
 
-            Random rand = new();
-
             foreach (var field in fieldsToList)
             {
                 occupiedPlots.Add(field.plotId);
@@ -231,7 +228,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
                 if (plot_id > plots) break;
 
-                int roll = rand.Next(55);
+                int roll = Global.Randomize(55);
                 int type;
 
                 if (roll < 10) type = 1; // tomatoes
@@ -252,7 +249,7 @@ namespace Rosettes.Modules.Engine.Minigame
                 FarmEngine.ModifyItem(dbUser, "seedbag", -1);
                 seeds--;
 
-                int damage = 3 + rand.Next(3);
+                int damage = 3 + Global.Randomize(3);
                 toolStatus -= damage;
                 FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
 
@@ -294,7 +291,6 @@ namespace Rosettes.Modules.Engine.Minigame
             embed.Title = $"Watering crops";
 
             int count = 0;
-            Random rand = new();
 
             bool cropsToHarvest = false;
 
@@ -303,7 +299,7 @@ namespace Rosettes.Modules.Engine.Minigame
             {
                 if (crop.unixNextWater < Global.CurrentUnix())
                 {
-                    crop.unixNextWater = Global.CurrentUnix() + 1800 + 300 * rand.Next(4);
+                    crop.unixNextWater = Global.CurrentUnix() + 1800 + 300 * Global.Randomize(4);
                     crop.unixGrowth -= 3600;
                     await FarmEngine._interface.UpdateCrop(crop);
                     if (crop.unixGrowth < Global.CurrentUnix())
@@ -391,7 +387,6 @@ namespace Rosettes.Modules.Engine.Minigame
             }
 
             int count = 0;
-            Random rand = new();
 
             int expIncrease = 0;
 
@@ -409,7 +404,7 @@ namespace Rosettes.Modules.Engine.Minigame
                         continue;
                     }
                     string harvest = Farm.GetHarvest(crop.cropType);
-                    int earnings = 9 + rand.Next(4) * 3 + rand.Next(4) * 3;
+                    int earnings = 9 + Global.Randomize(4) * 3 + Global.Randomize(4) * 3;
                     FarmEngine.ModifyItem(dbUser, harvest, +earnings);
                     expIncrease += earnings;
                     embed.AddField($"🌿 Plot {crop.plotId} harvested.", $"You have obtained {earnings} {FarmEngine.GetItemName(harvest)}.");
@@ -450,7 +445,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(expIncrease)} | {count} plot{(count != 1 ? 's' : null)} harvested." };
 
-            int damage = 3 + rand.Next(2);
+            int damage = 3 + Global.Randomize(2);
 
             toolStatus -= damage;
 

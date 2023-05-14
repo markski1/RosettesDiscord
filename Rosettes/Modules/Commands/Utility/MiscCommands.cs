@@ -119,12 +119,11 @@ namespace Rosettes.Modules.Commands.Utility
             var mid = await ReplyAsync(embed: embed.Build());
 
             // store the video locally
-            Random Random = new();
             if (!System.IO.Directory.Exists("./temp/twtvid/"))
             {
                 System.IO.Directory.CreateDirectory("./temp/twtvid/");
             }
-            string fileName = $"./temp/twtvid/{Random.Next(20) + 1}.mp4";
+            string fileName = $"./temp/twtvid/{Global.Randomize(20) + 1}.mp4";
             using var videoStream = await Global.HttpClient.GetStreamAsync(tweetUrl);
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await videoStream.CopyToAsync(fileStream);
@@ -143,12 +142,11 @@ namespace Rosettes.Modules.Commands.Utility
             if (!File.Exists(fileName) || fileType is not FileType.QuickTime && fileType is not FileType.Mp4)
             {
                 downloadField.Value = "Failed.";
-
                 uploadField.Value = $"Won't be uploaded, failed to fetch valid video file. Format: {fileType}";
-
                 await mid.ModifyAsync(x => x.Embed = embed.Build());
 
-                return;
+				File.Delete(fileName);
+				return;
             }
 
             downloadField.Value = "Done.";
@@ -172,7 +170,6 @@ namespace Rosettes.Modules.Commands.Utility
                     uploadField.Value = "Failed.";
 
                     await mid.ModifyAsync(x => x.Embed = embed.Build());
-                    return;
                 }
             }
             else
@@ -182,7 +179,8 @@ namespace Rosettes.Modules.Commands.Utility
                 await RespondAsync(embed: embed.Build());
                 _ = mid.DeleteAsync();
             }
-        }
+			File.Delete(fileName);
+		}
 
         [SlashCommand("exportemoji", "Generate a ZIP file containing every single emoji in the guild.")]
         public async Task ExportEmoji()

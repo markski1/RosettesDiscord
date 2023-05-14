@@ -10,8 +10,8 @@ namespace Rosettes.Modules.Commands
 {
     public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 	{
-		[SlashCommand("dice", "Returns a random number between 1 and the provided number.")]
-		public async Task Dice(int num)
+		[SlashCommand("dice", "Roll dice.")]
+		public async Task Dice(int dice_faces, int dice_count = 1)
 		{
 			var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
 			var dbUser = await UserEngine.GetDBUser(Context.User);
@@ -25,24 +25,35 @@ namespace Rosettes.Modules.Commands
 				}
 			}
 
-			if (num < 2)
+			if (dice_faces < 2 || dice_count < 1)
 			{
-				await RespondAsync("The number cannot be lower than 2.", ephemeral: true);
+				await RespondAsync("Dice must have at least 1 face, and you must roll at least one dice.", ephemeral: true);
+				return;
 			}
-			else if (num > 1000000)
+			else if (dice_faces > 1000000 || dice_count > 10)
 			{
-				await RespondAsync("The number cannot be greater than 1 million.", ephemeral: true);
+				await RespondAsync("Dice may not have more than 1 million faces, and you may roll no more than 10 dice at once.", ephemeral: true);
+				return;
 			}
 			else
 			{
-				Random Random = new();
-
 				EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-				embed.WithTitle("Threw a dice!");
-				embed.WithDescription($"From 1 to {num}.");
+				embed.WithTitle($"Rolled {dice_count} dice.");
+				embed.WithDescription($"With {dice_faces} faces each.");
 
-				embed.AddField("Result: ", (Random.Next(num) + 1).ToString());
+				string resultText = "";
+				int diceTotal = 0;
+				for (int i = 0; i < dice_count; i++)
+				{
+					int diceResult = Global.Randomize(dice_faces) + 1;
+					resultText += $"**Die {i + 1}:** {diceResult} \n";
+					diceTotal += diceResult;
+				}
+
+				embed.AddField("Roll results: ", resultText);
+
+				embed.AddField("Total:", $"{diceTotal}, with each die scoring {diceTotal / dice_count} in average.");
 
 				await RespondAsync(embed: embed.Build());
 			}
@@ -62,14 +73,13 @@ namespace Rosettes.Modules.Commands
 			}
 
 			string[] coinSides = { face1, face2 };
-			Random rand = new();
 
 			var dbUser = await UserEngine.GetDBUser(Context.User);
 			EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 			embed.Title = "A coin is thrown in the air...";
 			embed.Description = $"{face1} in one side, {face2} in the other.";
 
-			embed.AddField("Result:", $"{coinSides[rand.Next(0, 2)]}");
+			embed.AddField("Result:", $"{coinSides[Global.Randomize(0, 2)]}");
 
 			await RespondAsync(embed: embed.Build());
 		}
@@ -89,9 +99,7 @@ namespace Rosettes.Modules.Commands
 				return;
 			}
 
-			Random randomizer = new();
-
-			int number = randomizer.Next(99999999) + 1;
+			int number = Global.Randomize(99999999) + 1;
 			// kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing so it doesn't matter.
 			if (number < 10000000)
 			{
@@ -113,7 +121,7 @@ namespace Rosettes.Modules.Commands
 
 			if (image == "true")
 			{
-				var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => randomizer.Next()).Take(1);
+				var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => Global.Randomizer.Next()).Take(1);
 				await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
 			}
 		}
