@@ -40,7 +40,7 @@ namespace Rosettes.Modules.Commands
 
 			embed.AddField("Memory in use", $"{(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb", inline: true);
 			embed.AddField("Threads", $"{proc.Threads.Count}", inline: true);
-			embed.AddField("Last updated", runtimeText);
+			embed.AddField("Uptime", runtimeText);
 			embed.AddField("Currently serving", $"{client.Guilds.Count} guilds.", inline: true);
 			embed.AddField("Ping to Discord", $"{client.Latency}ms", inline: true);
 			embed.AddField("Learn about me", "<https://markski.ar/rosettes>");
@@ -63,41 +63,24 @@ namespace Rosettes.Modules.Commands
 			if (function is "halt" or "restart")
 			{
 				await RespondAsync("Syncing cache data with database...");
-				UserEngine.SyncWithDatabase();
-				PetEngine.SyncWithDatabase();
-				GuildEngine.SyncWithDatabase();
-				Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
-				var client = ServiceManager.GetService<DiscordSocketClient>();
-				await client.SetActivityAsync(game);
-
 
 				if (function is "restart")
 				{
 					await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
-					try
+					if (await Global.RosettesMain.HaltOrRestart(true))
 					{
-						// In the machine where Rosettes runs, the startRosettes.sh script located one directory above
-						// properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
-						// I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
-						int success = await Global.RunBash("../startRosettes.sh");
-						if (success == 0)
-						{
-							await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes has restarted.\n\nGood morning, Dave.");
-						}
+						await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes has restarted.\n\nGood morning, Dave.");
 					}
-					catch (Exception ex)
+					else
 					{
-						await ModifyOriginalResponseAsync(msg => msg.Content = $"Rosettes failed to restart. {ex}");
+						await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes failed to restart.");
 					}
 				}
 				else
 				{
 					await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
+					await Global.RosettesMain.HaltOrRestart(false);
 				}
-
-				
-
-				Environment.Exit(0);
 			}
 			if (function is "lavalink")
 			{

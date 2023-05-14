@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine.Minigame;
+using System.Diagnostics;
 
 namespace Rosettes.Core
 {
@@ -15,7 +16,7 @@ namespace Rosettes.Core
 	{
 		private readonly DiscordSocketClient Client;
 		private readonly InteractionService Commands;
-		private readonly System.Timers.Timer FiveMinutyTimer = new();
+		private readonly System.Timers.Timer TenMinutyTimer = new();
 
 		public RosettesMain()
 		{
@@ -64,10 +65,10 @@ namespace Rosettes.Core
 			await EventManager.SetupAsync();
 
 			// FiveMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
-			FiveMinutyTimer.Elapsed += TenMinutyThings;
-			FiveMinutyTimer.Interval = 600000;
-			FiveMinutyTimer.AutoReset = true;
-			FiveMinutyTimer.Enabled = true;
+			TenMinutyTimer.Elapsed += TenMinutyThings;
+			TenMinutyTimer.Interval = 600000;
+			TenMinutyTimer.AutoReset = true;
+			TenMinutyTimer.Enabled = true;
 
 			// Done! Now keep this task blocked forever to avoid the bot from closing.
 			await Task.Delay(-1);
@@ -75,10 +76,51 @@ namespace Rosettes.Core
 
 		public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
 		{
+			using Process proc = Process.GetCurrentProcess();
+			TimeSpan elapsed = DateTime.Now - proc.StartTime;
+
+			// Restart every 3 days.
+			if (elapsed > TimeSpan.FromHours(72)) {
+				_ = HaltOrRestart(true);
+			}
+			else
+			{
+				UserEngine.SyncWithDatabase();
+				GuildEngine.SyncWithDatabase();
+				PetEngine.TimedThings();
+				PetEngine.SyncWithDatabase();
+			}
+		}
+
+		public async Task<bool> HaltOrRestart(bool restart = false)
+		{
 			UserEngine.SyncWithDatabase();
-			GuildEngine.SyncWithDatabase();
-			PetEngine.TimedThings();
 			PetEngine.SyncWithDatabase();
+			GuildEngine.SyncWithDatabase();
+			Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
+			var client = ServiceManager.GetService<DiscordSocketClient>();
+			await client.SetActivityAsync(game);
+
+			if (restart) {
+				try
+				{
+					// In the machine where Rosettes runs, the startRosettes.sh script located one directory above
+					// properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
+					// I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
+					int success = await Global.RunBash("../startRosettes.sh");
+					if (success == 0)
+					{
+						return true;
+					}
+				}
+				catch
+				{
+					return false;
+				}
+			}
+
+			Environment.Exit(0);
+			return true;
 		}
 	}        
 }
