@@ -67,7 +67,7 @@ namespace Rosettes.Modules.Commands
 				if (function is "restart")
 				{
 					await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
-					if (await Global.RosettesMain.HaltOrRestart(true))
+					if (await RosettesMain.HaltOrRestart(true))
 					{
 						await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes has restarted.\n\nGood morning, Dave.");
 					}
@@ -79,7 +79,7 @@ namespace Rosettes.Modules.Commands
 				else
 				{
 					await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
-					await Global.RosettesMain.HaltOrRestart(false);
+					await RosettesMain.HaltOrRestart(false);
 				}
 			}
 			if (function is "lavalink")

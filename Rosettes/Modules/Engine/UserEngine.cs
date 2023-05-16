@@ -120,7 +120,7 @@ namespace Rosettes.Modules.Engine
 			else
 			{
 				Id = newUser.Id;
-				NameCache = newUser.Username + "#" + newUser.Discriminator;
+				NameCache = newUser.Username;
 			}
 			SyncUpToDate = true;
 			LastFished = 0;
@@ -155,7 +155,7 @@ namespace Rosettes.Modules.Engine
 			var userReference = await GetDiscordReference();
 			if (userReference is null) return NameCache;
 			string nameGot;
-			if (full) nameGot = userReference.Username + "#" + userReference.Discriminator;
+			if (full) nameGot = userReference.Username;
 			else nameGot = userReference.Username;
 			if (nameGot != NameCache)
 			{

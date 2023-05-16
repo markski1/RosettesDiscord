@@ -214,7 +214,7 @@ namespace Rosettes.Managers
             if (user is SocketUser or SocketGuildUser)
             {
                 EmbedBuilder embed = await Global.MakeRosettesEmbed();
-                embed.Description = $"[{user.Username}#{user.Discriminator}]";
+                embed.Description = $"[{user.Username}]";
 
                 if (user.GetAvatarUrl() != null)
                 {

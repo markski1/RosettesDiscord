@@ -62,7 +62,7 @@ namespace Rosettes.Modules.Commands.Utility
             embed.AddField("Snowflake ID", guild.Id);
             embed.AddField("Members", guild.MemberCount, true);
             embed.AddField("Roles", guild.Roles.Count, true);
-            embed.AddField("Owner", guild.Owner.Username + "#" + guild.Owner.Discriminator);
+            embed.AddField("Owner", guild.Owner.Username);
             embed.AddField("Stickers", guild.Stickers.Count, true);
             embed.AddField("Emoji", guild.Emotes.Count, true);
             if (guild.SplashUrl is not null)
@@ -274,7 +274,7 @@ namespace Rosettes.Modules.Commands.Utility
         public async Task SendFeedback(string text)
         {
             string message;
-            message = $"Feedback received from {Context.User.Username}#{Context.User.Discriminator} (id {Context.User.Id})";
+            message = $"Feedback received from {Context.User.Username} (id {Context.User.Id})";
             if (Context.Guild is not null)
             {
                 message += $"\nSent from guild {Context.Guild.Name} (id {Context.Guild.Id})";
@@ -282,7 +282,7 @@ namespace Rosettes.Modules.Commands.Utility
             message += $"```{text}```";
             Global.GenerateNotification(message);
 
-            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from Markski#7243 depending on severity.", ephemeral: true);
+            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from @markski depending on severity.", ephemeral: true);
         }
     }
 }

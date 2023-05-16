@@ -92,7 +92,7 @@ namespace Rosettes.Core
 			}
 		}
 
-		public async Task<bool> HaltOrRestart(bool restart = false)
+		public static async Task<bool> HaltOrRestart(bool restart = false)
 		{
 			UserEngine.SyncWithDatabase();
 			PetEngine.SyncWithDatabase();
@@ -101,26 +101,28 @@ namespace Rosettes.Core
 			var client = ServiceManager.GetService<DiscordSocketClient>();
 			await client.SetActivityAsync(game);
 
+			bool success = true;
+
 			if (restart) {
 				try
 				{
 					// In the machine where Rosettes runs, the startRosettes.sh script located one directory above
 					// properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
 					// I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
-					int success = await Global.RunBash("../startRosettes.sh");
-					if (success == 0)
+					int runSuccess = await Global.RunBash("../startRosettes.sh");
+					if (runSuccess != 0)
 					{
-						return true;
+						success = false;
 					}
 				}
 				catch
 				{
-					return false;
+					success = false;
 				}
 			}
 
 			Environment.Exit(0);
-			return true;
+			return success;
 		}
 	}        
 }
