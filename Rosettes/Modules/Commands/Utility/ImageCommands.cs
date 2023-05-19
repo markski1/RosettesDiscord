@@ -316,7 +316,7 @@ namespace Rosettes.Modules.Commands.Utility
                 {
                     await Task.Delay(250);
                     quarterSecondCount++;
-                    if (quarterSecondCount >= 20) // if the download takes more than 5 seconds it's probably not a very honest url
+                    if (quarterSecondCount >= 12) // if the download takes more than 3 seconds it's probably not a very honest url
                     {
                         await FollowupAsync("Cancelled: GIF download took too long.");
                         // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this

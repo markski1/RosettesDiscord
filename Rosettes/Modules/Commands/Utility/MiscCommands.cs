@@ -5,6 +5,7 @@ using Rosettes.Modules.Commands.Alarms;
 using Discord;
 using MetadataExtractor.Util;
 using Discord.WebSocket;
+using JikanDotNet;
 
 namespace Rosettes.Modules.Commands.Utility
 {
@@ -103,31 +104,47 @@ namespace Rosettes.Modules.Commands.Utility
             // form a link straight to FxTwitter's direct media backend.
             tweetUrl = $"https://d.fxtwitter.com{tweetUrl}";
 
+            // Let Discord know we are working on it and to not timeout our interaction.
             await DeferAsync();
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
-            embed.Title = "Exporting twitter video.";
+            embed.Title = "Fetching video.";
 
-            EmbedFieldBuilder downloadField = new() { Name = "Video download.", Value = "In progress...", IsInline = true };
+            EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Downloading from Twitter...", IsInline = true };
 
-            EmbedFieldBuilder uploadField = new() { Name = "Video upload.", Value = "Waiting..." };
-
-            embed.AddField(downloadField);
-            embed.AddField(uploadField);
+            embed.AddField(downloadStatus);
 
             var mid = await ReplyAsync(embed: embed.Build());
 
-            // store the video locally
-            if (!System.IO.Directory.Exists("./temp/twtvid/"))
+			// store the video locally
+			if (!System.IO.Directory.Exists("./temp/twtvid/"))
             {
                 System.IO.Directory.CreateDirectory("./temp/twtvid/");
             }
+
             string fileName = $"./temp/twtvid/{Global.Randomize(20) + 1}.mp4";
-            using var videoStream = await Global.HttpClient.GetStreamAsync(tweetUrl);
-            using var fileStream = new FileStream(fileName, FileMode.Create);
-            await videoStream.CopyToAsync(fileStream);
-            fileStream.Close();
+            using (Stream stream = await Global.HttpClient.GetStreamAsync(tweetUrl))
+            {
+				using var fileStream = new FileStream(fileName, FileMode.Create);
+				var downloadTask = stream.CopyToAsync(fileStream);
+				int quarterSecondCount = 0;
+				while (!downloadTask.IsCompleted)
+				{
+					await Task.Delay(250);
+					quarterSecondCount++;
+					if (quarterSecondCount > 12) // 3 seconds
+					{
+						downloadStatus.Value = "Failed. Video is too large.";
+						embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+						await mid.ModifyAsync(x => x.Embed = embed.Build());
+						// GC will destroy the stream's copytoasync op automatically.
+						return;
+					}
+				}
+			}
+
+            ulong size = 0;
 
             // retrieve the video's format.
             using var checkFileStream = new FileStream(fileName, FileMode.Open);
@@ -141,21 +158,18 @@ namespace Rosettes.Modules.Commands.Utility
             // ensure the file was downloaded correctly and is either MPEG4 or QuickTime encoded.
             if (!File.Exists(fileName) || fileType is not FileType.QuickTime && fileType is not FileType.Mp4)
             {
-                downloadField.Value = "Failed.";
-                uploadField.Value = $"Won't be uploaded, failed to fetch valid video file. Format: {fileType}";
+                downloadStatus.Value = "Failed. Twitter failed to provide a valid file format.";
                 await mid.ModifyAsync(x => x.Embed = embed.Build());
 
-				File.Delete(fileName);
-				return;
+                File.Delete(fileName);
+                return;
             }
 
-            downloadField.Value = "Done.";
-
-            uploadField.Value = "In progress...";
+            downloadStatus.Value = "Uploading to Discord...";
 
             await mid.ModifyAsync(x => x.Embed = embed.Build());
 
-            ulong size = (ulong)new FileInfo(fileName).Length;
+            size = (ulong)new FileInfo(fileName).Length;
 
             // check if the guild supports a file this large, otherwise fail.
             if (Context.Guild == null || Context.Guild.MaxUploadLimit > size)
@@ -167,16 +181,16 @@ namespace Rosettes.Modules.Commands.Utility
                 }
                 catch
                 {
-                    uploadField.Value = "Failed.";
+					downloadStatus.Value = "Upload failed.";
 
                     await mid.ModifyAsync(x => x.Embed = embed.Build());
                 }
             }
             else
             {
-                uploadField.Value = "Failed.";
-                embed.AddField("Video was too large.", $"Instead, have a [Direct link]({tweetUrl}).");
-                await RespondAsync(embed: embed.Build());
+                downloadStatus.Value = "Upload failed. File was too large.";
+                embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+                await FollowupAsync(embed: embed.Build());
                 _ = mid.DeleteAsync();
             }
 			File.Delete(fileName);
