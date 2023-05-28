@@ -79,8 +79,8 @@ namespace Rosettes.Core
 			using Process proc = Process.GetCurrentProcess();
 			TimeSpan elapsed = DateTime.Now - proc.StartTime;
 
-			// Restart every 3 days.
-			if (elapsed > TimeSpan.FromHours(72)) {
+			// Restart every 2 days.
+			if (elapsed >= TimeSpan.FromHours(48)) {
 				_ = HaltOrRestart(true);
 			}
 			else
