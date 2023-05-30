@@ -360,19 +360,19 @@ namespace Rosettes.Modules.Engine.Minigame
 				return;
 			}
 
-			int happinessGained = pet.DoFeed(foodItem);
-
-			if (happinessGained < 0) {
-				if (happinessGained == -1) await component.RespondAsync("Pets may only be fed fish of any type, shrimps or carrots", ephemeral: true);
-				if (happinessGained == -2) await component.RespondAsync("Pets may only be fed once in a 5 minute window.", ephemeral: true);
-				return;
-			}
-
 			int foodAvailable = await FarmEngine.GetItem(dbUser, foodItem);
 
 			if (foodAvailable <= 0)
 			{
 				await component.RespondAsync($"You don't have any {FarmEngine.GetItemName(foodItem)}.", ephemeral: true);
+				return;
+			}
+
+			int happinessGained = pet.DoFeed(foodItem);
+
+			if (happinessGained < 0) {
+				if (happinessGained == -1) await component.RespondAsync("Pets may only be fed fish of any type, shrimps or carrots", ephemeral: true);
+				if (happinessGained == -2) await component.RespondAsync("Pets may only be fed once in a 5 minute window.", ephemeral: true);
 				return;
 			}
 

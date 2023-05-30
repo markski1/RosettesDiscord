@@ -243,6 +243,12 @@ namespace Rosettes.Modules.Engine.Minigame
 					int totalSold = amount * timesToSell;
 					int totalEarned = cost * timesToSell;
 
+					// sometimes it rounds the division up? maybe. there's a weird bug, and this might be a fix
+					if (totalSold > availableAmount)
+					{
+						totalSold -= amount;
+					}
+
 					ModifyItem(dbUser, selling, -totalSold);
 					ModifyItem(dbUser, "dabloons", +totalEarned);
 
