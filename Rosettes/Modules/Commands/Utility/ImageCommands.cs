@@ -509,7 +509,6 @@ namespace Rosettes.Modules.Commands.Utility
             }
             else
             {
-                await component.FollowupWithFileAsync(fileName);
                 embed.Description = $"Converting image to {format}\nThere was an error.";
                 await component.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             }
