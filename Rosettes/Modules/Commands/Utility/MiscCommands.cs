@@ -296,7 +296,7 @@ namespace Rosettes.Modules.Commands.Utility
             message += $"```{text}```";
             Global.GenerateNotification(message);
 
-            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from @markski depending on severity.", ephemeral: true);
+            await RespondAsync("Your feedback has been sent. All feedback is read and taken into account. If a suggestion you sent is implemented or an issue you pointed out is resolved, you might receive a DM from Rosettes letting you know of this.\n \n If you don't allow DM's from bots, you may not receive anything or get a friend request from `markski.ar` depending on severity.", ephemeral: true);
         }
     }
 }
