@@ -69,17 +69,17 @@ namespace Rosettes.Modules.Commands.Utility
             for (i = 0; i < mineCount; i++)
             {
                 int x, y;
-                // avoid repeats by breaking out of the 'loop' only if the chosen square has no other mines.
-                while (true)
+
+                // find X and Y with no repeats.
+                do
                 {
                     x = Global.Randomize(gridWidth);
                     y = Global.Randomize(gridHeight);
+                } 
+                while (playingField[x, y] == -1);
 
-                    if (playingField[x, y] == -1) continue;
-                    break;
-                }
-                // set -1 where the mine is
-                playingField[x, y] = -1;
+				// set -1 where the mine is
+				playingField[x, y] = -1;
             }
 
             string board = "";

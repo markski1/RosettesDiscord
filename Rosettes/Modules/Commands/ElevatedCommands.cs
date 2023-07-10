@@ -2,13 +2,10 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Guild;
-using Rosettes.Modules.Engine.Minigame;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands

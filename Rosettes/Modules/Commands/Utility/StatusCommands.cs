@@ -135,14 +135,10 @@ namespace Rosettes.Modules.Commands.Utility
                     {
                         if (serverNames.Contains(world.Key))
                         {
-
                             int spacing = 16 - world.Key.ToString().Length;
-                            string spacingText = "";
-                            for (int i = 0; i < spacing; i++)
-                            {
-                                spacingText += " ";
-                            }
-                            serverText += $"{world.Key}{spacingText}: {((int)world.Value == 1 ? "Online" : "Offline")}\n";
+                            string serverName = $"{world.Key} {new(' ', spacing)}";
+
+                            serverText += $"{serverName}: {((int)world.Value == 1 ? "Online" : "Offline")}\n";
                         }
                     }
                 }

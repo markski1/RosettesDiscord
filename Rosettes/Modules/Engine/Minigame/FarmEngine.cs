@@ -199,6 +199,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
 			await component.RespondAsync(embed: embed.Build(), ephemeral: true);
 
+			// reset the shop component options
 			try
 			{
 				await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());

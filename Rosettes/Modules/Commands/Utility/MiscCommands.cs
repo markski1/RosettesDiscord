@@ -5,7 +5,6 @@ using Rosettes.Modules.Commands.Alarms;
 using Discord;
 using MetadataExtractor.Util;
 using Discord.WebSocket;
-using JikanDotNet;
 
 namespace Rosettes.Modules.Commands.Utility
 {

@@ -209,6 +209,7 @@ namespace Rosettes.Managers
             return Task.CompletedTask;
         }
 
+        // ONLY used for Join and Quit notifications. NOT interchangeable with Global's MakeRosettesEmbed.
         private static async Task<EmbedBuilder> MakeEmbedForUser(dynamic user)
         {
             if (user is SocketUser or SocketGuildUser)

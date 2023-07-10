@@ -120,7 +120,10 @@ namespace Rosettes.Modules.Engine
 			else
 			{
 				Id = newUser.Id;
-				NameCache = newUser.Username;
+				if (newUser.GlobalName is not null)
+					NameCache = newUser.Username;
+				else
+					NameCache = newUser.Username;
 			}
 			SyncUpToDate = true;
 			LastFished = 0;
@@ -150,13 +153,20 @@ namespace Rosettes.Modules.Engine
 			return await UserEngine.GetUserReferenceByID(Id);
 		}
 
-		public async Task<string> GetName(bool full = true)
+		public async Task<string> GetName()
 		{
 			var userReference = await GetDiscordReference();
 			if (userReference is null) return NameCache;
+
 			string nameGot;
-			if (full) nameGot = userReference.Username;
-			else nameGot = userReference.Username;
+			if (userReference.GlobalName is not null)
+			{
+				nameGot = userReference.GlobalName;
+			}
+			else
+			{
+				nameGot = userReference.Username;
+			}
 			if (nameGot != NameCache)
 			{
 				NameCache = nameGot;

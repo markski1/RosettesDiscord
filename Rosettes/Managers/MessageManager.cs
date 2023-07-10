@@ -64,22 +64,21 @@ namespace Rosettes.Managers
 
         public static async Task GetGameInfo(SocketCommandContext context)
         {
-            // Grab the game's ID from the url itself. It's located after '/app/' and sometimes the name is after it.
+            // Grab the game's ID from the url. It's located after '/app/' and sometimes the name is after it.
             string extractID = context.Message.Content;
-            int begin = extractID.IndexOf("/app/") + 5;
+
+            int begin = extractID.IndexOf("/app/") + 5; // where the number starts in the string.
             int end = -1;
-            for (int i = begin; i < extractID.Length; i++)
-            {
-                if (char.IsNumber(extractID[i]))
-                {
-                    end = i + 1;
-                    continue;
-                }
-                end = i;
-                break;
-            }
-            if (end == -1) return;
+                
+            end = extractID
+                .Skip(begin)
+                .TakeWhile(char.IsNumber)
+                .Count() + begin;                       // where it ends.
+
+			if (end <= begin) return;
+
             int gameID = int.Parse(extractID[begin..end]);
+
             string data;
             try
             {
@@ -159,36 +158,29 @@ namespace Rosettes.Managers
             if (extractID.Contains("/profiles/"))
             {
                 int begin = extractID.IndexOf("/profiles/") + 10;
-                int end = -1;
-                for (int i = begin; i < extractID.Length; i++)
-                {
-                    if (char.IsNumber(extractID[i]))
-                    {
-                        end = i + 1;
-                        continue;
-                    }
-                    end = i;
-                    break;
-                }
-                if (end == -1) return;
-                steamID = ulong.Parse(extractID[begin..end]);
+
+				int end = -1;
+
+				end = extractID
+					.Skip(begin)
+					.TakeWhile(char.IsNumber)
+					.Count() + begin;                       // where it ends.
+
+				if (end <= begin) return;
+
+				steamID = ulong.Parse(extractID[begin..end]);
             }
             // "hard" mode: if it's a vanity URL, resolve it through Steam WebAPI
             else
             {
                 int begin = extractID.IndexOf("/id/") + 4;
-                int end = -1;
-                for (int i = begin; i < extractID.Length; i++)
-                {
-                    if (extractID[i] != '/')
-                    {
-                        continue;
-                    }
-                    end = i;
-                    break;
-                }
-                if (end == -1) end = extractID.Length;
-                string vanityURL;
+
+                int end = extractID
+					.Skip(begin)
+					.TakeWhile(x => x != '/')
+					.Count() + begin;                       // stop where '/' found, if any.
+
+				string vanityURL;
                 try
                 {
                     vanityURL = extractID[begin..end];

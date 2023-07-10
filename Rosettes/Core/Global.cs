@@ -63,26 +63,18 @@ namespace Rosettes.Core
 
 				if (author is not null)
 				{
-					SocketGuildUser? GuildUser = author as SocketGuildUser;
 					EmbedAuthorBuilder authorEmbed = new();
 					embed.Author = authorEmbed;
-					if (GuildUser is not null && GuildUser.DisplayName is not null)
-					{
-						authorEmbed.Name = GuildUser.DisplayName;
-						if (GuildUser.GetDisplayAvatarUrl() is not null)
-						{
-							authorEmbed.IconUrl = GuildUser.GetDisplayAvatarUrl();
-						}
-					}
-					else
-					{
-						authorEmbed.Name = author.Username;
-						if (author.GetAvatarUrl() is not null)
-						{
-							authorEmbed.IconUrl = author.GetAvatarUrl();
-						}
-					}
+
+					authorEmbed.Name = await dbUser.GetName();
+
 					authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
+
+					if (author.GetAvatarUrl() is not null)
+					{
+						authorEmbed.IconUrl = author.GetAvatarUrl();
+					}
+
 					Pet? pet = await PetEngine.GetUserPet(dbUser);
 					if (pet is not null)
 					{
@@ -121,9 +113,10 @@ namespace Rosettes.Core
 				WriteToFs(ref fileStream, _error);
 				fileStream.Close();
 			}
-			catch
+			catch (Exception e)
 			{
-				// meh, just don't stop
+				// well, this is awkward.
+				errorChannel.SendMessageAsync($"Furthermore, an exception was met trying to write to disk. ```{e}```");
 			}
 		}
 
@@ -153,21 +146,16 @@ namespace Rosettes.Core
 				begin = text.IndexOf("http:/");
 				if (begin == -1) return "0";
 			}
+
 			int end = -1;
-			for (int i = begin; i < end; i++)
-			{
-				if (text[i] == ' ' || char.IsControl(text[i]))
-				{
-					end = i;
-					break;
-				}
-			}
-			if (end == -1)
-			{
-				end = text.Length;
-			}
+
+			end = text
+				.Skip(begin)
+				.TakeWhile( x => !( char.IsWhiteSpace(x) || char.IsControl(x) ) )
+				.Count() + begin;
+
 			string url = text[begin..end];
-			//remove anti-embed artifacts
+			//remove anti-embed artifact
 			url = url.Replace(">", string.Empty);
 			return url;
 		}

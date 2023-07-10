@@ -48,18 +48,9 @@ namespace Rosettes.Modules.Engine.Guild
 
         public static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)
         {
-            string name;
-            if (user is SocketGuildUser guildUser)
-            {
-                name = guildUser.DisplayName.Replace(" ", "");
-            }
-            else
-            {
-                name = user.Username.Replace(" ", "");
-            }
             try
             {
-                IMessage message = await channel.SendMessageAsync($"{name} {action} the channel.");
+                IMessage message = await channel.SendMessageAsync($"{user.Username} {action} the channel.");
                 _ = new MessageDeleter(message, 60);
             }
             catch

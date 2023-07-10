@@ -3,8 +3,6 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rosettes.Core;
 using Rosettes.Managers;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Victoria.Node;
 using Victoria.Node.EventArgs;
 using Victoria.Player;
