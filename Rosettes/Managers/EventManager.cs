@@ -64,7 +64,7 @@ namespace Rosettes.Managers
                 _ = Task.Run(async () =>
                 {
                     PetEngine.LoadAllPetsFromDatabase();
-					GuildEngine.LoadAllGuildsFromDatabase();
+                    GuildEngine.LoadAllGuildsFromDatabase();
                     AlarmManager.LoadAllAlarmsFromDatabase();
                     RequestManager.Initialize();
                     await AutoRolesEngine.SyncWithDatabase();

@@ -78,8 +78,8 @@ namespace Rosettes.Modules.Commands.Utility
                 } 
                 while (playingField[x, y] == -1);
 
-				// set -1 where the mine is
-				playingField[x, y] = -1;
+                // set -1 where the mine is
+                playingField[x, y] = -1;
             }
 
             string board = "";

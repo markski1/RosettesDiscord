@@ -9,9 +9,9 @@ namespace Rosettes.Modules.Engine.Minigame
     {
         public static async Task<Crop?> InsertCropsInPlot(User dbUser, int cropType, int plot_id)
         {
-            // 5 second buffers on each to print a rounded-up time.
-            int growTime = Global.CurrentUnix() + 3600 * 3 + 3600 * Global.Randomize(4) + 5;
-            int waterTime = Global.CurrentUnix() + 1800 + 5;
+            // 3 second buffers on each to print a rounded-up time.
+            int growTime = Global.CurrentUnix() + 3600 * 3 + 3600 * Global.Randomize(4) + 3;
+            int waterTime = Global.CurrentUnix() + 1800 + 3;
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);
 

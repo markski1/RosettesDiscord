@@ -280,7 +280,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		public static async Task<int> RollForPet(User dbUser)
 		{
-			if (Global.Randomize(33) == 0)
+			if (Global.Chance(3))
 			{
 				int pet;
 				int attempts = 0;
@@ -503,7 +503,6 @@ namespace Rosettes.Modules.Engine.Minigame
 			embed.Title = "Name changed!";
 			embed.Description = $"You have changed your pet's name to {pet.GetName()}";
 			
-
 			ComponentBuilder comps = new();
 			ActionRowBuilder petRow = new();
 			ActionRowBuilder buttonRow = new();
@@ -555,11 +554,11 @@ namespace Rosettes.Modules.Engine.Minigame
 				}
 				else if (happiness > 40)
 				{
-					if (Global.Randomize(3) > 0) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
+					if (Global.Chance(66)) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
 				}
 				else
 				{
-					if (Global.Randomize(4) > 2) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
+					if (Global.Chance(25)) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
 				}
 			}
 		}

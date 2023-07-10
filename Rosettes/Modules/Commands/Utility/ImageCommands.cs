@@ -450,8 +450,8 @@ namespace Rosettes.Modules.Commands.Utility
             {
                 await FollowupAsync("Sorry, I was unable to do that.", ephemeral: true);
             }
-			File.Delete(fileName);
-		}
+            File.Delete(fileName);
+        }
     }
 
     public static class ImageHelper
@@ -512,8 +512,8 @@ namespace Rosettes.Modules.Commands.Utility
                 embed.Description = $"Converting image to {format}\nThere was an error.";
                 await component.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
             }
-			File.Delete(fileName);
-		}
+            File.Delete(fileName);
+        }
 
 
         public static async Task<string> GetDirectTenorURL(string tenorUrl)

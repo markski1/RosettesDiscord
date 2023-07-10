@@ -75,7 +75,7 @@ namespace Rosettes.Managers
                 .TakeWhile(char.IsNumber)
                 .Count() + begin;                       // where it ends.
 
-			if (end <= begin) return;
+            if (end <= begin) return;
 
             int gameID = int.Parse(extractID[begin..end]);
 
@@ -159,16 +159,16 @@ namespace Rosettes.Managers
             {
                 int begin = extractID.IndexOf("/profiles/") + 10;
 
-				int end = -1;
+                int end = -1;
 
-				end = extractID
-					.Skip(begin)
-					.TakeWhile(char.IsNumber)
-					.Count() + begin;                       // where it ends.
+                end = extractID
+                    .Skip(begin)
+                    .TakeWhile(char.IsNumber)
+                    .Count() + begin;                       // where it ends.
 
-				if (end <= begin) return;
+                if (end <= begin) return;
 
-				steamID = ulong.Parse(extractID[begin..end]);
+                steamID = ulong.Parse(extractID[begin..end]);
             }
             // "hard" mode: if it's a vanity URL, resolve it through Steam WebAPI
             else
@@ -176,11 +176,11 @@ namespace Rosettes.Managers
                 int begin = extractID.IndexOf("/id/") + 4;
 
                 int end = extractID
-					.Skip(begin)
-					.TakeWhile(x => x != '/')
-					.Count() + begin;                       // stop where '/' found, if any.
+                    .Skip(begin)
+                    .TakeWhile(x => x != '/')
+                    .Count() + begin;                       // stop where '/' found, if any.
 
-				string vanityURL;
+                string vanityURL;
                 try
                 {
                     vanityURL = extractID[begin..end];

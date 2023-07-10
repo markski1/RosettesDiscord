@@ -116,8 +116,8 @@ namespace Rosettes.Modules.Commands.Utility
 
             var mid = await ReplyAsync(embed: embed.Build());
 
-			// store the video locally
-			if (!System.IO.Directory.Exists("./temp/twtvid/"))
+            // store the video locally
+            if (!System.IO.Directory.Exists("./temp/twtvid/"))
             {
                 System.IO.Directory.CreateDirectory("./temp/twtvid/");
             }
@@ -125,23 +125,23 @@ namespace Rosettes.Modules.Commands.Utility
             string fileName = $"./temp/twtvid/{Global.Randomize(20) + 1}.mp4";
             using (Stream stream = await Global.HttpClient.GetStreamAsync(tweetUrl))
             {
-				using var fileStream = new FileStream(fileName, FileMode.Create);
-				var downloadTask = stream.CopyToAsync(fileStream);
-				int quarterSecondCount = 0;
-				while (!downloadTask.IsCompleted)
-				{
-					await Task.Delay(250);
-					quarterSecondCount++;
-					if (quarterSecondCount > 12) // 3 seconds
-					{
-						downloadStatus.Value = "Failed. Video is too large.";
-						embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
-						await mid.ModifyAsync(x => x.Embed = embed.Build());
-						// GC will destroy the stream's copytoasync op automatically.
-						return;
-					}
-				}
-			}
+                using var fileStream = new FileStream(fileName, FileMode.Create);
+                var downloadTask = stream.CopyToAsync(fileStream);
+                int quarterSecondCount = 0;
+                while (!downloadTask.IsCompleted)
+                {
+                    await Task.Delay(250);
+                    quarterSecondCount++;
+                    if (quarterSecondCount > 12) // 3 seconds
+                    {
+                        downloadStatus.Value = "Failed. Video is too large.";
+                        embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+                        await mid.ModifyAsync(x => x.Embed = embed.Build());
+                        // GC will destroy the stream's copytoasync op automatically.
+                        return;
+                    }
+                }
+            }
 
             ulong size = 0;
 
@@ -180,7 +180,7 @@ namespace Rosettes.Modules.Commands.Utility
                 }
                 catch
                 {
-					downloadStatus.Value = "Upload failed.";
+                    downloadStatus.Value = "Upload failed.";
 
                     await mid.ModifyAsync(x => x.Embed = embed.Build());
                 }
@@ -192,8 +192,8 @@ namespace Rosettes.Modules.Commands.Utility
                 await FollowupAsync(embed: embed.Build());
                 _ = mid.DeleteAsync();
             }
-			File.Delete(fileName);
-		}
+            File.Delete(fileName);
+        }
 
         [SlashCommand("exportemoji", "Generate a ZIP file containing every single emoji in the guild.")]
         public async Task ExportEmoji()
