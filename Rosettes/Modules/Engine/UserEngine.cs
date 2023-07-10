@@ -12,21 +12,12 @@ namespace Rosettes.Modules.Engine
         private static List<User> UserCache = new();
         public static readonly UserRepository _interface = new();
 
-        public static bool IsUserInCache(IUser user)
-        {
-            User? findUser = null;
-            findUser = UserCache.Find(item => item.Id == user.Id);
-            return findUser != null;
-        }
-
         public static async void SyncWithDatabase()
         {
             foreach (User user in UserCache)
             {
                 if (user.SyncUpToDate) continue;
-                // just get the name and don't do anything with it
-                // calling the method updates name_cache, which is what we want before saving
-                await user.GetName();
+
                 await _interface.UpdateUser(user);
                 user.SyncUpToDate = true;
             }
@@ -59,17 +50,27 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<User> GetDBUser(IUser user)
         {
-            if (!IsUserInCache(user))
+            try
             {
-                return await LoadUserFromDatabase(user);
+                return UserCache.First(item => item.Id == user.Id);
             }
-            return UserCache.First(item => item.Id == user.Id); ;
+            catch
+            {
+				return await LoadUserFromDatabase(user);
+			}
         }
 
         // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
         public static User GetDBUserById(ulong user)
         {
-            return UserCache.First(item => item.Id == user);
+            try
+            {
+                return UserCache.First(item => item.Id == user);
+            }
+            catch
+            {
+                return new User(null);
+            }
         }
 
         public static async Task<IUser> GetUserReferenceByID(ulong id)
@@ -217,15 +218,15 @@ namespace Rosettes.Modules.Engine
 
         public int GetLevel()
         {
-            int count = Exp;
+            float count = Exp;
             float requirement = 100.0f;
             int level = 1;
 
-            while (count > 0)
+            while (count > 0.9f)
             {
                 if (count >= requirement)
                 {
-                    count -= (int)requirement;
+                    count -= requirement;
                     requirement *= 1.1f;
                     level += 1;
                 }

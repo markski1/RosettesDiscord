@@ -59,9 +59,7 @@ namespace Rosettes.Core
                     EmbedAuthorBuilder authorEmbed = new();
                     embed.Author = authorEmbed;
 
-                    authorEmbed.Name = await dbUser.GetName();
-
-                    authorEmbed.Name += $" [lv {dbUser.GetLevel()}]";
+                    authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
 
                     if (author.GetAvatarUrl() is not null)
                     {
@@ -92,8 +90,7 @@ namespace Rosettes.Core
 
             if (_error.Length > 1999)
             {
-                _error = _error[..1900];
-                _error += "```(truncated)";
+                _error = $"{_error[..1900]} ```(truncated)";
             }
 
             errorChannel.SendMessageAsync(_error);

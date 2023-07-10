@@ -127,7 +127,7 @@ namespace Rosettes.Modules.Commands
             int offset;
             for (int i = 0; i < 64; i++)
             {
-                if (Global.Randomize(0, 2) == 0)
+                if (Global.Randomize(2) == 0)
                 {
                     offset = 65;
                 }

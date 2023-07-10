@@ -13,13 +13,6 @@ namespace Rosettes.Modules.Engine.Guild
         private static List<Guild> GuildCache = new();
         public static readonly GuildRepository _interface = new();
 
-        public static bool IsGuildInCache(SocketGuild guild)
-        {
-            Guild? findGuild = null;
-            findGuild = GuildCache.Find(item => item.Id == guild.Id);
-            return findGuild != null;
-        }
-
         public static async void SyncWithDatabase()
         {
             foreach (Guild guild in GuildCache.ToList())
@@ -30,9 +23,6 @@ namespace Rosettes.Modules.Engine.Guild
 
         public static async Task<Task> UpdateGuild(Guild guild)
         {
-#if RELEASE
-			guild.SelfTest();
-#endif
             if (await _interface.CheckGuildExists(guild.Id))
             {
                 await _interface.UpdateGuild(guild);
@@ -97,17 +87,27 @@ namespace Rosettes.Modules.Engine.Guild
 
         public static async Task<Guild> GetDBGuild(SocketGuild guild)
         {
-            if (!IsGuildInCache(guild))
+            try
             {
-                return await LoadGuildFromDatabase(guild);
+                return GuildCache.First(item => item.Id == guild.Id);
             }
-            return GuildCache.First(item => item.Id == guild.Id);
+            catch
+            {
+				return await LoadGuildFromDatabase(guild);
+			}
         }
 
         // assumes guild is cached! to be used in constructors, where async tasks cannot be awaited.
         public static Guild GetDBGuildById(ulong guild)
         {
-            return GuildCache.First(item => item.Id == guild);
+            try
+            {
+                return GuildCache.First(item => item.Id == guild);
+            }
+            catch
+            {
+                return new Guild(null);
+            }
         }
     }
 
