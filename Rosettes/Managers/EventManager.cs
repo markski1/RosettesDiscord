@@ -7,6 +7,7 @@ using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine.Minigame;
+using System.Data;
 
 namespace Rosettes.Managers
 {
@@ -136,9 +137,9 @@ namespace Rosettes.Managers
                 {
                     await UserEngine.GetDBUser(user);
                 }
-                catch
+                catch (Exception e)
                 {
-                    // just don't crash the rest of the program! We have nothing to handle here
+                    Global.GenerateErrorMessage("OnJoinGuild", $"Error caching user {user.Username} in guild {guild.Name} ```{e.Message}```");
                 }
             }
 
@@ -232,57 +233,51 @@ namespace Rosettes.Managers
 
         private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            // ensure guild is cached and their data can be accessed
-            ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
+			if (reaction.User.IsSpecified)
+			{
+				if (reaction.User.Value.IsBot) return Task.CompletedTask;
+			}
+
+			// ensure guild is cached and their data can be accessed
+			ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
             if (guildid == 0) return Task.CompletedTask;
             var guild = GuildEngine.GetDBGuildById(guildid);
             if (guild is null) return Task.CompletedTask;
-
-            if (reaction.User.IsSpecified)
-            {
-                if (reaction.User.Value.IsBot) return Task.CompletedTask;
-            }
 
             // If the message is AutoRoles, apply the relevant role.
             var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
-            foreach (var role in roles)
-            {
-                var success = await guild.SetUserRole(reaction.UserId, role.RoleId);
-                if (!success)
-                {
-                    var cacheChannel = await channel.DownloadAsync();
-                    await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-                }
-            }
+			var success = await guild.SetUserRole(reaction.UserId, roles);
+			if (!success)
+			{
+				var cacheChannel = await channel.DownloadAsync();
+				await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
+			}
 
-            return Task.CompletedTask;
+			return Task.CompletedTask;
         }
 
         private static async Task<Task> OnReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
         {
-            // ensure guild is cached and their data can be accessed
-            ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
+			if (reaction.User.IsSpecified)
+			{
+				if (reaction.User.Value.IsBot) return Task.CompletedTask;
+			}
+
+			// ensure guild is cached and their data can be accessed
+			ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
             if (guildid == 0) return Task.CompletedTask;
             var guild = GuildEngine.GetDBGuildById(guildid);
             if (guild is null) return Task.CompletedTask;
 
-            if (reaction.User.IsSpecified)
-            {
-                if (reaction.User.Value.IsBot) return Task.CompletedTask;
-            }
-
             // If the message is AutoRoles, remove the relevant role.
             var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
-            foreach (var role in roles)
+            var success = await guild.RemoveUserRole(reaction.UserId, roles);
+            if (!success)
             {
-                var success = await guild.RemoveUserRole(reaction.UserId, role.RoleId);
-                if (!success)
-                {
-                    var cacheChannel = await channel.DownloadAsync();
-                    await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-                }
+                var cacheChannel = await channel.DownloadAsync();
+                await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
             }
 
             return Task.CompletedTask;

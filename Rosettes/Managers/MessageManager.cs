@@ -40,14 +40,6 @@ namespace Rosettes.Managers
                 await MirrorExpiringMedia(context);
                 return;
             }
-
-            if (messageText.Contains("nitro") && (messageText.Contains("free") || messageText.Contains("earn") || messageText.Contains("win")))
-            {
-                if (message.MentionedEveryone || message.MentionedRoles.Any() || message.MentionedUsers.Any() || Global.GrabURLFromText(message.Content) != "0")
-                {
-                    await message.Channel.SendMessageAsync("HEY! Be careful of scammers and hackers, don't click on links you don't know or trust!");
-                }
-            }
         }
 
         private static bool NoMessageChannel(SocketCommandContext context)
@@ -86,7 +78,7 @@ namespace Rosettes.Managers
             }
             catch
             {
-                // an exception will mean a 404 or steam being down, I think.
+                // an exception will mean a 404 or timeout.
                 // nothing to handle here.
                 return;
             }
@@ -106,7 +98,7 @@ namespace Rosettes.Managers
 
             string url = Global.GrabURLFromText(message);
 
-            // Try to infer the format from the filename
+            // Infer the format from the filename
             // TODO: Infer the format from the downloaded data instead.
             int formatBegin = url.LastIndexOf('.');
             if (formatBegin == -1) return;

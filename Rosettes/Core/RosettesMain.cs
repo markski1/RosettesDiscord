@@ -62,8 +62,8 @@ namespace Rosettes.Core
             // start thy stuff
             await EventManager.SetupAsync();
 
-            // FiveMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
-            TenMinutyTimer.Elapsed += TenMinutyThings;
+			// TenMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
+			TenMinutyTimer.Elapsed += TenMinutyThings;
             TenMinutyTimer.Interval = 600000;
             TenMinutyTimer.AutoReset = true;
             TenMinutyTimer.Enabled = true;

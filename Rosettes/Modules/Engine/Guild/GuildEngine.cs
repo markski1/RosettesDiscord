@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
+using System.Data;
 
 namespace Rosettes.Modules.Engine.Guild
 {
@@ -283,14 +284,17 @@ namespace Rosettes.Modules.Engine.Guild
             return user;
         }
 
-        public async Task<bool> SetUserRole(ulong userid, ulong roleid)
+        public async Task<bool> SetUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
         {
             var user = await GetGuildUser(userid);
             if (user is not null)
             {
                 try
                 {
-                    await user.AddRoleAsync(roleid);
+                    foreach (var role in roles)
+                    {
+                        await user.AddRoleAsync(role.RoleId);
+                    }
                     return true;
                 }
                 catch
@@ -301,15 +305,18 @@ namespace Rosettes.Modules.Engine.Guild
             return false;
         }
 
-        public async Task<bool> RemoveUserRole(ulong userid, ulong roleid)
+        public async Task<bool> RemoveUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
         {
             var user = await GetGuildUser(userid);
             if (user is not null)
             {
                 try
                 {
-                    await user.RemoveRoleAsync(roleid);
-                    return true;
+					foreach (var role in roles)
+					{
+						await user.RemoveRoleAsync(role.RoleId);
+					}
+					return true;
                 }
                 catch
                 {

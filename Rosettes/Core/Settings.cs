@@ -43,7 +43,7 @@ namespace Rosettes.Core
 
         public static string LoadSetting(string name) => File.ReadAllText($"{keyLoc}/{name}.txt").Replace("\n", String.Empty);
 
-        // Supressing this warning, because if this were to be null, crashing IS the desired effect.
+        // Supressing this warning, because if this were to be null, crashing on launch IS the desired effect.
         // Rosettes cannot and should not work with misconfused keys.
         #pragma warning disable CS8603
         public static dynamic LoadJsonSetting(string name) => JsonConvert.DeserializeObject(File.ReadAllText($"{keyLoc}/{name}.txt"));
