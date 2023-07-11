@@ -2,7 +2,6 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rosettes.Core;
-using Rosettes.Managers;
 using Victoria.Node;
 using Victoria.Node.EventArgs;
 using Victoria.Player;
@@ -42,11 +41,17 @@ namespace Rosettes.Modules.Engine
 
         public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
         {
+            // Check conditions
             if (_lavaNode is null) return "Music playback hasn't initialized yet.";
-            if (user.VoiceChannel is null) return "You are not in VC.";
+            if (user.VoiceChannel is null) return "You are not in a voice channel.";
 
-            // because _lavaNode.IsConnected does not return accordingly.
-            try
+			if (string.IsNullOrWhiteSpace(query))
+			{
+				return "Please provide a URL or a name.";
+			}
+
+			// Connect if not yet connected
+			try
 			{
 				await _lavaNode.ConnectAsync();
 			}
@@ -55,6 +60,7 @@ namespace Rosettes.Modules.Engine
 				Global.GenerateErrorMessage("MusicEngine-ConnectAsync", $"{ex.Message}");
 			}
 
+            // Join channel if not yet joined.
             if (!_lavaNode.HasPlayer(guild))
             {
                 try
@@ -72,23 +78,21 @@ namespace Rosettes.Modules.Engine
             {
                 if (!_lavaNode.TryGetPlayer(guild, out var player))
                 {
-                    return "I cannot connect to the channel.";
+                    return "I cannot connect to the channel. Try using commands.";
                 }
                 
-                SearchResponse search;
-
-                search = await _lavaNode.SearchAsync(Uri.IsWellFormedUriString(query, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, query);
+                SearchResponse search = await _lavaNode.SearchAsync(Uri.IsWellFormedUriString(query, UriKind.Absolute) ? SearchType.Direct : SearchType.YouTube, query);
 
                 if (search.Status is SearchStatus.LoadFailed or SearchStatus.NoMatches)
                 {
-                    return $"I was unable to find anything for '{query}'.";
+                    return $"Couldn't find '{query}'.";
                 }
 
                 if (search.Status == SearchStatus.NoMatches) return $"Could not find {query}";
 
                 LavaTrack? track = search.Tracks.FirstOrDefault();
 
-                if (track == null) return "There was an error obtaining a track.";
+				if (track == null) return "There was an error obtaining a track.";
 
                 if (player.Track != null && player.PlayerState is PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
@@ -101,7 +105,7 @@ namespace Rosettes.Modules.Engine
             }
             catch (Exception ex)
             {
-                Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
+                Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex}");
                 return "There was an error trying to fetch the song, please try again.";
             }
         }
@@ -113,7 +117,7 @@ namespace Rosettes.Modules.Engine
             {
                 if (!_lavaNode.TryGetPlayer(guild, out var player))
                 {
-                    return "I cannot connect to the channel.";
+                    return "I am not connected.";
                 }
                 if (player.PlayerState is PlayerState.Playing) await player.StopAsync();
                 await _lavaNode.LeaveAsync(player.VoiceChannel);
@@ -121,7 +125,7 @@ namespace Rosettes.Modules.Engine
             }
             catch
             {
-                return "Error. Are you sure I'm playing music?";
+                return "There was an error. Are you sure I'm playing music?";
             }
         }
 
@@ -131,10 +135,6 @@ namespace Rosettes.Modules.Engine
             try
             {
                 if (!_lavaNode.TryGetPlayer(guild, out var player))
-                {
-                    return "I cannot connect to the channel.";
-                }
-                if (player == null)
                 {
                     return "Error. Are you sure I'm in VC?";
                 }
@@ -152,13 +152,13 @@ namespace Rosettes.Modules.Engine
                     }
                     catch
                     {
-                        return "There was an error trying to skip to the next song.";
+                        return "There was an error trying to skip to the next song. [E1]";
                     }
                 }
             }
             catch
             {
-                return "There was an error trying to skip to the next song.";
+                return "There was an error trying to skip to the next song. [E2]";
             }
         }
 
@@ -202,21 +202,21 @@ namespace Rosettes.Modules.Engine
                 if (player.PlayerState is PlayerState.Playing) await player.StopAsync();
                 await _lavaNode.LeaveAsync(player.VoiceChannel);
 
-                return "Left the VC.";
+                return "Playback stopped. Left the voicechat.";
             }
             catch
             {
-                return "Error: Not on VC, or something failed.";
+                return "Error: Not in voice channel, or something failed.";
             }
         }
 
         public static async Task TrackEnded(TrackEndEventArg<LavaPlayer<LavaTrack>, LavaTrack> args)
         {
-            var playa = args.Player;
+            var player = args.Player;
 
-            if (!playa.Vueue.TryDequeue(out var queueable)) return;
+            if (!player.Vueue.TryDequeue(out var queueable)) return;
         
-            var playerEmbed = GetPlayer(playa.TextChannel);
+            var playerEmbed = GetPlayer(player.TextChannel);
             EmbedBuilder embed = await Global.MakeRosettesEmbed();
             embed.Title = "Music player";
 
@@ -227,15 +227,15 @@ namespace Rosettes.Modules.Engine
                 return;
             }
 
-            await playa.PlayAsync(track);
+            await player.PlayAsync(track);
             if (playerEmbed is not null)
             {
-                embed.Description = $"**Playing next song**: `{playa.Track}`";
+                embed.Description = $"**Playing next song**: `{player.Track}`";
                 await playerEmbed.ModifyAsync(x => x.Embed = embed.Build());
             }
         }
 
-        static readonly Dictionary<IChannel, IUserMessage> channelPlayers = new();
+		static readonly Dictionary<IChannel, IUserMessage> channelPlayers = new();
 
         // we can make a safe assumption that channelPlayers will always contain a player message for a given channel.
         // music cannot start playing without first assigning a message.

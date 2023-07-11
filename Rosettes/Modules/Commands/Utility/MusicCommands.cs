@@ -137,7 +137,7 @@ namespace Rosettes.Modules.Commands.Utility
             buttons.WithButton(label: "Stop", customId: "music_stop", style: ButtonStyle.Danger);
             buttons.WithButton(label: "Add song", customId: "music_add", style: ButtonStyle.Secondary);
 
-            ComponentBuilder comps = new();
+			ComponentBuilder comps = new();
 
             comps.AddRow(buttons);
 
