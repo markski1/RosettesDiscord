@@ -12,23 +12,12 @@ namespace Rosettes.Modules.Engine
 {
     public static class MusicEngine
     {
-        private static int backupState = 0;
-
         static readonly NodeConfiguration lavaNodeConfig = new()
         {
             SelfDeaf = true,
             Hostname = Settings.LavaLinkData.Host,
             Port = Settings.LavaLinkData.Port,
-            Authorization = Settings.LavaLinkData.Password,
-            IsSecure = false
-        };
-
-        static readonly NodeConfiguration lavaNodeConfigBackup = new()
-        {
-            SelfDeaf = true,
-            Hostname = Settings.LavaLinkBackup.Host,
-            Port = Settings.LavaLinkBackup.Port,
-            Authorization = Settings.LavaLinkBackup.Password,
+            Authorization = (string)Settings.LavaLinkData.Password,
             IsSecure = false
         };
 
@@ -42,56 +31,13 @@ namespace Rosettes.Modules.Engine
             _lavaNode.OnWebSocketClosed += LavanodeDisconnect;
         }
 
-        private static async Task LavanodeDisconnect(WebSocketClosedEventArg arg)
+		private static async Task LavanodeDisconnect(WebSocketClosedEventArg arg)
         {
-            try
+			if (_lavaNode is not null)
             {
-                if (_lavaNode is null) throw new Exception();
                 await _lavaNode.ConnectAsync();
             }
-            catch
-            {
-                _ = RotateLavanode();
-            }
-
-            return;
-        }
-
-        public static async Task RotateLavanode()
-        {
-            NullLogger<LavaNode> nothing = new();
-
-            if (_lavaNode is not null)
-            {
-                try
-                {
-                    await _lavaNode.DisconnectAsync();
-                    await _lavaNode.DisposeAsync();
-                }
-                catch
-                {
-                    // doesn't matter, we're overriding lavaNode anyways, continue
-                }
-            }
-
-            var client = ServiceManager.GetService<DiscordSocketClient>();
-
-            switch (backupState)
-            {
-                case 0:
-                    _lavaNode = new(client, lavaNodeConfigBackup, nothing);
-                    backupState++;
-                    break;
-                default:
-                    _lavaNode = new(client, lavaNodeConfig, nothing);
-                    backupState = 0;
-                    break;
-            }
-
-            _lavaNode.OnTrackEnd += TrackEnded;
-            _lavaNode.OnWebSocketClosed += LavanodeDisconnect;
-
-            return;
+			return;
         }
 
         public static async Task<string> PlayAsync(SocketGuildUser user, IGuild guild, IVoiceState voiceState, ITextChannel channel, string query)
@@ -99,14 +45,15 @@ namespace Rosettes.Modules.Engine
             if (_lavaNode is null) return "Music playback hasn't initialized yet.";
             if (user.VoiceChannel is null) return "You are not in VC.";
 
+            // because _lavaNode.IsConnected does not return accordingly.
             try
-            {
-                await _lavaNode.ConnectAsync();
-            }
-            catch
-            {
-                // probably already connected, move on
-            }
+			{
+				await _lavaNode.ConnectAsync();
+			}
+			catch (Exception ex)
+			{
+				Global.GenerateErrorMessage("MusicEngine-ConnectAsync", $"{ex.Message}");
+			}
 
             if (!_lavaNode.HasPlayer(guild))
             {
@@ -116,9 +63,8 @@ namespace Rosettes.Modules.Engine
                 }
                 catch (Exception ex)
                 {
-                    await RotateLavanode();
                     Global.GenerateErrorMessage("MusicEngine-JoinAsync", $"{ex.Message}");
-                    return "Error joining the channel, please try again later.";
+                    return "Error joining the channel, please try again in a bit.";
                 }
             }
 
@@ -156,7 +102,6 @@ namespace Rosettes.Modules.Engine
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("MusicEngine-PlayAsync", $"{ex.Message}");
-                await RotateLavanode();
                 return "There was an error trying to fetch the song, please try again.";
             }
         }
