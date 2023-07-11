@@ -3,8 +3,6 @@ using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
-using System.ComponentModel;
-using System;
 using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Modules.Engine.Minigame
@@ -13,24 +11,55 @@ namespace Rosettes.Modules.Engine.Minigame
 	{
 		public static readonly FarmRepository _interface = new();
 
+		public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> inventoryItems = new()
+		{
+		//    db_name            name                   can_give  can_pet_eat
+			{ "fish",           ( "🐡 Common fish",     true,    true   ) },
+			{ "uncommonfish",   ( "🐟 Uncommon fish",   true,    true   ) },
+			{ "rarefish",       ( "🐠 Rare fish",       true,    true   ) },
+			{ "shrimp",         ( "🦐 Shrimp",          true,    true   ) },
+			{ "dabloons",       ( "🐾 Dabloons",        true,    false  ) },
+			{ "garbage",        ( "🗑 Garbage",         true,    false  ) },
+			{ "tomato",         ( "🍅 Tomato",          true,    false  ) },
+			{ "carrot",         ( "🥕 Carrot",          true,    true   ) },
+			{ "potato",         ( "🥔 Potato",          true,    false  ) },
+			{ "seedbag",        ( "🌱 Seed bag",        true,    false  ) },
+			{ "fishpole",       ( "🎣 Fishing pole",    false,   false  ) },
+			{ "farmtools",      ( "🧰 Farming tools",   false,   false  ) }
+		};
+
+		public static readonly Dictionary<string, (string name, int amount, int cost)> itemSaleChart = new()
+		{
+		//   instruct   name         amount cost
+			{ "sell1", ("fish",         5,   3) },
+			{ "sell2", ("uncommonfish", 5,   6) },
+			{ "sell3", ("rarefish",     1,   5) },
+			{ "sell4", ("shrimp",       5,   5) },
+			{ "sell5", ("tomato",       10,  6) },
+			{ "sell6", ("carrot",       10,  5) },
+			{ "sell7", ("potato",       10,  4) },
+			{ "sell8", ("garbage",      5,   3) }
+		};
+
 		public static string GetItemName(string choice)
 		{
-			return choice switch
-			{
-				"fish" => "🐡 Common fish",
-				"uncommonfish" => "🐟 Uncommon fish",
-				"rarefish" => "🐠 Rare fish",
-				"shrimp" => "🦐 Shrimp",
-				"dabloons" => "🐾 Dabloons",
-				"garbage" => "🗑 Garbage",
-				"tomato" => "🍅 Tomato",
-				"carrot" => "🥕 Carrot",
-				"potato" => "🥔 Potato",
-				"seedbag" => "🌱 Seed bag",
-				"fishpole" => "🎣 Fishing pole",
-				"farmtools" => "🧰 Farming tools",
-				_ => "invalid item"
-			};
+			if (!inventoryItems.ContainsKey(choice))
+				return "invalid item";
+
+			return inventoryItems[choice].fullName;
+		}
+
+		public static bool IsValidGiveChoice(string choice)
+		{
+			if (!inventoryItems.ContainsKey(choice))
+				return false;
+
+			return inventoryItems[choice].can_give;
+		}
+
+		public static bool IsValidItem(string choice)
+		{
+			return inventoryItems.ContainsKey(choice);
 		}
 
 		public static async void ModifyItem(User dbUser, string choice, int amount)
@@ -78,24 +107,6 @@ namespace Rosettes.Modules.Engine.Minigame
 				return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
 			}
 			return "yes";
-		}
-
-		public static bool IsValidGiveChoice(string choice)
-		{
-			string[] choices =
-				{
-					"fish",
-					"uncommonfish",
-					"rarefish",
-					"shrimp",
-					"dabloons",
-					"garbage",
-					"tomato",
-					"carrot",
-					"potato",
-					"seedbag"
-				};
-			return choices.Contains(choice);
 		}
 
 		public static async Task ShopAction(SocketMessageComponent component)
@@ -172,20 +183,8 @@ namespace Rosettes.Modules.Engine.Minigame
 				case "sell_e":
 				case "sell":
 					bool sell_e = component.Data.CustomId.Contains("_e");
-					var sellItems = new Dictionary<string, (string name, int amount, int cost)>
-					{
-					//   instruct   name         amount cost
-						{ "sell1", ("fish",         5,   3) },
-						{ "sell2", ("uncommonfish", 5,   6) },
-						{ "sell3", ("rarefish",     1,   5) },
-						{ "sell4", ("shrimp",       5,   5) },
-						{ "sell5", ("tomato",       10,  6) },
-						{ "sell6", ("carrot",       10,  5) },
-						{ "sell7", ("potato",       10,  4) },
-						{ "sell8", ("garbage",      5,   3) }
-					};
-
-					if (sellItems.TryGetValue(component.Data.Values.Last(), out var values))
+					
+					if (itemSaleChart.TryGetValue(component.Data.Values.Last(), out var values))
 					{
 						text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sell_e);
 					}
@@ -244,8 +243,8 @@ namespace Rosettes.Modules.Engine.Minigame
 					int totalSold = amount * timesToSell;
 					int totalEarned = cost * timesToSell;
 
-					// sometimes it rounds the division up? maybe. there's a weird bug, and this might be a fix
-					if (totalSold > availableAmount)
+					// shouldn't happen, but...
+					while (totalSold > availableAmount)
 					{
 						totalSold -= amount;
 					}

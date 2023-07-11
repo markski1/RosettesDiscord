@@ -91,7 +91,9 @@ namespace Rosettes.Database
 
         public async Task<int> FetchInventoryItem(User user, string item)
         {
-            var db = DBConnection();
+			if (!FarmEngine.IsValidItem(item)) return -1;
+
+			var db = DBConnection();
 
             var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
@@ -108,7 +110,9 @@ namespace Rosettes.Database
 
         public async Task<string> FetchInventoryStringItem(User user, string item)
         {
-            var db = DBConnection();
+			if (!FarmEngine.IsValidItem(item)) return "err";
+
+			var db = DBConnection();
 
             var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
@@ -125,6 +129,8 @@ namespace Rosettes.Database
 
         public async Task<bool> ModifyInventoryItem(User user, string item, int amount)
         {
+            if (!FarmEngine.IsValidItem(item)) return false;
+
             var db = DBConnection();
 
             var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
@@ -142,7 +148,9 @@ namespace Rosettes.Database
 
         public async Task<bool> SetInventoryItem(User user, string item, int newValue)
         {
-            var db = DBConnection();
+			if (!FarmEngine.IsValidItem(item)) return false;
+
+			var db = DBConnection();
 
             var sql = $"UPDATE users_inventory SET {item} = @newValue WHERE id=@id";
 
@@ -159,7 +167,9 @@ namespace Rosettes.Database
 
         public async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
         {
-            var db = DBConnection();
+			if (!FarmEngine.IsValidItem(item)) return false;
+
+			var db = DBConnection();
 
             var sql = $"UPDATE users_inventory SET `{item}` = '{newValue}' WHERE id=@id";
 

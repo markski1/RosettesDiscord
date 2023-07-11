@@ -22,6 +22,50 @@ namespace Rosettes.Modules.Engine.Minigame
 		private static List<Pet> PetCache = new();
 		public static readonly PetRepository _interface = new();
 
+		public static readonly Dictionary<int, (string fullName, string emoji)> petChart = new()
+		{
+		//  db_id   name             emoji
+			{ 1,  ( "🐕 Dog",        "🐕" ) },
+			{ 2,  ( "🦊 Fox",        "🦊" ) },
+			{ 3,  ( "🐈 Cat",        "🐈" ) },
+			{ 4,  ( "🐐 Goat",       "🐐" ) },
+			{ 5,  ( "🐇 Rabbit",     "🐇" ) },
+			{ 6,  ( "🦇 Bat",        "🦇" ) },
+			{ 7,  ( "🐦 Bird",       "🐦" ) },
+			{ 8,  ( "🦎 Lizard",     "🦎" ) },
+			{ 9,  ( "🐹 Hamster",    "🐹" ) },
+			{ 10, ( "🐸 Frog",       "🐸" ) },
+			{ 11, ( "🦝 Raccoon",    "🦝" ) },
+			{ 12, ( "🐼 Panda",      "🐼" ) },
+			{ 13, ( "🐁 Mouse",      "🐁" ) },
+			{ 14, ( "🐊 Crocodile",  "🐊" ) },
+			{ 15, ( "🐢 Turtle",     "🐢" ) },
+			{ 16, ( "🦦 Otter",      "🦦" ) },
+			{ 17, ( "🦜 Parrot",     "🦜" ) },
+			{ 18, ( "🦨 Skunk",      "🦨" ) },
+			{ 19, ( "🐿 Chipmunk",   "🐿" ) },
+			{ 20, ( "🐝 Bee",        "🐝" ) },
+			{ 21, ( "🦉 Owl",        "🦉" ) },
+			{ 22, ( "🐺 Wolf",       "🐺" ) },
+			{ 23, ( "🦈 Shark",      "🦈" ) }
+		};
+
+		public static string PetNames(int id)
+		{
+			if (!petChart.ContainsKey(id))
+				return "? Invalid Pet";
+
+			return petChart[id].fullName;
+		}
+
+		public static string PetEmojis(int id)
+		{
+			if (!petChart.ContainsKey(id))
+				return "?";
+
+			return petChart[id].emoji;
+		}
+
 		public static async void LoadAllPetsFromDatabase()
 		{
 			IEnumerable<Pet> petCacheTemp;
@@ -62,68 +106,6 @@ namespace Rosettes.Modules.Engine.Minigame
 			{
 				return null;
 			}
-		}
-
-		public static string PetNames(int id)
-		{
-			return id switch
-			{
-				1 => "🐕 Dog",
-				2 => "🦊 Fox",
-				3 => "🐈 Cat",
-				4 => "🐐 Goat",
-				5 => "🐇 Rabbit",
-				6 => "🦇 Bat",
-				7 => "🐦 Bird",
-				8 => "🦎 Lizard",
-				9 => "🐹 Hamster",
-				10 => "🐸 Frog",
-				11 => "🦝 Raccoon",
-				12 => "🐼 Panda",
-				13 => "🐁 Mouse",
-				14 => "🐊 Crocodile",
-				15 => "🐢 Turtle",
-				16 => "🦦 Otter",
-				17 => "🦜 Parrot",
-				18 => "🦨 Skunk",
-				19 => "🐿 Chipmunk",
-				20 => "🐝 Bee",
-				21 => "🦉 Owl",
-				22 => "🐺 Wolf",
-				23 => "🦈 Shark",
-				_ => "? Invalid Pet"
-			};
-		}
-
-		public static string PetEmojis(int id)
-		{
-			return id switch
-			{
-				1 => "🐕",
-				2 => "🦊",
-				3 => "🐈",
-				4 => "🐐",
-				5 => "🐇",
-				6 => "🦇",
-				7 => "🐦",
-				8 => "🦎",
-				9 => "🐹",
-				10 => "🐸",
-				11 => "🦝",
-				12 => "🐼",
-				13 => "🐁",
-				14 => "🐊",
-				15 => "🐢",
-				16 => "🦦",
-				17 => "🦜",
-				18 => "🦨",
-				19 => "🐿",
-				20 => "🐝",
-				21 => "🦉",
-				22 => "🐺",
-				23 => "🦈",
-				_ => "?"
-			};
 		}
 
 		public static async Task ShowPets(SocketInteraction interaction, IUser user)
@@ -531,15 +513,10 @@ namespace Rosettes.Modules.Engine.Minigame
 
 		public static bool AcceptablePetMeal(string foodItem)
 		{
-			string[] choices =
-				{
-					"fish",
-					"uncommonfish",
-					"rarefish",
-					"shrimp",
-					"carrot",
-				};
-			return choices.Contains(foodItem);
+			if (!FarmEngine.inventoryItems.ContainsKey(foodItem))
+				return false;
+
+			return FarmEngine.inventoryItems[foodItem].can_give;
 		}
 
 		public static void TimedThings()

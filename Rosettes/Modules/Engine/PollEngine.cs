@@ -30,7 +30,16 @@ namespace Rosettes.Modules.Engine
         {
             if (Option.Length > 2) return "There was an error counting your vote.";
 
-            var conn = new MySqlConnection(Settings.Database.ConnectionString);
+			string[] possibleColumns = { "count1", "count2", "count3", "count4" };
+
+			string columnName = $"count{Option}";
+
+			if (!possibleColumns.Contains(columnName))
+			{
+                return "There was an error counting your vote.";
+			}
+
+			var conn = new MySqlConnection(Settings.Database.ConnectionString);
 
             // begin by checking if the user has already voted in this poll.
             var sql = @"SELECT user_id FROM poll_votes WHERE user_id=@userId";
@@ -48,7 +57,10 @@ namespace Rosettes.Modules.Engine
                 return "You have already voted in this poll.";
             }
 
-            sql = $"UPDATE polls SET `count{Option}`=count{Option}+1 WHERE id=@Id";
+			// this looks ugly, but at the start of the function we ensure 'columnName' can only be a safe value.
+			sql = $"UPDATE polls SET `{columnName}` = {columnName}+1 WHERE id=@Id";
+            // even if safe, concatenating strings to form SQL queries isn't pretty
+            // but I couldn't find any way to provide dynamic column names with Dapper.
 
             try
             {
@@ -65,9 +77,9 @@ namespace Rosettes.Modules.Engine
                 }
                 catch
                 {
-                    // catastrophic db failure --- if we SOMEHOW get here, we managed to log a user as having voted without having counted their vote.
-                    // This should NEVER happen, but it would be irresponsible to not at least check if it ever does and see if a more elegant solution is needed.
-                    Global.GenerateErrorMessage("sql-voteCountFailedUncount", $"Catastrophic failure, we set a user as having voted without counting the vote. - sqlException code {ex.Message}");
+                    // Reaching this block constitutes a catastrophic failure. We managed to log a user as having voted without having counted their vote.
+                    // This should be impossible. But it would be irresponsible to not at least check and log that we ever get here.
+                    Global.GenerateErrorMessage("sql-voteCountFailedUncount", $"A user was set as having voted without counting the vote. - sqlException code {ex.Message}");
                 }
                 return "Sorry, there was an error adding your vote.";
             }
