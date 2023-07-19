@@ -4,15 +4,13 @@ using Rosettes.Core;
 using Rosettes.Database;
 
 /*
-	The pet system is currently overcomplicated due to a lack of foresight when pets were first added.
-	As they were initially just collectibles that were treated as a commodity and couldn't be individually addressed
-	or interacted with, they were originally only stored as either a 0 or a 1 in a string field in the database.
+	The pet system is currently overcomplicated due to a lack of foresight when I added pets.
+	They were initially just collectibles, treated as a commodity which couldn't be individually addressed.
 
-	As the pet system got further developed into becoming, well, a system, it became a necessity to append the new functionality
-	onto that rather janky foundation.
+	As the pet system got further developed into becoming, well, a system, it became a necessity to 
+	append the new functionality onto that rather janky foundation.
 
-	I will eventually rewrite this into a less messy state. It won't be hard, but it'll require like an hour or two of tedium.
-	For now, it is what it is.
+	It's not terrible or unworkable, but it's complex, and complexity is bad. I will address this, eventually.
 */
 
 namespace Rosettes.Modules.Engine.Minigame

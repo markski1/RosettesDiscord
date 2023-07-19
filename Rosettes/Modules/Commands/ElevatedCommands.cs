@@ -86,7 +86,7 @@ namespace Rosettes.Modules.Commands
         {
             if (Context.Guild is not null)
             {
-                await RespondAsync("Keys are private! You can't generate a new key while in a guild, you must do it in a private message.", ephemeral: true);
+                await RespondAsync("Please use this command in my DM's, not here.", ephemeral: true);
                 return;
             }
 
@@ -94,11 +94,11 @@ namespace Rosettes.Modules.Commands
 
             var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
 
-            bool result;
+            bool hasKey;
 
             try
             {
-                result = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
+				hasKey = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
             }
             catch (Exception ex)
             {
@@ -106,7 +106,7 @@ namespace Rosettes.Modules.Commands
                 return;
             }
 
-            if (result)
+            if (hasKey)
             {
                 sql = @"UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
             }
@@ -141,12 +141,20 @@ namespace Rosettes.Modules.Commands
             }
             catch (Exception ex)
             {
-                await RespondAsync("Sorry, there was an error generating a logon key for you. Please try again in a while.");
+                await RespondAsync("Sorry, there was an error generating a Rosettes key for you. Please try again in a while.");
                 Global.GenerateErrorMessage("keygen", $"Error! {ex.Message}");
                 return;
             }
 
-            await RespondAsync($"New unique key generated. This key is to be used in the webpanel, at https://snep.markski.ar/rosettes\n\nAnyone with this key can change Rosettes' settings in guilds owned by you.\nIf you ever want to change your key, just use /keygen again.");
+            if (hasKey)
+            {
+				await RespondAsync($"You have renewed your Rosettes key.");
+			}
+            else
+            {
+				await RespondAsync($"You have been issued a Rosettes key. This is an unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
+			}
+            
             await ReplyAsync($"```{NewKey}```");
         }
     }

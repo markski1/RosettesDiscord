@@ -55,9 +55,9 @@ namespace Rosettes.Modules.Engine
 			{
 				await _lavaNode.ConnectAsync();
 			}
-			catch (Exception ex)
+			catch
 			{
-				Global.GenerateErrorMessage("MusicEngine-ConnectAsync", $"{ex.Message}");
+				// no need to act on this
 			}
 
             // Join channel if not yet joined.
