@@ -26,7 +26,8 @@ namespace Rosettes.Modules.Engine.Minigame
 			{ "seedbag",        ( "🌱 Seed bag",        true,    false  ) },
 			{ "fishpole",       ( "🎣 Fishing pole",    false,   false  ) },
 			{ "farmtools",      ( "🧰 Farming tools",   false,   false  ) },
-			{ "plots",          ( "🌿 Plot of land",    false,   false  ) }
+			{ "plots",          ( "🌿 Plot of land",    false,   false  ) },
+			{ "pets",           ( "[debug] pet list",   false,   false  ) }
 		};
 
 		public static readonly Dictionary<string, (string name, int amount, int cost)> itemSaleChart = new()

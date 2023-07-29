@@ -184,18 +184,20 @@ namespace Rosettes.Modules.Commands.Utility
             using (Stream stream = await Global.HttpClient.GetStreamAsync(getUrl))
             {
                 using var fileStream = new FileStream(fileName, FileMode.Create);
-                var downloadTask = stream.CopyToAsync(fileStream);
-                int quarterSecondCount = 0;
-                while (!downloadTask.IsCompleted)
+
+				var cts = new CancellationTokenSource();
+				var downloadTask = stream.CopyToAsync(fileStream, cts.Token);
+
+				// cancel if video takes more than 3 seconds to download.
+				if (await Task.WhenAny(downloadTask, Task.Delay(3000)) == downloadTask)
+				{
+					await downloadTask;
+				}
+				else
                 {
-                    await Task.Delay(250);
-                    quarterSecondCount++;
-                    if (quarterSecondCount > 10) // if the download takes more than 2.5 seconds it's probably not a very honest url
-                    {
-                        await RespondAsync("Cancelled: Image download took too long.", ephemeral: true);
-                        // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
-                        return;
-                    }
+                    await RespondAsync("Cancelled: Image download took too long.", ephemeral: true);
+                    cts.Cancel();
+                    return;
                 }
             }
 
@@ -309,19 +311,20 @@ namespace Rosettes.Modules.Commands.Utility
 
             using (Stream stream = await Global.HttpClient.GetStreamAsync(url))
             {
-                using var fileStream = new FileStream(fileName, FileMode.Create);
-                var downloadTask = stream.CopyToAsync(fileStream);
-                int quarterSecondCount = 0;
-                while (!downloadTask.IsCompleted)
-                {
-                    await Task.Delay(250);
-                    quarterSecondCount++;
-                    if (quarterSecondCount >= 12) // if the download takes more than 3 seconds it's probably not a very honest url
-                    {
-                        await FollowupAsync("Cancelled: GIF download took too long.");
-                        // Can't dipose an unfinished task, but upon testing, the GC consistently takes care of this
-                        return;
-                    }
+				using var fileStream = new FileStream(fileName, FileMode.Create);
+
+				var cts = new CancellationTokenSource();
+				var downloadTask = stream.CopyToAsync(fileStream, cts.Token);
+
+				// cancel if video takes more than 3 seconds to download.
+				if (await Task.WhenAny(downloadTask, Task.Delay(3000)) == downloadTask)
+				{
+					await downloadTask;
+				}
+				else
+				{
+                    await FollowupAsync("Cancelled: GIF download took too long.");
+                    return;
                 }
             }
 

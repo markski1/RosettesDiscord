@@ -126,20 +126,22 @@ namespace Rosettes.Modules.Commands.Utility
             using (Stream stream = await Global.HttpClient.GetStreamAsync(tweetUrl))
             {
                 using var fileStream = new FileStream(fileName, FileMode.Create);
-                var downloadTask = stream.CopyToAsync(fileStream);
-                int quarterSecondCount = 0;
-                while (!downloadTask.IsCompleted)
+
+                var cts = new CancellationTokenSource();
+                var downloadTask = stream.CopyToAsync(fileStream, cts.Token);
+
+                // cancel if video takes more than 3 seconds to download.
+                if (await Task.WhenAny(downloadTask, Task.Delay(3000)) == downloadTask)
                 {
-                    await Task.Delay(250);
-                    quarterSecondCount++;
-                    if (quarterSecondCount > 12) // 3 seconds
-                    {
-                        downloadStatus.Value = "Failed. Video is too large.";
-                        embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
-                        await mid.ModifyAsync(x => x.Embed = embed.Build());
-                        // GC will destroy the stream's copytoasync op automatically.
-                        return;
-                    }
+                    await downloadTask;
+                }
+                else
+                {
+                    downloadStatus.Value = "Failed. Video took too long to download.";
+                    embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+                    await mid.ModifyAsync(x => x.Embed = embed.Build());
+                    cts.Cancel();
+                    return;
                 }
             }
 
