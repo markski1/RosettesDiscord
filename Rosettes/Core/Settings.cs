@@ -6,15 +6,19 @@ namespace Rosettes.Core
 {
     public static class Settings
     {
-        // DEBUG means my windows machine, otherwise it's production
+        // DEBUG might be on either my local windows or linux machine
 #if DEBUG
         public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
+#if _WIN32
         public static readonly string keyLoc = "F:/rosetteskeys";
+#else
+        public static readonly string keyLoc = "/home/markski/rosetteskeys";
+#endif
+        // otherwise, it's production.
 #else
         public static readonly LogSeverity LogSeverity = LogSeverity.Info;
         public static readonly string keyLoc = "./keys";
 #endif
-
 
         public static readonly string Token = LoadSetting("token");
         public static readonly string SteamDevKey = LoadSetting("steam");
