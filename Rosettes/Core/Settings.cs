@@ -6,14 +6,10 @@ namespace Rosettes.Core
 {
     public static class Settings
     {
-        // DEBUG might be on either my local windows or linux machine
+		// DEBUG is my local machine
 #if DEBUG
-        public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
-#if _WIN32
-        public static readonly string keyLoc = "F:/rosetteskeys";
-#else
-        public static readonly string keyLoc = "/home/markski/rosetteskeys";
-#endif
+		public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
+		public static readonly string keyLoc = "/home/markski/rosetteskeys";
         // otherwise, it's production.
 #else
         public static readonly LogSeverity LogSeverity = LogSeverity.Info;
