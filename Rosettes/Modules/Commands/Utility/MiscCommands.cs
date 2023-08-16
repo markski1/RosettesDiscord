@@ -123,8 +123,24 @@ namespace Rosettes.Modules.Commands.Utility
             }
 
             string fileName = $"./temp/twtvid/{Global.Randomize(20) + 1}.mp4";
-            using (Stream stream = await Global.HttpClient.GetStreamAsync(tweetUrl))
+            using (HttpResponseMessage response = await Global.HttpClient.GetAsync(tweetUrl))
             {
+                try
+                {
+                    response.EnsureSuccessStatusCode();
+                }
+                catch
+                {
+                    downloadStatus.Value = "Failed to obtain video.";
+
+                    await mid.DeleteAsync();
+                    await FollowupAsync(embed: embed.Build());
+
+                    return;
+                }
+
+                Stream stream = await response.Content.ReadAsStreamAsync();
+
                 using var fileStream = new FileStream(fileName, FileMode.Create);
 
                 var cts = new CancellationTokenSource();
@@ -139,7 +155,10 @@ namespace Rosettes.Modules.Commands.Utility
                 {
                     downloadStatus.Value = "Failed. Video took too long to download.";
                     embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
-                    await mid.ModifyAsync(x => x.Embed = embed.Build());
+
+                    await mid.DeleteAsync();
+                    await FollowupAsync(embed: embed.Build());
+
                     cts.Cancel();
                     return;
                 }
@@ -160,7 +179,8 @@ namespace Rosettes.Modules.Commands.Utility
             if (!File.Exists(fileName) || fileType is not FileType.QuickTime && fileType is not FileType.Mp4)
             {
                 downloadStatus.Value = "Failed. Twitter failed to provide a valid file format.";
-                await mid.ModifyAsync(x => x.Embed = embed.Build());
+                await mid.DeleteAsync();
+                await FollowupAsync(embed: embed.Build());
 
                 File.Delete(fileName);
                 return;
@@ -184,7 +204,8 @@ namespace Rosettes.Modules.Commands.Utility
                 {
                     downloadStatus.Value = "Upload failed.";
 
-                    await mid.ModifyAsync(x => x.Embed = embed.Build());
+                    await mid.DeleteAsync();
+                    await FollowupAsync(embed: embed.Build());
                 }
             }
             else

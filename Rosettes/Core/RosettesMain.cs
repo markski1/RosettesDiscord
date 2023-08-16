@@ -67,6 +67,8 @@ namespace Rosettes.Core
             TenMinutyTimer.Interval = 600000;
             TenMinutyTimer.AutoReset = true;
             TenMinutyTimer.Enabled = true;
+
+            await Task.Delay(-1);
         }
 
         public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
