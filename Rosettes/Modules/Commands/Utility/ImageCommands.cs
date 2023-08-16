@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using System.Globalization;
 
 namespace Rosettes.Modules.Commands.Utility
 {
@@ -48,11 +49,13 @@ namespace Rosettes.Modules.Commands.Utility
         {
             string getUrl = $"https://saucenao.com/search.php?db=999&output_type=2&numres=1&dbmaski=25986063&api_key={Settings.SauceNAO}&url={url}";
 
+            await DeferAsync();
+
             var response = await Global.HttpClient.GetStringAsync(getUrl);
 
             if (response is null)
             {
-                await RespondAsync("Sorry, there was an error reaching the SauceNAO API. [SE1]", ephemeral: true);
+                await FollowupAsync("Sorry, there was an error reaching the SauceNAO API. [SE1]");
                 return;
             }
 
@@ -60,7 +63,7 @@ namespace Rosettes.Modules.Commands.Utility
 
             if (deserializedResponse is null)
             {
-                await RespondAsync("Sorry, there was an error reaching the SauceNAO API. [SE2]", ephemeral: true);
+                await FollowupAsync("Sorry, there was an error reaching the SauceNAO API. [SE2]");
                 return;
             }
 
@@ -74,30 +77,49 @@ namespace Rosettes.Modules.Commands.Utility
 
             bool found = false;
 
-
-
             if (responseObj.header.long_remaining < 1 || responseObj.header.long_remaining < 1)
             {
                 embed.Description = "We are currently rate-limited by SauceNAO. This usually fixes itself after a minute or two, so try again in a bit, or see the results directly on SauceNAO.";
             }
             else
             {
+                // due to the requests, responseObj.results will only have the top result and nothing else.
+                // foreach is just a lazy way to check wether there is a result and to extract it.
                 foreach (var item in responseObj.results)
                 {
                     found = true;
-                    embed.ThumbnailUrl = item.header.thumbnail;
+
+                    string auxIndexName = item.header.index_name;
+
+                    // SauceNao NSFW indexes seem to largely begin with 'H-' then a denomination.
+                    if (auxIndexName.Contains("H-"))
+                    {
+                        embed.AddField("Warning", "Result is potentially NSFW.\nThumbnail omitted.");
+                    }
+                    else
+                    {
+                        embed.ThumbnailUrl = item.header.thumbnail;
+                    }
+
                     embed.AddField("Similarity", $"{item.header.similarity} percent");
                     string sources = "";
-                    foreach (var src in item.data.ext_urls)
+                    if (item.data.ext_urls is not null)
                     {
-                        sources += $"{src}\n";
+                        foreach (var src in item.data.ext_urls)
+                        {
+                            sources += $"{src}\n";
+                        }
+                    }
+                    else
+                    {
+                        sources = "No sources available.";
                     }
                     embed.AddField("Source URLs", sources);
                 }
 
                 if (!found)
                 {
-                    await RespondAsync("No results.", ephemeral: true);
+                    await FollowupAsync("No results.");
                     return;
                 }
             }
@@ -106,23 +128,7 @@ namespace Rosettes.Modules.Commands.Utility
 
             comps.WithButton("See results on SauceNAO", style: ButtonStyle.Link, url: $"https://saucenao.com/search.php?url={url}");
 
-            try
-            {
-                await RespondAsync(embed: embed.Build(), components: comps.Build());
-            }
-            // if we took too long to respond we'll have an exception, then do it as a reply.
-            catch
-            {
-                try
-                {
-                    await ReplyAsync(embed: embed.Build(), components: comps.Build());
-                }
-                // if we don't have permissions, just fail.
-                catch
-                {
-                    // don't crash.
-                }
-            }
+            await FollowupAsync(embed: embed.Build(), components: comps.Build());
         }
 
 

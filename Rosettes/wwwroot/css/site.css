@@ -1,0 +1,32 @@
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    background-color: #cccccc;
+}
+
+header {
+    margin: auto;
+    width: 20rem;
+    margin-top: 2rem;
+}
+
+footer {
+    margin: 3rem 0;
+}
+
+h1 {
+    margin: 0;
+}
+
+.container {
+    margin: 2rem auto;
+    max-width: 800px;
+    width: 100%;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.4) 10px;
+}

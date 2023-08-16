@@ -263,7 +263,7 @@ namespace Rosettes.Managers
             return Task.CompletedTask;
         }
 
-        private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
+        private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)
         {
             return Task.CompletedTask;
         }

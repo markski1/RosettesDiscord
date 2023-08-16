@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Managers;
-using Rosettes.Modules.Engine;
 using System.Diagnostics;
 
 namespace Rosettes.Modules.Commands

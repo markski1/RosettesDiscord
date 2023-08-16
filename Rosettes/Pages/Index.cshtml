@@ -1,0 +1,40 @@
+﻿@page
+@using System.Diagnostics;
+@using Discord.WebSocket;
+@using Rosettes.Managers;
+@model IndexModel
+@{
+    ViewData["Title"] = "Web Panel";
+
+    using Process proc = Process.GetCurrentProcess();
+    TimeSpan elapsed = DateTime.Now - proc.StartTime;
+    string runtimeText = "";
+    if (elapsed.Days > 0)
+    {
+        runtimeText += $"{elapsed.Days} day{((elapsed.Days != 1) ? 's' : null)}, ";
+    }
+    if (elapsed.Hours > 0)
+    {
+        runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
+    }
+    runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)} ago.";
+
+    var client = ServiceManager.GetService<DiscordSocketClient>();
+}
+
+<div class="text-center">
+    <h1>Identify</h1>
+    <form method="post">
+        <p>Please enter your Rosettes key:</p>
+        <input type="text" name="rosettes_key" required />
+        <input type="submit" value="identify" />
+    </form>
+    <p>If you don't have a key, use the command /keygen in Rosettes' private messages.</p>
+    <!-- Stats -->
+    <h3>Rosettes statistics:</h3>
+    <ul>
+        <li>Last restart: @runtimeText</li>
+        <li>Serving: @client.Guilds.Count guilds.</li>
+    </ul>
+    <small>Note: Rosettes restarts every 24 hours.</small>
+</div>
