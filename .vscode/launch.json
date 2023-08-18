@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Rosettes/bin/Debug/net6.0/Rosettes.dll",
+            "program": "${workspaceFolder}/Rosettes/bin/Debug/net7.0/linux-x64/Rosettes.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Rosettes",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

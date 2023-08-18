@@ -1,5 +1,5 @@
 # Rosettes
-A simple Discord bot written in .NET 6 through Discord.NET
+A simple Discord bot written in .NET 7 through Discord.NET
 
 ## What is Rosettes meant to be?
 
@@ -31,7 +31,26 @@ Within reason, it should not be spammy.
 ## Building
 The solution file is there, all you have to do is open and compile.
 
-Getting it to work is a different beast. Rosettes was not built to be easily portable/deployed. There are token keys and database tables required for stuff to work.
+Getting it to work is a different beast. Rosettes was not built to be easily portable/deployed.
+
+If you really want to try:
+- the Database folder has a .sql file with the database schema
+- Settings.cs within the Core folder should tell you where to play the necesary tokens (within .txt files, no line breaks).
+- mysql.txt specifically should look like this:
+
+```
+{
+	"Server": "host.name",
+	"UserID": "username",
+	"Password": "password",
+	"Database": "table_name"
+}
+```
+
 The reason I open sourced Rosettes is a simple matter of transparency. Let people see for themselves how things run behind the scenes. It's not really meant to be used on your own.
 
-You are, of course, free to grab any source code here and use it as you please, but don't expect to receive support if stuff doesn't work first try.
+## LICENCE
+
+Anyone, anywhere, for any reason, can use any of the code in this repository.
+It is provided as-is, I am not responsible or liable for anything related to it's use by third parties.
+If the code is used in a public-facing application, I'd appreciate to be given some minimal credit somewhere, but I certainly won't bother enforcing this if you wish to not do it.
