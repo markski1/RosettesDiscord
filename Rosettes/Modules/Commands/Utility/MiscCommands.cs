@@ -85,17 +85,26 @@ namespace Rosettes.Modules.Commands.Utility
         public async Task TweetVideo(string tweetUrl)
         {
             string originalTweet = tweetUrl;
+            bool isX = false;
 
             int tldEnd = tweetUrl.IndexOf("twitter.com");
 
+            if (tldEnd == -1)
+            {
+                tldEnd = tweetUrl.IndexOf("x.com");
+                isX = true;
+            }
             if (tldEnd == -1)
             {
                 await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
                 return;
             }
 
-            // position this number in the location where "twitter.com" ends in the URL.
-            tldEnd += 11;
+            // position this number in the location where the TLD ends.
+            if (isX)
+                tldEnd += 5;
+            else
+                tldEnd += 11;
 
             // remove anything before twitter.com (should also cover links from fxtwitter, sxtwitter etc)
             tweetUrl = tweetUrl[tldEnd..tweetUrl.Length];
