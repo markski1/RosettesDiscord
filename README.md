@@ -1,5 +1,8 @@
 # Rosettes
-A simple Discord bot written in .NET 7 through Discord.NET
+An open source Discord bot written in .NET 7, by use of Discord.NET
+
+## Features
+Learn about Rosettes' features at [https://markski.ar/rosettes](https://markski.ar/rosettes).
 
 ## What is Rosettes meant to be?
 
