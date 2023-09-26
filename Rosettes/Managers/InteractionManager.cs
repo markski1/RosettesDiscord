@@ -110,66 +110,6 @@ namespace Rosettes.Managers
                         PetEngine.BeginNameChange(component);
                         break;
 
-
-                    // music stuff
-                    case "music_toggle":
-                    case "music_skip":
-                    case "music_stop":
-                    case "music_add":
-                        if (component.GuildId is ulong guild_id)
-                        {
-                            var dbGuild = GuildEngine.GetDBGuildById(guild_id);
-                            if (dbGuild != null)
-                            {
-                                var guild = dbGuild.GetDiscordSocketReference();
-                                if (guild != null)
-                                {
-                                    var dbUser = await UserEngine.GetDBUser(component.User);
-                                    EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-                                    embed.Title = "Music Player";
-                                    bool stop = false;
-                                    if (action == "music_toggle")
-                                    {
-                                        embed.Description = await MusicEngine.ToggleAsync(guild);
-                                    }
-                                    if (action == "music_skip")
-                                    {
-                                        embed.Description = await MusicEngine.SkipTrackAsync(guild);
-                                    }
-                                    if (action == "music_stop")
-                                    {
-                                        embed.Description = await MusicEngine.StopAsync(guild);
-                                        stop = true;
-                                    }
-                                    if (action == "music_add")
-                                    {
-                                        ModalBuilder modal = new()
-                                        {
-                                            Title = "Add song to queue",
-                                            CustomId = "music_add"
-                                        };
-                                        modal.AddTextInput("Enter song name or URL", "song");
-                                        await component.RespondWithModalAsync(modal.Build());
-                                        return;
-                                    }
-                                    try
-                                    {
-                                        await component.Message.ModifyAsync(x => x.Embed = embed.Build());
-                                        // if "stop" is pushed, replace components by empty ones, to remove the buttons.
-                                        if (stop) await component.Message.ModifyAsync(x => x.Components = new ComponentBuilder().Build());
-                                        await component.DeferAsync();
-                                    }
-                                    catch
-                                    {
-                                        await component.RespondAsync("I can't update the player because I don't have access to this channel.\nPlease tell an admin, or use me somewhere else!", ephemeral: true);
-                                    }
-                                }
-                            }
-                        }
-                        break;
-
-
-
                     // if nothing else, it's poll stuff
                     default:
                         await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
@@ -201,43 +141,6 @@ namespace Rosettes.Managers
                     string newName = components.First(x => x.CustomId == "newName").Value;
 
                     PetEngine.SetPetName(modal, newName);
-                }
-
-                if (modal.Data.CustomId == "music_add")
-                {
-                    if (modal.GuildId is ulong guild_id)
-                    {
-                        var dbGuild = GuildEngine.GetDBGuildById(guild_id);
-                        if (dbGuild != null)
-                        {
-                            var guild = dbGuild.GetDiscordSocketReference();
-                            if (guild != null)
-                            {
-                                var dbUser = await UserEngine.GetDBUser(modal.User);
-                                EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-                                embed.Title = "Music player";
-                                if (modal.User is not SocketGuildUser _socketUser || modal.User is not IVoiceState _voiceState || modal.Channel is not ITextChannel _textChannel)
-                                {
-                                    return;
-                                }
-                                embed.Description = await MusicEngine.PlayAsync(_socketUser, guild, _voiceState, _textChannel, components.First(x => x.CustomId == "song").Value);
-                                var ogMessage = MusicEngine.GetPlayer(modal.Channel);
-                                if (ogMessage is not null)
-                                {
-                                    try
-                                    {
-                                        await ogMessage.ModifyAsync(x => x.Embed = embed.Build());
-                                    }
-                                    catch
-                                    {
-                                        await modal.RespondAsync("I don't have access to this channel. Please let an admin know, or try using me in other channel.", ephemeral: true);
-                                        return;
-                                    }
-                                }
-                                await modal.DeferAsync();
-                            }
-                        }
-                    }
                 }
             });
             return Task.CompletedTask;

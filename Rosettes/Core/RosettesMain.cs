@@ -42,15 +42,6 @@ namespace Rosettes.Core
             collection.AddSingleton<InteractionManager>();
 
             ServiceManager.SetProvider(collection);
-
-            try
-            {
-                MusicEngine.SetMusicEngine(Client);
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("RosettesMain-LavalinkStartFail", $"{ex.Message}");
-            }
         }
 
         public async Task MainAsync()

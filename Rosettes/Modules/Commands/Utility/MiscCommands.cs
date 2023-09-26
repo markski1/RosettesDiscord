@@ -81,7 +81,7 @@ namespace Rosettes.Modules.Commands.Utility
             else await RespondAsync("No URL found in this message.", ephemeral: true);
         }
 
-        [SlashCommand("twtvid", "Get the video file of the specified tweet.")]
+        [SlashCommand("twtvid", "Get the video file of the specified twitter post.")]
         public async Task TweetVideo(string tweetUrl)
         {
             string originalTweet = tweetUrl;
@@ -96,7 +96,7 @@ namespace Rosettes.Modules.Commands.Utility
             }
             if (tldEnd == -1)
             {
-                await RespondAsync("That's not a valid tweet URL.", ephemeral: true);
+                await RespondAsync("That's not a valid twitter URL.", ephemeral: true);
                 return;
             }
 
