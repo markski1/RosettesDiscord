@@ -64,20 +64,10 @@ namespace Rosettes.Core
 
         public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
         {
-            using Process proc = Process.GetCurrentProcess();
-            TimeSpan elapsed = DateTime.Now - proc.StartTime;
-
-            // Restart every 2 days.
-            if (elapsed >= TimeSpan.FromHours(48)) {
-                _ = HaltOrRestart(true);
-            }
-            else
-            {
-                UserEngine.SyncWithDatabase();
-                GuildEngine.SyncWithDatabase();
-                PetEngine.TimedThings();
-                PetEngine.SyncWithDatabase();
-            }
+            UserEngine.SyncWithDatabase();
+            GuildEngine.SyncWithDatabase();
+            PetEngine.TimedThings();
+            PetEngine.SyncWithDatabase();
         }
 
         public static async Task<bool> HaltOrRestart(bool restart = false)
