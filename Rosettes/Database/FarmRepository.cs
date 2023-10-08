@@ -118,7 +118,7 @@ namespace Rosettes.Database
 
             try
             {
-                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id });
+                return (await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id })) ?? "invalid";
             }
             catch (Exception ex)
             {

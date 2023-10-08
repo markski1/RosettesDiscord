@@ -7,14 +7,16 @@ using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.RegularExpressions;
 using Rosettes.Modules.Engine.Guild;
+using Genbox.Wikipedia;
+using Discord.Commands;
 
 namespace Rosettes.Modules.Commands.Utility
 {
-    [Group("find", "Commands to find certain things")]
+    [Discord.Interactions.Group("find", "Commands to find certain things")]
     public class FindCommands : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("pokemon", "Search for information about a specified pokemon")]
-        public async Task GetPokemon([Summary("name-or-id", "Enter the name or ID for the Pokémon to search for.")] string name = "none")
+        [SlashCommand("pokemon", "Search for information about a specified pokémon")]
+        public async Task GetPokemon([Discord.Interactions.Summary("name-or-id", "Enter the name or ID for the Pokémon to search for.")] string name = "none")
         {
             bool searchById = int.TryParse(name, out int id);
 
@@ -331,6 +333,58 @@ namespace Rosettes.Modules.Commands.Utility
             comps.WithButton("MyAnimeList", style: ButtonStyle.Link, url: result.Url);
 
             await RespondAsync(embed: embed.Build(), components: comps.Build());
+        }
+
+        [SlashCommand("wiki", "Finds something on Wikipedia.")]
+        public async Task FindWiki(string text)
+        {
+            using WikipediaClient client = new WikipediaClient();
+
+            WikiSearchRequest req = new(text)
+            {
+                Limit = 1
+            };
+
+            try
+            {
+                WikiSearchResponse response = await client.SearchAsync(req) ?? throw new Exception("Failed to fetch results.");
+
+                if (response.QueryResult.SearchResults.Count > 0)
+                {
+                    var use = response.QueryResult.SearchResults[0];
+                    var db_user = await UserEngine.GetDBUser(Context.User);
+
+                    EmbedAuthorBuilder author = new()
+                    {
+                        Name = "Wikipedia",
+                        IconUrl = "https://wikipedia.org/static/images/icons/wikipedia.png"
+                    };
+
+                    EmbedBuilder embed = new()
+                    {
+                        Author = author,
+                        Title = use.Title,
+                        Description = use.Snippet ?? "No snippet available."
+                    };
+
+                    // remove HTML tags
+                    embed.Description = Regex.Replace(embed.Description, @"<[^>]+>|&nbsp;", "").Trim();
+
+                    ComponentBuilder comps = new();
+
+                    comps.WithButton("View on Wikipedia", style: ButtonStyle.Link, url: use.Url.AbsoluteUri);
+
+                    await RespondAsync(embed: embed.Build(), components: comps.Build());
+                }
+                else
+                {
+                    await RespondAsync("Sorry, I found nothing with that text.", ephemeral: true);
+                }
+            }
+            catch
+            {
+                await RespondAsync("Sorry, I could not make the search.", ephemeral: true);
+            }
         }
 
         [SlashCommand("character", "Finds a summary for a specified character in media (Animated or Manga).")]

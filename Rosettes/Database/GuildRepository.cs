@@ -69,7 +69,7 @@ namespace Rosettes.Database
 
             try
             {
-                return await db.QueryFirstOrDefaultAsync<Guild>(sql, new { id = guild.Id });
+                return (await db.QueryFirstOrDefaultAsync<Guild>(sql, new { id = guild.Id })) ?? new Guild(null);
             }
             catch (Exception ex)
             {
@@ -86,7 +86,7 @@ namespace Rosettes.Database
 
             try
             {
-                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = guild.Id });
+                return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = guild.Id }) ?? "1111111111";
             }
             catch (Exception ex)
             {

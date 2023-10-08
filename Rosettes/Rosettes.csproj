@@ -30,8 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.0.151" />
+    <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
+    <PackageReference Include="Dapper" Version="2.1.4" />
     <PackageReference Include="Discord.Net" Version="3.12.0" />
+    <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
     <PackageReference Include="JikanDotNet" Version="2.6.3" />
     <PackageReference Include="MetadataExtractor" Version="2.8.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />

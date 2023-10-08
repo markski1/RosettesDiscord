@@ -31,7 +31,7 @@ namespace Rosettes.Modules.Commands.Utility
             EmbedBuilder embed = await Global.MakeRosettesEmbed(db_user);
 
             embed.Title = "User information";
-            embed.ThumbnailUrl = guildUser.GetDisplayAvatarUrl();
+            embed.ThumbnailUrl = guildUser.GetDisplayAvatarUrl(size: 1024);
 
             embed.AddField("Level", $"Level {db_user.GetLevel()} ({db_user.Exp}xp)");
             embed.AddField("Joined Discord", $"<t:{guildUser.CreatedAt.ToUnixTimeSeconds()}:R>", true);
@@ -39,8 +39,6 @@ namespace Rosettes.Modules.Commands.Utility
             {
                 embed.AddField("Joined Server", $"<t:{guildJoin.ToUnixTimeSeconds()}:R>", true);
             }
-
-            embed.AddField("Rosettes achievements", "None");
 
             await RespondAsync(embed: embed.Build());
         }

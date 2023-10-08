@@ -64,7 +64,7 @@ namespace Rosettes.Database
 
             try
             {
-                return await db.QueryFirstOrDefaultAsync<User>(sql, new { id = user.Id });
+                return await db.QueryFirstOrDefaultAsync<User>(sql, new { id = user.Id }) ?? new User(null);
             }
             catch (Exception ex)
             {
