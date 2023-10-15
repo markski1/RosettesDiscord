@@ -64,6 +64,12 @@ namespace Rosettes.Core
 
         public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
         {
+            Thread timedThread = new(TimedActions);
+            timedThread.Start();
+        }
+
+        public void TimedActions()
+        {
             UserEngine.SyncWithDatabase();
             GuildEngine.SyncWithDatabase();
             PetEngine.TimedThings();

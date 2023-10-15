@@ -71,7 +71,7 @@ namespace Rosettes.Modules.Commands.Utility
             await RespondAsync(embed: embed.Build());
         }
 
-        [MessageCommand("DL Twitter video")]
+        [MessageCommand("DL X/Twitter video")]
         public async Task TweetVideoMsg(IMessage message)
         {
             string url = Global.GrabURLFromText(message.Content);
@@ -79,7 +79,7 @@ namespace Rosettes.Modules.Commands.Utility
             else await RespondAsync("No URL found in this message.", ephemeral: true);
         }
 
-        [SlashCommand("twtvid", "Get the video file of the specified twitter post.")]
+        [SlashCommand("twtvid", "Get the video file of the specified x/twitter post.")]
         public async Task TweetVideo(string tweetUrl)
         {
             string originalTweet = tweetUrl;

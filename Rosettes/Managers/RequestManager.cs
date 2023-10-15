@@ -11,13 +11,19 @@ namespace Rosettes.Managers
 
         public static void Initialize()
         {
-            RequestTimer.Elapsed += RequestHandler;
+            RequestTimer.Elapsed += RunHandler;
             RequestTimer.Interval = 10000;
             RequestTimer.AutoReset = true;
             RequestTimer.Enabled = true;
         }
 
-        public static async void RequestHandler(object? source, System.Timers.ElapsedEventArgs e)
+        public static void RunHandler(object? source, System.Timers.ElapsedEventArgs e)
+        {
+            Thread handlerThread = new(RequestHandler);
+            handlerThread.Start();
+        }
+
+        public static async void RequestHandler()
         {
             using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
