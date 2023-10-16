@@ -6,13 +6,15 @@
         private int decks;
         private readonly Random rand = new();
 
-        public Blackjack(int decks) {
+        public Blackjack(int decks)
+        {
             this.decks = decks;
             PopulateCards();
             ShuffleCards();
         }
 
-        private void PopulateCards() {
+        private void PopulateCards()
+        {
             for (int j = 0; j < 4; j++) // per each type of card
             {
                 for (int k = 0; k < 12; k++) // per each number and type
@@ -34,7 +36,8 @@
         {
             int n = cards.Count;
 
-            while (n > 1) {
+            while (n > 1)
+            {
                 int k = rand.Next(n);
                 n--;
                 (cards[n], cards[k]) = (cards[k], cards[n]);

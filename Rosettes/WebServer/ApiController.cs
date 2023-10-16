@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Rosettes.Controllers;
+namespace Rosettes.WebServer;
 
 [ApiController]
 [Route("rosettes-api")]

@@ -3,74 +3,73 @@ using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 
-namespace Rosettes.Database
+namespace Rosettes.Database;
+
+public interface IAlarmRepository
 {
-    public interface IAlarmRepository
+    Task<IEnumerable<Alarm>> GetAllAlarmsAsync();
+    Task<bool> InsertAlarm(Alarm alarm);
+    Task<bool> DeleteAlarm(Alarm alarm);
+}
+
+public class AlarmRepository : IAlarmRepository
+{
+    private static MySqlConnection DBConnection()
     {
-        Task<IEnumerable<Alarm>> GetAllAlarmsAsync();
-        Task<bool> InsertAlarm(Alarm alarm);
-        Task<bool> DeleteAlarm(Alarm alarm);
+        return new MySqlConnection(Settings.Database.ConnectionString);
     }
 
-    public class AlarmRepository : IAlarmRepository
+    public async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {
-        private static MySqlConnection DBConnection()
+        var db = DBConnection();
+
+        var sql = @"SELECT datetime, user, channel FROM alarms";
+
+        try
         {
-            return new MySqlConnection(Settings.Database.ConnectionString);
+            return await db.QueryAsync<Alarm>(sql, new { });
         }
-
-        public async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
+        catch (Exception ex)
         {
-            var db = DBConnection();
-
-            var sql = @"SELECT datetime, user, channel FROM alarms";
-
-            try
-            {
-                return await db.QueryAsync<Alarm>(sql, new { });
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-getallalarms", $"sqlException code {ex.Message}");
-                return new List<Alarm>();
-            }
+            Global.GenerateErrorMessage("sql-getallalarms", $"sqlException code {ex.Message}");
+            return new List<Alarm>();
         }
+    }
 
-        public async Task<bool> InsertAlarm(Alarm alarm)
-        {
-            var db = DBConnection();
+    public async Task<bool> InsertAlarm(Alarm alarm)
+    {
+        var db = DBConnection();
 
-            var sql = @"INSERT INTO alarms (datetime, user, channel)
+        var sql = @"INSERT INTO alarms (datetime, user, channel)
                         VALUES(@DateTime, @User, @Channel)";
 
-            if (alarm.Channel is null) return false;
+        if (alarm.Channel is null) return false;
 
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-insertalarm", $"sqlException code {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> DeleteAlarm(Alarm alarm)
+        try
         {
-            var db = DBConnection();
+            return (await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id })) > 0;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-insertalarm", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
 
-            var sql = @"DELETE FROM alarms
+    public async Task<bool> DeleteAlarm(Alarm alarm)
+    {
+        var db = DBConnection();
+
+        var sql = @"DELETE FROM alarms
                         WHERE user = @User";
-            try
-            {
-                return (await db.ExecuteAsync(sql, new { User = alarm.User.Id })) > 0;
-            }
-            catch (Exception ex)
-            {
-                Global.GenerateErrorMessage("sql-deletealarm", $"sqlException code {ex.Message}");
-                return false;
-            }
+        try
+        {
+            return (await db.ExecuteAsync(sql, new { User = alarm.User.Id })) > 0;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-deletealarm", $"sqlException code {ex.Message}");
+            return false;
         }
     }
 }

@@ -1,7 +1,6 @@
-﻿using Discord.WebSocket;
-using Discord;
+﻿using Discord;
+using Discord.WebSocket;
 using Rosettes.Core;
-using System.Linq;
 
 namespace Rosettes.Modules.Engine.Minigame
 {
@@ -267,7 +266,7 @@ namespace Rosettes.Modules.Engine.Minigame
             {
                 embed.AddField($"🌿 Plot {Plot.plotId}", $"Finishes growing <t:{Plot.unixGrowth}:R>\nCan be watered <t:{Plot.unixNextWater}:R>");
             }
-            
+
             embed.Footer = new EmbedFooterBuilder() { Text = $"{dbUser.AddExp(plantedCrops.Count * 5)} | {plantedCrops.Count} {FarmEngine.GetItemName("seedbag")} used." };
 
             if (toolsBroken)
