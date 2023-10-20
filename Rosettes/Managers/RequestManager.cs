@@ -17,15 +17,15 @@ public static class RequestManager
         RequestTimer.Enabled = true;
     }
 
-    public static void RunHandler(object? source, System.Timers.ElapsedEventArgs e)
+    private static void RunHandler(object? source, System.Timers.ElapsedEventArgs e)
     {
         Thread handlerThread = new(RequestHandler);
         handlerThread.Start();
     }
 
-    public static async void RequestHandler()
+    private static async void RequestHandler()
     {
-        using var db = new MySqlConnection(Settings.Database.ConnectionString);
+        await using var db = new MySqlConnection(Settings.Database.ConnectionString);
 
         var sql = @"SELECT requesttype, relevantguild, relevantvalue, relevantstringvalue FROM requests";
 

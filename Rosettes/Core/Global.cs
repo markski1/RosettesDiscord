@@ -35,9 +35,9 @@ public static class Global
         return percentage > Randomizer.Next(100);
     }
 
-    public static void WriteToFs(ref FileStream fs, string text)
+    private static void WriteToFs(ref FileStream fs, string text)
     {
-        Byte[] textAsBytes = new UTF8Encoding(true).GetBytes(text);
+        byte[] textAsBytes = new UTF8Encoding(true).GetBytes(text);
         fs.Write(textAsBytes, 0, textAsBytes.Length);
     }
 
@@ -50,26 +50,22 @@ public static class Global
 
         if (dbUser is not null)
         {
-            IUser? author;
-            author = await dbUser.GetDiscordReference();
+            var author = await dbUser.GetDiscordReference();
 
-            if (author is not null)
+            EmbedAuthorBuilder authorEmbed = new();
+            embed.Author = authorEmbed;
+
+            authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
+
+            if (author.GetAvatarUrl() is not null)
             {
-                EmbedAuthorBuilder authorEmbed = new();
-                embed.Author = authorEmbed;
+                authorEmbed.IconUrl = author.GetAvatarUrl();
+            }
 
-                authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
-
-                if (author.GetAvatarUrl() is not null)
-                {
-                    authorEmbed.IconUrl = author.GetAvatarUrl();
-                }
-
-                Pet? pet = await PetEngine.GetUserPet(dbUser);
-                if (pet is not null)
-                {
-                    authorEmbed.Name += $" | [{pet.GetName()}]";
-                }
+            var pet = await PetEngine.GetUserPet(dbUser);
+            if (pet is not null)
+            {
+                authorEmbed.Name += $" | [{pet.GetName()}]";
             }
         }
 
@@ -81,25 +77,25 @@ public static class Global
     public static void GenerateErrorMessage(string source, string error)
     {
         // generate the error string
-        string _error = $"There was an error at \"{source}\".\n```{error}```\n";
+        string errorText = $"There was an error at \"{source}\".\n```{error}```\n";
 
         // send it to error channel
         var client = ServiceManager.GetService<DiscordSocketClient>();
         if (client.GetChannel(984608927775854594) is not ITextChannel errorChannel) return;
 
-        if (_error.Length > 1999)
+        if (errorText.Length > 1999)
         {
-            _error = $"{_error[..1900]} ```(truncated)";
+            errorText = $"{errorText[..1900]} ```(truncated)";
         }
 
-        errorChannel.SendMessageAsync(_error);
+        errorChannel.SendMessageAsync(errorText);
 
         // and log it to a file
-        _error = $"{DateTime.UtcNow} | There was an error at \"{source}\".\n{error}\n\n";
+        errorText = $"{DateTime.UtcNow} | There was an error at \"{source}\".\n{error}\n\n";
         try
         {
             var fileStream = new FileStream("./errors.log", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            WriteToFs(ref fileStream, _error);
+            WriteToFs(ref fileStream, errorText);
             fileStream.Close();
         }
         catch (Exception e)
@@ -123,22 +119,19 @@ public static class Global
         return (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
     }
 
-    public static string GrabURLFromText(string text)
+    public static string GrabUrlFromText(string text)
     {
         // try to grab the first URL from the received text.
         // Start by finding the first instance of http, and end as soon as we find a space or a control character.
         // return "0" if we can't find a url.
-        int begin;
-        begin = text.IndexOf("https:/");
+        var begin = text.IndexOf("https:/", StringComparison.Ordinal);
         if (begin == -1)
         {
-            begin = text.IndexOf("http:/");
+            begin = text.IndexOf("http:/", StringComparison.Ordinal);
             if (begin == -1) return "0";
         }
 
-        int end = -1;
-
-        end = text
+        var end = text
             .Skip(begin)
             .TakeWhile(x => !(char.IsWhiteSpace(x) || char.IsControl(x)))
             .Count() + begin;
@@ -151,11 +144,7 @@ public static class Global
 
     public static bool CheckSnep(ulong id)
     {
-        if (id == 93115098461110272)
-        {
-            return true;
-        }
-        return false;
+        return id == 93115098461110272;
     }
 
     public static Task<int> RunBash(this string cmd)
@@ -175,7 +164,7 @@ public static class Global
             },
             EnableRaisingEvents = true
         };
-        process.Exited += (sender, args) =>
+        process.Exited += (_, _) =>
         {
             if (process.ExitCode == 0)
             {
@@ -222,16 +211,13 @@ public static class Global
         }
     }
 
-    public static IGuildUser GetSelfGuildUser(SocketGuild guild)
+    private static IGuildUser GetSelfGuildUser(SocketGuild guild)
     {
-        ulong id;
-#if DEBUG
-        id = 815231883944263681;
-#else
-        id = 970176524110147605;
-#endif
-
-        return guild.GetUser(id);
+    #if DEBUG
+        return guild.GetUser(815231883944263681);
+    #else
+        return guild.GetUser(970176524110147605);
+    #endif
     }
 
     public static bool CanSendMessage(SocketInteractionContext context)
@@ -245,28 +231,28 @@ public static class Global
 
 public class MessageDeleter
 {
-    private readonly System.Timers.Timer Timer = new();
-    private readonly IMessage message;
+    private readonly System.Timers.Timer _timer = new();
+    private readonly IMessage _message;
 
-    public MessageDeleter(IMessage _message, int seconds)
+    public MessageDeleter(IMessage message, int seconds)
     {
-        Timer.Elapsed += DeleteMessage;
-        Timer.Interval = seconds * 1000;
-        message = _message;
-        Timer.Enabled = true;
+        _timer.Elapsed += DeleteMessage;
+        _timer.Interval = seconds * 1000;
+        this._message = message;
+        _timer.Enabled = true;
     }
 
-    public void DeleteMessage(Object? source, System.Timers.ElapsedEventArgs e)
+    private void DeleteMessage(object? source, System.Timers.ElapsedEventArgs e)
     {
         try
         {
-            message.DeleteAsync();
+            _message.DeleteAsync();
         }
         catch
         {
             // nothing to do if lacking perms at this point, just don't crash.
         }
-        Timer.Stop();
-        Timer.Dispose();
+        _timer.Stop();
+        _timer.Dispose();
     }
 }

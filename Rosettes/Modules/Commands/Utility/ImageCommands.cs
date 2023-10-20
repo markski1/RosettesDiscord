@@ -13,7 +13,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("SauceNAO Search")]
     public async Task SauceNAOCtx(IMessage message)
     {
-        string getUrl = Global.GrabURLFromText(message.Content);
+        string getUrl = Global.GrabUrlFromText(message.Content);
 
         // first try to find any image attached
         if (message.Attachments.Any())
@@ -138,7 +138,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Convert Image")]
     public async Task ConvertImageCtx(IMessage message)
     {
-        string getUrl = Global.GrabURLFromText(message.Content);
+        string getUrl = Global.GrabUrlFromText(message.Content);
 
         // first try to find any image attached
         if (message.Attachments.Any())
@@ -236,7 +236,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Reverse GIF")]
     public async Task ReverseGIFMessageCMD(IMessage message)
     {
-        string getUrl = Global.GrabURLFromText(message.Content);
+        string getUrl = Global.GrabUrlFromText(message.Content);
 
         // first try to find a gif attached
         if (message.Attachments.Any())
@@ -277,7 +277,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("reverse-gif", "[experimental] Reverse the gif in the provided URL.")]
     public async Task ReverseGIFSlashCMD(string gifUrl)
     {
-        string getUrl = Global.GrabURLFromText(gifUrl);
+        string getUrl = Global.GrabUrlFromText(gifUrl);
 
         // check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
         if (getUrl.Contains("tenor.com"))

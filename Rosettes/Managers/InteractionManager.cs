@@ -124,23 +124,26 @@ public class InteractionManager
         _ = Task.Run(async () =>
         {
             List<SocketMessageComponentData> components = modal.Data.Components.ToList();
-            if (modal.Data.CustomId == "pollMaker")
+            switch (modal.Data.CustomId)
             {
-                string question = components.First(x => x.CustomId == "question").Value;
-                string option1 = components.First(x => x.CustomId == "option1").Value;
-                string option2 = components.First(x => x.CustomId == "option2").Value;
-                string option3 = components.First(x => x.CustomId == "option3").Value;
-                string option4 = components.First(x => x.CustomId == "option4").Value;
+                case "pollMaker":
+                {
+                    string question = components.First(x => x.CustomId == "question").Value;
+                    string option1 = components.First(x => x.CustomId == "option1").Value;
+                    string option2 = components.First(x => x.CustomId == "option2").Value;
+                    string option3 = components.First(x => x.CustomId == "option3").Value;
+                    string option4 = components.First(x => x.CustomId == "option4").Value;
 
-                await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
-                return;
-            }
+                    await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
+                    return;
+                }
+                case "petNamechange":
+                {
+                    string newName = components.First(x => x.CustomId == "newName").Value;
 
-            if (modal.Data.CustomId == "petNamechange")
-            {
-                string newName = components.First(x => x.CustomId == "newName").Value;
-
-                PetEngine.SetPetName(modal, newName);
+                    PetEngine.SetPetName(modal, newName);
+                    break;
+                }
             }
         });
         return Task.CompletedTask;
@@ -174,10 +177,10 @@ public class InteractionManager
     private Task OnGuildCommandExecuted(SocketSlashCommand arg)
     {
         // only handle guild-specific commands.
-        if (arg.GuildId is not ulong guild_id) return Task.CompletedTask;
+        if (arg.GuildId is not ulong guildId) return Task.CompletedTask;
         if (arg.Type != InteractionType.ApplicationCommand) return Task.CompletedTask;
 
-        var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+        var dbGuild = GuildEngine.GetDBGuildById(guildId);
         dbGuild.ExecuteCommand(arg);
 
         return Task.CompletedTask;

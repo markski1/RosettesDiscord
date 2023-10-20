@@ -74,7 +74,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("DL X/Twitter video")]
     public async Task TweetVideoMsg(IMessage message)
     {
-        string url = Global.GrabURLFromText(message.Content);
+        string url = Global.GrabUrlFromText(message.Content);
         if (url != "0") await TweetVideo(url);
         else await RespondAsync("No URL found in this message.", ephemeral: true);
     }

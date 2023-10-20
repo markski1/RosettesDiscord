@@ -11,35 +11,35 @@ namespace Rosettes.Managers;
 
 public static class EventManager
 {
-    private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
-    private static bool booting = true;
+    private static readonly DiscordSocketClient Client = ServiceManager.GetService<DiscordSocketClient>();
+    private static bool _booting = true;
 
     public static Task SetupAsync()
     {
-        _client.Log += message =>
+        Client.Log += message =>
         {
             Console.WriteLine($"{DateTime.Now} | {message.ToString()}");
             return Task.CompletedTask;
         };
 
 
-        _client.Ready += OnReady;
+        Client.Ready += OnReady;
 
-        _client.JoinedGuild += OnJoinGuild;
+        Client.JoinedGuild += OnJoinGuild;
 
-        _client.LeftGuild += OnLeftGuild;
+        Client.LeftGuild += OnLeftGuild;
 
-        _client.RoleCreated += OnRoleChange;
-        _client.RoleDeleted += OnRoleChange;
-        _client.RoleUpdated += OnRoleChange;
+        Client.RoleCreated += OnRoleChange;
+        Client.RoleDeleted += OnRoleChange;
+        Client.RoleUpdated += OnRoleChange;
 
-        _client.ReactionAdded += OnReactionAdded;
-        _client.ReactionRemoved += OnReactionRemoved;
+        Client.ReactionAdded += OnReactionAdded;
+        Client.ReactionRemoved += OnReactionRemoved;
 
-        _client.UserJoined += OnUserJoin;
-        _client.UserLeft += OnUserLeft;
+        Client.UserJoined += OnUserJoin;
+        Client.UserLeft += OnUserLeft;
 
-        _client.UserVoiceStateUpdated += JQMonitorEngine.UserVCUpdated;
+        Client.UserVoiceStateUpdated += JQMonitorEngine.UserVCUpdated;
 
         return Task.CompletedTask;
     }
@@ -47,9 +47,9 @@ public static class EventManager
     // fired when booting
     private static async Task<Task> OnReady()
     {
-        if (booting)
+        if (_booting)
         {
-            booting = false;
+            _booting = false;
         }
         else
         {
@@ -75,9 +75,9 @@ public static class EventManager
         }
 
         Game game = new("Homph", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
-        await _client.SetActivityAsync(game);
-        await _client.SetStatusAsync(UserStatus.Online);
-        _client.MessageReceived += OnMessageReceived;
+        await Client.SetActivityAsync(game);
+        await Client.SetStatusAsync(UserStatus.Online);
+        Client.MessageReceived += OnMessageReceived;
 
         // it never would be null if we get this far, but this puts IntelliSense at ease.
         if (ServiceManager.Provider.GetService<InteractionManager>() is InteractionManager _intMan)
@@ -102,7 +102,7 @@ public static class EventManager
             try
             {
                 message = arg as SocketUserMessage;
-                context = new SocketCommandContext(_client, message);
+                context = new SocketCommandContext(Client, message);
             }
             catch
             {
@@ -168,7 +168,7 @@ public static class EventManager
 
     private static async Task<Task> OnUserJoin(SocketGuildUser user)
     {
-        if (user is null || user.Guild is null) return Task.CompletedTask;
+        if (user.Guild is null) return Task.CompletedTask;
 
         var dbGuild = await GuildEngine.GetDBGuild(user.Guild);
 
@@ -179,31 +179,27 @@ public static class EventManager
             await user.AddRoleAsync(defRole);
         }
 
-        if (dbGuild.LogChannel > 0)
-        {
-            EmbedBuilder embed = await MakeEmbedForUser(user);
-            embed.Title = "User joined the server.";
-            embed.AddField("Bot:", $"{user.IsBot}");
+        if (dbGuild.LogChannel <= 0) return Task.CompletedTask;
+        
+        EmbedBuilder embed = await MakeEmbedForUser(user);
+        embed.Title = "User joined the server.";
+        embed.AddField("Bot:", $"{user.IsBot}");
 
-            dbGuild.SendLogMessage(embed);
-        }
+        dbGuild.SendLogMessage(embed);
 
         return Task.CompletedTask;
     }
 
     private static async Task<Task> OnUserLeft(SocketGuild guild, SocketUser user)
     {
-        if (user is null || guild is null) return Task.CompletedTask;
-
         var dbGuild = await GuildEngine.GetDBGuild(guild);
 
-        if (dbGuild.LogChannel > 0)
-        {
-            EmbedBuilder embed = await MakeEmbedForUser(user);
-            embed.Title = "User left the server.";
+        if (dbGuild.LogChannel <= 0) return Task.CompletedTask;
+        
+        EmbedBuilder embed = await MakeEmbedForUser(user);
+        embed.Title = "User left the server.";
 
-            dbGuild.SendLogMessage(embed);
-        }
+        dbGuild.SendLogMessage(embed);
 
         return Task.CompletedTask;
     }
@@ -240,18 +236,15 @@ public static class EventManager
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
         if (guildid == 0) return Task.CompletedTask;
         var guild = GuildEngine.GetDBGuildById(guildid);
-        if (guild is null) return Task.CompletedTask;
 
         // If the message is AutoRoles, apply the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
-
         var success = await guild.SetUserRole(reaction.UserId, roles);
-        if (!success)
-        {
-            var cacheChannel = await channel.DownloadAsync();
-            await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-        }
-
+        
+        if (success) return Task.CompletedTask;
+        
+        var cacheChannel = await channel.DownloadAsync();
+        await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
         return Task.CompletedTask;
     }
 
@@ -266,18 +259,15 @@ public static class EventManager
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
         if (guildid == 0) return Task.CompletedTask;
         var guild = GuildEngine.GetDBGuildById(guildid);
-        if (guild is null) return Task.CompletedTask;
 
         // If the message is AutoRoles, remove the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
         var success = await guild.RemoveUserRole(reaction.UserId, roles);
-        if (!success)
-        {
-            var cacheChannel = await channel.DownloadAsync();
-            await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-        }
-
+        if (success) return Task.CompletedTask;
+        
+        var cacheChannel = await channel.DownloadAsync();
+        await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
         return Task.CompletedTask;
     }
 }

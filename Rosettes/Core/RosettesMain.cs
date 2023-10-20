@@ -10,18 +10,17 @@ namespace Rosettes.Core;
 
 public class RosettesMain
 {
-    private readonly DiscordSocketClient Client;
-    private readonly InteractionService Commands;
-    private readonly System.Timers.Timer TenMinutyTimer = new();
+    private readonly DiscordSocketClient _client;
+    private readonly System.Timers.Timer _syncTimer = new();
 
     public RosettesMain()
     {
-        InteractionServiceConfig interaction_config = new()
+        InteractionServiceConfig interactionConfig = new()
         {
             DefaultRunMode = RunMode.Async,
             LogLevel = Settings.LogSeverity
         };
-        DiscordSocketConfig client_config = new()
+        DiscordSocketConfig clientConfig = new()
         {
             AlwaysDownloadUsers = true,
             LargeThreshold = 250,
@@ -29,14 +28,14 @@ public class RosettesMain
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
             LogLevel = Settings.LogSeverity
         };
-        Client = new(client_config);
-        Commands = new(Client, interaction_config);
+        _client = new DiscordSocketClient(clientConfig);
+        InteractionService commands = new(_client, interactionConfig);
 
 
         ServiceCollection collection = new();
 
-        collection.AddSingleton(Client);
-        collection.AddSingleton(Commands);
+        collection.AddSingleton(_client);
+        collection.AddSingleton(commands);
         collection.AddSingleton<InteractionManager>();
 
         ServiceManager.SetProvider(collection);
@@ -45,28 +44,28 @@ public class RosettesMain
     public async Task MainAsync()
     {
         // Identify with the token and connect to discord.
-        await Client.LoginAsync(TokenType.Bot, Settings.Token);
-        await Client.StartAsync();
+        await _client.LoginAsync(TokenType.Bot, Settings.Token);
+        await _client.StartAsync();
 
         // start thy stuff
         await EventManager.SetupAsync();
 
         // TenMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
-        TenMinutyTimer.Elapsed += TenMinutyThings;
-        TenMinutyTimer.Interval = 600000;
-        TenMinutyTimer.AutoReset = true;
-        TenMinutyTimer.Enabled = true;
+        _syncTimer.Elapsed += SyncThings;
+        _syncTimer.Interval = 600000;
+        _syncTimer.AutoReset = true;
+        _syncTimer.Enabled = true;
 
         await Task.Delay(-1);
     }
 
-    public void TenMinutyThings(object? source, System.Timers.ElapsedEventArgs e)
+    private static void SyncThings(object? source, System.Timers.ElapsedEventArgs e)
     {
         Thread timedThread = new(TimedActions);
         timedThread.Start();
     }
 
-    public void TimedActions()
+    private static void TimedActions()
     {
         UserEngine.SyncWithDatabase();
         GuildEngine.SyncWithDatabase();
@@ -92,7 +91,7 @@ public class RosettesMain
                 // In the machine where Rosettes runs, the startRosettes.sh script located one directory above
                 // properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
                 // I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
-                int runSuccess = await Global.RunBash("../startRosettes.sh");
+                int runSuccess = await "../startRosettes.sh".RunBash();
                 if (runSuccess != 0)
                 {
                     success = false;

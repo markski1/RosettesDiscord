@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine.Guild;
@@ -9,7 +8,6 @@ namespace Rosettes.Managers;
 
 public static class MessageManager
 {
-    private static readonly DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
     public static async Task HandleMessage(SocketCommandContext context)
     {
         if (!NoMessageChannel(context)) return;
@@ -38,7 +36,6 @@ public static class MessageManager
         if (messageText.Contains(@"i.4cdn.org"))
         {
             await MirrorExpiringMedia(context);
-            return;
         }
     }
 
@@ -54,27 +51,27 @@ public static class MessageManager
         };
     }
 
-    public static async Task GetGameInfo(SocketCommandContext context)
+    private static async Task GetGameInfo(SocketCommandContext context)
     {
         // Grab the game's ID from the url. It's located after '/app/' and sometimes the name is after it.
-        string extractID = context.Message.Content;
+        string extractId = context.Message.Content;
 
-        int begin = extractID.IndexOf("/app/") + 5; // where the number starts in the string.
+        int begin = extractId.IndexOf("/app/", StringComparison.Ordinal) + 5; // where the number starts in the string.
         int end = -1;
 
-        end = extractID
+        end = extractId
             .Skip(begin)
             .TakeWhile(char.IsNumber)
             .Count() + begin;                       // where it ends.
 
         if (end <= begin) return;
 
-        int gameID = int.Parse(extractID[begin..end]);
+        int gameId = int.Parse(extractId[begin..end]);
 
         string data;
         try
         {
-            data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={gameID}");
+            data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={gameId}");
         }
         catch
         {
@@ -83,20 +80,20 @@ public static class MessageManager
             return;
         }
 
-        var DeserialziedObject = JsonConvert.DeserializeObject(data);
-        if (DeserialziedObject == null) return;
-        dynamic result = ((dynamic)DeserialziedObject).response;
+        var deserialziedObject = JsonConvert.DeserializeObject(data);
+        if (deserialziedObject == null) return;
+        dynamic result = ((dynamic)deserialziedObject).response;
 
         if (result.result != 1) return;
         await context.Channel.SendMessageAsync($"^ Playing right now: {result.player_count:N0}");
     }
-    public static async Task MirrorExpiringMedia(SocketCommandContext context)
+    private static async Task MirrorExpiringMedia(SocketCommandContext context)
     {
         string message = context.Message.Content;
         if (message is null) return;
 
 
-        string url = Global.GrabURLFromText(message);
+        string url = Global.GrabUrlFromText(message);
 
         // Infer the format from the filename
         // TODO: Infer the format from the downloaded data instead.
@@ -107,18 +104,18 @@ public static class MessageManager
         // If the length of the grabbed "format" is too long, we can assume the URL didn't specify a format.
         if (format.Length > 5) return;
 
-        await context.Channel.SendMessageAsync("This URL will expire. Attempting to mirror.");
+        var expireMessage = await context.Channel.SendMessageAsync("This URL will expire. I will now attempt to mirror it's media by uploading it directly to Discord.");
 
         try
         {
-            Stream data = await Global.HttpClient.GetStreamAsync(url);
+            var data = await Global.HttpClient.GetStreamAsync(url);
 
             if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
             string fileName = $"./temp/{Global.Randomize(20) + 1}.{format}";
 
             if (File.Exists(fileName)) File.Delete(fileName);
 
-            using var fileStream = new FileStream(fileName, FileMode.Create);
+            await using var fileStream = new FileStream(fileName, FileMode.Create);
             await data.CopyToAsync(fileStream);
             fileStream.Close();
 
@@ -130,69 +127,69 @@ public static class MessageManager
             }
             else
             {
-                await context.Channel.SendMessageAsync($"Sorry! The file was too large to upload to this guild.");
+                throw new Exception("File was too large.");
             }
 
             File.Delete(fileName);
         }
         catch (Exception ex)
         {
-            await context.Channel.SendMessageAsync($"Sorry! I couldn't do it... - ({ex.Message})");
+            await expireMessage.ModifyAsync(x => x.Content = $"Sorry! I couldn't do it... - ({ex.Message})");
         }
     }
 
-    public static async Task GetProfileInfo(SocketCommandContext context)
+    private static async Task GetProfileInfo(SocketCommandContext context)
     {
         //extract steamID from url
-        string extractID = Global.GrabURLFromText(context.Message.Content);
-        ulong steamID;
+        string extractId = Global.GrabUrlFromText(context.Message.Content);
+        ulong steamId;
         // easy mode: if it's a "profiles" url, just extract the number off the url
-        if (extractID.Contains("/profiles/"))
+        if (extractId.Contains("/profiles/"))
         {
-            int begin = extractID.IndexOf("/profiles/") + 10;
+            int begin = extractId.IndexOf("/profiles/", StringComparison.Ordinal) + 10;
 
             int end = -1;
 
-            end = extractID
+            end = extractId
                 .Skip(begin)
                 .TakeWhile(char.IsNumber)
                 .Count() + begin;                       // where it ends.
 
             if (end <= begin) return;
 
-            steamID = ulong.Parse(extractID[begin..end]);
+            steamId = ulong.Parse(extractId[begin..end]);
         }
         // "hard" mode: if it's a vanity URL, resolve it through Steam WebAPI
         else
         {
-            int begin = extractID.IndexOf("/id/") + 4;
+            int begin = extractId.IndexOf("/id/", StringComparison.Ordinal) + 4;
 
-            int end = extractID
+            int end = extractId
                 .Skip(begin)
                 .TakeWhile(x => x != '/')
                 .Count() + begin;                       // stop where '/' found, if any.
 
-            string vanityURL;
+            string vanityUrl;
             try
             {
-                vanityURL = extractID[begin..end];
+                vanityUrl = extractId[begin..end];
             }
             catch
             {
                 // If substring results in an exception, the url wasn't valid
                 return;
             }
-            var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={Settings.SteamDevKey}&vanityurl={vanityURL}");
+            var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={Settings.SteamDevKey}&vanityurl={vanityUrl}");
 
-            var DeserialziedObject = JsonConvert.DeserializeObject(data);
-            if (DeserialziedObject == null) return;
-            dynamic result = ((dynamic)DeserialziedObject).response;
+            var deserialziedObject = JsonConvert.DeserializeObject(data);
+            if (deserialziedObject == null) return;
+            dynamic result = ((dynamic)deserialziedObject).response;
 
             if (result.success != 1) return;
-            steamID = result.steamid;
+            steamId = result.steamid;
         }
 
-        var moreData = await Global.HttpClient.GetStringAsync($"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={Settings.SteamDevKey}&steamids={steamID}");
+        var moreData = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={Settings.SteamDevKey}&steamids={steamId}");
 
         var deserializedMoreData = JsonConvert.DeserializeObject(moreData);
         if (deserializedMoreData == null) return;
@@ -210,7 +207,7 @@ public static class MessageManager
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
         embed.Author = new EmbedAuthorBuilder() { Name = player.personaname, IconUrl = player.avatar };
-        embed.Description = $"Steam ID: {steamID}";
+        embed.Description = $"Steam ID: {steamId}";
 
         if (player.communityvisibilitystate is not null)
         {
@@ -248,11 +245,11 @@ public static class MessageManager
             {
                 if (player.gameserverip != "0.0.0.0:0") text += $"\nServer IP: {player.gameserverip}";
             }
-            embed.AddField("Playing game", text, false);
+            embed.AddField("Playing game", text);
         }
         else
         {
-            embed.AddField("Playing game", "Not playing", false);
+            embed.AddField("Playing game", "Not playing");
         }
 
         if (player.lastlogoff is not null)
