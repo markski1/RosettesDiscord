@@ -9,7 +9,7 @@ namespace Rosettes.Modules.Engine.Guild;
 
 public static class GuildEngine
 {
-    private static List<Guild> GuildCache = new();
+    public static List<Guild> GuildCache = new();
     public static readonly GuildRepository _interface = new();
 
     public static async void SyncWithDatabase()
@@ -24,6 +24,7 @@ public static class GuildEngine
     {
         if (await _interface.CheckGuildExists(guild.Id))
         {
+            guild.SelfTest();
             await _interface.UpdateGuild(guild);
             guild.Settings = await _interface.GetGuildSettings(guild);
             guild.DefaultRole = await _interface.GetGuildDefaultRole(guild);
@@ -119,9 +120,9 @@ public class Guild
     public ulong DefaultRole;
     public ulong LogChannel;
     public ulong FarmChannel;
-    public SocketGuild? CachedReference;
     public string NameCache;
-    public List<GuildCommand> GuildCommands = new();
+    private SocketGuild? CachedReference;
+    private readonly List<GuildCommand> GuildCommands = new();
 
     // settings contains 10 characters, each representative of the toggle state of a setting.
     //

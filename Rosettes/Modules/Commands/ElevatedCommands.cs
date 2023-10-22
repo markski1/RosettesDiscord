@@ -34,11 +34,12 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         embed.Description = "A simple, free, open source discord bot.";
         embed.ThumbnailUrl = "https://markski.ar/images/rosettes.png";
 
-        embed.AddField("Memory in use", $"{(ulong)((proc.PrivateMemorySize64 / 1024) * 0.5):N0} Kb", inline: true);
+        embed.AddField("Memory in use", $"{(ulong)(proc.PrivateMemorySize64 / 1024):N0} Kb", inline: true);
         embed.AddField("Threads", $"{proc.Threads.Count}", inline: true);
-        embed.AddField("Uptime", runtimeText);
-        embed.AddField("Currently serving", $"{client.Guilds.Count} guilds.", inline: true);
+        embed.AddField("Currently serving", $"{client.Guilds.Sum(x => x.MemberCount)} users, across {client.Guilds.Count} guilds.");
+        embed.AddField("Uptime", runtimeText, inline: true);
         embed.AddField("Ping to Discord", $"{client.Latency}ms", inline: true);
+
         embed.AddField("Learn about me", "<https://markski.ar/rosettes>");
 
         EmbedFooterBuilder footer = new() { Text = "Good morning, Dave." };

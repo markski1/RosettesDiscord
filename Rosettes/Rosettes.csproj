@@ -5,33 +5,16 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
     <DebugType>portable</DebugType>
     <Authors>Markski</Authors>
 	<PublishSingleFile>true</PublishSingleFile>
 	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	<PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Optimize>False</Optimize>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
-    <PackageReference Include="Dapper" Version="2.1.4" />
+    <PackageReference Include="Dapper" Version="2.1.15" />
     <PackageReference Include="Discord.Net" Version="3.12.0" />
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
     <PackageReference Include="JikanDotNet" Version="2.6.3" />
@@ -40,12 +23,8 @@
     <PackageReference Include="MySqlConnector" Version="2.2.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PokeApiNet" Version="3.0.10" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.12" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-
+ 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using MySqlConnector;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Rosettes.Core;
 
@@ -15,13 +16,14 @@ public static class Settings
     public static readonly LogSeverity LogSeverity = LogSeverity.Info;
     public static readonly string keyLoc = "./keys";
 #endif
-
+    
     public static readonly string Token = LoadSetting("token");
     public static readonly string SteamDevKey = LoadSetting("steam");
     public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
     public static readonly string RapidAPIKey = LoadSetting("rapidapi");
     public static readonly string TenorKey = LoadSetting("tenor");
     public static readonly string SauceNAO = LoadSetting("saucenao");
+    public static readonly string SecretKey = LoadSetting("secretkey");
     public static readonly dynamic LavaLinkData = LoadJsonSetting("lavalink");
     public static readonly dynamic LavaLinkBackup = LoadJsonSetting("lavalinkbackup");
     public static readonly MySqlConnectionStringBuilder Database = new();
