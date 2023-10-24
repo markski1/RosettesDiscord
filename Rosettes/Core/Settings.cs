@@ -24,8 +24,6 @@ public static class Settings
     public static readonly string TenorKey = LoadSetting("tenor");
     public static readonly string SauceNAO = LoadSetting("saucenao");
     public static readonly string SecretKey = LoadSetting("secretkey");
-    public static readonly dynamic LavaLinkData = LoadJsonSetting("lavalink");
-    public static readonly dynamic LavaLinkBackup = LoadJsonSetting("lavalinkbackup");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
 
