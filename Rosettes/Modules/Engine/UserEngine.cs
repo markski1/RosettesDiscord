@@ -16,10 +16,10 @@ public static class UserEngine
     {
         foreach (User user in UserCache)
         {
-            if (user.SyncUpToDate) continue;
+            if (user.NeedsUpdate()) continue;
 
             await _interface.UpdateUser(user);
-            user.SyncUpToDate = true;
+            user.NeedsUpdate(true);
         }
     }
 
@@ -92,6 +92,15 @@ public static class UserEngine
         }
         return userList;
     }
+
+    public static async Task<User> GetUserByRosettesKey(string rosettes_key)
+    {
+        ulong? result = await _interface.GetUserByRosettesKey(rosettes_key);
+
+        if (result is null) return new User(null);
+
+        return GetDBUserById((ulong)result);
+    }
 }
 
 public class User
@@ -99,16 +108,14 @@ public class User
     public ulong Id { get; }
     public int MainPet { get; set; }
     public int Exp { get; set; }
+    public string NameCache { get; set; } = "";
+    public string Username { get; set; } = "";
 
     // Contains if the user's data in memory has changed since last syncing to database.
-    public bool SyncUpToDate { get; set; }
+    private bool SyncUpToDate { get; set; }
 
     // timers
-    public int LastFished { get; set; }
-
-
-    // Database flags
-    private string NameCache = "";
+    private int LastFished { get; set; }
 
     // normal constructor
     public User(IUser? newUser)
@@ -117,14 +124,16 @@ public class User
         {
             Id = 0;
             NameCache = "invalid";
+            Username = "invalid";
         }
         else
         {
             Id = newUser.Id;
             if (newUser.GlobalName is not null)
-                NameCache = newUser.Username;
+                NameCache = newUser.GlobalName;
             else
                 NameCache = newUser.Username;
+            Username = newUser.Username;
         }
         SyncUpToDate = true;
         LastFished = 0;
@@ -133,11 +142,12 @@ public class User
     }
 
     // database constructor, used on loading users
-    public User(ulong id, string namecache, int exp, int mainpet)
+    public User(ulong id, string username, string namecache, int exp, int mainpet)
     {
         Id = id;
         SyncUpToDate = true;
         LastFished = 0;
+        Username = username;
         NameCache = namecache;
         MainPet = mainpet;
         Exp = exp;
@@ -176,6 +186,24 @@ public class User
         return NameCache;
     }
 
+    public async Task<string> GetUsername()
+    {
+        var userReference = await GetDiscordReference();
+        if (userReference is null) return Username;
+
+        string nameGot = "invalid";
+        if (userReference.Username is not null)
+        {
+            nameGot = userReference.Username;
+        }
+        if (nameGot != Username)
+        {
+            Username = nameGot;
+            SyncUpToDate = false;
+        }
+        return Username;
+    }
+
     // farm stuff
 
     public bool CanFish()
@@ -191,6 +219,14 @@ public class User
     public int GetFishTime()
     {
         return LastFished;
+    }
+
+    public bool NeedsUpdate(bool? set = null)
+    {
+        if (set is null) return SyncUpToDate;
+
+        SyncUpToDate = true;
+        return true;
     }
 
     public void SetPet(int id)

@@ -26,7 +26,7 @@ public class UserRepository : IUserRepository
     {
         var db = DBConnection();
 
-        var sql = @"SELECT id, namecache, exp, mainpet FROM users";
+        var sql = @"SELECT id, username, namecache, exp, mainpet FROM users";
 
         try
         {
@@ -60,7 +60,7 @@ public class UserRepository : IUserRepository
     {
         var db = DBConnection();
 
-        var sql = @"SELECT id, namecache, exp, mainpet FROM users WHERE id=@id";
+        var sql = @"SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
 
         try
         {
@@ -77,15 +77,15 @@ public class UserRepository : IUserRepository
     {
         var db = DBConnection();
 
-        var sql = @"INSERT INTO users (id, namecache, mainpet)
-                        VALUES(@Id, @NameCache, @MainPet)";
+        var sql = @"INSERT INTO users (id, username, namecache, mainpet)
+                        VALUES(@Id, @Username, @NameCache, @MainPet)";
 
         var sql2 = @"INSERT INTO users_inventory (id) VALUES(@Id)";
 
         try
         {
             await db.ExecuteAsync(sql2, new { user.Id });
-            return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet })) > 0;
+            return (await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet })) > 0;
         }
         catch (Exception ex)
         {
@@ -99,17 +99,36 @@ public class UserRepository : IUserRepository
         var db = DBConnection();
 
         var sql = @"UPDATE users
-                        SET id=@Id, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
+                        SET id=@Id, username=@Username, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
                         WHERE id = @Id";
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { user.Id, NameCache = await user.GetName(), user.MainPet, user.Exp })) > 0;
+            return (await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet, user.Exp })) > 0;
         }
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
             return false;
+        }
+    }
+
+    public async Task<ulong?> GetUserByRosettesKey(string rosettes_key)
+    {
+        var db = DBConnection();
+
+        var sql = @"SELECT id
+                        FROM login_keys
+                        WHERE login_key = @rosettes_key
+                        LIMIT 1";
+
+        try
+        {
+            return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { rosettes_key });
+        }
+        catch
+        {
+            return null;
         }
     }
 }

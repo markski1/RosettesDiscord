@@ -332,7 +332,7 @@ namespace Rosettes.Modules.Engine.Minigame
             if (!dbUser.CanFish())
             {
                 embed.Title = "Can't fish yet.";
-                embed.Description = $"You may fish again <t:{dbUser.LastFished}:R>";
+                embed.Description = $"You may fish again <t:{dbUser.GetFishTime()}:R>";
 
                 await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
                 return;

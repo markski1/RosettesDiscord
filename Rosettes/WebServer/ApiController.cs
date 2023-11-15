@@ -5,6 +5,7 @@ using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine;
+using Microsoft.AspNetCore.Identity;
 
 namespace Rosettes.WebServer;
 
@@ -67,5 +68,12 @@ public class ApiController : ControllerBase
         {
             return $"Message could not be sent. \n {ex}";
         }        
+    }
+
+    [HttpGet("CheckKey")]
+    public async Task<User> CheckKey(string rosettes_key)
+    {
+        rosettes_key = rosettes_key.Trim();
+        return await UserEngine.GetUserByRosettesKey(rosettes_key);
     }
 }
