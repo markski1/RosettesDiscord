@@ -14,14 +14,27 @@ public static class GuildEngine
 
     public static async void SyncWithDatabase()
     {
+        List<Guild> toDelete = new();
+        // Guilds in the cache of which Rosettes is no longer a member are to be removed from the cache.
+        // foreach does not grafeculy handle the target being mutated during iteration, 
+        // so we add those to a second list and prune after.
         foreach (Guild guild in GuildCache.ToList())
         {
-            await UpdateGuild(guild);
+            if (!await UpdateGuild(guild))
+            {
+                toDelete.Add(guild);
+            }
         }
+        toDelete.ForEach(x => GuildCache.Remove(x));
     }
 
-    public static async Task<Task> UpdateGuild(Guild guild)
+    public static async Task<bool> UpdateGuild(Guild guild)
     {
+        var client = ServiceManager.GetService<DiscordSocketClient>();
+        if (!client.Guilds.Contains(guild.GetDiscordSocketReference()))
+        {
+            return false;
+        }
         if (await _interface.CheckGuildExists(guild.Id))
         {
             guild.SelfTest();
@@ -32,7 +45,6 @@ public static class GuildEngine
         else
         {
             // handle deletion or memory resets
-            var client = ServiceManager.GetService<DiscordSocketClient>();
             SocketGuild? foundGuild = null;
             foreach (SocketGuild aSocketGuild in client.Guilds)
             {
@@ -40,14 +52,14 @@ public static class GuildEngine
             }
             if (foundGuild is null)
             {
-                GuildCache.Remove(guild);
+                return false;
             }
             else
             {
                 await _interface.InsertGuild(guild);
             }
         }
-        return Task.CompletedTask;
+        return true;
     }
 
     public static void RemoveGuildFromCache(ulong guildid)
