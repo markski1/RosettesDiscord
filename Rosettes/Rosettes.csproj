@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DebugType>portable</DebugType>
@@ -13,17 +13,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
-    <PackageReference Include="Dapper" Version="2.1.15" />
-    <PackageReference Include="Discord.Net" Version="3.12.0" />
+    <PackageReference Include="CoreCLR-NCalc" Version="3.0.119" />
+    <PackageReference Include="Dapper" Version="2.1.24" />
+    <PackageReference Include="Discord.Net" Version="3.13.0" />
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
-    <PackageReference Include="JikanDotNet" Version="2.6.3" />
+    <PackageReference Include="JikanDotNet" Version="2.7.0" />
     <PackageReference Include="MetadataExtractor" Version="2.8.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-    <PackageReference Include="MySqlConnector" Version="2.2.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="MySqlConnector" Version="2.3.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="PokeApiNet" Version="3.0.10" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.12" />
+    <PackageReference Include="PokeApiNet" Version="4.0.0" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
  
