@@ -142,7 +142,7 @@ public class Guild
     // If we ever need more than 10 settings, we're doing something very wrong.
     //
     // - Char 0: Message Analysis level
-    // - Char 1: Music Command toggle
+    // - Char 1: Deprecated, unused.
     // - Char 2: Random Command toggle
     // - Char 3: Dumb Command toggle
     // - Char 4: Farm Command toggle
@@ -224,12 +224,6 @@ public class Guild
     public bool MessageAnalysis()
     {
         char value = Settings[0];
-        return value == '1';
-    }
-
-    public bool AllowsMusic()
-    {
-        char value = Settings[1];
         return value == '1';
     }
 

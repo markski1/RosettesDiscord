@@ -237,9 +237,6 @@ public static class AdminHelper
         enabledText = (dbGuild.MessageAnalysis()) ? "Enabled" : "Disabled";
         firstRow.WithButton($"Message parsing: {enabledText}", "toggle_msg");
 
-        enabledText = (dbGuild.AllowsMusic()) ? "Enabled" : "Disabled";
-        firstRow.WithButton($"Music commands: {enabledText}", "toggle_music");
-
         ActionRowBuilder secondRow = new();
         enabledText = (dbGuild.AllowsFarm()) ? "Enabled" : "Disabled";
         secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
@@ -284,9 +281,6 @@ public static class AdminHelper
             {
                 case "toggle_msg":
                     dbGuild.ToggleSetting(0);
-                    break;
-                case "toggle_music":
-                    dbGuild.ToggleSetting(1);
                     break;
                 case "toggle_farm":
                     dbGuild.ToggleSetting(4);
