@@ -85,20 +85,8 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("checkem", "Want to gamble something on dubs, trips, maybe even quads? Check'Em!")]
-    public async Task CheckEm([Summary("image", "Return a relevant checkem image. By default, false.")] string image = "false")
+    public async Task CheckEm()
     {
-        if (Context.Guild is null)
-        {
-            await RespondAsync("This command cannot be used in DM's. Instead use https://snep.markski.ar/checkem");
-            return;
-        }
-
-        if (image != "false" && image != "true")
-        {
-            await RespondAsync("the 'image' parameter may only be 'true' or 'false'(default)", ephemeral: true);
-            return;
-        }
-
         int number = Global.Randomize(99999999) + 1;
         // kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing so it doesn't matter.
         if (number < 10000000)
@@ -118,11 +106,5 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         await RespondAsync($"[{displayName}] Check'Em! : **{number}**");
-
-        if (image == "true")
-        {
-            var File = Directory.GetFiles("/var/www/html/checkem/").OrderBy(x => Global.Randomizer.Next()).Take(1);
-            await ReplyAsync(File.First().Replace("/var/www/html/", "https://snep.markski.ar/"));
-        }
     }
 }

@@ -219,7 +219,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.Title = $"{dbGuild.NameCache} | Settings";
 
-        embed.Footer = new EmbedFooterBuilder() { Text = "You may also use the web panel for more comprehensive settings,\nsuch as setting up AutoRoles.\nhttps://snep.markski.ar/rosettes" };
+        embed.Footer = new EmbedFooterBuilder() { Text = "You may also use the web panel for more comprehensive settings,\nsuch as setting up AutoRoles.\nhttps://markski.ar/rosettes/panel" };
 
         await RespondAsync(embed: embed.Build(), components: component);
 

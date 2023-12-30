@@ -120,7 +120,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         string NewKey = "";
         char Character;
         int offset;
-        for (int i = 0; i < 64; i++)
+        for (int i = 0; i < 24; i++)
         {
             if (Global.Randomize(2) == 0)
             {
