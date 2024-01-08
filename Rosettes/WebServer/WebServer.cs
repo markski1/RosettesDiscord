@@ -2,18 +2,18 @@
 
 public static class WebServer
 {
-    private static Thread? webServerThread;
-    private static WebApplication? app;
+    private static Thread? _webServerThread;
+    private static WebApplication? _app;
 
-    public static void Initialize(WebApplication _app)
+    public static void Initialize(WebApplication app)
     {
-        app = _app;
-        webServerThread = new(RunWebServer);
-        webServerThread.Start();
+        _app = app;
+        _webServerThread = new(RunWebServer);
+        _webServerThread.Start();
     }
 
-    public static void RunWebServer()
+    private static void RunWebServer()
     {
-        app?.Run();
+        _app?.Run();
     }
 }

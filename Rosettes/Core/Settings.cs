@@ -1,7 +1,6 @@
 ﻿using Discord;
 using MySqlConnector;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Rosettes.Core;
 
@@ -24,29 +23,28 @@ public static class Settings
     public static readonly string TenorKey = LoadSetting("tenor");
     public static readonly string SauceNAO = LoadSetting("saucenao");
     public static readonly string SecretKey = LoadSetting("secretkey");
-    public static readonly string OpenAI = LoadSetting("openai");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
 
     public static bool LoadDatabaseObj()
     {
-        dynamic MySQLData = LoadJsonSetting("mysql");
-        if (MySQLData is null)
+        dynamic? mySqlData = LoadJsonSetting("mysql");
+        if (mySqlData is null)
         {
             return false;
         }
-        Database.Server = MySQLData.Server;
-        Database.UserID = MySQLData.UserID;
-        Database.Password = MySQLData.Password;
-        Database.Database = MySQLData.Database;
+        Database.Server = mySqlData.Server;
+        Database.UserID = mySqlData.UserID;
+        Database.Password = mySqlData.Password;
+        Database.Database = mySqlData.Database;
         return true;
     }
 
-    public static string LoadSetting(string name) => File.ReadAllText($"{keyLoc}/{name}.txt").Replace("\n", String.Empty);
+    private static string LoadSetting(string name) => File.ReadAllText($"{keyLoc}/{name}.txt").Replace("\n", String.Empty);
 
     // Supressing this warning, because if this were to be null, crashing on launch IS the desired effect.
     // Rosettes cannot and should not work with misconfused keys.
 #pragma warning disable CS8603
-    public static dynamic LoadJsonSetting(string name) => JsonConvert.DeserializeObject(File.ReadAllText($"{keyLoc}/{name}.txt"));
+    private static dynamic LoadJsonSetting(string name) => JsonConvert.DeserializeObject(File.ReadAllText($"{keyLoc}/{name}.txt"));
 #pragma warning restore CS8603
 }

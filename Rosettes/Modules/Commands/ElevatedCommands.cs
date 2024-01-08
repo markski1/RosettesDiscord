@@ -76,7 +76,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             else
             {
                 await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
-                await RosettesMain.HaltOrRestart(false);
+                await RosettesMain.HaltOrRestart();
             }
         }
     }

@@ -82,7 +82,6 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("twtvid", "Get the video file of the specified x/twitter post.")]
     public async Task TweetVideo(string tweetUrl)
     {
-        string originalTweet = tweetUrl;
         bool isX = false;
 
         int tldEnd = tweetUrl.IndexOf("twitter.com");
@@ -148,7 +147,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
 
             Stream stream = await response.Content.ReadAsStreamAsync();
 
-            using var fileStream = new FileStream(fileName, FileMode.Create);
+            await using var fileStream = new FileStream(fileName, FileMode.Create);
 
             var cts = new CancellationTokenSource();
             var downloadTask = stream.CopyToAsync(fileStream, cts.Token);
@@ -171,16 +170,12 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        ulong size = 0;
+        ulong size;
 
         // retrieve the video's format.
-        using var checkFileStream = new FileStream(fileName, FileMode.Open);
-        FileType fileType = FileType.Unknown;
-        if (checkFileStream is not null)
-        {
-            fileType = FileTypeDetector.DetectFileType(checkFileStream);
-            checkFileStream.Close();
-        }
+        await using var checkFileStream = new FileStream(fileName, FileMode.Open);
+        FileType fileType = FileTypeDetector.DetectFileType(checkFileStream);
+        checkFileStream.Close();
 
         // ensure the file was downloaded correctly and is either MPEG4 or QuickTime encoded.
         if (!File.Exists(fileName) || fileType is not FileType.QuickTime && fileType is not FileType.Mp4)
@@ -239,11 +234,8 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
             return;
         }
-
-        else
-        {
-            _ = new EmojiDownloader.EmojiDownloader().DownloadEmojis(Context);
-        }
+        
+        _ = new EmojiDownloader.EmojiDownloader().DownloadEmojis(Context);
     }
 
     [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]

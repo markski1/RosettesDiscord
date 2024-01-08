@@ -4,75 +4,66 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
-using System.Data;
 
 namespace Rosettes.Modules.Commands;
 
 public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("dice", "Roll dice.")]
-    public async Task Dice(int dice_faces, int dice_count = 1)
+    public async Task Dice(int diceFaces, int diceCount = 1)
     {
         var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
         var dbUser = await UserEngine.GetDBUser(Context.User);
 
-        if (dbGuild is not null)
+        if (!dbGuild.AllowsRandom())
         {
-            if (!dbGuild.AllowsRandom())
-            {
-                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
-                return;
-            }
+            await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
+            return;
         }
 
-        if (dice_faces < 2 || dice_count < 1)
+        if (diceFaces < 2 || diceCount < 1)
         {
             await RespondAsync("Dice must have at least 1 face, and you must roll at least one dice.", ephemeral: true);
             return;
         }
-        else if (dice_faces > 1000000 || dice_count > 10)
+        else if (diceFaces > 1000000 || diceCount > 10)
         {
             await RespondAsync("Dice may not have more than 1 million faces, and you may roll no more than 10 dice at once.", ephemeral: true);
             return;
         }
-        else
+        
+        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+
+        embed.WithTitle($"Rolled {diceCount} dice.");
+        embed.WithDescription($"With {diceFaces} faces each.");
+
+        string resultText = "";
+        int diceTotal = 0;
+        for (int i = 0; i < diceCount; i++)
         {
-            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-            embed.WithTitle($"Rolled {dice_count} dice.");
-            embed.WithDescription($"With {dice_faces} faces each.");
-
-            string resultText = "";
-            int diceTotal = 0;
-            for (int i = 0; i < dice_count; i++)
-            {
-                int diceResult = Global.Randomize(dice_faces) + 1;
-                resultText += $"**Die {i + 1}:** {diceResult} \n";
-                diceTotal += diceResult;
-            }
-
-            embed.AddField("Roll results: ", resultText);
-
-            embed.AddField("Total:", $"{diceTotal}, with each die scoring {diceTotal / dice_count} in average.");
-
-            await RespondAsync(embed: embed.Build());
+            int diceResult = Global.Randomize(diceFaces) + 1;
+            resultText += $"**Die {i + 1}:** {diceResult} \n";
+            diceTotal += diceResult;
         }
+
+        embed.AddField("Roll results: ", resultText);
+
+        embed.AddField("Total:", $"{diceTotal}, with each die scoring {diceTotal / diceCount} in average.");
+
+        await RespondAsync(embed: embed.Build());
     }
 
     [SlashCommand("coin", "Throw a coin! You may provide two custom faces.")]
     public async Task CoinCommand([Summary("face-1", "By default, Tails")] string face1 = "Tails", [Summary("face-2", "By default, Heads")] string face2 = "Face")
     {
         var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-        if (dbGuild is not null)
+        if (!dbGuild.AllowsRandom())
         {
-            if (!dbGuild.AllowsRandom())
-            {
-                await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
-                return;
-            }
+            await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
+            return;
         }
 
-        string[] coinSides = { face1, face2 };
+        string[] coinSides = [face1, face2];
 
         var dbUser = await UserEngine.GetDBUser(Context.User);
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
@@ -95,10 +86,10 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         string displayName;
-        SocketGuildUser? GuildUser = Context.User as SocketGuildUser;
-        if (GuildUser is not null && GuildUser.Nickname is not null)
+
+        if (Context.User is SocketGuildUser guildUser)
         {
-            displayName = GuildUser.DisplayName;
+            displayName = guildUser.DisplayName;
         }
         else
         {

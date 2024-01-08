@@ -100,51 +100,55 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         var roles = AutoRolesEngine.GetRolesByCode(code, Context.Guild.Id);
 
-        if (roles is null || !roles.Any())
+        if (roles != null)
         {
-            await RespondAsync("Error. Please make sure you're using the right code in the right guild.", ephemeral: true);
-            return;
-        }
-
-        List<Emoji> emojis = new();
-
-        string text = "";
-
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-        var restGuild = await dbGuild.GetDiscordRestReference();
-        var socketGuild = dbGuild.GetDiscordSocketReference();
-
-        EmbedBuilder embed = new()
-        {
-            Color = Color.DarkPurple,
-            Title = AutoRolesEngine.GetNameFromCode(code),
-            Description = " "
-        };
-
-        foreach (var role in roles)
-        {
-            emojis.Add(new Emoji(role.Emote));
-            string roleName = "";
-            if (socketGuild is not null && socketGuild.GetRole(role.RoleId) is not null)
+            IEnumerable<AutoRoleEntry> roleEntries = roles.ToList();
+            if (!roleEntries.Any())
             {
-                roleName = socketGuild.GetRole(role.RoleId).Mention;
+                await RespondAsync("Error. Please make sure you're using the right code in the right guild.", ephemeral: true);
+                return;
             }
-            else if (restGuild is not null && restGuild.GetRole(role.RoleId) is not null)
+
+            List<Emoji> emojis = new();
+
+            string text = "";
+
+            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            var restGuild = await dbGuild.GetDiscordRestReference();
+            var socketGuild = dbGuild.GetDiscordSocketReference();
+
+            EmbedBuilder embed = new()
             {
-                roleName = restGuild.GetRole(role.RoleId).Mention;
+                Color = Color.DarkPurple,
+                Title = AutoRolesEngine.GetNameFromCode(code),
+                Description = " "
+            };
+
+            foreach (var role in roleEntries)
+            {
+                emojis.Add(new Emoji(role.Emote));
+                string roleName = "";
+                if (socketGuild is not null && socketGuild.GetRole(role.RoleId) is not null)
+                {
+                    roleName = socketGuild.GetRole(role.RoleId).Mention;
+                }
+                else if (restGuild is not null && restGuild.GetRole(role.RoleId) is not null)
+                {
+                    roleName = restGuild.GetRole(role.RoleId).Mention;
+                }
+                text += $"{role.Emote} - {roleName}\n\n";
             }
-            text += $"{role.Emote} - {roleName}\n\n";
+
+            embed.AddField("Available roles: ", text);
+
+            var mid = await ReplyAsync(embed: embed.Build());
+
+            await mid.AddReactionsAsync(emojis);
+
+            await GuildEngine.UpdateGuild(dbGuild);
+
+            await AutoRolesEngine.UpdateGroupMessageId(code, mid.Id);
         }
-
-        embed.AddField("Available roles: ", text);
-
-        var mid = await ReplyAsync(embed: embed.Build());
-
-        await mid.AddReactionsAsync(emojis);
-
-        await GuildEngine.UpdateGuild(dbGuild);
-
-        await AutoRolesEngine.UpdateGroupMessageId(code, mid.Id);
 
         await RespondAsync("Autoroles message created. If you get permissions errors, remember the following:\n\n1. Make sure you did not remove the 'Manage roles' permission when you invited Rosettes into your server.\n2. Make sure the role \"Rosettes\" is higher in the list of roles than the ones which can be chosen.", ephemeral: true);
     }
@@ -269,7 +273,6 @@ public static class AdminHelper
         {
             var dbGuild = GuildEngine.GetDBGuildById(guild_id);
             var guildRef = dbGuild.GetDiscordSocketReference();
-            if (guildRef is null) return;
             if (guildRef.OwnerId != component.User.Id && !Global.CheckSnep(component.User.Id))
             {
                 await component.RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);

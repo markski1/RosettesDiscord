@@ -5,7 +5,6 @@ using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine;
-using Microsoft.AspNetCore.Identity;
 
 namespace Rosettes.WebServer;
 
@@ -13,13 +12,6 @@ namespace Rosettes.WebServer;
 [Route("rosettes-api")]
 public class ApiController : ControllerBase
 {
-    private readonly ILogger<ApiController> _logger;
-
-    public ApiController(ILogger<ApiController> logger)
-    {
-        _logger = logger;
-    }
-
     [HttpGet("CheckAlive")]
     public string CheckAlive()
     {
@@ -39,7 +31,7 @@ public class ApiController : ControllerBase
         ulong userSum = 0;
 
         foreach (var guild in GuildEngine.GuildCache) {
-            ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId))?.Username}\n\n";
+            ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId)).Username}\n\n";
             userSum += guild.Members;
         }
 
@@ -71,9 +63,9 @@ public class ApiController : ControllerBase
     }
 
     [HttpGet("CheckKey")]
-    public async Task<User> CheckKey(string rosettes_key)
+    public async Task<User> CheckKey(string rosettesKey)
     {
-        rosettes_key = rosettes_key.Trim();
-        return await UserEngine.GetUserByRosettesKey(rosettes_key);
+        rosettesKey = rosettesKey.Trim();
+        return await UserEngine.GetUserByRosettesKey(rosettesKey);
     }
 }

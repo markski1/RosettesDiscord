@@ -101,7 +101,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             var datacenterObj = JObject.Parse(datacenterData);
             var worldObj = JObject.Parse(worldData);
 
-            if (datacenterObj == null || worldObj == null)
+            if (datacenterObj is null || worldObj is null)
             {
                 await RespondAsync("Failed to retrieve datacenter data.", ephemeral: true);
                 return;
@@ -135,7 +135,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
                 {
                     if (serverNames.Contains(world.Key))
                     {
-                        int spacing = 16 - world.Key.ToString().Length;
+                        int spacing = 16 - world.Key.Length;
                         string serverName = $"{world.Key} {new(' ', spacing)}";
 
                         serverText += $"{serverName}: {((int)world.Value == 1 ? "Online" : "Offline")}\n";
