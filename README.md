@@ -52,6 +52,21 @@ If you really want to try:
 
 The reason I open sourced Rosettes is a simple matter of transparency. Let people see for themselves how things run behind the scenes. It's not really meant to be used on your own.
 
+## Attributions
+
+Rosettes' feature set is made possible by:
+
+- Discord.NET (by an infinity of contributors) for the base Discord foundation.
+- MySqlConnector (Bradley Grainger) for connecting to MySQL.
+- Dapper (Sam Saffron, Marc Gravel, Nick Craver - @DapperLib), a micro-ORM.
+- NCalc (Sebastian Klose - @sklose) for expr evaluation.
+- JikanDotNet (Bartłomiej Buchała - @Ervie) for media information.
+- Genbox.Wikipedia (Ian Qvist - @Genbox) for Wikipedia API.
+- MetadataExtractor (Drew Noakes - @drewnoakes) for metadata stuff.
+- Newtonsoft.Json (James Newton-King) for JSON parsing.
+- PokeApiNet (JJ Banda - @jtwotimes) for Pokemon data.
+- vxtwitter and vxdiscord (Dylan - @dylanpdx) for fetching X and TikTok media.
+
 ## LICENCE
 
 Anyone, anywhere, for any reason, can use any of the code in this repository.

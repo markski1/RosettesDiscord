@@ -5,6 +5,7 @@ using MetadataExtractor.Util;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -71,11 +72,20 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync(embed: embed.Build());
     }
 
-    [MessageCommand("DL X/Twitter video")]
+    [MessageCommand("Download X/Tiktok vid")]
     public async Task TweetVideoMsg(IMessage message)
     {
         string url = Global.GrabUrlFromText(message.Content);
-        if (url != "0") await TweetVideo(url);
+        if (url != "0")
+        {
+            if (url.Contains("tiktok.com")) {
+                await TiktokVideo(url);
+            }
+            else
+            {
+                await TweetVideo(url);
+            }
+        }
         else await RespondAsync("No URL found in this message.", ephemeral: true);
     }
 
@@ -112,24 +122,77 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         // Let Discord know we are working on it and to not timeout our interaction.
         await DeferAsync();
 
+        await FetchVideo(tweetUrl);
+    }
+
+    [SlashCommand("tikvid", "Get the video file of the specified TikTok post.")]
+    public async Task TiktokVideo(string tiktokUrl)
+    {
+        int tldEnd = tiktokUrl.IndexOf("tiktok.com");
+
+        if (tldEnd == -1)
+        {
+            await RespondAsync("That's not a valid tiktok URL.", ephemeral: true);
+            return;
+        }
+
+        // position this number in the location where the TLD ends.
+        tldEnd += 10;
+
+        // remove anything before tiktok.com (should also cover links from fxtwitter, sxtwitter etc)
+        tiktokUrl = tiktokUrl[tldEnd..tiktokUrl.Length];
+
+        // form a link straight to vxtiktok.
+        tiktokUrl = $"https://vxtiktok.com{tiktokUrl}";
+
+        // Let Discord know we are working on it and to not timeout our interaction.
+        await DeferAsync();
+
+        HttpClient fetcher = new();
+
+        fetcher.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)");
+
+        var data = await fetcher.GetStringAsync(tiktokUrl);
+
+        int scrapeStart = data.IndexOf("<meta property=\"og:video\" content=\"");
+
+        if (scrapeStart == -1)
+        {
+            await FollowupAsync("Could not fetch video.", ephemeral: true);
+            return;
+        }
+
+        scrapeStart += 35;
+
+        data = data[scrapeStart..data.Length];
+
+        int scrapeEnd = data.IndexOf("\" />");
+
+        data = data[0..scrapeEnd];
+
+        await FetchVideo(data);
+    }
+
+    private async Task FetchVideo(string videoUrl)
+    {
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
         embed.Title = "Fetching video.";
 
-        EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Downloading from Twitter...", IsInline = true };
+        EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Downloading...", IsInline = true };
 
         embed.AddField(downloadStatus);
 
         var mid = await ReplyAsync(embed: embed.Build());
 
         // store the video locally
-        if (!System.IO.Directory.Exists("./temp/twtvid/"))
+        if (!System.IO.Directory.Exists("./temp/vid/"))
         {
-            System.IO.Directory.CreateDirectory("./temp/twtvid/");
+            System.IO.Directory.CreateDirectory("./temp/vid/");
         }
 
-        string fileName = $"./temp/twtvid/{Global.Randomize(20) + 1}.mp4";
-        using (HttpResponseMessage response = await Global.HttpClient.GetAsync(tweetUrl))
+        string fileName = $"./temp/vid/{Global.Randomize(20) + 1}.mp4";
+        using (HttpResponseMessage response = await Global.HttpClient.GetAsync(videoUrl))
         {
             try
             {
@@ -160,7 +223,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             else
             {
                 downloadStatus.Value = "Failed. Video took too long to download.";
-                embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+                embed.AddField("Instead...", $"Have a [Direct link]({videoUrl}).");
 
                 await mid.DeleteAsync();
                 await FollowupAsync(embed: embed.Build());
@@ -180,7 +243,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         // ensure the file was downloaded correctly and is either MPEG4 or QuickTime encoded.
         if (!File.Exists(fileName) || fileType is not FileType.QuickTime && fileType is not FileType.Mp4)
         {
-            downloadStatus.Value = "Failed. Twitter failed to provide a valid file format.";
+            downloadStatus.Value = "Failed. Backend failed to provide a valid file format.";
             await mid.DeleteAsync();
             await FollowupAsync(embed: embed.Build());
 
@@ -213,7 +276,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             downloadStatus.Value = "Upload failed. File was too large.";
-            embed.AddField("Instead...", $"Have a [Direct link]({tweetUrl}).");
+            embed.AddField("Instead...", $"Have a [Direct link]({videoUrl}).");
             await FollowupAsync(embed: embed.Build());
             _ = mid.DeleteAsync();
         }
