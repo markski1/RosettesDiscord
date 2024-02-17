@@ -50,9 +50,9 @@ public class RosettesMain
         // start thy stuff
         await EventManager.SetupAsync();
 
-        // TenMinutyTimer(); defined below, runs every 10 minutes, or 600 seconds
+        // TenMinutyTimer(); defined below, runs every 20 minutes, or 1200 seconds
         _syncTimer.Elapsed += SyncThings;
-        _syncTimer.Interval = 600000;
+        _syncTimer.Interval = 1200000;
         _syncTimer.AutoReset = true;
         _syncTimer.Enabled = true;
 
