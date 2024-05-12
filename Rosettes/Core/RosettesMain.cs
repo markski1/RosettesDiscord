@@ -28,10 +28,10 @@ public class RosettesMain
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent,
             LogLevel = Settings.LogSeverity
         };
+
         _client = new DiscordSocketClient(clientConfig);
+        
         InteractionService commands = new(_client, interactionConfig);
-
-
         ServiceCollection collection = new();
 
         collection.AddSingleton(_client);
