@@ -1,10 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
 using MetadataExtractor.Util;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -16,6 +19,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string url = Global.GrabUrlFromText(message.Content);
         if (url != "0")
         {
+            await DeferAsync();
             await FetchMedia(url, "video");
         }
         else await RespondAsync("No URL found in this message.", ephemeral: true);
@@ -56,19 +60,21 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             Directory.CreateDirectory("./temp/media/");
         }
 
-        var requestData = JsonConvert.SerializeObject(
+        string requestData = JsonConvert.SerializeObject(
             new
             {
                 url = URI,
-                isAudioOnly = type == "audio",
-                disableMetadata = true,
+                isAudioOnly = type == "audio"
             }
         );
 
-        HttpResponseMessage response = await Global.HttpClient.PostAsync(
-            "https://co.wuk.sh/api/json",
-            new StringContent(requestData, System.Text.Encoding.UTF8, "application/json")
-        );
+        HttpRequestMessage request = new(HttpMethod.Post, "https://co.wuk.sh/api/json");
+
+        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        request.Content = new StringContent(requestData, Encoding.UTF8);
+        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+        HttpResponseMessage response = await Global.HttpClient.SendAsync(request);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -79,9 +85,10 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string responseContent = await response.Content.ReadAsStringAsync();
         dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseContent);
 
-        if (responseData is null || responseData.url is null || responseData.status != "success")
+        if (responseData is null || responseData.url is null)
         {
             await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed to obtain media (URI might be invalid).");
+            Console.WriteLine(responseContent);
             return;
         }
 
