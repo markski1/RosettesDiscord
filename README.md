@@ -1,5 +1,5 @@
 # Rosettes
-An open source Discord bot written in .NET 7, by use of Discord.NET
+An open source Discord bot written in .NET 8, by use of Discord.NET
 
 ## Features
 Learn about Rosettes' features at [https://markski.ar/rosettes](https://markski.ar/rosettes).
@@ -65,7 +65,7 @@ Rosettes' feature set is made possible by:
 - MetadataExtractor (Drew Noakes - @drewnoakes) for metadata stuff.
 - Newtonsoft.Json (James Newton-King) for JSON parsing.
 - PokeApiNet (JJ Banda - @jtwotimes) for Pokemon data.
-- vxtwitter and vxdiscord (Dylan - @dylanpdx) for fetching X and TikTok media.
+- cobalt.tools (Wukko - @wukko) for media fetching.
 
 ## LICENCE
 
