@@ -3,6 +3,7 @@ using Discord;
 using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine;
 
@@ -10,14 +11,15 @@ public static class PollEngine
 {
     public static async Task<bool> AddPoll(ulong Id, string Question, string Option1, string Option2, string Option3, string Option4)
     {
-        var conn = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO polls (id, question, option1, option2, option3, option4)
                         VALUES(@Id, @Question, @Option1, @Option2, @Option3, @Option4)";
 
         try
         {
-            return (await conn.ExecuteAsync(sql, new { Id, Question, Option1, Option2, Option3, Option4 })) > 0;
+            return (await db.ExecuteAsync(sql, new { Id, Question, Option1, Option2, Option3, Option4 })) > 0;
         }
         catch (Exception ex)
         {
@@ -39,7 +41,8 @@ public static class PollEngine
             return "There was an error counting your vote.";
         }
 
-        var conn = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         // begin by checking if the user has already voted in this poll.
         var sql = @"SELECT user_id FROM poll_votes WHERE user_id=@userId";
@@ -49,7 +52,7 @@ public static class PollEngine
 
         try
         {
-            await conn.ExecuteAsync(sql, new { userId, pollMessage.Id });
+            await db.ExecuteAsync(sql, new { userId, pollMessage.Id });
         }
         catch
         {
@@ -64,7 +67,7 @@ public static class PollEngine
 
         try
         {
-            await conn.ExecuteAsync(sql, new { pollMessage.Id });
+            await db.ExecuteAsync(sql, new { pollMessage.Id });
         }
         catch (Exception ex)
         {
@@ -73,7 +76,7 @@ public static class PollEngine
             sql = @"DELETE FROM poll_votes WHERE user_id=@userId AND poll_id=@Id)";
             try
             {
-                await conn.ExecuteAsync(sql, new { userId, pollMessage.Id });
+                await db.ExecuteAsync(sql, new { userId, pollMessage.Id });
             }
             catch
             {
@@ -86,7 +89,7 @@ public static class PollEngine
 
         sql = $"SELECT question, option1, option2, option3, option4, count1, count2, count3, count4 FROM polls WHERE id=@Id";
 
-        Poll pollResult = await conn.QueryFirstOrDefaultAsync<Poll>(sql, new { pollMessage.Id });
+        Poll pollResult = await db.QueryFirstOrDefaultAsync<Poll>(sql, new { pollMessage.Id });
 
         if (pollResult is not null)
         {

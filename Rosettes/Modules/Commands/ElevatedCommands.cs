@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Database;
 using Rosettes.Managers;
 using System.Diagnostics;
 
@@ -90,7 +91,8 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var db = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
 

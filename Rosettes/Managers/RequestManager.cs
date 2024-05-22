@@ -1,6 +1,5 @@
 ﻿using Dapper;
-using MySqlConnector;
-using Rosettes.Core;
+using Rosettes.Database;
 using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Managers;
@@ -25,7 +24,8 @@ public static class RequestManager
 
     private static async void RequestHandler()
     {
-        await using var db = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT requesttype, relevantguild, relevantvalue, relevantstringvalue FROM requests";
 

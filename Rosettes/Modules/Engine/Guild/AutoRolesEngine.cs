@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using MySqlConnector;
 using Rosettes.Core;
+using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine.Guild;
 
@@ -75,7 +76,8 @@ public static class AutoRolesEngine
 
     public static async Task<bool> SyncWithDatabase()
     {
-        using var db = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
 
@@ -94,7 +96,8 @@ public static class AutoRolesEngine
 
         group.MessageId = MessageId;
 
-        using var db = new MySqlConnection(Settings.Database.ConnectionString);
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE autorole_groups
 						SET messageid=@MessageId
