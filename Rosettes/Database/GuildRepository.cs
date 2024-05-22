@@ -22,14 +22,10 @@ public interface IGuildRepository
 
 public class GuildRepository : IGuildRepository
 {
-    private static MySqlConnection DBConnection()
-    {
-        return new MySqlConnection(Settings.Database.ConnectionString);
-    }
-
     public async Task<IEnumerable<Guild>> GetAllGuildsAsync()
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
 
@@ -46,7 +42,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<bool> CheckGuildExists(ulong guildId)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT count(1) FROM guilds WHERE id=@guildId";
 
@@ -63,7 +60,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<Guild> GetGuildData(SocketGuild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
@@ -80,7 +78,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<string> GetGuildSettings(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT settings FROM guilds WHERE id=@id";
 
@@ -97,7 +96,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<bool> SetGuildSettings(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE guilds
                         SET settings = @Settings
@@ -116,7 +116,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<ulong> GetGuildDefaultRole(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT defaultrole FROM guilds WHERE id=@id";
 
@@ -133,7 +134,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<bool> InsertGuild(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO guilds (id, namecache, members, settings, ownerid)
                         VALUES(@Id, @NameCache, @Members, @Settings, @OwnerId)";
@@ -151,7 +153,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<bool> UpdateGuild(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE guilds
                         SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@FarmChannel
@@ -169,7 +172,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<bool> UpdateGuildRoles(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var discordGuild = guild.GetDiscordSocketReference();
         if (discordGuild is null) return false;
@@ -211,7 +215,8 @@ public class GuildRepository : IGuildRepository
 
     public async Task<IEnumerable<GuildCommand>> LoadGuildCommands(Guild guild)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT guildid, name, description, ephemeral, action, value FROM custom_cmds";
 

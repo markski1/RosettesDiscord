@@ -21,14 +21,10 @@ public interface IFarmRepository
 
 public class FarmRepository : IFarmRepository
 {
-    private static MySqlConnection DBConnection()
-    {
-        return new MySqlConnection(Settings.Database.ConnectionString);
-    }
-
     public async Task<IEnumerable<Crop>> GetUserCrops(User user)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT plot_id, user_id, unix_growth, unix_next_water, crop_type FROM users_crops WHERE user_id=@Id";
 
@@ -37,7 +33,8 @@ public class FarmRepository : IFarmRepository
 
     public async Task<bool> InsertCrop(Crop crop)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO users_crops (plot_id, user_id, unix_growth, unix_next_water, crop_type)
                         VALUES(@plotId, @userId, @unixGrowth, @unixNextWater, @cropType)";
@@ -55,7 +52,8 @@ public class FarmRepository : IFarmRepository
 
     public async Task<bool> UpdateCrop(Crop crop)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE users_crops
                         SET plot_id=@plotId, user_id=@userId, unix_growth=@unixGrowth, unix_next_water=@unixNextWater, crop_type=@cropType
@@ -74,7 +72,8 @@ public class FarmRepository : IFarmRepository
 
     public async Task<bool> DeleteCrop(Crop crop)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"DELETE FROM users_crops
                         WHERE user_id = @userId AND plot_id = @plotId";
@@ -93,7 +92,8 @@ public class FarmRepository : IFarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return -1;
 
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
@@ -112,7 +112,8 @@ public class FarmRepository : IFarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return "err";
 
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
@@ -131,7 +132,8 @@ public class FarmRepository : IFarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return false;
 
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
 
@@ -150,7 +152,8 @@ public class FarmRepository : IFarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return false;
 
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = $"UPDATE users_inventory SET {item} = @newValue WHERE id=@id";
 
@@ -169,7 +172,8 @@ public class FarmRepository : IFarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return false;
 
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = $"UPDATE users_inventory SET `{item}` = '{newValue}' WHERE id=@id";
 

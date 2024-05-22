@@ -17,14 +17,10 @@ public interface IUserRepository
 
 public class UserRepository : IUserRepository
 {
-    private static MySqlConnection DBConnection()
-    {
-        return new MySqlConnection(Settings.Database.ConnectionString);
-    }
-
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT id, username, namecache, exp, mainpet FROM users";
 
@@ -41,7 +37,8 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> CheckUserExists(IUser user)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT count(1) FROM users WHERE id=@Id";
 
@@ -58,7 +55,8 @@ public class UserRepository : IUserRepository
 
     public async Task<User> GetUserData(IUser user)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
 
@@ -75,7 +73,8 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> InsertUser(User user)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO users (id, username, namecache, mainpet)
                         VALUES(@Id, @Username, @NameCache, @MainPet)";
@@ -96,7 +95,8 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> UpdateUser(User user)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE users
                         SET id=@Id, username=@Username, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
@@ -115,7 +115,8 @@ public class UserRepository : IUserRepository
 
     public async Task<ulong?> GetUserByRosettesKey(string rosettes_key)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT id
                         FROM login_keys

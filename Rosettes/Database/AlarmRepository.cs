@@ -14,14 +14,10 @@ public interface IAlarmRepository
 
 public class AlarmRepository : IAlarmRepository
 {
-    private static MySqlConnection DBConnection()
-    {
-        return new MySqlConnection(Settings.Database.ConnectionString);
-    }
-
     public async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT datetime, user, channel FROM alarms";
 
@@ -38,7 +34,8 @@ public class AlarmRepository : IAlarmRepository
 
     public async Task<bool> InsertAlarm(Alarm alarm)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO alarms (datetime, user, channel)
                         VALUES(@DateTime, @User, @Channel)";
@@ -58,7 +55,8 @@ public class AlarmRepository : IAlarmRepository
 
     public async Task<bool> DeleteAlarm(Alarm alarm)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"DELETE FROM alarms
                         WHERE user = @User";

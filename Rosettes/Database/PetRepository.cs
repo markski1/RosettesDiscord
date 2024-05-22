@@ -15,14 +15,10 @@ public interface IPetRepository
 
 public class PetRepository : IPetRepository
 {
-    private static MySqlConnection DBConnection()
-    {
-        return new MySqlConnection(Settings.Database.ConnectionString);
-    }
-
     public async Task<IEnumerable<Pet>> GetAllPetsAsync()
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
 
@@ -39,7 +35,8 @@ public class PetRepository : IPetRepository
 
     public async Task<bool> CheckPetExists(ulong ownerId, int index)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"SELECT count(1) FROM pets WHERE owner_id=@ownerId AND pet_index=@index";
 
@@ -56,7 +53,8 @@ public class PetRepository : IPetRepository
 
     public async Task<int> InsertPet(Pet pet)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"INSERT INTO pets (pet_index, owner_id, pet_name, found_date)
                         VALUES(@Index, @ownerId, @Name, @FoundDate)";
@@ -79,7 +77,8 @@ public class PetRepository : IPetRepository
 
     public async Task<bool> UpdatePet(Pet pet)
     {
-        var db = DBConnection();
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
 
         var sql = @"UPDATE pets
                         SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness
