@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
+using System.Text.Encodings.Web;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -21,7 +22,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             string fileType = message.Attachments.First().ContentType.ToLower();
             if (fileType.Contains("image/"))
             {
-                getUrl = message.Attachments.First().Url;
+                getUrl = message.Attachments.First().ProxyUrl;
             }
         }
 
@@ -40,13 +41,15 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
+        getUrl = UrlEncoder.Default.Encode(getUrl);
+
         await SauceNAO(getUrl);
     }
 
     [SlashCommand("saucenao", "Use SauceNAO to try and find the source of a provided image url.")]
     public async Task SauceNAO(string url)
     {
-        string getUrl = $"https://saucenao.com/search.php?db=999&output_type=2&numres=1&dbmaski=25986063&api_key={Settings.SauceNAO}&url={url}";
+        string getUrl = $"https://saucenao.com/search.php?output_type=2&api_key={Settings.SauceNAO}&url={url}";
 
         await DeferAsync();
 
@@ -57,6 +60,8 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             await FollowupAsync("Sorry, there was an error reaching the SauceNAO API. [SE1]");
             return;
         }
+
+        Console.WriteLine(response.ToString());
 
         var deserializedResponse = JsonConvert.DeserializeObject(response);
 
@@ -76,9 +81,17 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 
         bool found = false;
 
-        if (responseObj.header.long_remaining < 1 || responseObj.header.long_remaining < 1)
+        if (responseObj.results is null)
         {
-            embed.Description = "We are currently rate-limited by SauceNAO. This usually fixes itself after a minute or two, so try again in a bit, or see the results directly on SauceNAO.";
+            if (responseObj.header.short_remaining < 1)
+            {
+                embed.Description = "We are currently rate-limited by SauceNAO. This usually fixes itself after a minute or two, so try again in a bit, or see the results directly on SauceNAO.";
+            }
+            else
+            {
+                embed.Description = "Could not find matches or data on the requested image.";
+            }
+            
         }
         else
         {
