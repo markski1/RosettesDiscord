@@ -14,7 +14,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("SauceNAO Search")]
     public async Task SauceNAOCtx(IMessage message)
     {
-        string getUrl = Global.GrabUrlFromText(message.Content);
+        string getUri = Global.GrabUriFromText(message.Content);
 
         // first try to find any image attached
         if (message.Attachments.Any())
@@ -22,17 +22,17 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             string fileType = message.Attachments.First().ContentType.ToLower();
             if (fileType.Contains("image/"))
             {
-                getUrl = message.Attachments.First().ProxyUrl;
+                getUri = message.Attachments.First().ProxyUrl;
             }
         }
 
         // if still no luck, try to grab an emote.
-        if (getUrl == "0")
+        if (getUri == "0")
         {
             try
             {
                 Emote emote = Emote.Parse(message.Content);
-                getUrl = emote.Url;
+                getUri = emote.Url;
             }
             catch
             {
@@ -41,9 +41,9 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        getUrl = UrlEncoder.Default.Encode(getUrl);
+        getUri = UrlEncoder.Default.Encode(getUri);
 
-        await SauceNAO(getUrl);
+        await SauceNAO(getUri);
     }
 
     [SlashCommand("saucenao", "Use SauceNAO to try and find the source of a provided image url.")]
@@ -151,7 +151,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Convert Image")]
     public async Task ConvertImageCtx(IMessage message)
     {
-        string getUrl = Global.GrabUrlFromText(message.Content);
+        string getUri = Global.GrabUriFromText(message.Content);
 
         // first try to find any image attached
         if (message.Attachments.Any())
@@ -159,17 +159,17 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             string fileType = message.Attachments.First().ContentType.ToLower();
             if (fileType.Contains("image/"))
             {
-                getUrl = message.Attachments.First().Url;
+                getUri = message.Attachments.First().Url;
             }
         }
 
         // if still no luck, try to grab an emote.
-        if (getUrl == "0")
+        if (getUri == "0")
         {
             try
             {
                 Emote emote = Emote.Parse(message.Content);
-                getUrl = emote.Url;
+                getUri = emote.Url;
             }
             catch
             {
@@ -178,7 +178,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        await ConvertImage(getUrl);
+        await ConvertImage(getUri);
     }
 
     [SlashCommand("convert", "Convert an image to a desired format.")]
@@ -249,7 +249,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Reverse GIF")]
     public async Task ReverseGIFMessageCMD(IMessage message)
     {
-        string getUrl = Global.GrabUrlFromText(message.Content);
+        string getUri = Global.GrabUriFromText(message.Content);
 
         // first try to find a gif attached
         if (message.Attachments.Any())
@@ -257,19 +257,19 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             string fileType = message.Attachments.First().ContentType.ToLower();
             if (fileType.Contains("/gif"))
             {
-                getUrl = message.Attachments.First().Url;
+                getUri = message.Attachments.First().Url;
             }
         }
         // else, check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
-        else if (getUrl.Contains("tenor.com"))
+        else if (getUri.Contains("tenor.com"))
         {
-            getUrl = await ImageHelper.GetDirectTenorURL(getUrl);
+            getUri = await ImageHelper.GetDirectTenorURL(getUri);
         }
 
         // if we got a url to fetch, go for it.
-        if (getUrl != "0")
+        if (getUri != "0")
         {
-            await ReverseGIF(getUrl);
+            await ReverseGIF(getUri);
         }
         else
         {
@@ -290,17 +290,17 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("reverse-gif", "[experimental] Reverse the gif in the provided URL.")]
     public async Task ReverseGIFSlashCMD(string gifUrl)
     {
-        string getUrl = Global.GrabUrlFromText(gifUrl);
+        string getUri = Global.GrabUriFromText(gifUrl);
 
         // check if it's a tenor url. If that's the case, we need to get a direct link to the gif through the API.
-        if (getUrl.Contains("tenor.com"))
+        if (getUri.Contains("tenor.com"))
         {
-            getUrl = await ImageHelper.GetDirectTenorURL(getUrl);
+            getUri = await ImageHelper.GetDirectTenorURL(getUri);
         }
 
-        if (getUrl != "0")
+        if (getUri != "0")
         {
-            await ReverseGIF(getUrl);
+            await ReverseGIF(getUri);
         }
         else
         {

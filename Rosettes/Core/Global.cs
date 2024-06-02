@@ -119,7 +119,7 @@ public static class Global
         return (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
     }
 
-    public static string GrabUrlFromText(string text)
+    public static string GrabUriFromText(string text)
     {
         // try to grab the first URL from the received text.
         // Start by finding the first instance of http, and end as soon as we find a space or a control character.

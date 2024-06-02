@@ -53,7 +53,7 @@ public static class MessageManager
 
     private static async Task GetGameInfo(SocketCommandContext context)
     {
-        // Grab the game's ID from the url. It's located after '/app/' and sometimes the name is after it.
+        // Grab the game's ID from the uri. It's located after '/app/' and sometimes the name is after it.
         string extractId = context.Message.Content;
 
         int begin = extractId.IndexOf("/app/", StringComparison.Ordinal) + 5; // where the number starts in the string.
@@ -93,22 +93,22 @@ public static class MessageManager
         if (message is null) return;
 
 
-        string url = Global.GrabUrlFromText(message);
+        string uri = Global.GrabUriFromText(message);
 
         // Infer the format from the filename
         // TODO: Infer the format from the downloaded data instead.
-        int formatBegin = url.LastIndexOf('.');
+        int formatBegin = uri.LastIndexOf('.');
         if (formatBegin == -1) return;
-        string format = url[formatBegin..url.Length];
+        string format = uri[formatBegin..uri.Length];
 
-        // If the length of the grabbed "format" is too long, we can assume the URL didn't specify a format.
+        // If the length of the grabbed "format" is too long, we can assume the URI didn't specify a format.
         if (format.Length > 5) return;
 
-        var expireMessage = await context.Channel.SendMessageAsync("This URL will expire. I will now attempt to mirror it's media by uploading it directly to Discord.");
+        var expireMessage = await context.Channel.SendMessageAsync("This URI will expire. I will now attempt to mirror it's media by uploading it directly to Discord.");
 
         try
         {
-            var data = await Global.HttpClient.GetStreamAsync(url);
+            var data = await Global.HttpClient.GetStreamAsync(uri);
 
             if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
             string fileName = $"./temp/{Global.Randomize(20) + 1}.{format}";
@@ -140,10 +140,10 @@ public static class MessageManager
 
     private static async Task GetProfileInfo(SocketCommandContext context)
     {
-        //extract steamID from url
-        string extractId = Global.GrabUrlFromText(context.Message.Content);
+        //extract steamID from uri
+        string extractId = Global.GrabUriFromText(context.Message.Content);
         ulong steamId;
-        // easy mode: if it's a "profiles" url, just extract the number off the url
+        // easy mode: if it's a "profiles" uri, just extract the number off the uri
         if (extractId.Contains("/profiles/"))
         {
             int begin = extractId.IndexOf("/profiles/", StringComparison.Ordinal) + 10;
@@ -159,7 +159,7 @@ public static class MessageManager
 
             steamId = ulong.Parse(extractId[begin..end]);
         }
-        // "hard" mode: if it's a vanity URL, resolve it through Steam WebAPI
+        // "hard" mode: if it's a vanity URI, resolve it through Steam WebAPI
         else
         {
             int begin = extractId.IndexOf("/id/", StringComparison.Ordinal) + 4;
@@ -169,17 +169,17 @@ public static class MessageManager
                 .TakeWhile(x => x != '/')
                 .Count() + begin;                       // stop where '/' found, if any.
 
-            string vanityUrl;
+            string vanityUri;
             try
             {
-                vanityUrl = extractId[begin..end];
+                vanityUri = extractId[begin..end];
             }
             catch
             {
-                // If substring results in an exception, the url wasn't valid
+                // If substring results in an exception, the uri wasn't valid
                 return;
             }
-            var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={Settings.SteamDevKey}&vanityurl={vanityUrl}");
+            var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={Settings.SteamDevKey}&vanityurl={vanityUri}");
 
             var deserialziedObject = JsonConvert.DeserializeObject(data);
             if (deserialziedObject == null) return;

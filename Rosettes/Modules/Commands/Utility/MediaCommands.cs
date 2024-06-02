@@ -1,12 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
-using MetadataExtractor.Util;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Newtonsoft.Json;
 using Rosettes.Core;
-using System.Net.Mime;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -16,13 +11,13 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
     {
-        string url = Global.GrabUrlFromText(message.Content);
-        if (url != "0")
+        string uri = Global.GrabUriFromText(message.Content);
+        if (uri != "0")
         {
             await DeferAsync();
-            await FetchMedia(url, "video");
+            await FetchMedia(uri, "video");
         }
-        else await RespondAsync("No URL found in this message.", ephemeral: true);
+        else await RespondAsync("No URI found in this message.", ephemeral: true);
     }
 
 
