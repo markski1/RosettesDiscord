@@ -73,7 +73,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (!response.IsSuccessStatusCode)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed to obtain media (API Failure).");
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Sorry, I was unable to obtain this video.");
             return;
         }
 
