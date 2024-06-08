@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CoreCLR-NCalc" Version="3.1.241" />
+    <PackageReference Include="CoreCLR-NCalc" Version="3.1.251" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Discord.Net" Version="3.15.0" />
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
@@ -23,8 +23,8 @@
     <PackageReference Include="MySqlConnector" Version="2.3.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PokeApiNet" Version="4.0.0" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
  
 </Project>
