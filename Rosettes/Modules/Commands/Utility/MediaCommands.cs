@@ -63,7 +63,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         );
 
-        HttpRequestMessage request = new(HttpMethod.Post, "http://gateway.markski.ar:9000/api/json");
+        HttpRequestMessage request = new(HttpMethod.Post, "https://api.cobalt.tools/api/json");
 
         request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StringContent(requestData, Encoding.UTF8);
