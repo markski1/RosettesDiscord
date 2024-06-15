@@ -47,7 +47,17 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.AddField(downloadStatus);
 
-        var mid = await ReplyAsync(embed: embed.Build());
+        IUserMessage? mid;
+        
+        // The 'middle state' message may not be created if the bot has no perms.
+        try
+        {
+            mid = await ReplyAsync(embed: embed.Build());
+        }
+        catch
+        {
+            mid = null;
+        }
 
         // store the file locally
         if (!Directory.Exists("./temp/media/"))
@@ -120,8 +130,11 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        downloadStatus.Value = "Uploading to Discord...";
-        await mid.ModifyAsync(x => x.Embed = embed.Build());
+        if (mid is not null)
+        {
+            downloadStatus.Value = "Uploading to Discord...";
+            await mid.ModifyAsync(x => x.Embed = embed.Build());
+        }
 
         ulong size = (ulong)new FileInfo(fileName).Length;
 
@@ -131,14 +144,14 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             try
             {
                 await FollowupWithFileAsync(fileName);
-                _ = mid.DeleteAsync();
+                if (mid is not null) await mid.DeleteAsync();
             }
             catch
             {
                 downloadStatus.Value = "Upload failed.";
 
-                await mid.DeleteAsync();
                 await FollowupAsync(embed: embed.Build());
+                if (mid is not null) await mid.DeleteAsync();
             }
         }
         else
@@ -146,16 +159,19 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             downloadStatus.Value = "Upload failed. File was too large.";
             embed.AddField("Instead...", $"Have a [Direct link]({MediaURI}).");
             await FollowupAsync(embed: embed.Build());
-            _ = mid.DeleteAsync();
+            if (mid is not null) await mid.DeleteAsync();
         }
         File.Delete(fileName);
     }
 
-    private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage mid, EmbedBuilder embed, string message)
+    private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed, string message)
     {
         downloadStatus.Value = message;
 
-        await mid.DeleteAsync();
+        if (mid is not null)
+        {
+            await mid.DeleteAsync();
+        }
         await FollowupAsync(embed: embed.Build());
 
         return Task.CompletedTask;
