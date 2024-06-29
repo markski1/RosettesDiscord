@@ -26,7 +26,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         {
             runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
         }
-        runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)} ago.";
+        runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
 
         var client = ServiceManager.GetService<DiscordSocketClient>();
 
