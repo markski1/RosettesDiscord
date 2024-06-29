@@ -48,12 +48,12 @@ public static class DatabasePool
                 _availableConnections.Remove(connection);
                 return new DbConnectionWrapper(connection);
             }
-
-            // Otherwise, create a new connection.
-            var newConn = new MySqlConnection(Settings.Database.ConnectionString);
-
-            return new DbConnectionWrapper(newConn);
         }
+
+        // Otherwise, create a new connection.
+        var newConn = new MySqlConnection(Settings.Database.ConnectionString);
+
+        return new DbConnectionWrapper(newConn);
     }
 
     public static void ReturnConnection(MySqlConnection connection)
