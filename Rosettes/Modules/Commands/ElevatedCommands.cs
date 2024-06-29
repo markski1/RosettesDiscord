@@ -35,7 +35,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         embed.Description = "A simple, free, open source discord bot.";
         embed.ThumbnailUrl = "https://markski.ar/images/rosettes.png";
 
-        embed.AddField("Memory in use", $"{(ulong)(proc.PrivateMemorySize64 / 1024):N0} Kb", inline: true);
+        embed.AddField("Working set", $"{(ulong)(proc.PrivateMemorySize64 / 1024):N0} Kb", inline: true);
         embed.AddField("Threads", $"{proc.Threads.Count}", inline: true);
         embed.AddField("Currently serving", $"{client.Guilds.Sum(x => x.MemberCount)} users, across {client.Guilds.Count} guilds.");
         embed.AddField("Uptime", runtimeText, inline: true);
@@ -105,6 +105,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("keygen-getcode", $"sqlException code {ex.Message}");
+            await RespondAsync("Sorry, there was an error generating a Rosettes key for you. Please try again in a while.");
             return;
         }
 
