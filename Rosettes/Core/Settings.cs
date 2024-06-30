@@ -20,7 +20,6 @@ public static class Settings
     public static readonly string SteamDevKey = LoadSetting("steam");
     public static readonly string FFXIVApiKey = LoadSetting("ffxiv");
     public static readonly string RapidAPIKey = LoadSetting("rapidapi");
-    public static readonly string TenorKey = LoadSetting("tenor");
     public static readonly string SauceNAO = LoadSetting("saucenao");
     public static readonly string SecretKey = LoadSetting("secretkey");
     public static readonly MySqlConnectionStringBuilder Database = new();
