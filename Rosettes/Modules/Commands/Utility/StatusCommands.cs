@@ -323,8 +323,6 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             embed.AddField("Status", "FAIL.\nFailed to reach provided hostname or IP.");
         }
 
-        embed.Footer = new EmbedFooterBuilder() { Text = "request sent from gateway.markski.ar" };
-
         await RespondAsync(embed: embed.Build());
     }
 }

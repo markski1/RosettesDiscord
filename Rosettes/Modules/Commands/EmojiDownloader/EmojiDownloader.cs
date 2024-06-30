@@ -98,14 +98,14 @@ public class EmojiDownloader
             ZipFile.CreateFromDirectory($"./temp/{serverName}", zipPath);
 
             // move the zip file to the webserver.
-            if (File.Exists($"/var/www/html/markski.ar/rosettes/downloads/{serverName}.zip"))
+            if (File.Exists($"/var/www/html/downloads/{serverName}.zip"))
             {
-                File.Delete($"/var/www/html/markski.ar/rosettes/downloads/{serverName}.zip");
+                File.Delete($"/var/www/html/downloads/{serverName}.zip");
             }
-            File.Move(zipPath, $"/var/www/html/markski.ar/rosettes/downloads/{serverName}.zip");
+            File.Move(zipPath, $"/var/www/html/downloads/{serverName}.zip");
 
             statusField.Value = $"Progress: `Done exporting. Done uploading.`";
-            embed.AddField("Download link", $"<https://markski.ar/rosettes/downloads/{serverName}.zip>");
+            embed.AddField("Download link", $"<https://rosettes.markski.ar/downloads/{serverName}.zip>");
             await ServerContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
         catch (Exception ex)

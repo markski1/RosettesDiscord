@@ -185,15 +185,15 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task ConvertImage(string getUrl)
     {
         string randomValue = $"{Global.Randomize(90) + 10}";
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/convertQueue/"))
+        if (!Directory.Exists("/var/www/html/services/convertQueue/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/convertQueue/");
+            Directory.CreateDirectory("/var/www/html/services/convertQueue/");
         }
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/generated/"))
+        if (!Directory.Exists("/var/www/html/services/generated/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/generated/");
+            Directory.CreateDirectory("/var/www/html/services/generated/");
         }
-        string fileName = $"/var/www/html/markski.ar/rosettes/services/convertQueue/{randomValue}.image";
+        string fileName = $"/var/www/html/services/convertQueue/{randomValue}.image";
         if (File.Exists(fileName))
         {
             File.Delete(fileName);
@@ -311,15 +311,15 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task ReverseGIF(string url)
     {
         string randomValue = $"{Global.Randomize(100)}";
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/reverseCache/"))
+        if (!Directory.Exists("/var/www/html/services/reverseCache/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/reverseCache/");
+            Directory.CreateDirectory("/var/www/html/services/reverseCache/");
         }
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/generated/"))
+        if (!Directory.Exists("/var/www/html/services/generated/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/generated/");
+            Directory.CreateDirectory("/var/www/html/services/generated/");
         }
-        string fileName = $"/var/www/html/markski.ar/rosettes/services/reverseCache/{randomValue}.gif";
+        string fileName = $"/var/www/html/services/reverseCache/{randomValue}.gif";
         if (File.Exists(fileName))
         {
             File.Delete(fileName);
@@ -346,12 +346,12 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        fileName = $"/var/www/html/markski.ar/rosettes/services/generated/{randomValue}.gif";
+        fileName = $"/var/www/html/services/generated/{randomValue}.gif";
         if (File.Exists(fileName))
         {
             File.Delete(fileName);
         }
-        using (var stream = await Global.HttpClient.GetStreamAsync($"https://markski.ar/rosettes/services/reverse.php?imageNum={randomValue}"))
+        using (var stream = await Global.HttpClient.GetStreamAsync($"https://rosettes.markski.ar/services/reverse.php?imageNum={randomValue}"))
         {
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await stream.CopyToAsync(fileStream);
@@ -425,15 +425,15 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task DoBrickThrow(string url, bool reverse = false, bool parry = false)
     {
         string randomValue = $"{Global.Randomize(100)}";
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/emojiCache/"))
+        if (!Directory.Exists("/var/www/html/services/emojiCache/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/emojiCache/");
+            Directory.CreateDirectory("/var/www/html/services/emojiCache/");
         }
-        if (!Directory.Exists("/var/www/html/markski.ar/rosettes/services/generated/"))
+        if (!Directory.Exists("/var/www/html/services/generated/"))
         {
-            Directory.CreateDirectory("/var/www/html/markski.ar/rosettes/services/generated/");
+            Directory.CreateDirectory("/var/www/html/services/generated/");
         }
-        string fileName = $"/var/www/html/markski.ar/rosettes/services/emojiCache/{randomValue}.png";
+        string fileName = $"/var/www/html/services/emojiCache/{randomValue}.png";
         if (File.Exists(fileName))
         {
             File.Delete(fileName);
@@ -444,7 +444,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await stream.CopyToAsync(fileStream);
         }
-        fileName = $"/var/www/html/markski.ar/rosettes/services/generated/{randomValue}.gif";
+        fileName = $"/var/www/html/services/generated/{randomValue}.gif";
         if (File.Exists(fileName))
         {
             File.Delete(fileName);
@@ -457,7 +457,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         {
             randomValue += "&parry";
         }
-        using (var stream = await Global.HttpClient.GetStreamAsync($"https://markski.ar/rosettes/services/brickthrow.php?emojiNum={randomValue}"))
+        using (var stream = await Global.HttpClient.GetStreamAsync($"https://rosettes.markski.ar/services/brickthrow.php?emojiNum={randomValue}"))
         {
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await stream.CopyToAsync(fileStream);
@@ -513,9 +513,9 @@ public static class ImageHelper
 
         await component.RespondAsync(embed: embed.Build());
 
-        var fileName = $"/var/www/html/markski.ar/rosettes/services/generated/{imageLoc}.{format}";
+        var fileName = $"/var/www/html/services/generated/{imageLoc}.{format}";
 
-        using (var stream = await Global.HttpClient.GetStreamAsync($"https://markski.ar/rosettes/services/convert.php?fileName={imageLoc}{imageLoc2}&format={format}"))
+        using (var stream = await Global.HttpClient.GetStreamAsync($"https://rosettes.markski.ar/services/convert.php?fileName={imageLoc}{imageLoc2}&format={format}"))
         {
             using var fileStream = new FileStream(fileName, FileMode.Create);
             await stream.CopyToAsync(fileStream);
