@@ -7,6 +7,7 @@ using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Minigame;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Text;
 
 namespace Rosettes.Core;
@@ -39,6 +40,33 @@ public static class Global
     {
         byte[] textAsBytes = new UTF8Encoding(true).GetBytes(text);
         fs.Write(textAsBytes, 0, textAsBytes.Length);
+    }
+
+    public static async Task<bool> DownloadFile(string path, string uri)
+    {
+        try
+        {
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(2));
+
+            using HttpResponseMessage response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            using Stream stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+
+            await stream.CopyToAsync(fileStream, cts.Token);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public static async Task<EmbedBuilder> MakeRosettesEmbed(User? dbUser = null)

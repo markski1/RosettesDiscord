@@ -2,6 +2,8 @@
 using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -43,7 +45,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.Title = $"Fetching {type}.";
 
-        EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Downloading...", IsInline = true };
+        EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Obtaining URI information.", IsInline = true };
 
         embed.AddField(downloadStatus);
 
@@ -97,37 +99,23 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        if (mid is not null)
+        {
+            downloadStatus.Value = "Downloading...";
+            await mid.ModifyAsync(x => x.Embed = embed.Build());
+        }
+
         string MediaURI = responseData.url;
 
         string fileExt = type == "video" ? "mp4" : "mp3";
         string fileName = $"./temp/media/{Global.Randomize(20) + 1}.{fileExt}";
 
-        using (response = await Global.HttpClient.GetAsync(MediaURI))
+        bool success = await Global.DownloadFile(fileName, MediaURI);
+
+        if (!success)
         {
-            if (!response.IsSuccessStatusCode)
-            {
-                await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed to obtain media (Likely network failure).");
-                return;
-            }
-
-            Stream stream = await response.Content.ReadAsStreamAsync();
-
-            await using var fileStream = new FileStream(fileName, FileMode.Create);
-
-            var cts = new CancellationTokenSource();
-            var downloadTask = stream.CopyToAsync(fileStream, cts.Token);
-
-            // cancel if media takes more than 5 seconds to download.
-            if (await Task.WhenAny(downloadTask, Task.Delay(5000)) == downloadTask)
-            {
-                await downloadTask;
-            }
-            else
-            {
-                await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed. Media took too long to download.");
-                cts.Cancel();
-                return;
-            }
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", MediaURI);
+            return;
         }
 
         if (mid is not null)
@@ -135,7 +123,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             downloadStatus.Value = "Uploading to Discord...";
             await mid.ModifyAsync(x => x.Embed = embed.Build());
         }
-
+        
         ulong size = (ulong)new FileInfo(fileName).Length;
 
         // check if the guild supports a file this large, otherwise fail.
@@ -164,7 +152,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         File.Delete(fileName);
     }
 
-    private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed, string message)
+    private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed, string message, string? MediaURI = null)
     {
         downloadStatus.Value = message;
 
@@ -172,6 +160,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         {
             await mid.DeleteAsync();
         }
+
+        if (MediaURI is not null)
+        {
+            embed.AddField("Instead...", $"Have a [Direct link]({MediaURI}).");
+        }
+
         await FollowupAsync(embed: embed.Build());
 
         return Task.CompletedTask;

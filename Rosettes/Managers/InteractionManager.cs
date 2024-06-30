@@ -67,13 +67,6 @@ public class InteractionManager
                 return;
             }
 
-            // image conversion
-            if (action.Contains("CONVERT"))
-            {
-                await ImageHelper.ContinueImageConversion(component);
-                return;
-            }
-
             switch (action)
             {
                 // farm stuff
