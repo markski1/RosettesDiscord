@@ -1,0 +1,45 @@
+/* Sections */
+body {
+    background-color: #333333;
+    font-family: Tahoma, SansSerif;
+    color: #BBBBBB;
+}
+
+main {
+    margin: 2rem auto auto;
+    border-radius: 3px;
+    width: 50%;
+    max-width: 800px;
+    background-color: #CCCCCC;
+    padding: 2rem;
+    color: #202020;
+}
+
+footer {
+    margin: 2rem auto auto;
+    text-align: center;
+}
+
+/* W3 Components */
+
+table, td {
+    border: 0 #222222 solid;
+    color: black;
+}
+
+/* My Components */
+
+.menu-button {
+    border-radius: 5px;
+    background-color: #444499;
+    border: 0;
+    padding: 0.5rem;
+    display: block;
+    color: #EEEEEE;
+    margin-bottom: .4rem;
+    text-decoration: none;
+}
+
+.menu-button:hover {
+    background-color: #5555AA;
+}

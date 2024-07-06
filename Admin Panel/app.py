@@ -1,6 +1,6 @@
 from flask import Flask
 
-from config import app_host, app_port, app_debug
+from core.config import app_host, app_port, app_debug
 from routes.home import home_bp
 from routes.panel import panel_bp
 

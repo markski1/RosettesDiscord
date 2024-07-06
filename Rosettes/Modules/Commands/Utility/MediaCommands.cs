@@ -108,9 +108,16 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string MediaURI = responseData.url;
 
         string fileExt = type == "video" ? "mp4" : "mp3";
-        string fileName = $"./temp/media/{Global.Randomize(20) + 1}.{fileExt}";
+        string fileName = $"./temp/media/{Global.Randomize(50) + 1}.{fileExt}";
 
-        bool success = await Global.DownloadFile(fileName, MediaURI);
+        int seconds = 5;
+
+        if (MediaURI.Contains("youtu"))
+        {
+            seconds = 10;
+        }
+
+        bool success = await Global.DownloadFile(fileName, MediaURI, seconds);
 
         if (!success)
         {
@@ -149,7 +156,6 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             await FollowupAsync(embed: embed.Build());
             if (mid is not null) await mid.DeleteAsync();
         }
-        File.Delete(fileName);
     }
 
     private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed, string message, string? MediaURI = null)

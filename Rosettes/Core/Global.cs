@@ -42,12 +42,12 @@ public static class Global
         fs.Write(textAsBytes, 0, textAsBytes.Length);
     }
 
-    public static async Task<bool> DownloadFile(string path, string uri)
+    public static async Task<bool> DownloadFile(string path, string uri, int timeout_s = 5)
     {
         try
         {
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromSeconds(3));
+            cts.CancelAfter(TimeSpan.FromSeconds(timeout_s));
 
             using HttpResponseMessage response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
 
