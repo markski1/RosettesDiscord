@@ -41,7 +41,7 @@ public class ApiController : ControllerBase
     }
 
     [HttpGet("SendMessage")]
-    public string SendMessage(string secretKey, ulong channelId, string message)
+    public string SendMessage(string secretKey, ulong channelId, string message, int type = 0)
     {
         if (secretKey != Settings.SecretKey)
         {
@@ -50,10 +50,17 @@ public class ApiController : ControllerBase
 
         try
         {
-            // send it to error channel
             var client = ServiceManager.GetService<DiscordSocketClient>();
-            if (client.GetChannel(channelId) is not ITextChannel destinationChannel) return "Channel could not be found.";
-            destinationChannel.SendMessageAsync(message);
+            if (type == 0)
+            {
+                if (client.GetChannel(channelId) is not ITextChannel destinationChannel) return "Channel could not be found.";
+                destinationChannel.SendMessageAsync(message);
+            }
+            else
+            {
+                if (client.GetUser(channelId) is not SocketUser user) return "User could not be found";
+                user.SendMessageAsync(message);
+            }
             return "Message was sent, probably.";
         }
         catch (Exception ex)
