@@ -9,17 +9,14 @@ namespace Rosettes.Modules.Engine;
 
 public static class UserEngine
 {
-    private static List<User> UserCache = new();
+    private static List<User> UserCache = [];
     public static readonly UserRepository _interface = new();
 
     public static async void SyncWithDatabase()
     {
         foreach (User user in UserCache)
         {
-            if (user.NeedsUpdate()) continue;
-
             await _interface.UpdateUser(user);
-            user.NeedsUpdate(true);
         }
     }
 
@@ -111,9 +108,6 @@ public class User
     public string NameCache { get; set; } = "";
     public string Username { get; set; } = "";
 
-    // Contains if the user's data in memory has changed since last syncing to database.
-    private bool SyncUpToDate { get; set; }
-
     // timers
     private int LastFished { get; set; }
 
@@ -135,7 +129,6 @@ public class User
                 NameCache = newUser.Username;
             Username = newUser.Username;
         }
-        SyncUpToDate = true;
         LastFished = 0;
         MainPet = 0;
         Exp = 0;
@@ -145,7 +138,6 @@ public class User
     public User(ulong id, string username, string namecache, int exp, int mainpet)
     {
         Id = id;
-        SyncUpToDate = true;
         LastFished = 0;
         Username = username;
         NameCache = namecache;
@@ -181,7 +173,6 @@ public class User
         if (nameGot != NameCache)
         {
             NameCache = nameGot;
-            SyncUpToDate = false;
         }
         return NameCache;
     }
@@ -199,7 +190,6 @@ public class User
         if (nameGot != Username)
         {
             Username = nameGot;
-            SyncUpToDate = false;
         }
         return Username;
     }
@@ -221,14 +211,6 @@ public class User
         return LastFished;
     }
 
-    public bool NeedsUpdate(bool? set = null)
-    {
-        if (set is null) return SyncUpToDate;
-
-        SyncUpToDate = true;
-        return true;
-    }
-
     public void SetPet(int id)
     {
         MainPet = id;
@@ -236,7 +218,6 @@ public class User
         {
             _ = PetEngine.EnsurePetExists(Id, MainPet);
         }
-        SyncUpToDate = false;
     }
 
     // returns 0 unless adding exp resulted in a level up, in which case returns the level.
@@ -244,7 +225,6 @@ public class User
     {
         int level = GetLevel();
         Exp += amount;
-        SyncUpToDate = false;
         if (GetLevel() > level)
         {
             return $"+{amount} exp, leveled up";
