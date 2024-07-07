@@ -26,6 +26,7 @@ class Database:
     def execute(self, query, *params):
         if not self.conn.is_connected():
             self.conn.reconnect()
+            self.conn.autocommit = True
             self.cursor = self.conn.cursor(buffered=True)
 
         try:
@@ -33,6 +34,7 @@ class Database:
         except mysql.connector.errors.DatabaseError:
             self.conn.disconnect()
             self.conn.reconnect()
+            self.conn.autocommit = True
             self.cursor = self.conn.cursor(buffered=True)
             self.cursor.execute(query, params)
 
