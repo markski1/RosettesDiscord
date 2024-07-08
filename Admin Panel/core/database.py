@@ -29,14 +29,7 @@ class Database:
             self.conn.autocommit = True
             self.cursor = self.conn.cursor(buffered=True)
 
-        try:
-            self.cursor.execute(query, params)
-        except mysql.connector.errors.DatabaseError:
-            self.conn.disconnect()
-            self.conn.reconnect()
-            self.conn.autocommit = True
-            self.cursor = self.conn.cursor(buffered=True)
-            self.cursor.execute(query, params)
+        self.cursor.execute(query, params)
 
     def fetch_all(self):
         columns = [col[0] for col in self.cursor.description]

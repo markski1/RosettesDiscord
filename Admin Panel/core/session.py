@@ -30,11 +30,11 @@ def attempt_login(auth_key):
     result = db.fetch_one()
 
     if result:
-        db.execute("SELECT * FROM users WHERE id = %s", result[0])
+        db.execute("SELECT * FROM users WHERE id = %s", result['id'])
         user_data = db.fetch_one()
 
         user_model = Session()
-        user_model.id = result[0]
+        user_model.id = result['id']
         user_model.name = user_data['username']
         return user_model
 

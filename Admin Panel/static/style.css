@@ -7,11 +7,10 @@ body {
 
 main {
     margin: 2rem auto auto;
-    border-radius: 3px;
     width: 50%;
     max-width: 800px;
-    background-color: #CCCCCC;
-    padding: 2rem;
+    background-color: #EEEEEE;
+    padding: 1rem 1.5rem;
     color: #202020;
 }
 

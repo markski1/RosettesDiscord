@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}Login{% endblock %}
+
+{% block main %}
+
+    <p>Welcome, {{ user['username'] }}</p>
+
+    <h2>Servers</h2>
+
+    {% for server in servers %}
+        <p>{{ server['namecache'] }}</p>
+    {% else %}
+        <p>You do not have any servers in which Rosettes has been added.</p>
+    {% endfor %}
+
+{% endblock %}

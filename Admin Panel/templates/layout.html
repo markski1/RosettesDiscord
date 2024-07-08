@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
-    <title>Rosettes</title>
+    <title>{% block title %}{% endblock %} - Rosettes</title>
 </head>
 <body>
     <main>
