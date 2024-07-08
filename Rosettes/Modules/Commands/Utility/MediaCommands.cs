@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Newtonsoft.Json;
+using PokeApiNet;
 using Rosettes.Core;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -92,10 +93,48 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string responseContent = await response.Content.ReadAsStringAsync();
         dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseContent);
 
-        if (responseData is null || responseData.url is null)
+        if (responseData is null)
         {
             await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed to obtain media (URI might be invalid).");
-            Console.WriteLine(responseContent);
+            return;
+        }
+
+        string? mediaURI = null;
+
+        mediaURI = responseData.url;
+
+        // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
+        if (mediaURI is null)
+        {
+            if (responseData.pickerType is not null)
+            {
+                if (responseData.pickerType == "images")
+                {
+                    await DeclareDownloadFailure(downloadStatus, mid, embed, "This tweet seems to only contain images.");
+                    return;
+                }
+                else
+                {
+                    foreach (var item in responseData.picker)
+                    {
+                        if (item.type == "video")
+                        {
+                            mediaURI = item.url;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                await DeclareDownloadFailure(downloadStatus, mid, embed, "No media found in the tweet.");
+                return;
+            }
+        }
+
+        if (mediaURI is null)
+        {
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "No media found in the tweet.");
             return;
         }
 
@@ -103,25 +142,24 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         {
             downloadStatus.Value = "Downloading...";
             await mid.ModifyAsync(x => x.Embed = embed.Build());
-        }
-
-        string MediaURI = responseData.url;
+        }        
 
         string fileExt = type == "video" ? "mp4" : "mp3";
+
         string fileName = $"./temp/media/{Global.Randomize(50) + 1}.{fileExt}";
 
         int seconds = 5;
 
-        if (MediaURI.Contains("youtu"))
+        if (mediaURI.Contains("youtu"))
         {
             seconds = 10;
         }
 
-        bool success = await Global.DownloadFile(fileName, MediaURI, seconds);
+        bool success = await Global.DownloadFile(fileName, mediaURI, seconds);
 
         if (!success)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", MediaURI);
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", mediaURI);
             return;
         }
 
@@ -152,7 +190,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             downloadStatus.Value = "Upload failed. File was too large.";
-            embed.AddField("Instead...", $"Have a [Direct link]({MediaURI}).");
+            embed.AddField("Instead...", $"Have a [Direct link]({mediaURI}).");
             await FollowupAsync(embed: embed.Build());
             if (mid is not null) await mid.DeleteAsync();
         }
