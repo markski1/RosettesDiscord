@@ -1,4 +1,6 @@
+import string
 from functools import wraps
+import random
 
 from flask import request
 
@@ -14,3 +16,9 @@ def htmx_check(func):
         return func(is_htmx, *args, **kwargs)
 
     return wrapper
+
+
+def generate_random_string(length):
+    length = int(length)
+    alphanumeric_characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(alphanumeric_characters) for _ in range(length))

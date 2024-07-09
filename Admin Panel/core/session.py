@@ -4,22 +4,29 @@ from flask_login import (
 )
 
 from core.database import Database
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
 def init_app(app):
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.session_protection = "strong"
 
     @login_manager.user_loader
     def user_loader(load_id):
-        # TODO: Token de sesión
-        user_model = Session()
-        user_model.id = load_id
-        return user_model
+        db = Database()
+        db.execute("SELECT * FROM users WHERE id = %s", load_id)
+        result = db.fetch_one()
+
+        if result:
+            user_model = Session()
+            user_model.id = load_id
+            return user_model
 
     return None
 
@@ -30,12 +37,8 @@ def attempt_login(auth_key):
     result = db.fetch_one()
 
     if result:
-        db.execute("SELECT * FROM users WHERE id = %s", result['id'])
-        user_data = db.fetch_one()
-
         user_model = Session()
         user_model.id = result['id']
-        user_model.name = user_data['username']
         return user_model
 
     return None

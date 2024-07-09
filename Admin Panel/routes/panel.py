@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user
 
 from core.session import attempt_login
 from utils.db_getters import get_owned_servers, get_user_data
@@ -25,7 +25,9 @@ def login():
     if not key:
         return "Invalid key"
 
-    if attempt_login(key):
+    user_sesh = attempt_login(key)
+    if user_sesh:
+        login_user(user_sesh)
         return redirect("/panel/")
     else:
         return "Key does not exist."
