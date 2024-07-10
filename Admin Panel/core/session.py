@@ -3,7 +3,7 @@ from flask_login import (
     UserMixin
 )
 
-from core.database import Database
+from core.database import Database, pool_db_conn, get_db_conn
 import os
 from dotenv import load_dotenv
 
@@ -19,9 +19,10 @@ def init_app(app):
 
     @login_manager.user_loader
     def user_loader(load_id):
-        db = Database()
+        db = get_db_conn()
         db.execute("SELECT * FROM users WHERE id = %s", load_id)
         result = db.fetch_one()
+        pool_db_conn(db)
 
         if result:
             user_model = Session()
@@ -32,9 +33,10 @@ def init_app(app):
 
 
 def attempt_login(auth_key):
-    db = Database()
+    db = get_db_conn()
     db.execute("SELECT id FROM login_keys WHERE login_key = %s", auth_key)
     result = db.fetch_one()
+    pool_db_conn(db)
 
     if result:
         user_model = Session()

@@ -26,7 +26,17 @@ table, td {
     color: black;
 }
 
+a {
+    color: black;
+}
+
 /* My Components */
+
+.block {
+    background-color: #BBBBBB;
+    padding: 0.2rem 0.4rem;
+    margin: 0.5rem;
+}
 
 .menu-button {
     border-radius: 5px;

@@ -3,12 +3,16 @@
 
 {% block main %}
 
-    <p>Welcome, {{ user['username'] }}</p>
+    <p>Welcome, {{ user['namecache'] }} | <a href="/session/logout">Logout</a></p>
 
     <h2>Servers</h2>
 
     {% for server in servers %}
-        <p>{{ server['namecache'] }}</p>
+        <div class="block">
+            <h4>{{ server['namecache'] }}</h4>
+            <p>{{ server['members'] }} members.</p>
+            <p><a href="/panel/{{ server['id'] }}/settings">Settings</a> | <a href="/panel/{{ server['id'] }}/roles">Roles</a> | <a href="/panel/{{ server['id'] }}/cmds">Custom commands</a></p>
+        </div>
     {% else %}
         <p>You do not have any servers in which Rosettes has been added.</p>
     {% endfor %}

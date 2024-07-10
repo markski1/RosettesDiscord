@@ -9,6 +9,25 @@ db_password = os.getenv('DB_PASS')
 db_host = os.getenv('DB_HOST')
 db_database = os.getenv('DB_NAME')
 
+db_pool = []
+
+
+def get_db_conn():
+    global db_pool
+
+    while len(db_pool) > 0:
+        db = db_pool.pop()
+
+        if db.is_healthy():
+            return db
+
+    return Database()
+
+
+def pool_db_conn(db):
+    global db_pool
+    db_pool.append(db)
+
 
 class Database:
     def __init__(self):
@@ -44,3 +63,9 @@ class Database:
         else:
             result = dict(zip(columns, row))
             return result
+
+    def is_healthy(self):
+        if self.conn.is_connected():
+            return True
+
+        return False

@@ -1,37 +1,37 @@
-from core.database import Database
+from core.database import get_db_conn, pool_db_conn
 
 
 def get_user_data(user_id):
-    db = Database()
+    db = get_db_conn()
     db.execute("SELECT * FROM users WHERE id = %s", user_id)
-    try:
-        return db.fetch_one()
-    except:
-        return None
+
+    result = db.fetch_one()
+    pool_db_conn(db)
+    return result
 
 
 def get_owned_servers(user_id):
-    db = Database()
+    db = get_db_conn()
     db.execute("SELECT * FROM guilds WHERE ownerid = %s", user_id)
-    try:
-        return db.fetch_all()
-    except:
-        return None
+
+    result = db.fetch_all()
+    pool_db_conn(db)
+    return result
 
 
 def get_server_roles(server_id):
-    db = Database()
+    db = get_db_conn()
     db.execute("SELECT * FROM roles WHERE guildid = %s", server_id)
-    try:
-        return db.fetch_all()
-    except:
-        return None
+
+    result = db.fetch_all()
+    pool_db_conn(db)
+    return result
 
 
 def get_server_commands(server_id):
-    db = Database()
+    db = get_db_conn()
     db.execute("SELECT * FROM custom_cmds WHERE guildid = %s", server_id)
-    try:
-        return db.fetch_all()
-    except:
-        return None
+
+    result = db.fetch_all()
+    pool_db_conn(db)
+    return result
