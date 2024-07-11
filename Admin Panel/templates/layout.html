@@ -1,15 +1,23 @@
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
-    <title>{% block title %}{% endblock %} - Rosettes</title>
-</head>
-<body>
-    <main>
-        {% block main %} {% endblock %}
-    </main>
-    <footer>
-        <p>Rosettes Web Panel</p>
-    </footer>
-</body>
-</html>
+{% if htmx %}
+    {% block main %} {% endblock %}
+    <script>
+        document.title = "Rosettes - {{ self.title() }}";
+        window.scrollTo(0, 0);
+    </script>
+{% else %}
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+        <title>Rosettes - {% block title %}{% endblock %}</title>
+    </head>
+    <body>
+        <main>
+            {{ self.main() }}
+        </main>
+        <footer>
+            <p>Rosettes Web Panel</p>
+        </footer>
+    </body>
+    </html>
+{% endif %}

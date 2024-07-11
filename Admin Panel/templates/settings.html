@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block title %}Login{% endblock %}
+
+{% block main %}
+
+    <p><a href="/panel/">Go back</a></p>
+
+    <h2>Settings for {{ server['namecache'] }}</h2>
+
+    <form method="POST" action="/action/update-settings">
+        <p>TODO</p>
+    </form>
+
+{% endblock %}

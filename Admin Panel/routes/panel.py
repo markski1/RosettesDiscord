@@ -1,9 +1,11 @@
+from functools import wraps
+
 from flask import Blueprint, render_template, request, redirect
 from flask_login import login_required, current_user, login_user
 
 from core.session import attempt_login
-from utils.db_getters import get_owned_servers, get_user_data
-from utils.miscfuncs import htmx_check
+from utils.db_getters import get_owned_servers, get_user_data, get_server_data
+from utils.miscfuncs import htmx_check, ownership_required
 
 panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
 
@@ -18,16 +20,39 @@ def index(is_htmx):
     return render_template("panel.html", is_htmx=is_htmx, servers=servers, user=user)
 
 
-@panel_bp.post("/login")
-def login():
-    key = request.form["key"]
+@panel_bp.post("/<int:server_id>/settings")
+@login_required
+@ownership_required
+@htmx_check
+def settings(is_htmx, server_id):
+    server = get_server_data(server_id)
+    if not server:
+        return "Server not found."
 
-    if not key:
-        return "Invalid key"
+    # TODO: Parse server['settings']
 
-    user_sesh = attempt_login(key)
-    if user_sesh:
-        login_user(user_sesh)
-        return redirect("/panel/")
-    else:
-        return "Key does not exist."
+    return render_template("settings.html", is_htmx=is_htmx, server=server)
+
+
+@panel_bp.post("/<int:server_id>/roles")
+@login_required
+@ownership_required
+@htmx_check
+def roles(is_htmx, server_id):
+    server = get_server_data(server_id)
+    if not server:
+        return "Server not found."
+
+    return render_template("roles.html", is_htmx=is_htmx, server=server)
+
+
+@panel_bp.post("/<int:server_id>/cmds")
+@login_required
+@ownership_required
+@htmx_check
+def cmds(is_htmx, server_id):
+    server = get_server_data(server_id)
+    if not server:
+        return "Server not found."
+
+    return render_template("cmds.html", is_htmx=is_htmx, server=server)

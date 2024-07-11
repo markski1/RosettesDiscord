@@ -10,6 +10,15 @@ def get_user_data(user_id):
     return result
 
 
+def get_server_data(server_id):
+    db = get_db_conn()
+    db.execute("SELECT * FROM guild WHERE id = %s", server_id)
+
+    result = db.fetch_one()
+    pool_db_conn(db)
+    return result
+
+
 def get_owned_servers(user_id):
     db = get_db_conn()
     db.execute("SELECT * FROM guilds WHERE ownerid = %s", user_id)
