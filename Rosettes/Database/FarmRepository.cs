@@ -65,7 +65,7 @@ public class FarmRepository : IFarmRepository
         }
         catch (Exception ex)
         {
-            Global.GenerateErrorMessage("sql-updateuser", $"sqlException code {ex.Message}");
+            Global.GenerateErrorMessage("sql-updatecrop", $"sqlException code {ex.Message}");
             return false;
         }
     }
