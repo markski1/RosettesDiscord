@@ -6,20 +6,7 @@ using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Database;
 
-public interface IFarmRepository
-{
-    Task<bool> DeleteCrop(Crop crop);
-    Task<int> FetchInventoryItem(User user, string item);
-    Task<string> FetchInventoryStringItem(User user, string item);
-    Task<IEnumerable<Crop>> GetUserCrops(User user);
-    Task<bool> InsertCrop(Crop crop);
-    Task<bool> ModifyInventoryItem(User user, string item, int amount);
-    Task<bool> ModifyStrInventoryItem(User user, string item, string newValue);
-    Task<bool> SetInventoryItem(User user, string item, int newValue);
-    Task<bool> UpdateCrop(Crop crop);
-}
-
-public class FarmRepository : IFarmRepository
+public class FarmRepository
 {
     public async Task<IEnumerable<Crop>> GetUserCrops(User user)
     {

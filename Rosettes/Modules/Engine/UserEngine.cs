@@ -81,7 +81,7 @@ public static class UserEngine
     public static async Task<List<User>> GetAllUsersFromGuild(IGuild guild)
     {
         var users = await guild.GetUsersAsync();
-        List<User> userList = new();
+        List<User> userList = [];
         if (users is null) return userList;
         foreach (var user in users)
         {

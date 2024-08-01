@@ -5,15 +5,7 @@ using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Database;
 
-public interface IPetRepository
-{
-    Task<IEnumerable<Pet>> GetAllPetsAsync();
-    Task<bool> CheckPetExists(ulong owner_id, int index);
-    Task<int> InsertPet(Pet pet);
-    Task<bool> UpdatePet(Pet pet);
-}
-
-public class PetRepository : IPetRepository
+public class PetRepository
 {
     public async Task<IEnumerable<Pet>> GetAllPetsAsync()
     {

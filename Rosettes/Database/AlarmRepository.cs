@@ -5,14 +5,7 @@ using Rosettes.Modules.Commands.Alarms;
 
 namespace Rosettes.Database;
 
-public interface IAlarmRepository
-{
-    Task<IEnumerable<Alarm>> GetAllAlarmsAsync();
-    Task<bool> InsertAlarm(Alarm alarm);
-    Task<bool> DeleteAlarm(Alarm alarm);
-}
-
-public class AlarmRepository : IAlarmRepository
+public class AlarmRepository
 {
     public async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {

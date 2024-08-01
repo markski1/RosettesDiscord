@@ -7,7 +7,6 @@ using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Minigame;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Text;
 
 namespace Rosettes.Core;
@@ -17,8 +16,8 @@ public static class Global
     public static readonly RosettesMain RosettesMain = new();
     public static readonly HttpClient HttpClient = new();
     public static readonly PokeApiClient PokeClient = new();
-    public static readonly IJikan Jikan = new Jikan();
-    public static readonly Random Randomizer = new Random();
+    public static readonly Jikan Jikan = new();
+    public static readonly Random Randomizer = new();
 
     public static int Randomize(int num)
     {
@@ -266,7 +265,7 @@ public class MessageDeleter
     {
         _timer.Elapsed += DeleteMessage;
         _timer.Interval = seconds * 1000;
-        this._message = message;
+        _message = message;
         _timer.Enabled = true;
     }
 

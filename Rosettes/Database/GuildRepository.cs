@@ -6,21 +6,7 @@ using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Database;
 
-public interface IGuildRepository
-{
-    Task<IEnumerable<Guild>> GetAllGuildsAsync();
-    Task<Guild> GetGuildData(SocketGuild guild);
-    Task<string> GetGuildSettings(Guild guild);
-    Task<bool> SetGuildSettings(Guild guild);
-    Task<bool> CheckGuildExists(ulong guildId);
-    Task<bool> InsertGuild(Guild guild);
-    Task<bool> UpdateGuild(Guild guild);
-    Task<bool> UpdateGuildRoles(Guild guild);
-    Task<ulong> GetGuildDefaultRole(Guild guild);
-    Task<IEnumerable<GuildCommand>> LoadGuildCommands(Guild guild);
-}
-
-public class GuildRepository : IGuildRepository
+public class GuildRepository
 {
     public async Task<IEnumerable<Guild>> GetAllGuildsAsync()
     {

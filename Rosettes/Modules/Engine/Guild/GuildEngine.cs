@@ -14,7 +14,7 @@ public static class GuildEngine
 
     public static async void SyncWithDatabase()
     {
-        List<Guild> toDelete = new();
+        List<Guild> toDelete = [];
         // Guilds in the cache of which Rosettes is no longer a member are to be removed from the cache.
         // foreach does not grafeculy handle the target being mutated during iteration, 
         // so we add those to a second list and prune after.
