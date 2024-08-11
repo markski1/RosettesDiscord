@@ -34,7 +34,7 @@ def ownership_required(func):
         if not server:
             return "Rosettes has no knoweldge of this server."
 
-        if not current_user.id == server['ownerid']:
+        if int(current_user.id) != int(server['ownerid']):
             return "You don't own this server."
 
         return func(*args, **kwargs)

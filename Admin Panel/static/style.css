@@ -1,13 +1,13 @@
 /* Sections */
 body {
-    background-color: #333333;
-    font-family: Tahoma, SansSerif;
+    background-color: #666666;
+    font-family: Tahoma, SansSerif, sans-serif;
     color: #BBBBBB;
 }
 
 main {
     margin: 2rem auto auto;
-    width: 50%;
+    width: 60%;
     max-width: 800px;
     background-color: #EEEEEE;
     padding: 1rem 1.5rem;
@@ -34,8 +34,9 @@ a {
 
 .block {
     background-color: #BBBBBB;
-    padding: 0.2rem 0.4rem;
+    padding: 0.2rem 0.5rem;
     margin: 0.5rem;
+    border-radius: 5px;
 }
 
 .menu-button {
@@ -51,4 +52,29 @@ a {
 
 .menu-button:hover {
     background-color: #5555AA;
+}
+
+input {
+    border-radius: 3px;
+    border: 1px black solid;
+}
+
+input[type=text] {
+    padding: 0.3rem 0.5rem;
+}
+
+select {
+    padding: 0.3rem 0.5rem;
+    min-width: 100px;
+}
+
+input[type=submit] {
+    padding: 0.3rem 0.5rem;
+    background-color: #AAAAFF;
+}
+
+/* Modifiers */
+
+.bottom-pad {
+    padding-bottom: 0.75rem;
 }

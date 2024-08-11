@@ -1,14 +1,60 @@
 {% extends "layout.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Settings{% endblock %}
 
 {% block main %}
 
     <p><a href="/panel/">Go back</a></p>
 
-    <h2>Settings for {{ server['namecache'] }}</h2>
+    <h3>Settings for {{ server['namecache'] }}</h3>
 
-    <form method="POST" action="/action/update-settings">
-        <p>TODO</p>
+    <hr>
+
+    <form method="POST" action="/panel/{{ server['id'] }}/update-settings">
+        <div class="block bottom-pad">
+            <h4>Message parsing</h4>
+            <p>
+                Rosettes will parse messages to extract and provide data for certain things. I.E. Steam games or profiles, mirroring 4cdn uri's, etc.
+                <small>Regardless of this setting, Rosettes NEVER stores any message data whatsoever.</small>
+            </p>
+            <select name="msgparse">
+                <option value="1">Enabled</option>
+                <option value="0" {% if not msgparse %} selected {% endif %}>Disabled</option>
+            </select>
+        </div>
+        <div class="block bottom-pad">
+            <h4>Farm minigame</h4>
+            <p>
+                Toggles the minigame commands under /farm.
+                <small>Be advised, if annoying, this can be limited to a single channel with /setfarmchan.</small>
+            </p>
+            <select name="minigame">
+                <option value="1">Enabled</option>
+                <option value="0" {% if not minigame %} selected {% endif %}>Disabled</option>
+            </select>
+        </div>
+        <div class="block bottom-pad">
+            <h4>Gambling commands</h4>
+            <p>Gambling commands are the commands where randomization is relevant. i.e. /dice; /checkem.</p>
+            <select name="gambling">
+                <option value="1">Enabled</option>
+                <option value="0" {% if not gambling %} selected {% endif %}>Disabled</option>
+            </select>
+        </div>
+        <div class="block bottom-pad">
+            <h4>Voicechat announce</h4>
+            <p>
+                If enabled, Rosettes will announce when a user joins or leaves a VC, with a message in the channel's text channel.
+                <small>Each message is deleted after 60 seconds, so this does not cause spam.</small>
+            </p>
+            <select name="announce">
+                <option value="1">Enabled</option>
+                <option value="0" {% if not announce %} selected {% endif %}>Disabled</option>
+            </select>
+        </div>
+        <hr>
+        <input type="submit" value="Update settings">
     </form>
+    <h3>Additional configuration:</h3>
+    <p>/setlogchan sets a channel where an announcement is made whenever someone joins or leaves the server.</p>
 
 {% endblock %}

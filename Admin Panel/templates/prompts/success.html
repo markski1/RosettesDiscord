@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}Success{% endblock %}
+
+{% block main %}
+
+    <h1>Success</h1>
+
+    <form action="/session/login" method="POST">
+        <p>{{ message }}</p>
+        <a role="button" href="/panel">Continue</a>
+    </form>
+
+{% endblock %}

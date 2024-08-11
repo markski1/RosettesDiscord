@@ -12,7 +12,7 @@ def get_user_data(user_id):
 
 def get_server_data(server_id):
     db = get_db_conn()
-    db.execute("SELECT * FROM guild WHERE id = %s", server_id)
+    db.execute("SELECT * FROM guilds WHERE id = %s", server_id)
 
     result = db.fetch_one()
     pool_db_conn(db)
@@ -44,3 +44,8 @@ def get_server_commands(server_id):
     result = db.fetch_all()
     pool_db_conn(db)
     return result
+
+
+def set_server_settings(server_id, settings):
+    db = get_db_conn()
+    db.execute("UPDATE guilds SET settings = %s WHERE id = %s", settings, server_id)
