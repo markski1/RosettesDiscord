@@ -57,11 +57,7 @@ def post_settings(is_htmx, server_id):
         return "Invalid parameters."
 
     new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
-
-    print(new_settings)
-
     set_server_settings(server_id, new_settings)
-
     return render_template("prompts/success.html", is_htmx=is_htmx, message="Settings updated successfully.")
 
 

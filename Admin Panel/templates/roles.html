@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Roles{% endblock %}
 
 {% block main %}
 
     <p><a href="/panel/">Go back</a></p>
 
-    <h2>Settings for {{ server['namecache'] }}</h2>
+    <h3>Role settings for {{ server['namecache'] }}</h3>
 
-    <form method="POST" action="/action/update-settings">
-        <p>TODO</p>
+    <form method="POST" action="/panel/{{ server['id'] }}/update-roles">
+        <p>Not yet implemented.</p>
     </form>
 
 {% endblock %}
