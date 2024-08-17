@@ -7,8 +7,17 @@
 
     <h3>Custom commands for for {{ server['namecache'] }}</h3>
 
-    <form method="POST" action="/panel/{{ server['id'] }}/update-commands">
-        <p>Not yet implemented.</p>
-    </form>
+    {% for cmd in commands %}
+        <div class="block">
+            <h4><b>/</b>{{ cmd['name'] }}</h4>
+            <p>{{ cmd['description'] }}.</p>
+            <p><a href="/panel/{{ server['id'] }}/cmds">Delete</a></p>
+        </div>
+    {% else %}
+        <div class="block">
+            <p>No custom commands defined.</p>
+        </div>
+    {% endfor %}
+    <p><a href="/panel/{{ server['id'] }}/cmds/create">Create new command</a></p>
 
 {% endblock %}

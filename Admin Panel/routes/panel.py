@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect
 from flask_login import login_required, current_user, login_user
 
 from core.session import attempt_login
-from utils.db_getters import get_owned_servers, get_user_data, get_server_data, set_server_settings
+from utils.db_getters import get_owned_servers, get_user_data, get_server_data, set_server_settings, get_server_commands
 from utils.miscfuncs import htmx_check, ownership_required
 
 panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
@@ -82,4 +82,6 @@ def cmds(is_htmx, server_id):
     if not server:
         return "Server not found."
 
-    return render_template("cmds.html", is_htmx=is_htmx, server=server)
+    commands = get_server_commands(server_id)
+
+    return render_template("cmds.html", is_htmx=is_htmx, server=server, commands=commands)
