@@ -18,6 +18,20 @@
             <p>No custom commands defined.</p>
         </div>
     {% endfor %}
-    <p><a href="/panel/{{ server['id'] }}/cmds/create">Create new command</a></p>
+    <h4>Create new command</h4>
+    <div id="command-box">
+        <form method="POST" action="/action/{{ server['id'] }}/create-cmd">
+            <label>Command: /<input type="text" name="name" placeholder="Enter command"></label>
+            <label>Description: <input type="text" name="description" placeholder="Enter description"></label>
+            <label>
+                Type:
+                <select name="type">
+                    <option value=1>Send message</option>
+                    <option value=2>Assign role</option>
+                </select>
+            </label>
+
+        </form>
+    </div>
 
 {% endblock %}
