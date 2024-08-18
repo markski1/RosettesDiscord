@@ -46,9 +46,11 @@ public class RosettesMain
         // Identify with the token and connect to discord.
         await _client.LoginAsync(TokenType.Bot, Settings.Token);
         await _client.StartAsync();
+        
 
         // start thy stuff
         await EventManager.SetupAsync();
+        TelemetryEngine.Setup();
 
         // TenMinutyTimer(); defined below, runs every 20 minutes, or 1200 seconds
         _syncTimer.Elapsed += SyncThings;

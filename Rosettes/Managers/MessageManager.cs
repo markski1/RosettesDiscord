@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Managers;
@@ -11,6 +12,7 @@ public static class MessageManager
     public static async Task HandleMessage(SocketCommandContext context)
     {
         if (!NoMessageChannel(context)) return;
+        TelemetryEngine.Count(TelemetryType.Message);
         var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
         // if a guild's message analysis level is 0, don't parse messages at all.
         if (!dbGuild.MessageAnalysis())

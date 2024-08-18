@@ -26,6 +26,7 @@ public class InteractionManager
 
     private Task OnInteraction(SocketInteraction inter)
     {
+        TelemetryEngine.Count(TelemetryType.Interaction);
         _ = Task.Run(async () =>
         {
             try
@@ -47,6 +48,7 @@ public class InteractionManager
 
     private Task OnButtonClicked(SocketMessageComponent component)
     {
+        TelemetryEngine.Count(TelemetryType.Interaction);
         _ = Task.Run(async () =>
         {
             string action = component.Data.CustomId;
@@ -164,11 +166,14 @@ public class InteractionManager
 
     private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)
     {
+        TelemetryEngine.Count(TelemetryType.Command);
+        TelemetryEngine.CountCommand(arg1.Name);
         return Task.CompletedTask;
     }
 
     private Task OnGuildCommandExecuted(SocketSlashCommand arg)
     {
+        TelemetryEngine.Count(TelemetryType.Command);
         // only handle guild-specific commands.
         if (arg.GuildId is not ulong guildId) return Task.CompletedTask;
         if (arg.Type != InteractionType.ApplicationCommand) return Task.CompletedTask;
