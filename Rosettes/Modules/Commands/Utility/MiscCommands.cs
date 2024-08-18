@@ -20,19 +20,19 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     {
         user ??= Context.Interaction.User;
 
-        User db_user = await UserEngine.GetDBUser(user);
-        if (!db_user.IsValid() || user is not SocketGuildUser guildUser)
+        User dbUser = await UserEngine.GetDBUser(user);
+        if (!dbUser.IsValid() || user is not SocketGuildUser guildUser)
         {
             await RespondAsync("There was an error fetching user data from the database.", ephemeral: true);
             return;
         }
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(db_user);
+        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
         embed.Title = "User information";
         embed.ThumbnailUrl = guildUser.GetDisplayAvatarUrl(size: 1024);
 
-        embed.AddField("Level", $"Level {db_user.GetLevel()} ({db_user.Exp}xp)");
+        embed.AddField("Level", $"Level {dbUser.GetLevel()} ({dbUser.Exp}xp)");
         embed.AddField("Joined Discord", $"<t:{guildUser.CreatedAt.ToUnixTimeSeconds()}:R>", true);
         if (guildUser.JoinedAt is DateTimeOffset guildJoin)
         {
@@ -158,8 +158,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("feedback", "To send suggestions, feedback, bug reports, complaints or anything else to the bot developers.")]
     public async Task SendFeedback(string text)
     {
-        string message;
-        message = $"Feedback received from {Context.User.Username} (id {Context.User.Id})";
+        string message = $"Feedback received from {Context.User.Username} (id {Context.User.Id})";
         if (Context.Guild is not null)
         {
             message += $"\nSent from guild {Context.Guild.Name} (id {Context.Guild.Id})";

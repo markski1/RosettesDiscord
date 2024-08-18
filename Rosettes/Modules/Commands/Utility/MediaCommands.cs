@@ -1,10 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Newtonsoft.Json;
-using PokeApiNet;
 using Rosettes.Core;
-using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -25,22 +22,22 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
 
     [SlashCommand("getvideo", "Get the video from a provided URI.")]
-    public async Task GetVideo(string URI)
+    public async Task GetVideo(string uri)
     {
         await DeferAsync();
-        await FetchMedia(URI, "video");
+        await FetchMedia(uri, "video");
     }
 
 
     [SlashCommand("getaudio", "Get the audio from a provided URI.")]
-    public async Task GetAudio(string URI)
+    public async Task GetAudio(string uri)
     {
         await DeferAsync();
-        await FetchMedia(URI, "audio");
+        await FetchMedia(uri, "audio");
     }
 
 
-    private async Task FetchMedia(string URI, string type)
+    private async Task FetchMedia(string uri, string type)
     {
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
@@ -71,7 +68,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string requestData = JsonConvert.SerializeObject(
             new
             {
-                url = URI,
+                url = uri,
                 isAudioOnly = type == "audio"
             }
         );
@@ -99,12 +96,10 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        string? mediaURI = null;
-
-        mediaURI = responseData.url;
+        string? mediaUri = responseData.url;
 
         // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
-        if (mediaURI is null)
+        if (mediaUri is null)
         {
             if (responseData.pickerType is not null)
             {
@@ -119,7 +114,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                     {
                         if (item.type == "video")
                         {
-                            mediaURI = item.url;
+                            mediaUri = item.url;
                             break;
                         }
                     }
@@ -132,7 +127,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        if (mediaURI is null)
+        if (mediaUri is null)
         {
             await DeclareDownloadFailure(downloadStatus, mid, embed, "No media found in the tweet.");
             return;
@@ -150,16 +145,16 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         int seconds = 5;
 
-        if (mediaURI.Contains("youtu"))
+        if (mediaUri.Contains("youtu"))
         {
             seconds = 10;
         }
 
-        bool success = await Global.DownloadFile(fileName, mediaURI, seconds);
+        bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
 
         if (!success)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", mediaURI);
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", mediaUri);
             return;
         }
 
@@ -190,13 +185,14 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             downloadStatus.Value = "Upload failed. File was too large.";
-            embed.AddField("Instead...", $"Have a [Direct link]({mediaURI}).");
+            embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
             await FollowupAsync(embed: embed.Build());
             if (mid is not null) await mid.DeleteAsync();
         }
     }
 
-    private async Task<Task> DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed, string message, string? MediaURI = null)
+    private async Task DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed,
+        string message, string? mediaUri = null)
     {
         downloadStatus.Value = message;
 
@@ -205,14 +201,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             await mid.DeleteAsync();
         }
 
-        if (MediaURI is not null)
+        if (mediaUri is not null)
         {
-            embed.AddField("Instead...", $"Have a [Direct link]({MediaURI}).");
+            embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
         }
 
         await FollowupAsync(embed: embed.Build());
-
-        return Task.CompletedTask;
     }
 
     // Old, deprecated commands.

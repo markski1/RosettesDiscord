@@ -2,7 +2,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
@@ -119,12 +118,10 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
                         VALUES(@Id, @NewKey)";
         }
 
-        int randNumba;
-        string NewKey = "";
-        char Character;
-        int offset;
+        string newKey = "";
         for (int i = 0; i < 24; i++)
         {
+            int offset;
             if (Global.Randomize(2) == 0)
             {
                 offset = 65;
@@ -133,14 +130,14 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             {
                 offset = 97;
             }
-            randNumba = Global.Randomize(0, 26);
-            Character = Convert.ToChar(randNumba + offset);
-            NewKey += Character;
+            var randNumber = Global.Randomize(0, 26);
+            var character = Convert.ToChar(randNumber + offset);
+            newKey += character;
         }
 
         try
         {
-            await db.ExecuteAsync(sql, new { Context.User.Id, NewKey });
+            await db.ExecuteAsync(sql, new { Context.User.Id, NewKey = newKey });
         }
         catch (Exception ex)
         {
@@ -158,6 +155,6 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync($"You have been issued a Rosettes key. This is an unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
         }
 
-        await ReplyAsync($"```{NewKey}```");
+        await ReplyAsync($"```{newKey}```");
     }
 }

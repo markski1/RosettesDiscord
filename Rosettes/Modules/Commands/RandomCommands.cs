@@ -79,7 +79,7 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task CheckEm()
     {
         int number = Global.Randomize(99999999) + 1;
-        // kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing so it doesn't matter.
+        // kind of a hacky way to ensure the number is 8 digits long. This is just a memey random number thing, so it doesn't matter.
         if (number < 10000000)
         {
             number += 10000000;

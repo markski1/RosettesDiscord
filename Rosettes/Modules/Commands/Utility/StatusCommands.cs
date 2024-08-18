@@ -18,15 +18,15 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
         {
             var data = await Global.HttpClient.GetStringAsync($"https://api.steampowered.com/ICSGOServers_730/GetGameServersStatus/v1/?key={Settings.SteamDevKey}");
 
-            var DeserialziedObject = JsonConvert.DeserializeObject(data);
-            if (DeserialziedObject == null)
+            var deserialziedObject = JsonConvert.DeserializeObject(data);
+            if (deserialziedObject == null)
             {
                 await RespondAsync("Failed to retrieve status data.", ephemeral: true);
                 return;
             }
-            dynamic result = ((dynamic)DeserialziedObject).result;
+            dynamic result = ((dynamic)deserialziedObject).result;
 
-            TimeSpan WaitTime = TimeSpan.FromSeconds(Convert.ToDouble(result.matchmaking.search_seconds_avg));
+            TimeSpan waitTime = TimeSpan.FromSeconds(Convert.ToDouble(result.matchmaking.search_seconds_avg));
 
             EmbedBuilder steamStatus = await Global.MakeRosettesEmbed();
 
@@ -44,7 +44,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             csgoStatus.AddField("Online players", $"{result.matchmaking.online_players:N0}", true);
             csgoStatus.AddField("Online servers", $"{result.matchmaking.online_servers:N0}", true);
             csgoStatus.AddField("Searching game", $"{result.matchmaking.searching_players:N0}", true);
-            csgoStatus.AddField("Average wait", $"{WaitTime.Minutes} minute{(WaitTime.Minutes != 1 ? 's' : null)}, {WaitTime.Seconds} seconds.\n", true);
+            csgoStatus.AddField("Average wait", $"{waitTime.Minutes} minute{(waitTime.Minutes != 1 ? 's' : null)}, {waitTime.Seconds} seconds.\n", true);
 
             Embed[] embeds = { steamStatus.Build(), csgoStatus.Build() };
 
@@ -57,7 +57,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("ffxiv", "Check the status of FFXIV servers.")]
-    public async Task XIVCheck([Summary("datacenter", "Optionally, specify a datacenter to check it's servers.")] string checkServer = "NOTSPECIFIED")
+    public async Task XivCheck([Summary("datacenter", "Optionally, specify a datacenter to check it's servers.")] string checkServer = "NOTSPECIFIED")
     {
         string lobbyData;
         try
@@ -69,13 +69,13 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("Failed to retrieve datacenter list.", ephemeral: true);
             return;
         }
-        var DeserializedLobbyObject = JsonConvert.DeserializeObject(lobbyData);
-        if (DeserializedLobbyObject == null)
+        var deserializedLobbyObject = JsonConvert.DeserializeObject(lobbyData);
+        if (deserializedLobbyObject == null)
         {
             return;
         }
 
-        dynamic lobby = DeserializedLobbyObject;
+        dynamic lobby = deserializedLobbyObject;
 
         string lobbyText = $"Lobby status    : {(lobby.status == 1 ? "Online" : "Offline")}";
         string serverText = "";
@@ -108,19 +108,17 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             }
 
             string searchTerm = checkServer.ToLower();
-            List<string> serverNames = new();
+            List<string> serverNames = [];
 
             // This gets ugly really fast. Because of how frontier's xiv api formats the status response, we have to iterate all this crap
             // to figure out what servers we want to look at depending on the world given.
             // In other words, here we grab the datacenter object, with all it's servers are children token.
             foreach (var datacenter in datacenterObj.Cast<KeyValuePair<string, JToken>>().ToList())
             {
-                if (datacenter.Key.ToLower() == searchTerm)
+                if (!datacenter.Key.Equals(searchTerm, StringComparison.CurrentCultureIgnoreCase)) continue;
+                foreach (var server in datacenter.Value)
                 {
-                    foreach (var server in datacenter.Value)
-                    {
-                        serverNames.Add(server.ToString());
-                    }
+                    serverNames.Add(server.ToString());
                 }
             }
             if (!serverNames.Any())
@@ -245,7 +243,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("website", "Check if a given website is online and responding to http requests.")]
-    public async Task CheckURL(string url)
+    public async Task CheckUri(string url)
     {
         if (!url.Contains("http"))
         {

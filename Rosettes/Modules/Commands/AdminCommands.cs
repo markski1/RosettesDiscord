@@ -34,7 +34,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondWithModalAsync(modal.Build());
     }
 
-    public async static Task FollowUpPoll(string question, string option1, string option2, string option3, string option4, SocketModal component)
+    public static async Task FollowUpPoll(string question, string option1, string option2, string option3, string option4, SocketModal component)
     {
         // prevent option 4 with no option 3
         if (option3 == string.Empty && option4 != string.Empty)
@@ -269,9 +269,9 @@ public static class AdminHelper
 
     public static async Task ChangeSettings(SocketMessageComponent component)
     {
-        if (component.GuildId is ulong guild_id)
+        if (component.GuildId is ulong guildId)
         {
-            var dbGuild = GuildEngine.GetDBGuildById(guild_id);
+            var dbGuild = GuildEngine.GetDBGuildById(guildId);
             var guildRef = dbGuild.GetDiscordSocketReference();
             if (guildRef.OwnerId != component.User.Id && !Global.CheckSnep(component.User.Id))
             {

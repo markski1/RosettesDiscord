@@ -6,16 +6,15 @@ using Newtonsoft.Json.Linq;
 using PokeApiNet;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Guild;
 using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands.Utility;
 
-[Discord.Interactions.Group("find", "Commands to find certain things")]
+[Group("find", "Commands to find certain things")]
 public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("pokemon", "Search for information about a specified pokémon")]
-    public async Task GetPokemon([Discord.Interactions.Summary("name-or-id", "Enter the name or ID for the Pokémon to search for.")] string name = "none")
+    public async Task GetPokemon([Summary("name-or-id", "Enter the name or ID for the Pokémon to search for.")] string name = "none")
     {
         bool searchById = int.TryParse(name, out int id);
 
@@ -119,7 +118,6 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command cannot be used in DM's.");
             return;
         }
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
 
         if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
         {
@@ -348,10 +346,9 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
         {
             WikiSearchResponse response = await client.SearchAsync(req) ?? throw new Exception("Failed to fetch results.");
 
-            if (response.QueryResult.SearchResults.Count > 0)
+            if (response.QueryResult is { SearchResults.Count: > 0 })
             {
                 var use = response.QueryResult.SearchResults[0];
-                var db_user = await UserEngine.GetDBUser(Context.User);
 
                 EmbedAuthorBuilder author = new()
                 {

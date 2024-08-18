@@ -11,7 +11,7 @@ namespace Rosettes.Modules.Commands.Utility;
 public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [MessageCommand("SauceNAO Search")]
-    public async Task SauceNAOCtx(IMessage message)
+    public async Task SauceNaoCtx(IMessage message)
     {
         string getUri = Global.GrabUriFromText(message.Content);
 
@@ -42,25 +42,27 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 
         getUri = UrlEncoder.Default.Encode(getUri);
 
-        await SauceNAO(getUri);
+        await SauceNao(getUri);
     }
 
     [SlashCommand("saucenao", "Use SauceNAO to try and find the source of a provided image url.")]
-    public async Task SauceNAO(string url)
+    public async Task SauceNao(string url)
     {
         string getUrl = $"https://saucenao.com/search.php?output_type=2&api_key={Settings.SauceNAO}&url={url}";
 
         await DeferAsync();
 
-        var response = await Global.HttpClient.GetStringAsync(getUrl);
+        string response;
 
-        if (response is null)
+        try
+        {
+            response = await Global.HttpClient.GetStringAsync(getUrl);
+        }
+        catch
         {
             await FollowupAsync("Sorry, there was an error reaching the SauceNAO API. [SE1]");
             return;
         }
-
-        Console.WriteLine(response.ToString());
 
         var deserializedResponse = JsonConvert.DeserializeObject(response);
 
@@ -70,7 +72,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        dynamic responseObj = deserializedResponse as dynamic;
+        dynamic responseObj = deserializedResponse;
 
         var dbUser = await UserEngine.GetDBUser(Context.User);
 
