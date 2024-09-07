@@ -17,6 +17,7 @@ public static class UserEngine
         foreach (User user in UserCache)
         {
             await _interface.UpdateUser(user);
+            await Task.Delay(125);
         }
     }
 

@@ -24,6 +24,7 @@ public static class GuildEngine
             {
                 toDelete.Add(guild);
             }
+            await Task.Delay(125);
         }
         toDelete.ForEach(x => GuildCache.Remove(x));
     }
