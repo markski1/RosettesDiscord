@@ -69,10 +69,5 @@ public class ApiController : ControllerBase
         }        
     }
 
-    [HttpGet("CheckKey")]
-    public async Task<User> CheckKey(string rosettesKey)
-    {
-        rosettesKey = rosettesKey.Trim();
-        return await UserEngine.GetUserByRosettesKey(rosettesKey);
-    }
+
 }

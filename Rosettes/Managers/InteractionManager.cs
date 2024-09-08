@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Commands;
-using Rosettes.Modules.Commands.Utility;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine.Minigame;
