@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Discord.WebSocket;
-using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine.Guild;
 

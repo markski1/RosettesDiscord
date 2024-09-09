@@ -22,6 +22,24 @@ public class AuthRepository
         }
     }
 
+    public async Task<bool> AuthUser(int appId, ulong userId)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.db;
+
+        var sql = @"INSERT INTO app_auth_rel (user_id, app_id)
+                    VALUES(@UserId, @AppId)";
+
+        try
+        {
+            return (await db.ExecuteAsync(sql, new { UserId = userId, AppId = appId })) > 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<ApplicationRelation?> GetApplicationRelation(string applicationKey, ulong userId)
     {
         using var getConn = DatabasePool.GetConnection();

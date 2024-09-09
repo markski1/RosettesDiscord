@@ -5,6 +5,7 @@ using Rosettes.Core;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine;
+using Rosettes.Database;
 
 namespace Rosettes.WebServer;
 
@@ -69,5 +70,76 @@ public class ApiController : ControllerBase
         }        
     }
 
+    [HttpGet("Identify")]
+    public async Task<dynamic> Identify(string applicationKey, string userKey)
+    {
+        userKey = userKey.Trim();
+        var repo = new AuthRepository();
 
+        var appData = await repo.GetApplicationAuth(applicationKey);
+
+        if (appData == null)
+        {
+            return GenericResponse.GenerateError("Application key does not exist.");
+        }
+
+        var user = await UserEngine.GetUserByRosettesKey(userKey);
+
+        if (!user.IsValid())
+        {
+            return GenericResponse.GenerateError("User key does not exist.");
+        }
+
+        var rel = repo.GetApplicationRelation(applicationKey, user.Id);
+
+        if (rel == null)
+        {
+            await repo.AuthUser(appData.Id, user.Id);
+
+            await user.SendDirectMessage($"Auth notice: ```Your Rosettes key has been used to authorize you to the following application: {appData.Name}```");
+        }
+
+        return user;
+    }
+
+
+    [HttpGet("GetUser")]
+    public async Task<dynamic> Identify(string applicationKey, ulong userId)
+    {
+        var repo = new AuthRepository();
+        var appData = await repo.GetApplicationAuth(applicationKey);
+
+        if (appData == null)
+        {
+            return GenericResponse.GenerateError("Application key does not exist.");
+        }
+
+        var user = UserEngine.GetDBUserById(userId);
+
+        if (!user.IsValid())
+        {
+            return GenericResponse.GenerateError("Rosettes doesn't know that user ID.");
+        }
+
+        var rel = repo.GetApplicationRelation(applicationKey, user.Id);
+
+        if (rel == null)
+        {
+            return GenericResponse.GenerateError("The user ID provided has not authorized your application.");
+        }
+
+        return user;
+    }
+}
+
+public static class GenericResponse
+{
+    public static Dictionary<string, dynamic> GenerateError(string message)
+    {
+        return new Dictionary<string, dynamic>()
+        {
+            {"success", false},
+            {"message", message}
+        };
+    }
 }

@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Minigame;

@@ -157,6 +157,21 @@ public class User
         return await UserEngine.GetUserReferenceByID(Id);
     }
 
+    public async Task<bool> SendDirectMessage(string message)
+    {
+        var userRef = await UserEngine.GetUserReferenceByID(Id);
+
+        try
+        {
+            await userRef.SendMessageAsync(message);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public async Task<string> GetName()
     {
         var userReference = await GetDiscordReference();
