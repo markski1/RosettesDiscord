@@ -24,10 +24,14 @@ public static class GuildEngine
     public static async Task<bool> UpdateGuild(Guild guild)
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();
-        if (!client.Guilds.Contains(guild.GetDiscordSocketReference()))
+
+        // Guild may have been abandoned.
+        if (!client.Guilds.Where(x => x.Id == guild.Id).Any())
         {
             return false;
         }
+
+        // Guild may not be in DB if insert failed on join.
         if (await _interface.CheckGuildExists(guild.Id))
         {
             guild.SelfTest();
