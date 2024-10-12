@@ -30,18 +30,20 @@ public class ApiController : ControllerBase
         string ret = "";
 
         ulong userSum = 0;
+        int serverSum = 0;
 
         var client = ServiceManager.GetService<DiscordSocketClient>();
 
         foreach (var guild in GuildEngine.GuildCache) {
-            if (!client.Guilds.Where(x => x.Id == guild.Id).Any())
+            if (client.Guilds.Where(x => x.Id == guild.Id).Any())
             {
                 ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId)).Username}\n\n";
                 userSum += guild.Members;
+                serverSum += 1;
             }
         }
 
-        ret += $"Servers: {GuildEngine.GuildCache.Count} | Total users served: {userSum}";
+        ret += $"Servers: {serverSum} | Total users served: {userSum}";
 
         return ret;
     }
