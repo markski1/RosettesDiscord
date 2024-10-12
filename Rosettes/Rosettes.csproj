@@ -15,16 +15,16 @@
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="3.1.253" />
     <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="Discord.Net" Version="3.15.0" />
+    <PackageReference Include="Discord.Net" Version="3.16.0" />
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
-    <PackageReference Include="JikanDotNet" Version="2.7.0" />
+    <PackageReference Include="JikanDotNet" Version="2.8.0" />
     <PackageReference Include="MetadataExtractor" Version="2.8.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="MySqlConnector" Version="2.3.7" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PokeApiNet" Version="4.0.0" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.6" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.10" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
   </ItemGroup>
  
 </Project>
