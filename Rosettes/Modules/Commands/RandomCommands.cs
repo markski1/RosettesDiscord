@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using PokeApiNet;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
@@ -9,8 +10,8 @@ namespace Rosettes.Modules.Commands;
 
 public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    [SlashCommand("dice", "Roll dice.")]
-    public async Task Dice(int diceFaces, int diceCount = 1)
+    [SlashCommand("roll", "Roll dice. Use a number, or standard dice notation (i.e. 1d6)")]
+    public async Task Dice(string options)
     {
         var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
         var dbUser = await UserEngine.GetDBUser(Context.User);
@@ -21,34 +22,59 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (diceFaces < 2 || diceCount < 1)
+        int diceCount;
+        int diceFaces;
+
+        try
         {
-            await RespondAsync("Dice must have at least 1 face, and you must roll at least one dice.", ephemeral: true);
+            string[] parts = options.Split('d');
+
+            if (parts.Length > 1)
+            {
+                diceFaces = int.Parse(parts[1]);
+                diceCount = int.Parse(parts[0]);
+            }
+            else
+            {
+                diceFaces = int.Parse(parts[0]);
+                diceCount = 1;
+            }
+        }
+        catch
+        {
+            await RespondAsync("Please enter a valid value.", ephemeral: true);
             return;
         }
-        else if (diceFaces > 1000000 || diceCount > 10)
+        
+
+        if (diceFaces < 2 || diceCount < 1)
         {
-            await RespondAsync("Dice may not have more than 1 million faces, and you may roll no more than 10 dice at once.", ephemeral: true);
+            await RespondAsync("Dice must have at least 1 face, and you must roll at least one die.", ephemeral: true);
+            return;
+        }
+        else if (diceFaces > 10000000 || diceCount > 50)
+        {
+            await RespondAsync("Dice may not have more than 10 million faces, and you may roll no more than 50 dice at once.", ephemeral: true);
             return;
         }
         
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-        embed.WithTitle($"Rolled {diceCount} dice.");
-        embed.WithDescription($"With {diceFaces} faces each.");
+        embed.WithTitle($"Rolled {diceCount}d{diceFaces}.");
 
-        string resultText = "";
-        int diceTotal = 0;
-        for (int i = 0; i < diceCount; i++)
+        if (diceCount == 1)
         {
-            int diceResult = Global.Randomize(diceFaces) + 1;
-            resultText += $"**Die {i + 1}:** {diceResult} \n";
-            diceTotal += diceResult;
+            embed.WithDescription($"Result: {Global.Randomize(diceFaces) + 1}");
         }
+        else
+        {
+            List<int> results = [];
 
-        embed.AddField("Roll results: ", resultText);
+            for (int i = 0; i < diceCount; i++) results.Add(Global.Randomize(diceFaces) + 1);
 
-        embed.AddField("Total:", $"{diceTotal}, with each die scoring {diceTotal / diceCount} in average.");
+            embed.AddField("Roll results", String.Join(", ", results));
+            embed.AddField("Total", $"{results.Sum()}; average value {results.Sum() / diceCount}.");
+        }
 
         await RespondAsync(embed: embed.Build());
     }
