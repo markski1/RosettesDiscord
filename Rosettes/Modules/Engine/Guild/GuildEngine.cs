@@ -276,15 +276,14 @@ public class Guild
     public async Task<dynamic> GetGuildUser(ulong userid)
     {
         var dref = GetDiscordSocketReference();
-        dynamic user;
-        user = dref.GetUser(userid);
-        // if null, not cached, pick it up through rest
-        if (user is null)
-        {
-            var restSelf = await GetDiscordRestReference();
-            user = await restSelf.GetUserAsync(userid);
-        }
-        return user;
+        var user = dref.GetUser(userid);
+        dref.GetUsersAsync();
+        if (user is not null) return user;
+
+        // user not cached
+        var restSelf = await GetDiscordRestReference();
+        var restUser = await restSelf.GetUserAsync(userid);
+        return restUser;
     }
 
     public async Task<bool> SetUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
