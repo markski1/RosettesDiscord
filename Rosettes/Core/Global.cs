@@ -92,10 +92,11 @@ public static class Global
             var pet = await PetEngine.GetUserPet(dbUser);
             if (pet is not null)
             {
-                authorEmbed.Name += $" | [{pet.GetName()}]";
+                authorEmbed.Name += $" [{pet.GetName()}]";
             }
         }
 
+        // Transparent pixel
         embed.ThumbnailUrl = "https://markski.ar/images/trans.png";
 
         return embed;
