@@ -31,8 +31,6 @@ def settings(is_htmx, server_id):
     gambling = server["settings"][2] == '1'
     announce = server["settings"][5] == '1'
 
-    print(server["settings"])
-
     return render_template("settings.html", is_htmx=is_htmx, server=server,
                            msgparse=msgparse, minigame=minigame, gambling=gambling, announce=announce)
 
