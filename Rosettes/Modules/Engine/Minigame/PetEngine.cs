@@ -524,17 +524,19 @@ namespace Rosettes.Modules.Engine.Minigame
             foreach (Pet pet in PetCache)
             {
                 happiness = pet.GetHappiness();
+
+                // Depending on how the happiness range, the pet may lose happiness.
                 if (happiness > 80)
                 {
-                    pet.ModifyHappiness(-1);
+                    if (Global.Chance(80)) pet.ModifyHappiness(-1);
                 }
                 else if (happiness > 40)
                 {
-                    if (Global.Chance(66)) pet.ModifyHappiness(-1); // 66% chance of losing 1 happiness point
+                    if (Global.Chance(50)) pet.ModifyHappiness(-1);
                 }
                 else
                 {
-                    if (Global.Chance(25)) pet.ModifyHappiness(-1); // 25% chance of losing 1 happiness point
+                    if (Global.Chance(20)) pet.ModifyHappiness(-1);
                 }
             }
         }
