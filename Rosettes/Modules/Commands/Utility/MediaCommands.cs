@@ -59,8 +59,14 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             mid = null;
         }
 
-        await DeclareDownloadFailure(downloadStatus, mid, embed, "The media downloader is temporarily disabled. It'll be fixed soon.");
-        return;
+        // Disable the media downloader for now.
+        // MSVC doesn't like unreachable code, so we'll just set a bool to true.
+        bool True = true;
+        if (True)
+        {
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "The media downloader is temporarily disabled. It'll be fixed soon.");
+            return;
+        }
 
         // store the file locally
         if (!Directory.Exists("./temp/media/"))
