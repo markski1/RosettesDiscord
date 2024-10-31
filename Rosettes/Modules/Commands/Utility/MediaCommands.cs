@@ -40,7 +40,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         embed.AddField(downloadStatus);
 
         IUserMessage? mid;
-        
+
         // The 'middle state' message may not be created if the bot has no perms.
         try
         {
@@ -55,6 +55,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         if (!Directory.Exists("./temp/media/"))
         {
             Directory.CreateDirectory("./temp/media/");
+        }
+
+        if (uri.Contains("youtu.be") || uri.Contains("youtube.com"))
+        {
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Sorry, YouTube videos are *temporarily* not downloadable through Rosettes.");
+            return;
         }
 
         string requestData = JsonConvert.SerializeObject(
