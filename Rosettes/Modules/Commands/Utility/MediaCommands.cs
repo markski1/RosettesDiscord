@@ -15,7 +15,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         if (uri != "0")
         {
             await DeferAsync();
-            await FetchMedia(uri, "video");
+            await FetchMedia(uri);
         }
         else await RespondAsync("No URI found in this message.", ephemeral: true);
     }
@@ -25,23 +25,15 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task GetVideo(string uri)
     {
         await DeferAsync();
-        await FetchMedia(uri, "video");
+        await FetchMedia(uri);
     }
 
 
-    [SlashCommand("getaudio", "Get the audio from a provided URI.")]
-    public async Task GetAudio(string uri)
-    {
-        await DeferAsync();
-        await FetchMedia(uri, "audio");
-    }
-
-
-    private async Task FetchMedia(string uri, string type)
+    private async Task FetchMedia(string uri)
     {
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
-        embed.Title = $"Fetching {type}.";
+        embed.Title = $"Fetching video.";
 
         EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Obtaining URI information.", IsInline = true };
 
@@ -59,15 +51,6 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             mid = null;
         }
 
-        // Disable the media downloader for now.
-        // MSVC doesn't like unreachable code, so we'll just set a bool to true.
-        bool True = true;
-        if (True)
-        {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "The media downloader is temporarily disabled. It'll be fixed soon.");
-            return;
-        }
-
         // store the file locally
         if (!Directory.Exists("./temp/media/"))
         {
@@ -77,12 +60,11 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string requestData = JsonConvert.SerializeObject(
             new
             {
-                url = uri,
-                isAudioOnly = type == "audio"
+                url = uri
             }
         );
 
-        HttpRequestMessage request = new(HttpMethod.Post, "https://api.cobalt.tools/api/json");
+        HttpRequestMessage request = new(HttpMethod.Post, "http://snep.vps.webdock.cloud:9000");
 
         request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StringContent(requestData, Encoding.UTF8);
@@ -92,7 +74,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (!response.IsSuccessStatusCode)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Sorry, I was unable to obtain this video.");
+            await DeclareDownloadFailure(downloadStatus, mid, embed, $"Sorry, I was unable to obtain this video. [{response.StatusCode}]");
             return;
         }
 
@@ -148,15 +130,13 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             await mid.ModifyAsync(x => x.Embed = embed.Build());
         }        
 
-        string fileExt = type == "video" ? "mp4" : "mp3";
+        string fileName = $"./temp/media/{Global.Randomize(50) + 1}.mp4";
 
-        string fileName = $"./temp/media/{Global.Randomize(50) + 1}.{fileExt}";
-
-        int seconds = 5;
+        int seconds = 6;
 
         if (mediaUri.Contains("youtu"))
         {
-            seconds = 10;
+            seconds = 12;
         }
 
         bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
