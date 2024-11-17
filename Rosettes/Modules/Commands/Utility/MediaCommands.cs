@@ -70,7 +70,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         );
 
-        HttpRequestMessage request = new(HttpMethod.Post, "https://cobalt.markski.ar/");
+        HttpRequestMessage request = new(HttpMethod.Post, "http://127.0.0.1:9000/");
 
         request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StringContent(requestData, Encoding.UTF8);
