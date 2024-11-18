@@ -26,6 +26,7 @@
     <PackageReference Include="PokeApiNet" Version="4.0.0" />
 	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+	<PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
 	<PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
  

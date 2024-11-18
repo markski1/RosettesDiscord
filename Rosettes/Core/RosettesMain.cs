@@ -58,6 +58,8 @@ public class RosettesMain
         _syncTimer.AutoReset = true;
         _syncTimer.Enabled = true;
 
+        Global.HttpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0");
+
         await Task.Delay(-1);
     }
 

@@ -106,7 +106,6 @@ public static class MessageManager
         // If the length of the grabbed "format" is too long, we can assume the URI didn't specify a format.
         if (format.Length > 5) return;
 
-        var expireMessage = await context.Channel.SendMessageAsync("This URI will expire. I will now attempt to mirror it's media by uploading it directly to Discord.");
 
         try
         {
@@ -125,19 +124,15 @@ public static class MessageManager
 
             if (context.Guild.MaxUploadLimit > size)
             {
-                await context.Channel.SendFileAsync(fileName);
-            }
-            else
-            {
-                throw new Exception("File was too large.");
+                await context.Channel.SendFileAsync(fileName, text: "Mirroring this media, because i.4cdn links will expire.");
             }
 
             File.Delete(fileName);
         }
-        catch
+        catch (Exception ex)
         {
-            await expireMessage.ModifyAsync(x => x.Content = $"I attempted to mirror this expiring link. but failed. (This message will delete itself in 20 seconds)");
-            _ = new MessageDeleter(expireMessage, 20);
+            Console.WriteLine(ex);
+            return;
         }
     }
 
