@@ -134,9 +134,10 @@ public static class MessageManager
 
             File.Delete(fileName);
         }
-        catch (Exception ex)
+        catch
         {
-            await expireMessage.ModifyAsync(x => x.Content = $"Sorry! I couldn't do it... - ({ex.Message})");
+            await expireMessage.ModifyAsync(x => x.Content = $"I attempted to mirror this expiring link. but failed. (This message will delete itself in 20 seconds)");
+            _ = new MessageDeleter(expireMessage, 20);
         }
     }
 

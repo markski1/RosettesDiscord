@@ -51,7 +51,7 @@ public static class JQMonitorEngine
         try
         {
             IMessage message = await channel.SendMessageAsync($"{user.Username} {action} the channel.");
-            _ = new MessageDeleter(message, 60);
+            _ = new MessageDeleter(message, 30);
         }
         catch
         {

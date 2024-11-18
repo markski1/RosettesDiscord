@@ -199,23 +199,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         if (mediaUri is not null)
         {
             embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
+            await FollowupAsync(embed: embed.Build());
         }
-
-        await FollowupAsync(embed: embed.Build());
-    }
-
-    // Old, deprecated commands.
-
-
-    [SlashCommand("twtvid", "Deprecated, use /getvideo")]
-    public async Task TweetVideo()
-    {
-        await RespondAsync("This command is deprecated. You may now use /getvideo to extract a video from most websites!", ephemeral: true);
-    }
-
-    [SlashCommand("tikvid", "Get the video file of the specified TikTok post.")]
-    public async Task TiktokVideo()
-    {
-        await RespondAsync("This command is deprecated. You may now use /getvideo to extract a video from most websites!", ephemeral: true);
+        else
+        {
+            var msg = await FollowupAsync(embed: embed.Build());
+            _ = new MessageDeleter(msg, 30);
+        }
     }
 }

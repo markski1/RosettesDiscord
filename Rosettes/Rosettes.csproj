@@ -19,12 +19,14 @@
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
     <PackageReference Include="JikanDotNet" Version="2.9.1" />
     <PackageReference Include="MetadataExtractor" Version="2.8.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="MySqlConnector" Version="2.4.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PokeApiNet" Version="4.0.0" />
 	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 	<PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+	<PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
  
 </Project>
