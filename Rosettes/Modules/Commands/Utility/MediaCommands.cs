@@ -6,6 +6,12 @@ using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
 
+[CommandContextType(
+    InteractionContextType.BotDm,
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild
+)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [MessageCommand("Extract video")]
@@ -33,7 +39,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     {
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
-        embed.Title = $"Fetching video.";
+        embed.Title = $"Downloading video.";
 
         EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Obtaining URI information.", IsInline = true };
 
@@ -76,7 +82,17 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         request.Content = new StringContent(requestData, Encoding.UTF8);
         request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
-        HttpResponseMessage response = await Global.HttpClient.SendAsync(request);
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await Global.HttpClient.SendAsync(request);
+        }
+        catch
+        {
+            await DeclareDownloadFailure(downloadStatus, mid, embed, "Unable to connect, please try later.");
+            return;
+        }
 
         if (!response.IsSuccessStatusCode)
         {
@@ -189,6 +205,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     private async Task DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed,
         string message, string? mediaUri = null)
     {
+        embed.Title = "Video download failure.";
+
         downloadStatus.Value = message;
 
         if (mid is not null)
@@ -204,7 +222,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             var msg = await FollowupAsync(embed: embed.Build());
-            _ = new MessageDeleter(msg, 30);
+            _ = new MessageDeleter(msg, 15);
         }
     }
 }

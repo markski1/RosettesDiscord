@@ -1,26 +1,24 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using PokeApiNet;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
 
 namespace Rosettes.Modules.Commands;
 
+[CommandContextType(
+    InteractionContextType.BotDm, 
+    InteractionContextType.PrivateChannel, 
+    InteractionContextType.Guild
+)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("roll", "Roll dice. Use a number, or standard dice notation (i.e. 1d6)")]
-    public async Task Dice(string options)
+    public async Task RollDice(string options)
     {
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
         var dbUser = await UserEngine.GetDBUser(Context.User);
-
-        if (!dbGuild.AllowsRandom())
-        {
-            await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
-            return;
-        }
 
         int diceCount;
         int diceFaces;
@@ -82,13 +80,6 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("coin", "Throw a coin! You may provide two custom faces.")]
     public async Task CoinCommand([Summary("face-1", "By default, Tails")] string face1 = "Tails", [Summary("face-2", "By default, Heads")] string face2 = "Face")
     {
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
-        if (!dbGuild.AllowsRandom())
-        {
-            await RespondAsync("Sorry, but the guild admins have disabled the use of this type of commands.", ephemeral: true);
-            return;
-        }
-
         string[] coinSides = [face1, face2];
 
         var dbUser = await UserEngine.GetDBUser(Context.User);

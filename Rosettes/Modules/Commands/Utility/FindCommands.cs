@@ -10,6 +10,12 @@ using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands.Utility;
 
+[CommandContextType(
+    InteractionContextType.BotDm,
+    InteractionContextType.PrivateChannel,
+    InteractionContextType.Guild
+)]
+[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 [Group("find", "Commands to find certain things")]
 public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 {

@@ -112,7 +112,7 @@ public static class MessageManager
             var data = await Global.HttpClient.GetStreamAsync(uri);
 
             if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-            string fileName = $"./temp/{Global.Randomize(20) + 1}.{format}";
+            string fileName = $"./temp/{Global.Randomize(20) + 1}{format}";
 
             if (File.Exists(fileName)) File.Delete(fileName);
 

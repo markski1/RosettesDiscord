@@ -1,5 +1,5 @@
 # Rosettes
-An open source Discord bot written in .NET 8, by use of Discord.NET
+An open source Discord bot written in .NET 9, by use of Discord.NET
 
 ## Features
 Learn about Rosettes' features at [https://markski.ar/rosettes](https://markski.ar/rosettes).

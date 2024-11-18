@@ -48,7 +48,16 @@ public static class Global
             using var cts = new CancellationTokenSource();
             cts.CancelAfter(TimeSpan.FromSeconds(timeout_s));
 
-            using HttpResponseMessage response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+            }
+            catch
+            {
+                return false;
+            }
 
             if (!response.IsSuccessStatusCode)
             {
