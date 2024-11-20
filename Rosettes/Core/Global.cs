@@ -92,11 +92,7 @@ public static class Global
             embed.Author = authorEmbed;
 
             authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
-
-            if (author.GetAvatarUrl() is not null)
-            {
-                authorEmbed.IconUrl = author.GetAvatarUrl();
-            }
+            authorEmbed.IconUrl = author.GetDisplayAvatarUrl();
 
             var pet = await PetEngine.GetUserPet(dbUser);
             if (pet is not null)
@@ -183,50 +179,7 @@ public static class Global
     {
         return id == 93115098461110272;
     }
-
-    public static Task<int> RunBash(this string cmd)
-    {
-        var source = new TaskCompletionSource<int>();
-        var escapedArgs = cmd.Replace("\"", "\\\"");
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "bash",
-                Arguments = $"-c \"{escapedArgs}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            },
-            EnableRaisingEvents = true
-        };
-        process.Exited += (_, _) =>
-        {
-            if (process.ExitCode == 0)
-            {
-                source.SetResult(0);
-            }
-            else
-            {
-                source.SetException(new Exception($"Command `{cmd}` failed with exit code `{process.ExitCode}`"));
-            }
-
-            process.Dispose();
-        };
-
-        try
-        {
-            process.Start();
-        }
-        catch (Exception e)
-        {
-            source.SetException(e);
-        }
-
-        return source.Task;
-    }
-
+    
     public static bool CheckIsEmoteOrEmoji(string anEmoji)
     {
         try

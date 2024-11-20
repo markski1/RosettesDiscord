@@ -49,38 +49,6 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync(embed: embed.Build());
     }
 
-    [SlashCommand("devcmd", "Developer command.")]
-    public async Task AdminMenu(string function)
-    {
-        if (!Global.CheckSnep(Context.User.Id))
-        {
-            await RespondAsync("This command is snep exclusive.");
-            return;
-        }
-        if (function is "halt" or "restart")
-        {
-            await RespondAsync("Syncing cache data with database...");
-
-            if (function is "restart")
-            {
-                await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is restarting...");
-                if (await RosettesMain.HaltOrRestart(true))
-                {
-                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes has restarted.\n\nGood morning, Dave.");
-                }
-                else
-                {
-                    await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes failed to restart.");
-                }
-            }
-            else
-            {
-                await ModifyOriginalResponseAsync(msg => msg.Content = "Rosettes is shutting down.");
-                await RosettesMain.HaltOrRestart();
-            }
-        }
-    }
-
     [SlashCommand("keygen", "Generates a unique key for logging into the Rosettes admin panel.")]
     public async Task KeyGen()
     {

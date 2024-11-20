@@ -119,12 +119,6 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("urban", "Finds an UrbanDictionary definition for the provided word.")]
     public async Task UrbanDefine(string query)
     {
-        if (Context.Guild is null)
-        {
-            await RespondAsync("This command cannot be used in DM's.");
-            return;
-        }
-
         if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
         {
             await RespondAsync($"The term must only contain letters and numbers.");

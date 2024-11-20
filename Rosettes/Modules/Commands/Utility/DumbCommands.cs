@@ -7,7 +7,12 @@ namespace Rosettes.Modules.Commands.Utility;
 public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
-    public async Task MakeSweeper([Summary("emoji", "Emoji to be used as a mine.")] string anEmoji, [Summary("difficulty", "Difficulty of the resulting minesweeper, 1-3.")] int difficulty = 2, [Summary("hide-zeros", "Should zeros be hidden? true/false.")] string hideZeros = "false", [Summary("unspoilered", "Generate a field with no spoilers.")] string unspoilered = "false")
+    public async Task MakeSweeper(
+        [Summary("emoji", "Emoji to be used as a mine.")] string anEmoji, 
+        [Summary("difficulty", "Difficulty of the resulting minesweeper, 1-3.")] int difficulty = 2, 
+        [Summary("hide-zeros", "Should zeros be hidden? true/false.")] string hideZeros = "false", 
+        [Summary("unspoilered", "Generate a field with no spoilers.")] string unspoilered = "false"
+    )
     {
         if (difficulty < 1 || difficulty > 3)
         {
@@ -93,13 +98,10 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
                 if (playingField[i, j] == -1)
                 {
                     if (unspoilered == "true")
-                    {
                         board += $"{anEmoji}";
-                    }
                     else
-                    {
                         board += $"||{anEmoji}||";
-                    }
+
                     continue;
                 }
 

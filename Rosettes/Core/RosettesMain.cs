@@ -77,7 +77,7 @@ public class RosettesMain
         PetEngine.SyncWithDatabase();
     }
 
-    public static async Task<bool> HaltOrRestart(bool restart = false)
+    public static async Task<bool> HaltOrRestart()
     {
         UserEngine.SyncWithDatabase();
         PetEngine.SyncWithDatabase();
@@ -87,25 +87,6 @@ public class RosettesMain
         await client.SetActivityAsync(game);
 
         bool success = true;
-
-        if (restart)
-        {
-            try
-            {
-                // In the machine where Rosettes runs, the startRosettes.sh script located one directory above
-                // properly initializes certain files and starts Rosettes as a background process through nohup <whatever> &
-                // I find this more convenient than running it as a systemd service for reasons I don't care to discuss here.
-                int runSuccess = await "../startRosettes.sh".RunBash();
-                if (runSuccess != 0)
-                {
-                    success = false;
-                }
-            }
-            catch
-            {
-                success = false;
-            }
-        }
 
         Environment.Exit(0);
         return success;

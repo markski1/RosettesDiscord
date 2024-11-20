@@ -37,26 +37,6 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
     private async Task FetchMedia(string uri)
     {
-        EmbedBuilder embed = await Global.MakeRosettesEmbed();
-
-        embed.Title = $"Downloading video.";
-
-        EmbedFieldBuilder downloadStatus = new() { Name = "Status", Value = "Obtaining URI information.", IsInline = true };
-
-        embed.AddField(downloadStatus);
-
-        IUserMessage? mid;
-
-        // The 'middle state' message may not be created if the bot has no perms.
-        try
-        {
-            mid = await ReplyAsync(embed: embed.Build());
-        }
-        catch
-        {
-            mid = null;
-        }
-
         // store the file locally
         if (!Directory.Exists("./temp/media/"))
         {
@@ -65,7 +45,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (uri.Contains("youtu.be") || uri.Contains("youtube.com"))
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Sorry, YouTube videos are *temporarily* not downloadable through Rosettes.");
+            await DeclareDownloadFailure("Sorry, YouTube videos are *temporarily* not downloadable through Rosettes.");
             return;
         }
 
@@ -90,13 +70,13 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         }
         catch
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Unable to connect, please try later.");
+            await DeclareDownloadFailure("Unable to connect, please try later.");
             return;
         }
 
         if (!response.IsSuccessStatusCode)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, $"Sorry, I was unable to obtain this video. [{response.StatusCode}]");
+            await DeclareDownloadFailure($"Sorry, I was unable to obtain this video. [{response.StatusCode}]");
             return;
         }
 
@@ -105,7 +85,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (responseData is null)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Failed to obtain media (URI might be invalid).");
+            await DeclareDownloadFailure("Failed to obtain media (URI might be invalid).");
             return;
         }
 
@@ -118,7 +98,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             {
                 if (responseData.pickerType == "images")
                 {
-                    await DeclareDownloadFailure(downloadStatus, mid, embed, "This tweet seems to only contain images.");
+                    await DeclareDownloadFailure("This tweet seems to only contain images.");
                     return;
                 }
                 else
@@ -135,23 +115,17 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
             else
             {
-                await DeclareDownloadFailure(downloadStatus, mid, embed, "No media found in the tweet.");
+                await DeclareDownloadFailure("No media found in the tweet.");
                 return;
             }
         }
 
         if (mediaUri is null)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "No media found in the tweet.");
+            await DeclareDownloadFailure("No media found in the tweet.");
             return;
         }
-
-        if (mid is not null)
-        {
-            downloadStatus.Value = "Downloading...";
-            await mid.ModifyAsync(x => x.Embed = embed.Build());
-        }        
-
+  
         string fileName = $"./temp/media/{Global.Randomize(50) + 1}.mp4";
 
         int seconds = 6;
@@ -165,14 +139,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (!success)
         {
-            await DeclareDownloadFailure(downloadStatus, mid, embed, "Error downloading the file, maybe it was too large.", mediaUri);
+            await DeclareDownloadFailure("Error downloading the file, maybe it was too large.", mediaUri);
             return;
-        }
-
-        if (mid is not null)
-        {
-            downloadStatus.Value = "Uploading to Discord...";
-            await mid.ModifyAsync(x => x.Embed = embed.Build());
         }
         
         ulong size = (ulong)new FileInfo(fileName).Length;
@@ -183,36 +151,26 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             try
             {
                 await FollowupWithFileAsync(fileName);
-                if (mid is not null) await mid.DeleteAsync();
             }
             catch
             {
-                downloadStatus.Value = "Upload failed.";
-
-                await FollowupAsync(embed: embed.Build());
-                if (mid is not null) await mid.DeleteAsync();
+                await DeclareDownloadFailure("Error uploading the file, maybe it was too large.", mediaUri);
             }
         }
         else
         {
-            downloadStatus.Value = "Upload failed. File was too large.";
-            embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
-            await FollowupAsync(embed: embed.Build());
-            if (mid is not null) await mid.DeleteAsync();
+            await DeclareDownloadFailure("File could not be uploaded, it is too large.", mediaUri);
         }
     }
 
-    private async Task DeclareDownloadFailure(EmbedFieldBuilder downloadStatus, IUserMessage? mid, EmbedBuilder embed,
-        string message, string? mediaUri = null)
+    private async Task DeclareDownloadFailure(string message, string? mediaUri = null)
     {
+        EmbedBuilder embed = await Global.MakeRosettesEmbed();
+
         embed.Title = "Video download failure.";
 
-        downloadStatus.Value = message;
-
-        if (mid is not null)
-        {
-            await mid.DeleteAsync();
-        }
+        EmbedFieldBuilder result = new() { Name = "Result", Value = message, IsInline = true };
+        embed.AddField(result);
 
         if (mediaUri is not null)
         {
@@ -222,7 +180,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             var msg = await FollowupAsync(embed: embed.Build());
-            _ = new MessageDeleter(msg, 15);
+            _ = new MessageDeleter(msg, 30);
         }
     }
 }
