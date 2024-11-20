@@ -197,22 +197,4 @@ public class GuildRepository
 
         return true;
     }
-
-    public async Task<IEnumerable<GuildCommand>> LoadGuildCommands(Guild guild)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
-
-        var sql = @"SELECT guildid, name, description, ephemeral, action, value FROM custom_cmds";
-
-        try
-        {
-            return await db.QueryAsync<GuildCommand>(sql, new { });
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-getallguildcommands", $"sqlException code {ex.Message}");
-            return new List<GuildCommand>();
-        }
-    }
 }

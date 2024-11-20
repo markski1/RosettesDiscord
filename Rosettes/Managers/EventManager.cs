@@ -26,7 +26,6 @@ public static class EventManager
         Client.Ready += OnReady;
 
         Client.JoinedGuild += OnJoinGuild;
-
         Client.LeftGuild += OnLeftGuild;
 
         Client.RoleCreated += OnRoleChange;
@@ -65,7 +64,6 @@ public static class EventManager
                 PetEngine.LoadAllPetsFromDatabase();
                 GuildEngine.LoadAllGuildsFromDatabase();
                 AlarmManager.LoadAllAlarmsFromDatabase();
-                RequestManager.Initialize();
                 await AutoRolesEngine.SyncWithDatabase();
             });
         }

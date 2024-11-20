@@ -10,18 +10,11 @@ using System.Reflection;
 
 namespace Rosettes.Managers;
 
-public class InteractionManager
+public class InteractionManager(DiscordSocketClient client, InteractionService commands, IServiceProvider services)
 {
-    private readonly DiscordSocketClient _client;
-    private readonly InteractionService _commands;
-    private readonly IServiceProvider _services;
-
-    public InteractionManager(DiscordSocketClient client, InteractionService commands, IServiceProvider services)
-    {
-        _client = client;
-        _commands = commands;
-        _services = services;
-    }
+    private readonly DiscordSocketClient _client = client;
+    private readonly InteractionService _commands = commands;
+    private readonly IServiceProvider _services = services;
 
     private Task OnInteraction(SocketInteraction inter)
     {
@@ -172,14 +165,6 @@ public class InteractionManager
 
     private Task OnGuildCommandExecuted(SocketSlashCommand arg)
     {
-        TelemetryEngine.Count(TelemetryType.Command);
-        // only handle guild-specific commands.
-        if (arg.GuildId is not ulong guildId) return Task.CompletedTask;
-        if (arg.Type != InteractionType.ApplicationCommand) return Task.CompletedTask;
-
-        var dbGuild = GuildEngine.GetDBGuildById(guildId);
-        dbGuild.ExecuteCommand(arg);
-
         return Task.CompletedTask;
     }
 

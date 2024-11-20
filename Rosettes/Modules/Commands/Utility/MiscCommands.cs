@@ -79,7 +79,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
+        if (Context.User != Context.Guild.Owner)
         {
             await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
             return;

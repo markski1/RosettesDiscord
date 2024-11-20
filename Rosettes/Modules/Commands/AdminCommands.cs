@@ -90,7 +90,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command must run in a guild.");
             return;
         }
-        if (!Global.CheckSnep(Context.User.Id) && Context.User != Context.Guild.Owner)
+        if (Context.User != Context.Guild.Owner)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             return;
@@ -156,7 +156,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("setlogchan", "Sets the channel where user join/left is sent. Use 'disable: true' to disable.")]
     public async Task SetLogChan(string disable = "false")
     {
-        if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+        if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
         }
@@ -180,7 +180,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("setfarmchan", "Sets the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
     public async Task SetFarmChan(string disable = "false")
     {
-        if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+        if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
         }
@@ -204,7 +204,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("settings", "Change guild settings")]
     public async Task ShowSettings()
     {
-        if (Context.Guild.OwnerId != Context.User.Id && !Global.CheckSnep(Context.User.Id))
+        if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
         }
@@ -273,7 +273,7 @@ public static class AdminHelper
         {
             var dbGuild = GuildEngine.GetDBGuildById(guildId);
             var guildRef = dbGuild.GetDiscordSocketReference();
-            if (guildRef.OwnerId != component.User.Id && !Global.CheckSnep(component.User.Id))
+            if (guildRef.OwnerId != component.User.Id)
             {
                 await component.RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             }

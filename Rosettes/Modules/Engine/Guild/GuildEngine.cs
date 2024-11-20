@@ -90,7 +90,6 @@ public static class GuildEngine
         foreach (Guild guild in GuildCache)
         {
             guild.UpdateRoles();
-            await guild.UpdateCommands();
         }
     }
 
@@ -131,7 +130,6 @@ public class Guild
     public ulong FarmChannel;
     public string NameCache;
     private SocketGuild? CachedReference;
-    private readonly List<GuildCommand> GuildCommands = new();
 
     // settings contains 10 characters, each representative of the toggle state of a setting.
     //
@@ -350,103 +348,5 @@ public class Guild
         }
     }
 
-    public Task ExecuteCommand(SocketSlashCommand arg)
-    {
-        if (GuildCommands.Any(x => x.name == arg.Data.Name))
-        {
-            GuildCommand cmd = GuildCommands.First(x => x.name == arg.Data.Name);
-            cmd.Execute(arg);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public async Task UpdateCommands()
-    {
-        var cmdsTemp = await GuildEngine._interface.LoadGuildCommands(this);
-
-        var dref = GetDiscordSocketReference();
-
-        if (dref is null) return;
-
-        GuildCommands.Clear();
-        await dref.DeleteApplicationCommandsAsync();
-
-        foreach (var cmd in cmdsTemp)
-        {
-            cmd.BuildSelf();
-            GuildCommands.Add(cmd);
-        }
-    }
-
     public IUserMessage? cacheSettingsMsg;
-}
-
-public class GuildCommand
-{
-    public ulong guild_id;
-    public Guild dbGuild;
-    public string name;
-    public string description;
-    public int action;
-    public bool ephemeral;
-    public string value;
-
-    public GuildCommand(ulong guildid, string name, string description, int ephemeral, int action, string value)
-    {
-        guild_id = guildid;
-        this.name = name;
-        this.action = action;
-        this.value = value;
-        this.ephemeral = ephemeral != 0;
-        this.description = description;
-        dbGuild = GuildEngine.GetDBGuildById(guild_id);
-    }
-
-    public void BuildSelf()
-    {
-        SlashCommandBuilder command = new SlashCommandBuilder().
-            WithName(name).
-            WithDescription(description);
-
-        dbGuild.GetDiscordSocketReference().CreateApplicationCommandAsync(command.Build());
-    }
-
-    public async void Execute(SocketInteraction context)
-    {
-        if (context.User is not SocketGuildUser guildUser)
-        {
-            Global.GenerateErrorMessage("customcmd-assign", $"Failed to obtain a guild-specific user object!\n Guild: {context.GuildId} ; User: {context.User.Id} ; For command: {name}");
-            return;
-        }
-
-        switch (action)
-        {
-            case 0: // message
-                await context.RespondAsync(value, ephemeral: ephemeral);
-                break;
-            case 1: // assign role
-                ulong roleId = ulong.Parse(value);
-                bool hasRole = guildUser.Roles.Any(x => x.Id == roleId);
-                var role = guildUser.Guild.GetRole(roleId);
-                try
-                {
-                    if (hasRole)
-                    {
-                        await guildUser.RemoveRoleAsync(role);
-                        await context.RespondAsync($"Role `{role.Name}` removed.", ephemeral: ephemeral);
-                    }
-                    else
-                    {
-                        await guildUser.AddRoleAsync(role);
-                        await context.RespondAsync($"Role `{role.Name}` added.", ephemeral: ephemeral);
-                    }
-                }
-                catch
-                {
-                    await context.RespondAsync("Sorry, I don't have permission to add or remove roles in this guild. Please tell an admin.", ephemeral: true);
-                }
-                break;
-        }
-    }
 }
