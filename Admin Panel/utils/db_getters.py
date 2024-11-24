@@ -37,15 +37,6 @@ def get_server_roles(server_id):
     return result
 
 
-def get_server_commands(server_id):
-    db = get_db_conn()
-    db.execute("SELECT * FROM custom_cmds WHERE guildid = %s", server_id)
-
-    result = db.fetch_all()
-    pool_db_conn(db)
-    return result
-
-
 def set_server_settings(server_id, settings):
     db = get_db_conn()
     db.execute("UPDATE guilds SET settings = %s WHERE id = %s", settings, server_id)

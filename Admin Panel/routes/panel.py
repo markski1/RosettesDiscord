@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
-from utils.db_getters import get_owned_servers, get_user_data, get_server_data, set_server_settings, get_server_commands
+from utils.db_getters import get_owned_servers, get_user_data, get_server_data
 from utils.miscfuncs import htmx_check, ownership_required
 
 panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
@@ -45,17 +45,3 @@ def roles(is_htmx, server_id):
         return "Server not found."
 
     return render_template("roles.html", is_htmx=is_htmx, server=server)
-
-
-@panel_bp.get("/<int:server_id>/cmds")
-@login_required
-@ownership_required
-@htmx_check
-def cmds(is_htmx, server_id):
-    server = get_server_data(server_id)
-    if not server:
-        return "Server not found."
-
-    commands = get_server_commands(server_id)
-
-    return render_template("cmds.html", is_htmx=is_htmx, server=server, commands=commands)
