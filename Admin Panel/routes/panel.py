@@ -44,6 +44,6 @@ def roles(is_htmx, server_id):
     if not server:
         return "Server not found."
 
-    roles = get_server_roles(server_id)
+    rolelist = get_server_roles(server_id)
 
-    return render_template("roles.jinja2", is_htmx=is_htmx, server=server, roles=roles)
+    return render_template("roles.jinja2", is_htmx=is_htmx, server=server, roles=rolelist)
