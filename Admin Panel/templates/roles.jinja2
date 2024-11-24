@@ -5,146 +5,20 @@
 
     <p><a href="/panel/">Go back</a></p>
 
-    <h3>Creating an Autoroles profile for {{ server['namecache'] }}</h3>
+    <h3>Autoroles for {{ server['namecache'] }}</h3>
 
-    <form style="text-align: center;">
-        <p>Enter a name for this profile.</p>
-        <input type="text" name="name" />
-        <hr>
-        <p>You may add up to 20 emoji/role combinations.</p>
-        <div>
-            <button type="button" id="select-emoji">Select emoji</button>
-            <select onchange="selectRole()" id="role_selector">
-                {% for role in roles %}
-                    <option value="{{ role.id }}" style="background-color: {{ role.color }}">{{ role.rolename }}</option>
-                {% endfor %}
-            </select>
-            <p>When user clicks <span id="emoji_preview">__</span> they get "<b><span id="role_preview">______</span>"</b>
-            <button type="button" id="add" onclick="addSelection()">Add</button>
+    <p>Autorole groups:</p>
+    {% for arg in autorole_groups %}
+        <div class="block">
+            <h4>{{ arg.name }}</h4>
+            <p>Group ID: {{ arg.id }}</p>
+            <p>Applied to message: {% if arg.messageid > 0 %} {{ arg.messageid }} {% else %} No {% endif %}</p>
         </div>
-        <hr>
-        <div id="rolegroups">
-            <p><big>AutoRole entries:</big><p>
-            <span id="RoleEmojiList">
-
-            </span>
-            <p><small>You have <span id="SlotLeftCount">20</span> slots left.</small></p>
+    {% else %}
+        <div class="block">
+            <p>No autorole groups exist yet.</p>
         </div>
-        <div id="ConfirmAutoRoles" style="display: none">
-            <form method="POST" action="/action/{{ server.id }}/create-autoroles" onsubmit="return CheckRoleForm()">
-                <hr>
-                <p>When you are done, proceed.</p>
-                <input type="text" hidden value="{{ server.id }}}" name="guild_id"/>
-                <div id="DynamicForm" style="display: none">
-                </div>
-                <input type="submit" value="Create Autoroles">
-            </form>
-        </div>
-    </div>
-
-    <script type="text/javascript" src="{{ url_for('static', filename='vanillaEmojiPicker.json') }}"></script>
-    <script type="text/javascript">
-        new FgEmojiPicker({
-            trigger: ['#select-emoji'],
-            postion: ['bottom'],
-            emit(obj, triggerElement) {
-                const emoji = obj.emoji;
-                selectEmoji(emoji);
-            }
-        });
-
-        const maxEntries = 20;
-        let currentEntries = 0;
-
-        let ListAddedRoles = [];
-        let selectedEmoji = "__";
-        let selectedRoleId = 0;
-        let selectedRoleName = "______";
-
-        const ListRoles = [
-            {% for role in roles %}
-                {roleName: "{{ role.rolename }}", roleId: "{{ role.id }}"},
-            {% endfor %}
-        ];
-
-        function selectEmoji(emoji) {
-            document.getElementById("emoji_preview").innerHTML = emoji;
-            selectedEmoji = emoji;
-        }
-
-        function selectRole() {
-            let checkRole = document.getElementById("role_selector").value;
-            if (checkRole == 0) return;
-
-            ListRoles.forEach(setSelectedRole)
-        }
-
-        function setSelectedRole(item, index) {
-            let checkRole = document.getElementById("role_selector").value;
-            if (checkRole == item.roleId) {
-                selectedRoleId = item.roleId;
-                selectedRoleName = item.roleName;
-                document.getElementById("role_preview").innerHTML = item.roleName;
-            }
-        }
-
-        function addSelection() {
-            if (selectedEmoji == "__") {
-                alert("You must select a valid emoji.");
-                return 0;
-            }
-            if (selectedRoleId == 0) {
-                alert("You must select a valid role.");
-                return 0;
-            }
-            if (currentEntries == maxEntries) {
-                alert("Sorry, you cannot add more than " + maxEntries + " role selections to AutoRoles.");
-                return 0;
-            }
-            ListAddedRoles.push({roleName: selectedRoleName, roleId: selectedRoleId, roleEmoji: selectedEmoji});
-            selectedEmoji = "__";
-            selectedRoleId = 0;
-            selectedRoleName = "______";
-            document.getElementById("role_preview").innerHTML = selectedRoleName;
-            document.getElementById("emoji_preview").innerHTML = selectedEmoji;
-            document.getElementById("role_selector").value = 0;
-            document.getElementById("RoleEmojiList").innerHTML = "";
-            document.getElementById("ConfirmAutoRoles").style.display = "block";
-            document.getElementById("DynamicForm").innerHTML = "";
-
-            currentEntries++;
-            document.getElementById("SlotLeftCount").innerHTML = maxEntries - currentEntries;
-
-            ListAddedRoles.forEach(printRoleEntry);
-        }
-
-        function printRoleEntry(item, index) {
-            document.getElementById("RoleEmojiList").innerHTML += "<p>When user clicks " + item.roleEmoji + " they get \"<b>" + item.roleName + "</b>\".</p>";
-            let form1 = document.createElement("input");
-            form1.type = "text";
-            form1.name = "roleEntry[" + index + "][emoji]";
-            form1.value = item.roleEmoji;
-            let form2 = document.createElement("input");
-            form2.type = "text";
-            form2.name = "roleEntry[" + index + "][roleid]";
-            form2.value = item.roleId;
-            document.getElementById("DynamicForm").appendChild(form1);
-            document.getElementById("DynamicForm").appendChild(form2);
-        }
-
-        function CheckRoleForm() {
-            if (currentEntries == 0) {
-                alert("You've not added any roles!");
-                return false;
-            }
-
-            if (currentEntries > maxEntries) {
-                alert("You may no submit more than 20 roles.");
-                return false;
-            }
-            return true;
-        }
-
-    </script>
+    {% endfor %}
+    <p><a href=/panel/{{ server.id }}/autoroles-maker>Create new Autoroles group</a></p>
 
 {% endblock %}

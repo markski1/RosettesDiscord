@@ -64,6 +64,9 @@ class Database:
             result = dict(zip(columns, row))
             return result
 
+    def last_insert_id(self):
+        return self.cursor.lastrowid
+
     def is_healthy(self):
         if self.conn.is_connected():
             return True

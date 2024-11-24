@@ -1,0 +1,138 @@
+{% extends "layout.jinja2" %}
+{% block title %}Creating Autoroles{% endblock %}
+
+{% block main %}
+
+    <p><a href="/panel/">Go back</a></p>
+
+    <h3>Creating an Autoroles profile for {{ server['namecache'] }}</h3>
+
+    <div style="text-align: center;">
+        <p>Select an emoji and role combination, then click 'add'.</p>
+        <div>
+            <button style="height: 2rem; width: 8rem" type="button" id="select-emoji">Select emoji</button>
+            <select onchange="selectRole()" id="role_selector">
+                <option value=0>Choose a role</option>
+                {% for role in roles %}
+                    <option value="{{ role.id }}" style="background-color: {{ role.color }}">{{ role.rolename }}</option>
+                {% endfor %}
+            </select>
+            <div class="block">
+                <p>When user clicks <span id="emoji_preview">__</span> they get "<b><span id="role_preview">______</span>"</b>
+            </div>
+            <button style="height: 2rem; width: 5rem" type="button" id="add" onclick="addSelection()">Add</button>
+        </div>
+        <hr>
+        <div id="rolegroups">
+            <p><big>AutoRole entries:</big><p>
+            <span id="RoleEmojiList">
+
+            </span>
+            <p><small>You have <span id="SlotLeftCount">20</span> slots left.</small></p>
+        </div>
+        <div id="ConfirmAutoRoles" style="display: none">
+            <form method="POST" action="/action/{{ server.id }}/create-autoroles" onsubmit="return CheckRoleForm()">
+                <hr>
+                <p>Enter a name for this profile.</p>
+                <input type="text" name="name" placeholder="Choose your roles." />
+                <p>When you are done, proceed.</p>
+                <textarea hidden name="RoleListJson" id="RoleListJson">
+
+                </textarea>
+                <input type="submit" value="Create Autoroles">
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='vanillaEmojiPicker.json') }}"></script>
+    <script type="text/javascript">
+        new FgEmojiPicker({
+            trigger: ['#select-emoji'],
+            postion: ['bottom'],
+            emit(obj, triggerElement) {
+                const emoji = obj.emoji;
+                selectEmoji(emoji);
+            }
+        });
+
+        const maxEntries = 20;
+        let currentEntries = 0;
+
+        let ListAddedRoles = [];
+        let selectedEmoji = "__";
+        let selectedRoleId = 0;
+        let selectedRoleName = "______";
+
+        const ListRoles = [
+            {% for role in roles %}
+                {roleName: "{{ role.rolename }}", roleId: "{{ role.id }}"},
+            {% endfor %}
+        ];
+
+        function selectEmoji(emoji) {
+            document.getElementById("emoji_preview").innerHTML = emoji;
+            selectedEmoji = emoji;
+        }
+
+        function selectRole() {
+            let checkRole = document.getElementById("role_selector").value;
+            if (checkRole == 0) return;
+
+            ListRoles.forEach(setSelectedRole)
+        }
+
+        function setSelectedRole(item, index) {
+            let checkRole = document.getElementById("role_selector").value;
+            if (checkRole == item.roleId) {
+                selectedRoleId = item.roleId;
+                selectedRoleName = item.roleName;
+                document.getElementById("role_preview").innerHTML = item.roleName;
+            }
+        }
+
+        function addSelection() {
+            if (selectedEmoji == "__") {
+                alert("You must select a valid emoji.");
+                return 0;
+            }
+            if (selectedRoleId == 0) {
+                alert("You must select a valid role.");
+                return 0;
+            }
+            if (currentEntries == maxEntries) {
+                alert("Sorry, you cannot add more than " + maxEntries + " role selections to AutoRoles.");
+                return 0;
+            }
+            ListAddedRoles.push({roleName: selectedRoleName, roleId: selectedRoleId, roleEmoji: selectedEmoji});
+            document.getElementById("RoleEmojiList").innerHTML += "<p>When user clicks " + selectedEmoji + " they get \"<b>" + selectedRoleName + "</b>\".</p>";
+
+            selectedEmoji = "__";
+            selectedRoleId = 0;
+            selectedRoleName = "______";
+            document.getElementById("role_preview").innerHTML = selectedRoleName;
+            document.getElementById("emoji_preview").innerHTML = selectedEmoji;
+            document.getElementById("role_selector").value = 0;
+            document.getElementById("ConfirmAutoRoles").style.display = "block";
+
+            currentEntries++;
+            document.getElementById("SlotLeftCount").innerHTML = maxEntries - currentEntries;
+
+            document.getElementById("RoleListJson").innerHTML = JSON.stringify(ListAddedRoles);
+        }
+
+        function CheckRoleForm() {
+            if (currentEntries == 0) {
+                alert("You've not added any roles!");
+                return false;
+            }
+
+            if (currentEntries > maxEntries) {
+                alert("You may no submit more than 20 roles.");
+                return false;
+            }
+            return true;
+        }
+
+    </script>
+
+{% endblock %}
