@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "layout.jinja2" %}
 {% block title %}Settings{% endblock %}
 
 {% block main %}
@@ -13,7 +13,7 @@
         <div class="block bottom-pad">
             <h4>Message parsing</h4>
             <p>
-                Rosettes will parse messages to extract and provide data for certain things. I.E. Steam games or profiles, mirroring 4cdn uri's, etc.
+                Rosettes will parse messages to extract and provide data for certain things. I.E. Steam games or profiles, mirroring 4cdn uri's, etc.<br>
                 <small>Regardless of this setting, Rosettes NEVER stores any message data whatsoever.</small>
             </p>
             <select name="msgparse">
@@ -24,7 +24,7 @@
         <div class="block bottom-pad">
             <h4>Farm minigame</h4>
             <p>
-                Toggles the minigame commands under /farm.
+                Toggles the minigame commands under /farm.<br>
                 <small>Be advised, if annoying, this can be limited to a single channel with /setfarmchan.</small>
             </p>
             <select name="minigame">
@@ -33,17 +33,9 @@
             </select>
         </div>
         <div class="block bottom-pad">
-            <h4>Gambling commands</h4>
-            <p>Gambling commands are the commands where randomization is relevant. i.e. /dice; /checkem.</p>
-            <select name="gambling">
-                <option value="1">Enabled</option>
-                <option value="0" {% if not gambling %} selected {% endif %}>Disabled</option>
-            </select>
-        </div>
-        <div class="block bottom-pad">
             <h4>Voicechat announce</h4>
             <p>
-                If enabled, Rosettes will announce when a user joins or leaves a VC, with a message in the channel's text channel.
+                If enabled, Rosettes will announce when a user joins or leaves a VC, with a message in the channel's text channel.<br>
                 <small>Each message is deleted after 60 seconds, so this does not cause spam.</small>
             </p>
             <select name="announce">

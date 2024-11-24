@@ -32,21 +32,4 @@ def post_settings(is_htmx, server_id):
 
     new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
     set_server_settings(server_id, new_settings)
-    return render_template("prompts/success.html", is_htmx=is_htmx, message="Settings updated successfully.")
-
-
-@panel_bp.post("/<int:server_id>/create-cmd")
-@login_required
-@ownership_required
-@htmx_check
-def post_settings(is_htmx, server_id):
-    try:
-        name = abs(int(request.form["name"]))
-        description = abs(int(request.form["description"]))
-        cmd_type = abs(int(request.form["type"]))
-        content = abs(int(request.form["content"]))
-    except:
-        return "Invalid parameters."
-
-    return "Not yet implemented."
-
+    return render_template("prompts/success.jinja2", is_htmx=is_htmx, message="Settings updated successfully.")

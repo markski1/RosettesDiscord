@@ -1,17 +1,16 @@
 /* Sections */
 body {
-    background-color: #666666;
+    background-color: #1A1423;
     font-family: Tahoma, SansSerif, sans-serif;
-    color: #BBBBBB;
 }
 
 main {
     margin: 2rem auto auto;
     width: 60%;
     max-width: 800px;
-    background-color: #EEEEEE;
+    background-color: #372549;
     padding: 1rem 1.5rem;
-    color: #202020;
+    color: #DDDDEE;
 }
 
 footer {
@@ -27,15 +26,19 @@ table, td {
 }
 
 a {
-    color: black;
+    color: #5bc0be;
+}
+
+hr {
+    border: 1px black solid;
 }
 
 /* My Components */
 
 .block {
-    background-color: #BBBBBB;
-    padding: 0.2rem 0.5rem;
-    margin: 0.5rem;
+    background-color: #FFFFFF10;
+    padding: 0.2rem 0.75rem;
+    margin: 1rem .5rem;
     border-radius: 5px;
 }
 

@@ -12,4 +12,4 @@ def index(is_htmx):
     if current_user.is_authenticated:
         return redirect("/panel/")
 
-    return render_template("index.html", htmx=is_htmx)
+    return render_template("index.jinja2", htmx=is_htmx)

@@ -1,0 +1,46 @@
+{% if htmx %}
+    {% block main %} {% endblock %}
+    <script>
+        document.title = "Rosettes - {{ self.title() }}";
+        window.scrollTo(0, 0);
+    </script>
+{% else %}
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+        <title>Rosettes - {% block title %}{% endblock %}</title>
+    </head>
+    <body>
+        <main>
+            {{ self.main() }}
+        </main>
+        <footer style="user-select: none" onclick="ChangeFooter()">
+            <p alt="click me" style="color: #c1bdb3">MMXXIV | <span id="footerText"></span></p>
+        </footer>
+    </body>
+    <script>
+        const randNames = [
+            "Rosettes Automation, Inc",
+            "Rosettes Industries",
+            "Rosettes Technology Corporation",
+            "Rosettes Grand Prix Engineering Ltd.",
+            "Rosettes Consumer Consulting",
+            "Rosetted Valley Bank",
+            "Rosettes Mutual",
+            "Rosettes Gas & Electric Company",
+            "Rosettes L. Snep Investment Securities",
+            "Rosettes Savings and Loan Association",
+            "Rosettes-Myers Squibb",
+            "Rosettes-Volkswaggen Emissions Monitoring",
+            "FTX Rosettes F1 Team"
+        ];
+
+        ChangeFooter();
+
+        function ChangeFooter() {
+            document.getElementById("footerText").innerHTML = randNames[Math.floor(Math.random() * randNames.length)]
+        }
+    </script>
+    </html>
+{% endif %}

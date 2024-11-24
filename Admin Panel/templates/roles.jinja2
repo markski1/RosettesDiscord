@@ -1,0 +1,35 @@
+{% extends "layout.jinja2" %}
+{% block title %}Creating Autoroles{% endblock %}
+
+{% block main %}
+
+    <p><a href="/panel/">Go back</a></p>
+
+    <h3>Creating an Autoroles profile for {{ server['namecache'] }}</h3>
+
+    <form method="POST" action="/panel/{{ server['id'] }}/update-roles" style="text-align: center;">
+        <p></p>
+        <p>Enter a name for this profile.</p>
+        <input type="text" name="name" />
+        <hr>
+        <p>You may add up to 20 emoji/role combinations.</p>
+        <small>On Windows, you may use 'Win + .' to get an emoji selector.</small>
+        <div>
+            <input type="text" id="chosen_emoji">
+            <select id="chosen_role">
+                {% for role in roles %}
+                    <option value="{{ role.id }}" style="background-color: {{ role.color }}">{{ role.rolename }}</option>
+                {% endfor %}
+            </select>
+            <button id="add">Add</button>
+        </div>
+        <hr>
+        <div id="rolegroups">
+            <p>Role options will appear here as you add them.</p>
+        </div>
+        <hr>
+        <p>When you are done, proceed.</p>
+        <input type="submit" value="Create Autoroles">
+    </form>
+
+{% endblock %}

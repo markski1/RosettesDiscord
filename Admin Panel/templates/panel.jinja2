@@ -1,15 +1,15 @@
-{% extends "layout.html" %}
+{% extends "layout.jinja2" %}
 {% block title %}Panel{% endblock %}
 
 {% block main %}
 
-    <p>Welcome, {{ user['namecache'] }} | <a href="/session/logout">Logout</a></p>
+    <small>Welcome, {{ user['namecache'] }} | <a href="/session/logout">Logout</a></small>
 
     <h2>Servers</h2>
     <hr>
     {% for server in servers %}
         <div class="block">
-            <h4>{{ server['namecache'] }}</h4>
+            <p style="font-size: 1.3rem; font-weight: bold; margin: .75rem 0;">{{ server['namecache'] }}</p>
             <p>{{ server['members'] }} members.</p>
             <p><a href="/panel/{{ server['id'] }}/settings">Settings</a> | <a href="/panel/{{ server['id'] }}/roles">Roles</a></p>
         </div>

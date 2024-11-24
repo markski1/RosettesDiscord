@@ -90,9 +90,10 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command must run in a guild.");
             return;
         }
+
         if (Context.User != Context.Guild.Owner)
         {
-            await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+            await RespondAsync("This command may only be used by the server owner.", ephemeral: true);
             return;
         }
 
