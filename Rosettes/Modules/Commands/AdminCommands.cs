@@ -246,9 +246,6 @@ public static class AdminHelper
         enabledText = (dbGuild.AllowsFarm()) ? "Enabled" : "Disabled";
         secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
 
-        enabledText = (dbGuild.AllowsRandom()) ? "Enabled" : "Disabled";
-        secondRow.WithButton($"Gambling commands: {enabledText}", "toggle_gambling");
-
         enabledText = (dbGuild.MonitorsVC()) ? "Enabled" : "Disabled";
         secondRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
 
@@ -288,9 +285,6 @@ public static class AdminHelper
                     break;
                 case "toggle_farm":
                     dbGuild.ToggleSetting(4);
-                    break;
-                case "toggle_gambling":
-                    dbGuild.ToggleSetting(2);
                     break;
                 case "toggle_monitorvc":
                     dbGuild.ToggleSetting(5);

@@ -24,24 +24,6 @@ public class PetRepository
         }
     }
 
-    public async Task<bool> CheckPetExists(ulong ownerId, int index)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
-
-        var sql = @"SELECT count(1) FROM pets WHERE owner_id=@ownerId AND pet_index=@index";
-
-        try
-        {
-            return await db.ExecuteScalarAsync<bool>(sql, new { ownerId, index });
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-checkpetexists", $"sqlException code {ex.Message}");
-            return false;
-        }
-    }
-
     public async Task<int> InsertPet(Pet pet)
     {
         using var getConn = DatabasePool.GetConnection();
