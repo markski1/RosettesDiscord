@@ -56,7 +56,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         );
 
-        HttpRequestMessage request = new(HttpMethod.Post, "http://127.0.0.1:9000/");
+        HttpRequestMessage request = new(HttpMethod.Post, "http://snep.vps.webdock.cloud:9000/");
 
         request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = new StringContent(requestData, Encoding.UTF8);
@@ -90,6 +90,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         string? mediaUri = responseData.url;
+        string? baseName = responseData.filename;
 
         // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
         if (mediaUri is null)
@@ -108,6 +109,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                         if (item.type == "video")
                         {
                             mediaUri = item.url;
+                            baseName = item.filename;
                             break;
                         }
                     }
@@ -125,15 +127,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             await DeclareDownloadFailure("No media found in the tweet.");
             return;
         }
+
+        baseName ??= $"rosettes_{Global.Randomize(50) + 1}.mp4";
   
-        string fileName = $"./temp/media/{Global.Randomize(50) + 1}.mp4";
+        string fileName = $"./temp/media/rosettes_{baseName}";
 
         int seconds = 6;
-
-        if (mediaUri.Contains("youtu"))
-        {
-            seconds = 12;
-        }
 
         bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
 
