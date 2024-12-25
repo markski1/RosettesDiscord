@@ -106,7 +106,6 @@ public static class MessageManager
         // If the length of the grabbed "format" is too long, we can assume the URI didn't specify a format.
         if (format.Length > 5) return;
 
-
         try
         {
             var data = await Global.HttpClient.GetStreamAsync(uri);

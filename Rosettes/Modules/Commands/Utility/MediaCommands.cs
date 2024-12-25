@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using System.Linq;
 using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -11,9 +13,12 @@ namespace Rosettes.Modules.Commands.Utility;
     InteractionContextType.PrivateChannel,
     InteractionContextType.Guild
 )]
+
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    public static Dictionary<string, string> MediaCache = [];
+
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
     {
@@ -45,103 +50,124 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (uri.Contains("youtu.be") || uri.Contains("youtube.com"))
         {
-            await DeclareDownloadFailure("Sorry, YouTube videos are *temporarily* not downloadable through Rosettes.");
+            await DeclareDownloadFailure("Sorry, YouTube videos are currently not downloadable through Rosettes.");
             return;
         }
 
-        string requestData = JsonConvert.SerializeObject(
-            new
-            {
-                url = uri
-            }
-        );
+        uri = uri.Trim();
 
-        HttpRequestMessage request = new(HttpMethod.Post, "http://snep.vps.webdock.cloud:9000/");
+        string fileName;
+        string? mediaUri = null;
 
-        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-        request.Content = new StringContent(requestData, Encoding.UTF8);
-        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-
-        HttpResponseMessage response;
-
-        try
+        if (MediaCache.ContainsKey(uri))
         {
-            response = await Global.HttpClient.SendAsync(request);
+            fileName = MediaCache[uri];
         }
-        catch
+        else
         {
-            await DeclareDownloadFailure("Unable to connect, please try later.");
-            return;
-        }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            await DeclareDownloadFailure($"Sorry, I was unable to obtain this video. [{response.StatusCode}]");
-            return;
-        }
-
-        string responseContent = await response.Content.ReadAsStringAsync();
-        dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseContent);
-
-        if (responseData is null)
-        {
-            await DeclareDownloadFailure("Failed to obtain media (URI might be invalid).");
-            return;
-        }
-
-        string? mediaUri = responseData.url;
-        string? baseName = responseData.filename;
-
-        // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
-        if (mediaUri is null)
-        {
-            if (responseData.pickerType is not null)
-            {
-                if (responseData.pickerType == "images")
+            string requestData = JsonConvert.SerializeObject(
+                new
                 {
-                    await DeclareDownloadFailure("This tweet seems to only contain images.");
-                    return;
+                    url = uri
                 }
-                else
+            );
+
+            HttpRequestMessage request = new(HttpMethod.Post, "http://snep.vps.webdock.cloud:9000/");
+
+            request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = new StringContent(requestData, Encoding.UTF8);
+            request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await Global.HttpClient.SendAsync(request);
+            }
+            catch
+            {
+                await DeclareDownloadFailure("Unable to connect, please try later.");
+                return;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                await DeclareDownloadFailure($"Sorry, I was unable to obtain this video. [{response.StatusCode}]");
+                return;
+            }
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+            if (responseData is null)
+            {
+                await DeclareDownloadFailure("Failed to obtain media (URI might be invalid).");
+                return;
+            }
+
+            mediaUri = responseData.url;
+            string? baseName = responseData.filename;
+
+            // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
+            if (mediaUri is null)
+            {
+                if (responseData.pickerType is not null)
                 {
-                    foreach (var item in responseData.picker)
+                    if (responseData.pickerType == "images")
                     {
-                        if (item.type == "video")
+                        await DeclareDownloadFailure("This tweet seems to only contain images.");
+                        return;
+                    }
+                    else
+                    {
+                        foreach (var item in responseData.picker)
                         {
-                            mediaUri = item.url;
-                            baseName = item.filename;
-                            break;
+                            if (item.type == "video")
+                            {
+                                mediaUri = item.url;
+                                baseName = item.filename;
+                                break;
+                            }
                         }
                     }
                 }
+                else
+                {
+                    await DeclareDownloadFailure("No media found in the tweet.");
+                    return;
+                }
             }
-            else
+
+            if (mediaUri is null)
             {
                 await DeclareDownloadFailure("No media found in the tweet.");
                 return;
             }
+
+            bool cacheMedia = true;
+
+            if (baseName is null)
+            {
+                cacheMedia = false;
+                baseName ??= $"rosettes_{Global.Randomize(10000) + 1}.mp4";
+            }
+
+            fileName = $"./temp/media/rosettes_{Global.Randomize(99) + 1}_{baseName}";
+
+            int seconds = 6;
+
+            bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
+
+            if (!success)
+            {
+                await DeclareDownloadFailure("Error downloading the file, maybe it was too large.", mediaUri);
+                return;
+            }
+
+            if (cacheMedia) MediaCache[uri] = fileName;
         }
-
-        if (mediaUri is null)
-        {
-            await DeclareDownloadFailure("No media found in the tweet.");
-            return;
-        }
-
-        baseName ??= $"rosettes_{Global.Randomize(50) + 1}.mp4";
-  
-        string fileName = $"./temp/media/rosettes_{baseName}";
-
-        int seconds = 6;
-
-        bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
-
-        if (!success)
-        {
-            await DeclareDownloadFailure("Error downloading the file, maybe it was too large.", mediaUri);
-            return;
-        }
-        
+            
         ulong size = (ulong)new FileInfo(fileName).Length;
 
         // check if the guild supports a file this large, otherwise fail.
