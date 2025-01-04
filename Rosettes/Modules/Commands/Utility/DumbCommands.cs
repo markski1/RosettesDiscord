@@ -6,6 +6,7 @@ namespace Rosettes.Modules.Commands.Utility;
 
 public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
     [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
     public async Task MakeSweeper(
         [Summary("emoji", "Emoji to be used as a mine.")] string anEmoji, 
