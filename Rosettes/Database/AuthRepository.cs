@@ -3,14 +3,14 @@ using Rosettes.Modules.Engine;
 
 namespace Rosettes.Database;
 
-public class AuthRepository
+public static class AuthRepository
 {
-    public async Task<ApplicationAuth?> GetApplicationAuth(string applicationKey)
+    public static async Task<ApplicationAuth?> GetApplicationAuth(string applicationKey)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        var sql = @"SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
+        const string sql = @"SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
 
         try
         {
@@ -22,13 +22,12 @@ public class AuthRepository
         }
     }
 
-    public async Task<bool> AuthUser(int appId, ulong userId)
+    public static async Task<bool> AuthUser(int appId, ulong userId)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        var sql = @"INSERT INTO app_auth_rel (user_id, app_id)
-                    VALUES(@UserId, @AppId)";
+        const string sql = "INSERT INTO app_auth_rel (user_id, app_id) VALUES(@UserId, @AppId)";
 
         try
         {
@@ -40,19 +39,19 @@ public class AuthRepository
         }
     }
 
-    public async Task<ApplicationRelation?> GetApplicationRelation(string applicationKey, ulong userId)
+    public static async Task<ApplicationRelation?> GetApplicationRelation(string applicationKey, ulong userId)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        var appAuth = GetApplicationAuth(applicationKey);
+        var appAuth = await GetApplicationAuth(applicationKey);
 
-        if (appAuth == null)
+        if (appAuth is null)
         {
             return null;
         }
 
-        var sql = @"SELECT app_id, user_id FROM app_auth_rel WHERE app_id=@AppId and user_id=@UserId";
+        const string sql = @"SELECT app_id, user_id FROM app_auth_rel WHERE app_id=@AppId and user_id=@UserId";
 
         try
         {

@@ -32,7 +32,7 @@ public class RosettesMain
         _client = new DiscordSocketClient(clientConfig);
         
         InteractionService commands = new(_client, interactionConfig);
-        ServiceCollection collection = new();
+        ServiceCollection collection = [];
 
         collection.AddSingleton(_client);
         collection.AddSingleton(commands);
@@ -85,10 +85,8 @@ public class RosettesMain
         Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
         var client = ServiceManager.GetService<DiscordSocketClient>();
         await client.SetActivityAsync(game);
-
-        bool success = true;
-
+        
         Environment.Exit(0);
-        return success;
+        return true;
     }
 }

@@ -10,7 +10,7 @@ namespace Rosettes.Modules.Engine;
 public static class UserEngine
 {
     private static List<User> UserCache = [];
-    public static readonly UserRepository _interface = new();
+    private static readonly UserRepository _interface = new();
 
     public static async void SyncWithDatabase()
     {
@@ -40,9 +40,7 @@ public static class UserEngine
     // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
     public static async Task<bool> LoadAllUsersFromDatabase()
     {
-        IEnumerable<User> userCacheTemp;
-        userCacheTemp = await _interface.GetAllUsersAsync();
-        UserCache = userCacheTemp.ToList();
+        UserCache = (await _interface.GetAllUsersAsync()).ToList();
         return true;
     }
 
@@ -91,13 +89,11 @@ public static class UserEngine
         return userList;
     }
 
-    public static async Task<User> GetUserByRosettesKey(string rosettes_key)
+    public static async Task<User> GetUserByRosettesKey(string rosettesKey)
     {
-        ulong? result = await _interface.GetUserByRosettesKey(rosettes_key);
+        ulong? result = await _interface.GetUserByRosettesKey(rosettesKey);
 
-        if (result is null) return new User(null);
-
-        return GetDBUserById((ulong)result);
+        return result is null ? new User(null) : GetDBUserById((ulong)result);
     }
 }
 
@@ -214,12 +210,9 @@ public class User
 
     public bool CanFish()
     {
-        if (Global.CurrentUnix() > LastFished)
-        {
-            LastFished = Global.CurrentUnix() + 3600;
-            return true;
-        }
-        return false;
+        if (Global.CurrentUnix() <= LastFished) return false;
+        LastFished = Global.CurrentUnix() + 3600;
+        return true;
     }
 
     public int GetFishTime()

@@ -6,8 +6,6 @@ using PokeApiNet;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Minigame;
-using System.Diagnostics;
-using System.Text;
 
 namespace Rosettes.Core;
 
@@ -17,7 +15,7 @@ public static class Global
     public static readonly HttpClient HttpClient = new();
     public static readonly PokeApiClient PokeClient = new();
     public static readonly Jikan Jikan = new();
-    public static readonly Random Randomizer = new();
+    private static readonly Random Randomizer = new();
 
     public static int Randomize(int num)
     {
@@ -35,12 +33,12 @@ public static class Global
         return percentage > Randomizer.Next(100);
     }
 
-    public static async Task<bool> DownloadFile(string path, string uri, int timeout_s = 5)
+    public static async Task<bool> DownloadFile(string path, string uri, int timeoutS = 5)
     {
         try
         {
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromSeconds(timeout_s));
+            cts.CancelAfter(TimeSpan.FromSeconds(timeoutS));
 
             HttpResponseMessage response;
 
@@ -58,8 +56,8 @@ public static class Global
                 return false;
             }
 
-            using Stream stream = await response.Content.ReadAsStreamAsync(cts.Token);
-            using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+            await using Stream stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
 
             await stream.CopyToAsync(fileStream, cts.Token);
 
@@ -171,7 +169,7 @@ public static class Global
         }
     }
 
-    private static IGuildUser GetSelfGuildUser(SocketGuild guild)
+    private static SocketGuildUser GetSelfGuildUser(SocketGuild guild)
     {
     #if DEBUG
         return guild.GetUser(815231883944263681);

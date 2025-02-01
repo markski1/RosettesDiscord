@@ -17,10 +17,10 @@ namespace Rosettes.Modules.Engine.Minigame
 {
     public static class PetEngine
     {
-        private static List<Pet> PetCache = new();
-        public static readonly PetRepository _interface = new();
+        private static List<Pet> _petCache = [];
+        private static readonly PetRepository Interface = new();
 
-        public static readonly Dictionary<int, (string fullName, string emoji)> petChart = new()
+        private static readonly Dictionary<int, (string fullName, string emoji)> PetChart = new()
         {
 		//  db_id   name             emoji
 			{ 1,  ( "🐕 Dog",        "🐕" ) },
@@ -50,40 +50,37 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static string PetNames(int id)
         {
-            if (!petChart.ContainsKey(id))
+            if (!PetChart.TryGetValue(id, out var value))
                 return "? Invalid Pet";
 
-            return petChart[id].fullName;
+            return value.fullName;
         }
 
         public static string PetEmojis(int id)
         {
-            if (!petChart.ContainsKey(id))
+            if (!PetChart.TryGetValue(id, out var value))
                 return "?";
 
-            return petChart[id].emoji;
+            return value.emoji;
         }
 
         public static async void LoadAllPetsFromDatabase()
         {
-            IEnumerable<Pet> petCacheTemp;
-            petCacheTemp = await _interface.GetAllPetsAsync();
-            PetCache = petCacheTemp.ToList();
+            IEnumerable<Pet> petCacheTemp = await Interface.GetAllPetsAsync();
+            _petCache = petCacheTemp.ToList();
         }
 
-        public static async Task<Pet?> EnsurePetExists(ulong owner_id, int index)
+        public static async Task<Pet?> EnsurePetExists(ulong ownerId, int index)
         {
-            Pet? pet;
-
             try
             {
-                pet = PetCache.Find(x => x.ownerId == owner_id && x.Index == index);
-                if (pet is null)
-                {
-                    pet = new(index, owner_id, "[not named]");
-                    PetCache.Add(pet);
-                    pet.Id = await _interface.InsertPet(pet);
-                }
+                var pet = _petCache.Find(x => x.ownerId == ownerId && x.Index == index);
+                
+                if (pet is not null) return pet;
+                
+                pet = new(index, ownerId, "[not named]");
+                _petCache.Add(pet);
+                pet.Id = await Interface.InsertPet(pet);
                 return pet;
             }
             catch
@@ -98,7 +95,7 @@ namespace Rosettes.Modules.Engine.Minigame
             await EnsurePetExists(user.Id, user.MainPet);
             try
             {
-                return PetCache.Find(x => x.ownerId == user.Id && x.Index == user.MainPet);
+                return _petCache.Find(x => x.ownerId == user.Id && x.Index == user.MainPet);
             }
             catch
             {
@@ -331,8 +328,8 @@ namespace Rosettes.Modules.Engine.Minigame
 
             try
             {
-                pet = PetCache.First(x => x.Id == petId); // first() may throw an exception in some failure cases.
-                if (pet == null) { throw new Exception("pet not found"); } // if first() don't throw an exception but we failed all the same, force it.
+                pet = _petCache.First(x => x.Id == petId); // first() may throw an exception in some failure cases.
+                if (pet == null) { throw new Exception("pet not found"); } // if first() don't throw an exception, but we failed all the same, force it.
             }
             catch
             {
@@ -379,7 +376,7 @@ namespace Rosettes.Modules.Engine.Minigame
             await component.RespondAsync(embed: embed.Build(), components: comps.Build());
         }
 
-        public static async Task<bool> HasPet(User dbUser, int id)
+        private static async Task<bool> HasPet(User dbUser, int id)
         {
             // make zero-indexed
             id--;
@@ -502,41 +499,46 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void SyncWithDatabase()
         {
-            foreach (Pet pet in PetCache)
+            foreach (Pet pet in _petCache)
             {
                 if (pet.SyncUpToDate) continue;
-                await _interface.UpdatePet(pet);
+                await Interface.UpdatePet(pet);
                 pet.SyncUpToDate = true;
             }
         }
 
         public static bool AcceptablePetMeal(string foodItem)
         {
-            if (!FarmEngine.inventoryItems.ContainsKey(foodItem))
+            if (!FarmEngine.inventoryItems.TryGetValue(foodItem, out var item))
                 return false;
 
-            return FarmEngine.inventoryItems[foodItem].can_give;
+            return item.can_give;
         }
 
         public static void TimedThings()
         {
-            int happiness;
-            foreach (Pet pet in PetCache)
+            foreach (Pet pet in _petCache)
             {
-                happiness = pet.GetHappiness();
+                var happiness = pet.GetHappiness();
 
-                // Depending on how the happiness range, the pet may lose happiness.
-                if (happiness > 80)
+                switch (happiness)
                 {
-                    if (Global.Chance(80)) pet.ModifyHappiness(-1);
-                }
-                else if (happiness > 40)
-                {
-                    if (Global.Chance(50)) pet.ModifyHappiness(-1);
-                }
-                else
-                {
-                    if (Global.Chance(20)) pet.ModifyHappiness(-1);
+                    // Depending on how the happiness range, the pet may lose happiness.
+                    case > 80:
+                    {
+                        if (Global.Chance(80)) pet.ModifyHappiness(-1);
+                        break;
+                    }
+                    case > 40:
+                    {
+                        if (Global.Chance(50)) pet.ModifyHappiness(-1);
+                        break;
+                    }
+                    default:
+                    {
+                        if (Global.Chance(20)) pet.ModifyHappiness(-1);
+                        break;
+                    }
                 }
             }
         }

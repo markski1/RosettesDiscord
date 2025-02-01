@@ -34,13 +34,11 @@ public class ApiController : ControllerBase
 
         var client = ServiceManager.GetService<DiscordSocketClient>();
 
-        foreach (var guild in GuildEngine.GuildCache) {
-            if (client.Guilds.Where(x => x.Id == guild.Id).Any())
-            {
-                ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId)).Username}\n\n";
-                userSum += guild.Members;
-                serverSum += 1;
-            }
+        foreach (var guild in GuildEngine.GuildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id)))
+        {
+            ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId)).Username}\n\n";
+            userSum += guild.Members;
+            serverSum += 1;
         }
 
         ret += $"Servers: {serverSum} | Total users served: {userSum}";
@@ -66,7 +64,7 @@ public class ApiController : ControllerBase
             }
             else
             {
-                if (client.GetUser(channelId) is not SocketUser user) return "User could not be found";
+                if (client.GetUser(channelId) is not { } user) return "User could not be found";
                 user.SendMessageAsync(message);
             }
             return "Message was sent, probably.";
@@ -81,9 +79,8 @@ public class ApiController : ControllerBase
     public async Task<dynamic> Identify(string applicationKey, string userKey)
     {
         userKey = userKey.Trim();
-        var repo = new AuthRepository();
 
-        var appData = await repo.GetApplicationAuth(applicationKey);
+        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData == null)
         {
@@ -97,14 +94,13 @@ public class ApiController : ControllerBase
             return GenericResponse.GenerateError("User key does not exist.");
         }
 
-        var rel = repo.GetApplicationRelation(applicationKey, user.Id);
+        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
 
-        if (rel == null)
-        {
-            await repo.AuthUser(appData.Id, user.Id);
+        if (rel != null) return user;
+        
+        await AuthRepository.AuthUser(appData.Id, user.Id);
 
-            await user.SendDirectMessage($"Auth notice: ```Your Rosettes key has been used to authorize you to the following application: {appData.Name}```");
-        }
+        await user.SendDirectMessage($"Auth notice: ```Your Rosettes key has been used to authorize you to the following application: {appData.Name}```");
 
         return user;
     }
@@ -113,8 +109,7 @@ public class ApiController : ControllerBase
     [HttpGet("GetUser")]
     public async Task<dynamic> Identify(string applicationKey, ulong userId)
     {
-        var repo = new AuthRepository();
-        var appData = await repo.GetApplicationAuth(applicationKey);
+        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData == null)
         {
@@ -128,14 +123,12 @@ public class ApiController : ControllerBase
             return GenericResponse.GenerateError("Rosettes doesn't know that user ID.");
         }
 
-        var rel = repo.GetApplicationRelation(applicationKey, user.Id);
+        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
 
-        if (rel == null)
-        {
-            return GenericResponse.GenerateError("The user ID provided has not authorized your application.");
-        }
+        if (rel != null) return user;
+        
+        return GenericResponse.GenerateError("The user ID provided has not authorized your application.");
 
-        return user;
     }
 }
 
@@ -143,7 +136,7 @@ public static class GenericResponse
 {
     public static Dictionary<string, dynamic> GenerateError(string message)
     {
-        return new Dictionary<string, dynamic>()
+        return new Dictionary<string, dynamic>
         {
             {"success", false},
             {"message", message}
