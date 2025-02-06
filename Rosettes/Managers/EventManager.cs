@@ -131,7 +131,7 @@ public static class EventManager
             if (user is null) continue;
             try
             {
-                await UserEngine.GetDBUser(user);
+                await UserEngine.GetDbUser(user);
             }
             catch (Exception e)
             {

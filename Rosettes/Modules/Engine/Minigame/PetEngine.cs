@@ -105,7 +105,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ShowPets(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             await interaction.DeferAsync();
@@ -191,7 +191,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task PetAPet(SocketMessageComponent component)
         {
-            User dbUser = await UserEngine.GetDBUser(component.User);
+            User dbUser = await UserEngine.GetDbUser(component.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"*pets!\\*";
@@ -199,7 +199,7 @@ namespace Rosettes.Modules.Engine.Minigame
             string action = component.Data.CustomId;
             ulong id = ulong.Parse(action[6..]);
 
-            User receiverUser = UserEngine.GetDBUserById(id);
+            User receiverUser = UserEngine.GetDbUserById(id);
             Pet? receivingPet = await GetUserPet(receiverUser);
 
             if (receivingPet is null)
@@ -287,7 +287,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task SetDefaultPet(SocketMessageComponent component)
         {
-            var dbUser = await UserEngine.GetDBUser(component.User);
+            var dbUser = await UserEngine.GetDbUser(component.User);
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -316,7 +316,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task FeedAPet(SocketMessageComponent component)
         {
-            var dbUser = await UserEngine.GetDBUser(component.User);
+            var dbUser = await UserEngine.GetDbUser(component.User);
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -387,7 +387,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ViewPet(SocketInteraction interaction, IUser user)
         {
-            var dbUser = await UserEngine.GetDBUser(user);
+            var dbUser = await UserEngine.GetDbUser(user);
             Pet? pet = await GetUserPet(dbUser);
             if (pet is null)
             {
@@ -437,7 +437,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void BeginNameChange(SocketMessageComponent component)
         {
-            var dbUser = await UserEngine.GetDBUser(component.User);
+            var dbUser = await UserEngine.GetDbUser(component.User);
             Pet? pet = await GetUserPet(dbUser);
             if (pet is null)
             {
@@ -458,7 +458,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void SetPetName(SocketModal modal, string newName)
         {
-            var dbUser = await UserEngine.GetDBUser(modal.User);
+            var dbUser = await UserEngine.GetDbUser(modal.User);
             Pet? pet = await GetUserPet(dbUser);
             if (pet is null)
             {

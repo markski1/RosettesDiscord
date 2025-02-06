@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using Discord;
 using Discord.WebSocket;
-using MySqlConnector;
 using Rosettes.Core;
 using Rosettes.Database;
 
@@ -9,17 +8,21 @@ namespace Rosettes.Modules.Engine;
 
 public static class PollEngine
 {
-    public static async Task<bool> AddPoll(ulong Id, string Question, string Option1, string Option2, string Option3, string Option4)
+    public static async Task<bool> AddPoll(ulong id, string question, string option1, string option2, string option3, string option4)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        var sql = @"INSERT INTO polls (id, question, option1, option2, option3, option4)
-                        VALUES(@Id, @Question, @Option1, @Option2, @Option3, @Option4)";
+        const string sql = """
+                           INSERT INTO polls (id, question, option1, option2, option3, option4)
+                           VALUES(@Id, @Question, @Option1, @Option2, @Option3, @Option4)
+                           """;
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { Id, Question, Option1, Option2, Option3, Option4 })) > 0;
+            return (await db.ExecuteAsync(sql, new { Id = id, Question = question, Option1 = option1, Option2 = option2,
+                Option3 = option3,
+                Option4 = option4 })) > 0;
         }
         catch (Exception ex)
         {
@@ -28,13 +31,13 @@ public static class PollEngine
         }
     }
 
-    public static async Task<string> VoteInPoll(ulong userId, SocketUserMessage pollMessage, string Option)
+    public static async Task<string> VoteInPoll(ulong userId, SocketUserMessage pollMessage, string option)
     {
-        if (Option.Length > 2) return "There was an error counting your vote.";
+        if (option.Length > 2) return "There was an error counting your vote.";
 
-        string[] possibleColumns = { "count1", "count2", "count3", "count4" };
+        string[] possibleColumns = ["count1", "count2", "count3", "count4"];
 
-        string columnName = $"count{Option}";
+        string columnName = $"count{option}";
 
         if (!possibleColumns.Contains(columnName))
         {
@@ -44,11 +47,10 @@ public static class PollEngine
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        // begin by checking if the user has already voted in this poll.
-        var sql = @"SELECT user_id FROM poll_votes WHERE user_id=@userId";
-
-        sql = @"INSERT INTO poll_votes (user_id, poll_id)
-                    VALUES(@userId, @Id)";
+        var sql = """
+              INSERT INTO poll_votes (user_id, poll_id)
+              VALUES(@userId, @Id)
+              """;
 
         try
         {
@@ -89,7 +91,7 @@ public static class PollEngine
 
         sql = $"SELECT question, option1, option2, option3, option4, count1, count2, count3, count4 FROM polls WHERE id=@Id";
 
-        Poll pollResult = await db.QueryFirstOrDefaultAsync<Poll>(sql, new { pollMessage.Id });
+        Poll? pollResult = await db.QueryFirstOrDefaultAsync<Poll>(sql, new { pollMessage.Id });
 
         if (pollResult is not null)
         {
@@ -121,28 +123,24 @@ public static class PollEngine
     }
 }
 
-public class Poll
+public class Poll(
+    string question,
+    string option1,
+    string option2,
+    string option3,
+    string option4,
+    uint count1,
+    uint count2,
+    uint count3,
+    uint count4)
 {
-    public string Question;
-    public string Option1;
-    public string Option2;
-    public string Option3;
-    public string Option4;
-    public uint Count1;
-    public uint Count2;
-    public uint Count3;
-    public uint Count4;
-
-    public Poll(string question, string option1, string option2, string option3, string option4, uint count1, uint count2, uint count3, uint count4)
-    {
-        Question = question;
-        Option1 = option1;
-        Option2 = option2;
-        Option3 = option3;
-        Option4 = option4;
-        Count1 = count1;
-        Count2 = count2;
-        Count3 = count3;
-        Count4 = count4;
-    }
+    public string Question = question;
+    public string Option1 = option1;
+    public string Option2 = option2;
+    public string Option3 = option3;
+    public string Option4 = option4;
+    public uint Count1 = count1;
+    public uint Count2 = count2;
+    public uint Count3 = count3;
+    public uint Count4 = count4;
 }

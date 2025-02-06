@@ -1,20 +1,18 @@
 ﻿using Dapper;
-using MySqlConnector;
-using Rosettes.Core;
 using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine.Guild;
 
 public static class AutoRolesEngine
 {
-    private static List<AutoRoleEntry> AutoRolesEntries = new();
-    private static List<AutoRoleGroup> AutoRolesGroups = new();
+    private static List<AutoRoleEntry> _autoRolesEntries = [];
+    private static List<AutoRoleGroup> _autoRolesGroups = [];
 
     public static ulong GetGuildIdFromMessage(ulong messageid)
     {
         try
         {
-            return AutoRolesGroups.First(x => x.MessageId == messageid).GuildId;
+            return _autoRolesGroups.First(x => x.MessageId == messageid).GuildId;
         }
         catch
         {
@@ -26,7 +24,7 @@ public static class AutoRolesEngine
     {
         try
         {
-            return AutoRolesGroups.First(x => x.Id == code).Name;
+            return _autoRolesGroups.First(x => x.Id == code).Name;
         }
         catch
         {
@@ -36,42 +34,38 @@ public static class AutoRolesEngine
 
     public static IEnumerable<AutoRoleEntry> GetMessageRolesForEmote(ulong messageid, string emoteName)
     {
-        IEnumerable<AutoRoleEntry> FoundEntries;
-        uint parentGroup = AutoRolesGroups.First(x => x.MessageId == messageid).Id;
-        FoundEntries =
-            from role in AutoRolesEntries
+        uint parentGroup = _autoRolesGroups.First(x => x.MessageId == messageid).Id;
+        IEnumerable<AutoRoleEntry> foundEntries = from role in _autoRolesEntries
             where role.RoleGroupId == parentGroup && role.Emote == emoteName
             select role;
-        return FoundEntries;
+        return foundEntries;
     }
 
     public static IEnumerable<AutoRoleEntry>? GetRolesByCode(uint code, ulong guildid)
     {
-        IEnumerable<AutoRoleEntry>? FoundEntries;
+        IEnumerable<AutoRoleEntry>? foundEntries;
         try
         {
-            uint parentGroup = AutoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id;
-            FoundEntries =
-                from role in AutoRolesEntries
+            uint parentGroup = _autoRolesGroups.First(x => x.Id == code && x.GuildId == guildid).Id;
+            foundEntries =
+                from role in _autoRolesEntries
                 where role.RoleGroupId == parentGroup
                 select role;
         }
         catch
         {
-            FoundEntries = null;
+            foundEntries = null;
         }
-        return FoundEntries;
+        return foundEntries;
     }
 
     public static IEnumerable<AutoRoleEntry> GetMessageAutoroles(ulong messageid)
     {
-        IEnumerable<AutoRoleEntry> FoundEntries;
-        uint parentGroup = AutoRolesGroups.First(x => x.MessageId == messageid).Id;
-        FoundEntries =
-            from role in AutoRolesEntries
+        uint parentGroup = _autoRolesGroups.First(x => x.MessageId == messageid).Id;
+        IEnumerable<AutoRoleEntry> foundEntries = from role in _autoRolesEntries
             where role.RoleGroupId == parentGroup
             select role;
-        return FoundEntries;
+        return foundEntries;
     }
 
     public static async Task<bool> SyncWithDatabase()
@@ -81,20 +75,20 @@ public static class AutoRolesEngine
 
         var sql = @"SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
 
-        AutoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
+        _autoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
 
         sql = @"SELECT id, guildid, messageid, name FROM autorole_groups";
 
-        AutoRolesGroups = (await db.QueryAsync<AutoRoleGroup>(sql, new { })).ToList();
+        _autoRolesGroups = (await db.QueryAsync<AutoRoleGroup>(sql, new { })).ToList();
 
         return true;
     }
 
-    public static async Task<bool> UpdateGroupMessageId(uint Code, ulong MessageId)
+    public static async Task<bool> UpdateGroupMessageId(uint code, ulong messageId)
     {
-        var group = AutoRolesGroups.First(x => x.Id == Code);
+        var group = _autoRolesGroups.First(x => x.Id == code);
 
-        group.MessageId = MessageId;
+        group.MessageId = messageId;
 
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
@@ -103,40 +97,24 @@ public static class AutoRolesEngine
 						SET messageid=@MessageId
 						WHERE id = @Code";
 
-        await db.ExecuteAsync(sql, new { MessageId, Code });
+        await db.ExecuteAsync(sql, new { MessageId = messageId, Code = code });
 
         return true;
     }
 }
 
-public class AutoRoleEntry
+public class AutoRoleEntry(ulong guildid, string emote, ulong roleid, uint rolegroupid)
 {
-    public ulong GuildId;
-    public string Emote;
-    public ulong RoleId;
-    public uint RoleGroupId;
-
-    public AutoRoleEntry(ulong guildid, string emote, ulong roleid, uint rolegroupid)
-    {
-        GuildId = guildid;
-        Emote = emote;
-        RoleId = roleid;
-        RoleGroupId = rolegroupid;
-    }
+    public ulong GuildId = guildid;
+    public string Emote = emote;
+    public ulong RoleId = roleid;
+    public uint RoleGroupId = rolegroupid;
 }
 
-public class AutoRoleGroup
+public class AutoRoleGroup(uint id, ulong guildid, ulong messageid, string name)
 {
-    public uint Id;
-    public ulong GuildId;
-    public ulong MessageId;
-    public string Name;
-
-    public AutoRoleGroup(uint id, ulong guildid, ulong messageid, string name)
-    {
-        Id = id;
-        GuildId = guildid;
-        MessageId = messageid;
-        Name = name;
-    }
+    public uint Id = id;
+    public ulong GuildId = guildid;
+    public ulong MessageId = messageid;
+    public string Name = name;
 }

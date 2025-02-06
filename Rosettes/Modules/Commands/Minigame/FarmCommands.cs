@@ -86,8 +86,8 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (FarmEngine.IsValidGiveChoice(choice))
         {
-            var dbUser = await UserEngine.GetDBUser(Context.User);
-            var receiver = await UserEngine.GetDBUser(user);
+            var dbUser = await UserEngine.GetDbUser(Context.User);
+            var receiver = await UserEngine.GetDbUser(user);
 
             if (await FarmEngine.GetItem(dbUser, choice) < amount)
             {

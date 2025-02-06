@@ -74,7 +74,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 
         dynamic responseObj = deserializedResponse;
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 

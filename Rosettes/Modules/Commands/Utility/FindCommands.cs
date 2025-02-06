@@ -37,7 +37,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -167,7 +167,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
                 parsedDefinitionList.Add(temp);
             }
 
-            var dbUser = await UserEngine.GetDBUser(Context.User);
+            var dbUser = await UserEngine.GetDbUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Definition for: {query}";
@@ -218,7 +218,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -288,7 +288,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -404,7 +404,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 

@@ -113,7 +113,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ShopAction(SocketMessageComponent component)
         {
-            var dbUser = await UserEngine.GetDBUser(component.User);
+            var dbUser = await UserEngine.GetDbUser(component.User);
 
             string text = "";
 
@@ -306,7 +306,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task CatchFishFunc(SocketInteraction interaction, IUser user)
         {
-            var dbUser = await UserEngine.GetDBUser(user);
+            var dbUser = await UserEngine.GetDbUser(user);
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
@@ -410,7 +410,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             await interaction.DeferAsync();
@@ -480,7 +480,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
         {
-            var dbUser = await UserEngine.GetDBUser(user);
+            var dbUser = await UserEngine.GetDbUser(user);
             if (dbUser is null) return;
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);

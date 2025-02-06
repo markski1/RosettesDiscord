@@ -39,7 +39,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task ShowFarm(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Farm";
@@ -145,7 +145,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task PlantSeed(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Planting seeds";
@@ -284,7 +284,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task WaterCrops(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Watering crops";
@@ -361,7 +361,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task HarvestCrops(SocketInteraction interaction, IUser user)
         {
-            User dbUser = await UserEngine.GetDBUser(user);
+            User dbUser = await UserEngine.GetDbUser(user);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = $"Harvesting crops";

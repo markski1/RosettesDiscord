@@ -28,12 +28,12 @@ public enum TelemetryType {
 
 public static class TelemetryEngine
 {
-    private static int CommandCount = 0;
-    private static int InteractionCount = 0;
-    private static int MessageCount = 0;
+    private static int _commandCount;
+    private static int _interactionCount;
+    private static int _messageCount;
     private static readonly System.Timers.Timer Timer = new(60 * 60 * 1000);
 
-    private static Dictionary<string, int> UseByCommand = [];
+    private static readonly Dictionary<string, int> UseByCommand = [];
 
     public static void Setup()
     {
@@ -47,13 +47,14 @@ public static class TelemetryEngine
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.db;
 
-        var sql = @"INSERT INTO telemetry (cmd_count, interaction_count, message_count, count_by_command)
-                        VALUES(@CommandCount, @InteractionCount, @MessageCount, @UseByCommand)"
-        ;
+        const string sql = """
+                           INSERT INTO telemetry (cmd_count, interaction_count, message_count, count_by_command)
+                           VALUES(@CommandCount, @InteractionCount, @MessageCount, @UseByCommand)
+                           """;
 
         try
         {
-            await db.ExecuteAsync(sql, new { CommandCount, InteractionCount, MessageCount, UseByCommand = JsonConvert.SerializeObject(UseByCommand) });
+            await db.ExecuteAsync(sql, new { CommandCount = _commandCount, InteractionCount = _interactionCount, MessageCount = _messageCount, UseByCommand = JsonConvert.SerializeObject(UseByCommand) });
         }
         catch (Exception ex)
         {
@@ -61,9 +62,9 @@ public static class TelemetryEngine
         }
 
         UseByCommand.Clear();
-        CommandCount = 0;
-        InteractionCount = 0;
-        MessageCount = 0;
+        _commandCount = 0;
+        _interactionCount = 0;
+        _messageCount = 0;
     }
 
     public static void Count(TelemetryType telemetryType)
@@ -71,26 +72,22 @@ public static class TelemetryEngine
         switch (telemetryType)
         {
             case TelemetryType.Command:
-                CommandCount++;
+                _commandCount++;
                 break;
             case TelemetryType.Interaction:
-                InteractionCount++;
+                _interactionCount++;
                 break;
             case TelemetryType.Message:
-                MessageCount++;
+                _messageCount++;
                 break;
         }
     }
 
     public static void CountCommand(string commandName)
     {
-        if (UseByCommand.ContainsKey(commandName))
+        if (!UseByCommand.TryAdd(commandName, 1))
         {
             UseByCommand[commandName]++;
-        }
-        else
-        {
-            UseByCommand.Add(commandName, 1);
         }
     }
 }

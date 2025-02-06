@@ -18,7 +18,7 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("roll", "Roll dice. Use a number, or standard dice notation (i.e. 1d6)")]
     public async Task RollDice(string options)
     {
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         int diceCount;
         int diceFaces;
@@ -82,7 +82,7 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
     {
         string[] coinSides = [face1, face2];
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
         embed.Title = "A coin is thrown in the air...";
         embed.Description = $"{face1} in one side, {face2} in the other.";

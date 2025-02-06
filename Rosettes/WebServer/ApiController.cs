@@ -36,7 +36,11 @@ public class ApiController : ControllerBase
 
         foreach (var guild in GuildEngine.GuildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id)))
         {
-            ret += $"{guild.NameCache} | {guild.Members} members | {(await UserEngine.GetUserReferenceByID(guild.OwnerId)).Username}\n\n";
+            var findOwner = await UserEngine.GetUserReferenceById(guild.OwnerId);
+            if (findOwner != null)
+            {
+                ret += $"{guild.NameCache} | {guild.Members} members | {findOwner.Username}\n\n";
+            }
             userSum += guild.Members;
             serverSum += 1;
         }
@@ -116,7 +120,7 @@ public class ApiController : ControllerBase
             return GenericResponse.GenerateError("Application key does not exist.");
         }
 
-        var user = UserEngine.GetDBUserById(userId);
+        var user = UserEngine.GetDbUserById(userId);
 
         if (!user.IsValid())
         {

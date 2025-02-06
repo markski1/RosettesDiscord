@@ -16,11 +16,11 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("profile", "Information about yourself or provided user.")]
-    public async Task Profile(IUser? user = null)
+    private async Task Profile(IUser? user = null)
     {
         user ??= Context.Interaction.User;
 
-        User dbUser = await UserEngine.GetDBUser(user);
+        User dbUser = await UserEngine.GetDbUser(user);
         if (!dbUser.IsValid() || user is not SocketGuildUser guildUser)
         {
             await RespondAsync("There was an error fetching user data from the database.", ephemeral: true);
@@ -34,7 +34,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.AddField("Level", $"Level {dbUser.GetLevel()} ({dbUser.Exp}xp)");
         embed.AddField("Joined Discord", $"<t:{guildUser.CreatedAt.ToUnixTimeSeconds()}:R>", true);
-        if (guildUser.JoinedAt is DateTimeOffset guildJoin)
+        if (guildUser.JoinedAt is { } guildJoin)
         {
             embed.AddField("Joined Server", $"<t:{guildJoin.ToUnixTimeSeconds()}:R>", true);
         }
@@ -120,18 +120,24 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
+        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, Context.Channel, amount);
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        if (success)
+        {
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-        embed.Title = "Alarm set.";
-        embed.Description = $"An alarm has been. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
+            embed.Title = "Alarm set.";
+            embed.Description = $"An alarm has been set. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
 
-        embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
+            embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
 
-        await RespondAsync(embed: embed.Build());
-
-        AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), await UserEngine.GetDBUser(Context.User), Context.Channel, amount);
+            await RespondAsync(embed: embed.Build());
+        }
+        else
+        {
+            await RespondAsync("Sorry, there was an error setting an alarm.", ephemeral: true);
+        }
     }
 
     [SlashCommand("alarm-cancel", "Cancels your current alarm.")]

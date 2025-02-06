@@ -9,46 +9,53 @@ namespace Rosettes.Modules.Engine;
 
 public static class UserEngine
 {
-    private static List<User> UserCache = [];
-    private static readonly UserRepository _interface = new();
+    private static List<User> _userCache = [];
+    private static readonly UserRepository Interface = new();
 
     public static async void SyncWithDatabase()
     {
-        foreach (User user in UserCache)
+        try
         {
-            await _interface.UpdateUser(user);
-            await Task.Delay(125);
+            foreach (User user in _userCache)
+            {
+                await Interface.UpdateUser(user);
+                await Task.Delay(125);
+            }
+        }
+        catch (Exception e)
+        {
+            Global.GenerateErrorMessage("uengine-updt", $"Exception while updating users: {e.Message}");
         }
     }
 
-    public static async Task<User> LoadUserFromDatabase(IUser user)
+    private static async Task<User> LoadUserFromDatabase(IUser user)
     {
         User getUser;
-        if (await _interface.CheckUserExists(user))
+        if (await Interface.CheckUserExists(user))
         {
-            getUser = await _interface.GetUserData(user);
+            getUser = await Interface.GetUserData(user);
         }
         else
         {
             getUser = new User(user);
-            _ = _interface.InsertUser(getUser);
+            _ = Interface.InsertUser(getUser);
         }
-        if (getUser.IsValid()) UserCache.Add(getUser);
+        if (getUser.IsValid()) _userCache.Add(getUser);
         return getUser;
     }
 
     // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
     public static async Task<bool> LoadAllUsersFromDatabase()
     {
-        UserCache = (await _interface.GetAllUsersAsync()).ToList();
+        _userCache = (await Interface.GetAllUsersAsync()).ToList();
         return true;
     }
 
-    public static async Task<User> GetDBUser(IUser user)
+    public static async Task<User> GetDbUser(IUser user)
     {
         try
         {
-            return UserCache.First(item => item.Id == user.Id);
+            return _userCache.First(item => item.Id == user.Id);
         }
         catch
         {
@@ -57,11 +64,11 @@ public static class UserEngine
     }
 
     // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
-    public static User GetDBUserById(ulong user)
+    public static User GetDbUserById(ulong user)
     {
         try
         {
-            return UserCache.First(item => item.Id == user);
+            return _userCache.First(item => item.Id == user);
         }
         catch
         {
@@ -69,7 +76,7 @@ public static class UserEngine
         }
     }
 
-    public static async Task<IUser> GetUserReferenceByID(ulong id)
+    public static async Task<IUser?> GetUserReferenceById(ulong id)
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();
         IUser user = client.GetUser(id);
@@ -84,16 +91,16 @@ public static class UserEngine
         if (users is null) return userList;
         foreach (var user in users)
         {
-            userList.Add(await GetDBUser(user));
+            userList.Add(await GetDbUser(user));
         }
         return userList;
     }
 
     public static async Task<User> GetUserByRosettesKey(string rosettesKey)
     {
-        ulong? result = await _interface.GetUserByRosettesKey(rosettesKey);
+        ulong? result = await Interface.GetUserByRosettesKey(rosettesKey);
 
-        return result is null ? new User(null) : GetDBUserById((ulong)result);
+        return result is null ? new User(null) : GetDbUserById((ulong)result);
     }
 }
 
@@ -102,8 +109,8 @@ public class User
     public ulong Id { get; }
     public int MainPet { get; set; }
     public int Exp { get; set; }
-    public string NameCache { get; set; } = "";
-    public string Username { get; set; } = "";
+    public string NameCache { get; set; }
+    public string Username { get; set; }
 
     // timers
     private int LastFished { get; set; }
@@ -120,10 +127,7 @@ public class User
         else
         {
             Id = newUser.Id;
-            if (newUser.GlobalName is not null)
-                NameCache = newUser.GlobalName;
-            else
-                NameCache = newUser.Username;
+            NameCache = newUser.GlobalName ?? newUser.Username;
             Username = newUser.Username;
         }
         LastFished = 0;
@@ -144,18 +148,18 @@ public class User
 
     public bool IsValid()
     {
-        // if user was created with an Id of 0 it indicates a database failure and this user object is invalid.
+        // if user was created with an id of 0 it indicates a database failure and this user object is invalid.
         return Id != 0;
     }
 
-    public async Task<IUser> GetDiscordReference()
+    public async Task<IUser?> GetDiscordReference()
     {
-        return await UserEngine.GetUserReferenceByID(Id);
+        return await UserEngine.GetUserReferenceById(Id);
     }
 
     public async Task<bool> SendDirectMessage(string message)
     {
-        var userRef = await UserEngine.GetUserReferenceByID(Id);
+        var userRef = await UserEngine.GetUserReferenceById(Id);
 
         try
         {
@@ -173,19 +177,8 @@ public class User
         var userReference = await GetDiscordReference();
         if (userReference is null) return NameCache;
 
-        string nameGot;
-        if (userReference.GlobalName is not null)
-        {
-            nameGot = userReference.GlobalName;
-        }
-        else
-        {
-            nameGot = userReference.Username;
-        }
-        if (nameGot != NameCache)
-        {
-            NameCache = nameGot;
-        }
+        var nameGot = userReference.GlobalName ?? userReference.Username;
+        NameCache = nameGot;
         return NameCache;
     }
 

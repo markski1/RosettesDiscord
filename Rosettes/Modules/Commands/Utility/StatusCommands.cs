@@ -172,7 +172,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
         if (data == null) return;
         dynamic dataObj = data;
 
-        var dbUser = await UserEngine.GetDBUser(Context.User);
+        var dbUser = await UserEngine.GetDbUser(Context.User);
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
