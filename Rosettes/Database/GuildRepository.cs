@@ -7,12 +7,12 @@ namespace Rosettes.Database;
 
 public class GuildRepository
 {
-    public async Task<IEnumerable<Guild>> GetAllGuildsAsync()
+    public static async Task<IEnumerable<Guild>> GetAllGuildsAsync()
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
+        const string sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
 
         try
         {
@@ -25,12 +25,12 @@ public class GuildRepository
         }
     }
 
-    public async Task<bool> CheckGuildExists(ulong guildId)
+    public static async Task<bool> CheckGuildExists(ulong guildId)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT count(1) FROM guilds WHERE id=@guildId";
+        const string sql = "SELECT count(1) FROM guilds WHERE id=@guildId";
 
         try
         {
@@ -43,12 +43,12 @@ public class GuildRepository
         }
     }
 
-    public async Task<Guild> GetGuildData(SocketGuild guild)
+    public static async Task<Guild> GetGuildData(SocketGuild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
+        const string sql = "SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
         try
         {
@@ -61,12 +61,12 @@ public class GuildRepository
         }
     }
 
-    public async Task<string> GetGuildSettings(Guild guild)
+    public static async Task<string> GetGuildSettings(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT settings FROM guilds WHERE id=@id";
+        const string sql = "SELECT settings FROM guilds WHERE id=@id";
 
         try
         {
@@ -79,14 +79,16 @@ public class GuildRepository
         }
     }
 
-    public async Task<bool> SetGuildSettings(Guild guild)
+    public static async Task<bool> SetGuildSettings(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"UPDATE guilds
-                        SET settings = @Settings
-                        WHERE id = @Id";
+        const string sql = """
+                           UPDATE guilds
+                           SET settings = @Settings
+                           WHERE id = @Id
+                           """;
 
         try
         {
@@ -99,12 +101,12 @@ public class GuildRepository
         }
     }
 
-    public async Task<ulong> GetGuildDefaultRole(Guild guild)
+    public static async Task<ulong> GetGuildDefaultRole(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT defaultrole FROM guilds WHERE id=@id";
+        const string sql = "SELECT defaultrole FROM guilds WHERE id=@id";
 
         try
         {
@@ -117,13 +119,15 @@ public class GuildRepository
         }
     }
 
-    public async Task<bool> InsertGuild(Guild guild)
+    public static async Task<bool> InsertGuild(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"INSERT INTO guilds (id, namecache, members, settings, ownerid)
-                        VALUES(@Id, @NameCache, @Members, @Settings, @OwnerId)";
+        const string sql = """
+                           INSERT INTO guilds (id, namecache, members, settings, ownerid)
+                           VALUES(@Id, @NameCache, @Members, @Settings, @OwnerId)
+                           """;
 
         try
         {
@@ -136,14 +140,16 @@ public class GuildRepository
         }
     }
 
-    public async Task<bool> UpdateGuild(Guild guild)
+    public static async Task<bool> UpdateGuild(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"UPDATE guilds
-                        SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@FarmChannel
-                        WHERE id = @Id";
+        const string sql = """
+                           UPDATE guilds
+                           SET id=@Id, namecache=@NameCache, members=@Members, ownerid=@OwnerId, logchan=@LogChannel, rpgchan=@FarmChannel
+                           WHERE id = @Id
+                           """;
         try
         {
             return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.FarmChannel })) > 0;
@@ -155,23 +161,26 @@ public class GuildRepository
         }
     }
 
-    public async Task<bool> UpdateGuildRoles(Guild guild)
+    public static async Task<bool> UpdateGuildRoles(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var discordGuild = guild.GetDiscordSocketReference();
         if (discordGuild is null) return false;
 
-        var sql = @"DELETE FROM roles WHERE guildid = @Id";
-        await db.ExecuteAsync(sql, new { guild.Id });
+        await db.ExecuteAsync("DELETE FROM roles WHERE guildid = @Id", new { guild.Id });
 
-        sql = @"INSERT INTO roles (id, rolename, guildid, color)
-                    VALUES (@Id, @Name, @GuildId, @Color)";
+        const string sql = """
+                           INSERT INTO roles (id, rolename, guildid, color)
+                           VALUES (@Id, @Name, @GuildId, @Color)
+                           """;
 
-        var sql2 = @"UPDATE roles
-                        SET rolename=@Name, guildid=@GuildId, color=@Color
-                        WHERE id = @Id";
+        const string sql2 = """
+                            UPDATE roles
+                            SET rolename=@Name, guildid=@GuildId, color=@Color
+                            WHERE id = @Id
+                            """;
 
         foreach (var role in discordGuild.Roles)
         {

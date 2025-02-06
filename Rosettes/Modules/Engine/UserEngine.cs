@@ -98,7 +98,7 @@ public static class UserEngine
 
     public static async Task<User> GetUserByRosettesKey(string rosettesKey)
     {
-        ulong? result = await Interface.GetUserByRosettesKey(rosettesKey);
+        ulong? result = await UserRepository.GetUserByRosettesKey(rosettesKey);
 
         return result is null ? new User(null) : GetDbUserById((ulong)result);
     }

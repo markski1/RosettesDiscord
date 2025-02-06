@@ -59,12 +59,7 @@ public static class MessageManager
         string extractId = context.Message.Content;
 
         int begin = extractId.IndexOf("/app/", StringComparison.Ordinal) + 5; // where the number starts in the string.
-        int end = -1;
-
-        end = extractId
-            .Skip(begin)
-            .TakeWhile(char.IsNumber)
-            .Count() + begin;                       // where it ends.
+        int end = extractId.Skip(begin).TakeWhile(char.IsNumber).Count() + begin;
 
         if (end <= begin) return;
 
@@ -131,7 +126,6 @@ public static class MessageManager
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            return;
         }
     }
 
@@ -144,13 +138,10 @@ public static class MessageManager
         if (extractId.Contains("/profiles/"))
         {
             int begin = extractId.IndexOf("/profiles/", StringComparison.Ordinal) + 10;
-
-            int end = -1;
-
-            end = extractId
+            int end = extractId
                 .Skip(begin)
                 .TakeWhile(char.IsNumber)
-                .Count() + begin;                       // where it ends.
+                .Count() + begin;
 
             if (end <= begin) return;
 

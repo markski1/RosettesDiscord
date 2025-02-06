@@ -32,12 +32,12 @@ public static class GuildEngine
         }
 
         // Guild may not be in DB if insert failed on join.
-        if (await _interface.CheckGuildExists(guild.Id))
+        if (await GuildRepository.CheckGuildExists(guild.Id))
         {
             guild.SelfTest();
-            await _interface.UpdateGuild(guild);
-            guild.Settings = await _interface.GetGuildSettings(guild);
-            guild.DefaultRole = await _interface.GetGuildDefaultRole(guild);
+            await GuildRepository.UpdateGuild(guild);
+            guild.Settings = await GuildRepository.GetGuildSettings(guild);
+            guild.DefaultRole = await GuildRepository.GetGuildDefaultRole(guild);
         }
         else
         {
@@ -53,7 +53,7 @@ public static class GuildEngine
             }
             else
             {
-                await _interface.InsertGuild(guild);
+                await GuildRepository.InsertGuild(guild);
             }
         }
         return true;
@@ -68,14 +68,14 @@ public static class GuildEngine
     public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
     {
         Guild getGuild;
-        if (await _interface.CheckGuildExists(guild.Id))
+        if (await GuildRepository.CheckGuildExists(guild.Id))
         {
-            getGuild = await _interface.GetGuildData(guild);
+            getGuild = await GuildRepository.GetGuildData(guild);
         }
         else
         {
             getGuild = new Guild(guild);
-            await _interface.InsertGuild(getGuild);
+            await GuildRepository.InsertGuild(getGuild);
             getGuild.UpdateRoles();
         }
         if (getGuild.IsValid()) GuildCache.Add(getGuild);
@@ -85,7 +85,7 @@ public static class GuildEngine
     public static async void LoadAllGuildsFromDatabase()
     {
         IEnumerable<Guild> guildCacheTemp;
-        guildCacheTemp = await _interface.GetAllGuildsAsync();
+        guildCacheTemp = await GuildRepository.GetAllGuildsAsync();
         GuildCache = guildCacheTemp.ToList();
         foreach (Guild guild in GuildCache)
         {
@@ -195,7 +195,7 @@ public class Guild
         return foundGuild;
     }
 
-    public SocketGuild GetDiscordSocketReference()
+    public SocketGuild? GetDiscordSocketReference()
     {
         if (CachedReference is not null) return CachedReference;
         var client = ServiceManager.GetService<DiscordSocketClient>();
@@ -254,7 +254,7 @@ public class Guild
         else newSetting = '0';
         mutableSettings[id] = newSetting;
         Settings = new string(mutableSettings);
-        _ = GuildEngine._interface.SetGuildSettings(this);
+        _ = GuildRepository.SetGuildSettings(this);
     }
 
     public async void SetRoleForEveryone(ulong roleid)
@@ -328,7 +328,7 @@ public class Guild
 
     public async void UpdateRoles()
     {
-        await GuildEngine._interface.UpdateGuildRoles(this);
+        await GuildRepository.UpdateGuildRoles(this);
     }
 
     public async void SendLogMessage(EmbedBuilder embed)

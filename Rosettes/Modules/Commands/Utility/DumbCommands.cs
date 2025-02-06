@@ -4,6 +4,11 @@ using Rosettes.Core;
 
 namespace Rosettes.Modules.Commands.Utility;
 
+[CommandContextType(
+    InteractionContextType.BotDm, 
+    InteractionContextType.PrivateChannel, 
+    InteractionContextType.Guild
+)]
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 {

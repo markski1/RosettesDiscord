@@ -45,7 +45,7 @@ public static class TelemetryEngine
     private static async void SyncTelemetry(Object? source, System.Timers.ElapsedEventArgs e)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         const string sql = """
                            INSERT INTO telemetry (cmd_count, interaction_count, message_count, count_by_command)

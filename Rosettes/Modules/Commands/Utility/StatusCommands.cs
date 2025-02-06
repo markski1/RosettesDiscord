@@ -12,7 +12,7 @@ namespace Rosettes.Modules.Commands.Utility;
 public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("csgo", "Check the status of Steam and CSGO matchmaking.")]
-    public async Task CSGOStatus()
+    public async Task CsgoStatus()
     {
         try
         {
@@ -46,7 +46,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             csgoStatus.AddField("Searching game", $"{result.matchmaking.searching_players:N0}", true);
             csgoStatus.AddField("Average wait", $"{waitTime.Minutes} minute{(waitTime.Minutes != 1 ? 's' : null)}, {waitTime.Seconds} seconds.\n", true);
 
-            Embed[] embeds = { steamStatus.Build(), csgoStatus.Build() };
+            Embed[] embeds = [steamStatus.Build(), csgoStatus.Build()];
 
             await RespondAsync(embeds: embeds);
         }
@@ -98,10 +98,15 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
 
-            var datacenterObj = JObject.Parse(datacenterData);
-            var worldObj = JObject.Parse(worldData);
+            JObject datacenterObj;
+            JObject worldObj;
 
-            if (datacenterObj is null || worldObj is null)
+            try
+            {
+                datacenterObj = JObject.Parse(datacenterData);
+                worldObj = JObject.Parse(worldData);
+            }
+            catch
             {
                 await RespondAsync("Failed to retrieve datacenter data.", ephemeral: true);
                 return;
@@ -306,19 +311,13 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
         try
         {
             var reply = ping.Send(address, 2500);
-            if (reply is null)
-            {
-                embed.AddField("Status", "FAIL.\nNo 'pong' after 2500ms; might be offline.");
-            }
-            else
-            {
-                embed.AddField("Status", reply.Status);
-                embed.AddField("Roundtrip latency", $"{reply.RoundtripTime}ms");
-            }
+            
+            embed.AddField("Status", reply.Status);
+            embed.AddField("Roundtrip latency", $"{reply.RoundtripTime}ms");
         }
         catch
         {
-            embed.AddField("Status", "FAIL.\nFailed to reach provided hostname or IP.");
+            embed.AddField("Status", "FAIL.\nDestination did not respond to ping.");
         }
 
         await RespondAsync(embed: embed.Build());

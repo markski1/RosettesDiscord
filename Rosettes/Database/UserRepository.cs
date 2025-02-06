@@ -10,7 +10,7 @@ public class UserRepository
     public async Task<IEnumerable<User>> GetAllUsersAsync()
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT id, username, namecache, exp, mainpet FROM users";
 
@@ -28,7 +28,7 @@ public class UserRepository
     public async Task<bool> CheckUserExists(IUser user)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT count(1) FROM users WHERE id=@Id";
 
@@ -46,7 +46,7 @@ public class UserRepository
     public async Task<User> GetUserData(IUser user)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
 
@@ -64,7 +64,7 @@ public class UserRepository
     public async Task<bool> InsertUser(User user)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"INSERT INTO users (id, username, namecache, mainpet)
                         VALUES(@Id, @Username, @NameCache, @MainPet)";
@@ -86,7 +86,7 @@ public class UserRepository
     public async Task<bool> UpdateUser(User user)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"UPDATE users
                         SET id=@Id, username=@Username, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
@@ -103,10 +103,10 @@ public class UserRepository
         }
     }
 
-    public async Task<ulong?> GetUserByRosettesKey(string rosettes_key)
+    public static async Task<ulong?> GetUserByRosettesKey(string rosettesKey)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT id
                         FROM login_keys
@@ -115,7 +115,7 @@ public class UserRepository
 
         try
         {
-            return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { rosettes_key });
+            return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { rosettes_key = rosettesKey });
         }
         catch
         {

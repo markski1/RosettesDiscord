@@ -11,7 +11,7 @@ public static class PollEngine
     public static async Task<bool> AddPoll(ulong id, string question, string option1, string option2, string option3, string option4)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         const string sql = """
                            INSERT INTO polls (id, question, option1, option2, option3, option4)
@@ -45,7 +45,7 @@ public static class PollEngine
         }
 
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = """
               INSERT INTO poll_votes (user_id, poll_id)

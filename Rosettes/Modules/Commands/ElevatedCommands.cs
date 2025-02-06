@@ -59,7 +59,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
 

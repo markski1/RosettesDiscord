@@ -78,9 +78,9 @@ public static class EventManager
         Client.MessageReceived += OnMessageReceived;
 
         // it never would be null if we get this far, but this puts IntelliSense at ease.
-        if (ServiceManager.Provider.GetService<InteractionManager>() is InteractionManager _intMan)
+        if (ServiceManager.Provider.GetService<InteractionManager>() is { } intMan)
         {
-            await _intMan.SetupAsync();
+            await intMan.SetupAsync();
         }
         else
         {

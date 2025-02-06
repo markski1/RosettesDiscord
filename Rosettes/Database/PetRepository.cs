@@ -6,12 +6,12 @@ namespace Rosettes.Database;
 
 public class PetRepository
 {
-    public async Task<IEnumerable<Pet>> GetAllPetsAsync()
+    public static async Task<IEnumerable<Pet>> GetAllPetsAsync()
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
+        const string sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
 
         try
         {
@@ -24,13 +24,15 @@ public class PetRepository
         }
     }
 
-    public async Task<int> InsertPet(Pet pet)
+    public static async Task<int> InsertPet(Pet pet)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"INSERT INTO pets (pet_index, owner_id, pet_name, found_date)
-                        VALUES(@Index, @ownerId, @Name, @FoundDate)";
+        var sql = """
+                  INSERT INTO pets (pet_index, owner_id, pet_name, found_date)
+                  VALUES(@Index, @ownerId, @Name, @FoundDate)
+                  """;
 
         try
         {
@@ -48,14 +50,16 @@ public class PetRepository
         }
     }
 
-    public async Task<bool> UpdatePet(Pet pet)
+    public static async Task<bool> UpdatePet(Pet pet)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"UPDATE pets
-                        SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness
-                        WHERE pet_id = @Id";
+        const string sql = """
+                           UPDATE pets
+                           SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness
+                           WHERE pet_id = @Id
+                           """;
 
         try
         {

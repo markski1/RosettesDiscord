@@ -71,7 +71,7 @@ public static class AutoRolesEngine
     public static async Task<bool> SyncWithDatabase()
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
 
@@ -91,7 +91,7 @@ public static class AutoRolesEngine
         group.MessageId = messageId;
 
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var sql = @"UPDATE autorole_groups
 						SET messageid=@MessageId

@@ -66,7 +66,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void LoadAllPetsFromDatabase()
         {
-            IEnumerable<Pet> petCacheTemp = await Interface.GetAllPetsAsync();
+            IEnumerable<Pet> petCacheTemp = await PetRepository.GetAllPetsAsync();
             _petCache = petCacheTemp.ToList();
         }
 
@@ -80,7 +80,7 @@ namespace Rosettes.Modules.Engine.Minigame
                 
                 pet = new(index, ownerId, "[not named]");
                 _petCache.Add(pet);
-                pet.Id = await Interface.InsertPet(pet);
+                pet.Id = await PetRepository.InsertPet(pet);
                 return pet;
             }
             catch
@@ -502,7 +502,7 @@ namespace Rosettes.Modules.Engine.Minigame
             foreach (Pet pet in _petCache)
             {
                 if (pet.SyncUpToDate) continue;
-                await Interface.UpdatePet(pet);
+                await PetRepository.UpdatePet(pet);
                 pet.SyncUpToDate = true;
             }
         }

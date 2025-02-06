@@ -108,7 +108,6 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             await RespondAsync("Valid things to give:\n >>> \"fish\",\r\n\"uncommonfish\",\r\n\"rarefish\",\r\n\"shrimp\",\r\n\"dabloons\",\r\n\"garbage\",\r\n\"tomato\",\r\n\"carrot\",\r\n\"potato\",\r\n\"seedbag\"", ephemeral: true);
-            return;
         }
     }
 
@@ -123,7 +122,7 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
         }
         var users = await UserEngine.GetAllUsersFromGuild(Context.Guild);
 
-        if (users is null)
+        if (users.Count == 0)
         {
             await RespondAsync("There was an error listing the top users in this guild, sorry.");
             return;
@@ -133,15 +132,13 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 
         string topList = "Top 10 by experience: ```";
         topList += $"User                                 Level & Experience\n\n";
-        string userName;
-        var space = 30;
 
         foreach (var anUser in topUsers)
         {
             if (anUser.Exp <= 0) continue;
 
-            userName = await anUser.GetName();
-            space = 32 - userName.Length;
+            var userName = await anUser.GetName();
+            var space = 32 - userName.Length;
             userName += new string(' ', space);
 
             topList += $"{userName}|   Level {anUser.GetLevel()}; {anUser.Exp}xp\n";

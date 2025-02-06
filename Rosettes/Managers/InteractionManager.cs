@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Guild;
 using Rosettes.Modules.Engine.Minigame;
 using System.Reflection;
 
@@ -12,10 +11,6 @@ namespace Rosettes.Managers;
 
 public class InteractionManager(DiscordSocketClient client, InteractionService commands, IServiceProvider services)
 {
-    private readonly DiscordSocketClient _client = client;
-    private readonly InteractionService _commands = commands;
-    private readonly IServiceProvider _services = services;
-
     private Task OnInteraction(SocketInteraction inter)
     {
         TelemetryEngine.Count(TelemetryType.Interaction);
@@ -24,8 +19,8 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             try
             {
                 // get interaction context
-                var context = new SocketInteractionContext(_client, inter);
-                await _commands.ExecuteCommandAsync(context, _services);
+                var context = new SocketInteractionContext(client, inter);
+                await commands.ExecuteCommandAsync(context, services);
             }
             catch (Exception ex)
             {
@@ -170,20 +165,20 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
 
     public async Task SetupAsync()
     {
-        await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+        await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
-        await _commands.RegisterCommandsGloballyAsync();
+        await commands.RegisterCommandsGloballyAsync();
 
-        _client.InteractionCreated += OnInteraction;
+        client.InteractionCreated += OnInteraction;
 
-        _client.ButtonExecuted += OnButtonClicked;
+        client.ButtonExecuted += OnButtonClicked;
 
-        _client.SelectMenuExecuted += OnMenuSelectionMade;
+        client.SelectMenuExecuted += OnMenuSelectionMade;
 
-        _client.ModalSubmitted += OnModalSubmitted;
+        client.ModalSubmitted += OnModalSubmitted;
 
-        _client.SlashCommandExecuted += OnGuildCommandExecuted;
+        client.SlashCommandExecuted += OnGuildCommandExecuted;
 
-        _commands.SlashCommandExecuted += OnGlobalCommandExecuted;
+        commands.SlashCommandExecuted += OnGlobalCommandExecuted;
     }
 }

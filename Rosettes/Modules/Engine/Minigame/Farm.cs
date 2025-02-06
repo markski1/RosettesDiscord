@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
+using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine.Minigame
 {
@@ -14,7 +15,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
             Crop newCrop = new(plot_id, dbUser.Id, growTime, waterTime, cropType);
 
-            bool success = await FarmEngine._interface.InsertCrop(newCrop);
+            bool success = await FarmRepository.InsertCrop(newCrop);
 
             if (success)
             {
@@ -44,9 +45,9 @@ namespace Rosettes.Modules.Engine.Minigame
 
             embed.Title = $"Farm";
 
-            List<Crop> fieldsToList = (await FarmEngine._interface.GetUserCrops(dbUser)).ToList();
+            List<Crop> fieldsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
 
-            int plots = await FarmEngine._interface.FetchInventoryItem(dbUser, "plots");
+            int plots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
 
             embed.Description = $"Your farm has {plots} plot{(plots != 1 ? 's' : null)} of land.";
 
@@ -168,11 +169,11 @@ namespace Rosettes.Modules.Engine.Minigame
                 return;
             }
 
-            List<Crop> fieldsToList = (await FarmEngine._interface.GetUserCrops(dbUser)).ToList();
+            List<Crop> fieldsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
 
-            int plots = await FarmEngine._interface.FetchInventoryItem(dbUser, "plots");
+            int plots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
 
-            int seeds = await FarmEngine._interface.FetchInventoryItem(dbUser, "seedbag");
+            int seeds = await FarmRepository.FetchInventoryItem(dbUser, "seedbag");
 
             if (seeds <= 0)
             {
@@ -293,14 +294,14 @@ namespace Rosettes.Modules.Engine.Minigame
 
             bool cropsToHarvest = false;
 
-            List<Crop> cropsToList = (await FarmEngine._interface.GetUserCrops(dbUser)).ToList();
+            List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
             {
                 if (crop.unixNextWater < Global.CurrentUnix())
                 {
                     crop.unixNextWater = Global.CurrentUnix() + 1800 + 300 * Global.Randomize(4);
                     crop.unixGrowth -= 3600;
-                    await FarmEngine._interface.UpdateCrop(crop);
+                    await FarmRepository.UpdateCrop(crop);
                     if (crop.unixGrowth < Global.CurrentUnix())
                     {
                         embed.AddField($"🌿 Plot {crop.plotId} watered.", $"The crops in this plot have finished growing.");
@@ -391,12 +392,12 @@ namespace Rosettes.Modules.Engine.Minigame
 
             bool plotsWereHarvested = false;
 
-            List<Crop> cropsToList = (await FarmEngine._interface.GetUserCrops(dbUser)).ToList();
+            List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
             foreach (var crop in cropsToList)
             {
                 if (crop.unixGrowth < Global.CurrentUnix())
                 {
-                    var success = await FarmEngine._interface.DeleteCrop(crop);
+                    var success = await FarmRepository.DeleteCrop(crop);
                     if (success is false)
                     {
                         // quiet fail, but it will be reported above

@@ -6,12 +6,12 @@ namespace Rosettes.Database;
 
 public class AlarmRepository
 {
-    public async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
+    public static async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"SELECT datetime, user, channel FROM alarms";
+        const string sql = @"SELECT datetime, user, channel FROM alarms";
 
         try
         {
@@ -27,10 +27,12 @@ public class AlarmRepository
     public async Task<bool> InsertAlarm(Alarm alarm)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"INSERT INTO alarms (datetime, user, channel)
-                        VALUES(@DateTime, @User, @Channel)";
+        const string sql = """
+                           INSERT INTO alarms (datetime, user, channel)
+                           VALUES(@DateTime, @User, @Channel)
+                           """;
 
         if (alarm.Channel is null) return false;
 
@@ -45,13 +47,15 @@ public class AlarmRepository
         }
     }
 
-    public async Task<bool> DeleteAlarm(Alarm alarm)
+    public static async Task<bool> DeleteAlarm(Alarm alarm)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
-        var sql = @"DELETE FROM alarms
-                        WHERE user = @User";
+        const string sql = """
+                           DELETE FROM alarms
+                           WHERE user = @User
+                           """;
         try
         {
             return (await db.ExecuteAsync(sql, new { User = alarm.User.Id })) > 0;

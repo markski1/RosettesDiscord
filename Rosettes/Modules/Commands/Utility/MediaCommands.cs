@@ -1,9 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Microsoft.AspNetCore.Routing.Constraints;
 using Newtonsoft.Json;
 using Rosettes.Core;
-using System.Linq;
 using System.Text;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -17,7 +15,7 @@ namespace Rosettes.Modules.Commands.Utility;
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    public static Dictionary<string, string> MediaCache = [];
+    private static readonly Dictionary<string, string> MediaCache = [];
 
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
@@ -59,9 +57,9 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string fileName;
         string? mediaUri = null;
 
-        if (MediaCache.ContainsKey(uri))
+        if (MediaCache.TryGetValue(uri, out var value))
         {
-            fileName = MediaCache[uri];
+            fileName = value;
         }
         else
         {

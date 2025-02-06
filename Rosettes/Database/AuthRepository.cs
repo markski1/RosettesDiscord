@@ -8,7 +8,7 @@ public static class AuthRepository
     public static async Task<ApplicationAuth?> GetApplicationAuth(string applicationKey)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         const string sql = @"SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
 
@@ -25,7 +25,7 @@ public static class AuthRepository
     public static async Task<bool> AuthUser(int appId, ulong userId)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         const string sql = "INSERT INTO app_auth_rel (user_id, app_id) VALUES(@UserId, @AppId)";
 
@@ -42,7 +42,7 @@ public static class AuthRepository
     public static async Task<ApplicationRelation?> GetApplicationRelation(string applicationKey, ulong userId)
     {
         using var getConn = DatabasePool.GetConnection();
-        var db = getConn.db;
+        var db = getConn.Db;
 
         var appAuth = await GetApplicationAuth(applicationKey);
 

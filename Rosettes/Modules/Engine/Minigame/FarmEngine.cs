@@ -66,12 +66,12 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void ModifyItem(User dbUser, string choice, int amount)
         {
-            await _interface.ModifyInventoryItem(dbUser, choice, amount);
+            await FarmRepository.ModifyInventoryItem(dbUser, choice, amount);
         }
 
         public static async void SetItem(User dbUser, string choice, int newValue)
         {
-            await _interface.SetInventoryItem(dbUser, choice, newValue);
+            await FarmRepository.SetInventoryItem(dbUser, choice, newValue);
         }
 
         public static async void ModifyStrItem(User dbUser, string choice, string newValue)
@@ -81,12 +81,12 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async Task<int> GetItem(User dbUser, string name)
         {
-            return await _interface.FetchInventoryItem(dbUser, name);
+            return await FarmRepository.FetchInventoryItem(dbUser, name);
         }
 
         public static async Task<string> GetStrItem(User dbUser, string name)
         {
-            return await _interface.FetchInventoryStringItem(dbUser, name);
+            return await FarmRepository.FetchInventoryStringItem(dbUser, name);
         }
 
         public static async Task<string> CanUseFarmCommand(SocketInteractionContext context)

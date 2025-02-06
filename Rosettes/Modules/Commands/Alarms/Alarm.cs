@@ -14,7 +14,7 @@ public static class AlarmManager
 
     public static async void LoadAllAlarmsFromDatabase()
     {
-        IEnumerable<Alarm> activeAlarms = await Interface.GetAllAlarmsAsync();
+        IEnumerable<Alarm> activeAlarms = await AlarmRepository.GetAllAlarmsAsync();
         _activeAlarms = activeAlarms.ToList();
     }
 
@@ -37,7 +37,7 @@ public static class AlarmManager
     public static async void DeleteAlarm(Alarm alarm)
     {
         alarm.Timer.Stop();
-        await Interface.DeleteAlarm(alarm);
+        await AlarmRepository.DeleteAlarm(alarm);
         _activeAlarms.Remove(alarm);
     }
 
