@@ -13,7 +13,7 @@ public static class MessageManager
     {
         if (!NoMessageChannel(context)) return;
         TelemetryEngine.Count(TelemetryType.Message);
-        var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
+        var dbGuild = await GuildEngine.GetDbGuild(context.Guild);
         // if a guild's message analysis level is 0, don't parse messages at all.
         if (!dbGuild.MessageAnalysis())
         {

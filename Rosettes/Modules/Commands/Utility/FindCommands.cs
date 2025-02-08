@@ -131,7 +131,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             RequestUri = new Uri($"https://mashape-community-urban-dictionary.p.rapidapi.com/define?term={query.ToLower()}"),
             Headers =
                 {
-                    { "X-RapidAPI-Key", Settings.RapidAPIKey },
+                    { "X-RapidAPI-Key", Settings.RapidApiKey },
                     { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
                 },
         };

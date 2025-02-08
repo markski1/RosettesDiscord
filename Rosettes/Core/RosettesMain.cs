@@ -69,24 +69,11 @@ public class RosettesMain
         timedThread.Start();
     }
 
-    private static void TimedActions()
+    private static async void TimedActions()
     {
         UserEngine.SyncWithDatabase();
-        GuildEngine.SyncWithDatabase();
+        await GuildEngine.SyncWithDatabase();
         PetEngine.TimedThings();
         PetEngine.SyncWithDatabase();
-    }
-
-    public static async Task<bool> HaltOrRestart()
-    {
-        UserEngine.SyncWithDatabase();
-        PetEngine.SyncWithDatabase();
-        GuildEngine.SyncWithDatabase();
-        Game game = new("Restarting, please wait!", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
-        var client = ServiceManager.GetService<DiscordSocketClient>();
-        await client.SetActivityAsync(game);
-        
-        Environment.Exit(0);
-        return true;
     }
 }

@@ -114,7 +114,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
             string text = "";
 
-            var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+            var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
             var restGuild = await dbGuild.GetDiscordRestReference();
             var socketGuild = dbGuild.GetDiscordSocketReference();
 
@@ -162,7 +162,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
         }
 
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+        var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
 
         if (disable == "false")
         {
@@ -186,7 +186,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
         }
 
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+        var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
 
         if (disable == "false")
         {
@@ -216,7 +216,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var dbGuild = await GuildEngine.GetDBGuild(Context.Guild);
+        var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
 
         var component = AdminHelper.GetGuildSettingsButtons(dbGuild);
 
@@ -228,7 +228,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         await RespondAsync(embed: embed.Build(), components: component);
 
-        dbGuild.cacheSettingsMsg = await GetOriginalResponseAsync();
+        dbGuild.CacheSettingsMsg = await GetOriginalResponseAsync();
     }
 }
 
@@ -246,7 +246,7 @@ public static class AdminHelper
         enabledText = (dbGuild.AllowsFarm()) ? "Enabled" : "Disabled";
         secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
 
-        enabledText = (dbGuild.MonitorsVC()) ? "Enabled" : "Disabled";
+        enabledText = (dbGuild.MonitorsVc()) ? "Enabled" : "Disabled";
         secondRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
 
         ActionRowBuilder fourthRow = new();
@@ -269,7 +269,7 @@ public static class AdminHelper
     {
         if (component.GuildId is ulong guildId)
         {
-            var dbGuild = GuildEngine.GetDBGuildById(guildId);
+            var dbGuild = GuildEngine.GetDbGuildById(guildId);
             var guildRef = dbGuild.GetDiscordSocketReference();
             if (guildRef.OwnerId != component.User.Id)
             {
@@ -295,15 +295,15 @@ public static class AdminHelper
 
             try
             {
-                if (dbGuild.cacheSettingsMsg is not null)
+                if (dbGuild.CacheSettingsMsg is not null)
                 {
                     await component.DeferAsync(ephemeral: true);
-                    await dbGuild.cacheSettingsMsg.ModifyAsync(x => x.Components = buttonComponent);
+                    await dbGuild.CacheSettingsMsg.ModifyAsync(x => x.Components = buttonComponent);
                 }
                 else
                 {
                     await component.RespondAsync(components: buttonComponent);
-                    dbGuild.cacheSettingsMsg = await component.GetOriginalResponseAsync();
+                    dbGuild.CacheSettingsMsg = await component.GetOriginalResponseAsync();
                 }
             }
             catch

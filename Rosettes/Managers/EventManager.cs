@@ -38,7 +38,7 @@ public static class EventManager
         Client.UserJoined += OnUserJoin;
         Client.UserLeft += OnUserLeft;
 
-        Client.UserVoiceStateUpdated += JQMonitorEngine.UserVCUpdated;
+        Client.UserVoiceStateUpdated += JqMonitorEngine.UserVcUpdated;
 
         return Task.CompletedTask;
     }
@@ -123,7 +123,7 @@ public static class EventManager
 
     private static async Task<Task> OnJoinGuild(SocketGuild guild)
     {
-        await GuildEngine.GetDBGuild(guild);
+        await GuildEngine.GetDbGuild(guild);
 
         // cache users to memory
         foreach (var user in guild.Users)
@@ -150,7 +150,7 @@ public static class EventManager
 
     private static async Task<Task> OnRoleChange(SocketRole role)
     {
-        Guild guild = await GuildEngine.GetDBGuild(role.Guild);
+        Guild guild = await GuildEngine.GetDbGuild(role.Guild);
         guild.UpdateRoles();
 
         return Task.CompletedTask;
@@ -158,7 +158,7 @@ public static class EventManager
 
     private static async Task<Task> OnRoleChange(SocketRole role, SocketRole role1)
     {
-        Guild guild = await GuildEngine.GetDBGuild(role.Guild);
+        Guild guild = await GuildEngine.GetDbGuild(role.Guild);
         guild.UpdateRoles();
 
         return Task.CompletedTask;
@@ -168,7 +168,7 @@ public static class EventManager
     {
         if (user.Guild is null) return Task.CompletedTask;
 
-        var dbGuild = await GuildEngine.GetDBGuild(user.Guild);
+        var dbGuild = await GuildEngine.GetDbGuild(user.Guild);
 
         // If the guild has set a default role, apply it.
         var defRole = dbGuild.DefaultRole;
@@ -190,7 +190,7 @@ public static class EventManager
 
     private static async Task<Task> OnUserLeft(SocketGuild guild, SocketUser user)
     {
-        var dbGuild = await GuildEngine.GetDBGuild(guild);
+        var dbGuild = await GuildEngine.GetDbGuild(guild);
 
         if (dbGuild.LogChannel <= 0) return Task.CompletedTask;
         
@@ -233,7 +233,7 @@ public static class EventManager
         // ensure guild is cached and their data can be accessed
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
         if (guildid == 0) return Task.CompletedTask;
-        var guild = GuildEngine.GetDBGuildById(guildid);
+        var guild = GuildEngine.GetDbGuildById(guildid);
 
         // If the message is AutoRoles, apply the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
@@ -256,7 +256,7 @@ public static class EventManager
         // ensure guild is cached and their data can be accessed
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
         if (guildid == 0) return Task.CompletedTask;
-        var guild = GuildEngine.GetDBGuildById(guildid);
+        var guild = GuildEngine.GetDbGuildById(guildid);
 
         // If the message is AutoRoles, remove the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);

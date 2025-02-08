@@ -84,7 +84,7 @@ public static class Global
             embed.Author = authorEmbed;
 
             authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
-            authorEmbed.IconUrl = author.GetDisplayAvatarUrl();
+            authorEmbed.IconUrl = author?.GetDisplayAvatarUrl();
 
             var pet = await PetEngine.GetUserPet(dbUser);
             if (pet is not null)

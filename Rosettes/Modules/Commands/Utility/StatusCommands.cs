@@ -89,7 +89,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
             string worldData;
             try
             {
-                datacenterData = await Global.HttpClient.GetStringAsync($"https://xivapi.com/servers/dc?private_key={Settings.FFXIVApiKey}");
+                datacenterData = await Global.HttpClient.GetStringAsync($"https://xivapi.com/servers/dc?private_key={Settings.FfxivApiKey}");
                 worldData = await Global.HttpClient.GetStringAsync("http://frontier.ffxiv.com/worldStatus/current_status.json");
             }
             catch

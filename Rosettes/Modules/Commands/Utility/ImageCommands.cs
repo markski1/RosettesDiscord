@@ -48,7 +48,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("saucenao", "Use SauceNAO to try and find the source of a provided image url.")]
     public async Task SauceNao(string url)
     {
-        string getUrl = $"https://saucenao.com/search.php?output_type=2&api_key={Settings.SauceNAO}&url={url}";
+        string getUrl = $"https://saucenao.com/search.php?output_type=2&api_key={Settings.SauceNao}&url={url}";
 
         await DeferAsync();
 

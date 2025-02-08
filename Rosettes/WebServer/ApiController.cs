@@ -32,9 +32,7 @@ public class ApiController : ControllerBase
         ulong userSum = 0;
         int serverSum = 0;
 
-        var client = ServiceManager.GetService<DiscordSocketClient>();
-
-        foreach (var guild in GuildEngine.GuildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id)))
+        foreach (var guild in GuildEngine.GetActiveGuilds())
         {
             var findOwner = await UserEngine.GetUserReferenceById(guild.OwnerId);
             if (findOwner != null)

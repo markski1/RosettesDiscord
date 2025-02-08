@@ -4,9 +4,9 @@ using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine.Guild;
 
-public static class JQMonitorEngine
+public static class JqMonitorEngine
 {
-    public static Task UserVCUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
+    public static Task UserVcUpdated(SocketUser user, SocketVoiceState oldState, SocketVoiceState newState)
     {
         _ = Task.Run(async () =>
         {
@@ -35,8 +35,8 @@ public static class JQMonitorEngine
 
             if (channel is not null && action is not null)
             {
-                var dbGuild = await GuildEngine.GetDBGuild(channel.Guild);
-                if (!dbGuild.MonitorsVC()) return;
+                var dbGuild = await GuildEngine.GetDbGuild(channel.Guild);
+                if (!dbGuild.MonitorsVc()) return;
                 ChannelInform(user, channel, action);
                 if (channel2 is not null && action2 is not null)
                     ChannelInform(user, channel, action);
@@ -46,7 +46,7 @@ public static class JQMonitorEngine
         return Task.CompletedTask;
     }
 
-    public static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)
+    private static async void ChannelInform(SocketUser user, SocketVoiceChannel channel, string action)
     {
         try
         {

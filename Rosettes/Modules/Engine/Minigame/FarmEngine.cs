@@ -95,7 +95,7 @@ namespace Rosettes.Modules.Engine.Minigame
             {
                 return "Farming/Fishing Commands do not work in direct messages.";
             }
-            var dbGuild = await GuildEngine.GetDBGuild(context.Guild);
+            var dbGuild = await GuildEngine.GetDbGuild(context.Guild);
             if (!Global.CanSendMessage(context))
             {
                 return "I don't have access to this channel. Please let an admin know, or try using me in other channel.";

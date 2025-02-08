@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
 
@@ -9,16 +8,22 @@ namespace Rosettes.Modules.Engine.Guild;
 
 public static class GuildEngine
 {
-    public static List<Guild> GuildCache = new();
-    public static readonly GuildRepository _interface = new();
+    private static List<Guild> _guildCache = [];
 
-    public static async void SyncWithDatabase()
+    public static async Task<bool> SyncWithDatabase()
     {
-
-        foreach (Guild guild in GuildCache.ToList())
+        foreach (Guild guild in _guildCache.ToList())
         {
-            await UpdateGuild(guild);
+            try
+            {
+                await UpdateGuild(guild);
+            }
+            catch
+            {
+                return false;
+            }
         }
+        return true;
     }
 
     public static async Task<bool> UpdateGuild(Guild guild)
@@ -26,7 +31,7 @@ public static class GuildEngine
         var client = ServiceManager.GetService<DiscordSocketClient>();
 
         // Guild may have been abandoned.
-        if (!client.Guilds.Where(x => x.Id == guild.Id).Any())
+        if (client.Guilds.All(x => x.Id != guild.Id))
         {
             return false;
         }
@@ -61,11 +66,11 @@ public static class GuildEngine
 
     public static void RemoveGuildFromCache(ulong guildid)
     {
-        var guildObj = GuildCache.Find(item => item.Id == guildid);
-        if (guildObj is not null) GuildCache.Remove(guildObj);
+        var guildObj = _guildCache.Find(item => item.Id == guildid);
+        if (guildObj is not null) _guildCache.Remove(guildObj);
     }
 
-    public static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
+    private static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
     {
         Guild getGuild;
         if (await GuildRepository.CheckGuildExists(guild.Id))
@@ -78,26 +83,25 @@ public static class GuildEngine
             await GuildRepository.InsertGuild(getGuild);
             getGuild.UpdateRoles();
         }
-        if (getGuild.IsValid()) GuildCache.Add(getGuild);
+        if (getGuild.IsValid()) _guildCache.Add(getGuild);
         return getGuild;
     }
 
     public static async void LoadAllGuildsFromDatabase()
     {
-        IEnumerable<Guild> guildCacheTemp;
-        guildCacheTemp = await GuildRepository.GetAllGuildsAsync();
-        GuildCache = guildCacheTemp.ToList();
-        foreach (Guild guild in GuildCache)
+        IEnumerable<Guild> guildCacheTemp = await GuildRepository.GetAllGuildsAsync();
+        _guildCache = guildCacheTemp.ToList();
+        foreach (Guild guild in _guildCache)
         {
             guild.UpdateRoles();
         }
     }
 
-    public static async Task<Guild> GetDBGuild(SocketGuild guild)
+    public static async Task<Guild> GetDbGuild(SocketGuild guild)
     {
         try
         {
-            return GuildCache.First(item => item.Id == guild.Id);
+            return _guildCache.First(item => item.Id == guild.Id);
         }
         catch
         {
@@ -106,16 +110,22 @@ public static class GuildEngine
     }
 
     // assumes guild is cached! to be used in constructors, where async tasks cannot be awaited.
-    public static Guild GetDBGuildById(ulong guild)
+    public static Guild GetDbGuildById(ulong guild)
     {
         try
         {
-            return GuildCache.First(item => item.Id == guild);
+            return _guildCache.First(item => item.Id == guild);
         }
         catch
         {
             return new Guild(null);
         }
+    }
+
+    public static IEnumerable<Guild> GetActiveGuilds()
+    {
+        var client = ServiceManager.GetService<DiscordSocketClient>();
+        return _guildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id));
     }
 }
 
@@ -129,11 +139,11 @@ public class Guild
     public ulong LogChannel;
     public ulong FarmChannel;
     public string NameCache;
-    private SocketGuild? CachedReference;
+    private SocketGuild? _cachedReference;
 
     // settings contains 10 characters, each representative of the toggle state of a setting.
     //
-    // this is a short sighted and limited approach by design, because rosettes is MEANT TO BE SIMPLE.
+    // this is a short-sighted and limited approach by design, because rosettes is MEANT TO BE SIMPLE.
     // If we ever need more than 10 settings, we're doing something very wrong.
     //
     // - Char 0: Message Analysis level
@@ -160,7 +170,7 @@ public class Guild
             NameCache = guild.Name;
             OwnerId = guild.OwnerId;
         }
-        CachedReference = guild;
+        _cachedReference = guild;
         DefaultRole = 0;
         Members = 0;
         LogChannel = 0;
@@ -176,7 +186,7 @@ public class Guild
         Settings = settings;
         NameCache = namecache;
         OwnerId = ownerid;
-        CachedReference = null;
+        _cachedReference = null;
         DefaultRole = defaultrole;
         LogChannel = logchan;
         FarmChannel = rpgchan;
@@ -184,24 +194,24 @@ public class Guild
 
     public bool IsValid()
     {
-        // if guild was created with an Id of 0 it indicates a database failure and this object is invalid.
+        // if guild was created with an id of 0 it indicates a database failure and this object is invalid.
         return Id != 0;
     }
 
     public async Task<RestGuild> GetDiscordRestReference()
     {
-        DiscordSocketClient _client = ServiceManager.GetService<DiscordSocketClient>();
-        var foundGuild = await _client.Rest.GetGuildAsync(Id);
+        DiscordSocketClient client = ServiceManager.GetService<DiscordSocketClient>();
+        var foundGuild = await client.Rest.GetGuildAsync(Id);
         return foundGuild;
     }
 
     public SocketGuild? GetDiscordSocketReference()
     {
-        if (CachedReference is not null) return CachedReference;
+        if (_cachedReference is not null) return _cachedReference;
         var client = ServiceManager.GetService<DiscordSocketClient>();
         var foundGuild = client.GetGuild(Id);
-        CachedReference = foundGuild;
-        return CachedReference;
+        _cachedReference = foundGuild;
+        return _cachedReference;
     }
 
     public void SelfTest()
@@ -240,7 +250,7 @@ public class Guild
         return value == '1';
     }
 
-    public bool MonitorsVC()
+    public bool MonitorsVc()
     {
         char value = Settings[5];
         return value == '1';
@@ -249,9 +259,7 @@ public class Guild
     public void ToggleSetting(int id)
     {
         var mutableSettings = Settings.ToCharArray();
-        char newSetting;
-        if (mutableSettings[id] == '0') newSetting = '1';
-        else newSetting = '0';
+        var newSetting = mutableSettings[id] == '0' ? '1' : '0';
         mutableSettings[id] = newSetting;
         Settings = new string(mutableSettings);
         _ = GuildRepository.SetGuildSettings(this);
@@ -271,12 +279,11 @@ public class Guild
     }
 
     // returns either a SocketGuildUser or a RestGuildUser, depending on wether cached or not.
-    public async Task<dynamic> GetGuildUser(ulong userid)
+    private async Task<dynamic?> GetGuildUser(ulong userid)
     {
         var dref = GetDiscordSocketReference();
-        var user = dref.GetUser(userid);
-        dref.GetUsersAsync();
-        if (user is not null) return user;
+        var user = dref?.GetUser(userid);
+        if (user != null) return user;
 
         // user not cached
         var restSelf = await GetDiscordRestReference();
@@ -335,18 +342,13 @@ public class Guild
     {
         var guildref = GetDiscordSocketReference();
 
-        if (guildref is null)
-        {
-            return;
-        }
+        SocketTextChannel? chan = guildref?.GetTextChannel(LogChannel);
 
-        SocketTextChannel? chan = guildref.GetTextChannel(LogChannel);
-
-        if (chan is not null)
+        if (chan != null)
         {
             await chan.SendMessageAsync(embed: embed.Build());
         }
     }
 
-    public IUserMessage? cacheSettingsMsg;
+    public IUserMessage? CacheSettingsMsg;
 }
