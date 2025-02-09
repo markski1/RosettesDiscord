@@ -126,34 +126,21 @@ namespace Rosettes.Modules.Engine.Minigame
                             text = await ItemBuy(dbUser, buying: "seedbag", amount: 1, cost: 5);
                             break;
                         case "buy2":
-                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 5, cost: 20);
+                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 5, cost: 25);
                             break;
                         case "buy3":
+                            text = await ItemBuy(dbUser, buying: "seedbag", amount: 10, cost: 50);
+                            break;
+                        case "buy4":
                             if (await GetItem(dbUser, "fishpole") >= 25)
                             {
-                                text = $"Your current {GetItemName("fishpole")} are still in good shape.";
+                                text = $"Your current {GetItemName("fishpole")} is still in good shape.";
                             }
                             else if (await GetItem(dbUser, "dabloons") >= 5)
                             {
-                                ModifyItem(dbUser, "dabloons", -5);
-                                SetItem(dbUser, "fishpole", 100);
-                                text = $"You have purchased {GetItemName("fishpole")} for 5 {GetItemName("dabloons")}";
-                            }
-                            else
-                            {
-                                text = $"You don't have 5 {GetItemName("dabloons")}";
-                            }
-                            break;
-                        case "buy4":
-                            if (await GetItem(dbUser, "farmtools") >= 25)
-                            {
-                                text = $"Your current {GetItemName("farmtools")} are still in good shape.";
-                            }
-                            else if (await GetItem(dbUser, "dabloons") >= 10)
-                            {
                                 ModifyItem(dbUser, "dabloons", -10);
-                                SetItem(dbUser, "farmtools", 100);
-                                text = $"You have purchased {GetItemName("farmtools")} for 10 {GetItemName("dabloons")}";
+                                SetItem(dbUser, "fishpole", 100);
+                                text = $"You have purchased {GetItemName("fishpole")} for 10 {GetItemName("dabloons")}";
                             }
                             else
                             {
@@ -161,6 +148,22 @@ namespace Rosettes.Modules.Engine.Minigame
                             }
                             break;
                         case "buy5":
+                            if (await GetItem(dbUser, "farmtools") >= 25)
+                            {
+                                text = $"Your current {GetItemName("farmtools")} are still in good shape.";
+                            }
+                            else if (await GetItem(dbUser, "dabloons") >= 10)
+                            {
+                                ModifyItem(dbUser, "dabloons", -15);
+                                SetItem(dbUser, "farmtools", 100);
+                                text = $"You have purchased {GetItemName("farmtools")} for 15 {GetItemName("dabloons")}";
+                            }
+                            else
+                            {
+                                text = $"You don't have 15 {GetItemName("dabloons")}";
+                            }
+                            break;
+                        case "buy6":
                             if (await GetItem(dbUser, "dabloons") >= 200)
                             {
                                 if (await GetItem(dbUser, "plots") >= 3)
@@ -505,9 +508,10 @@ namespace Rosettes.Modules.Engine.Minigame
             if (!empty)
             {
                 buyMenu.AddOption(label: $"1 {GetItemName("seedbag")}", description: $"5 {GetItemName("dabloons")}", value: "buy1");
-                buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"20 {GetItemName("dabloons")}", value: "buy2");
-                buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"5 {GetItemName("dabloons")}", value: "buy3");
-                buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"10 {GetItemName("dabloons")}", value: "buy4");
+                buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"25 {GetItemName("dabloons")}", value: "buy2");
+                buyMenu.AddOption(label: $"10 {GetItemName("seedbag")}", description: $"50 {GetItemName("dabloons")}", value: "buy3");
+                buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"10 {GetItemName("dabloons")}", value: "buy4");
+                buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"15 {GetItemName("dabloons")}", value: "buy5");
                 buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "buy5");
             }
             else
