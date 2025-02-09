@@ -6,14 +6,14 @@ namespace Rosettes.Core;
 
 public static class Settings
 {
-    // DEBUG is my local machine
 #if DEBUG
+    // DEBUG is my local machine
     public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
     private const string KeyLoc = "/home/markski/rosetteskeys";
-    // otherwise, it's production.
 #else
+    // otherwise, it's production.
     public static readonly LogSeverity LogSeverity = LogSeverity.Info;
-    public static readonly string keyLoc = "./keys";
+    private const string KeyLoc = "./keys";
 #endif
     
     public static readonly string Token = LoadSetting("token");

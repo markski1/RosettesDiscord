@@ -69,10 +69,10 @@ public class RosettesMain
         timedThread.Start();
     }
 
-    private static async void TimedActions()
+    private static void TimedActions()
     {
         UserEngine.SyncWithDatabase();
-        await GuildEngine.SyncWithDatabase();
+        GuildEngine.SyncWithDatabase();
         PetEngine.TimedThings();
         PetEngine.SyncWithDatabase();
     }

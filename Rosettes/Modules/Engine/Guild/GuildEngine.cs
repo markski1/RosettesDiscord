@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
+using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
 
@@ -10,20 +11,19 @@ public static class GuildEngine
 {
     private static List<Guild> _guildCache = [];
 
-    public static async Task<bool> SyncWithDatabase()
+    public static async void SyncWithDatabase()
     {
-        foreach (Guild guild in _guildCache.ToList())
+        try
         {
-            try
+            foreach (Guild guild in _guildCache.ToList())
             {
                 await UpdateGuild(guild);
             }
-            catch
-            {
-                return false;
-            }
         }
-        return true;
+        catch (Exception e)
+        {
+            Global.GenerateErrorMessage("gengine", $"Failed to sync guilds. Error: {e.Message}");
+        }
     }
 
     public static async Task<bool> UpdateGuild(Guild guild)

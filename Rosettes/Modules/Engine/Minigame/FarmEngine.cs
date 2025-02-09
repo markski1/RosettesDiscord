@@ -512,7 +512,7 @@ namespace Rosettes.Modules.Engine.Minigame
                 buyMenu.AddOption(label: $"10 {GetItemName("seedbag")}", description: $"50 {GetItemName("dabloons")}", value: "buy3");
                 buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"10 {GetItemName("dabloons")}", value: "buy4");
                 buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"15 {GetItemName("dabloons")}", value: "buy5");
-                buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "buy5");
+                buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "buy6");
             }
             else
             {

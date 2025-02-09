@@ -12,7 +12,7 @@ public static class UserEngine
     private static List<User> _userCache = [];
     private static readonly UserRepository Interface = new();
 
-    public static async Task<bool> SyncWithDatabase()
+    public static async void SyncWithDatabase()
     {
         try
         {
@@ -25,10 +25,7 @@ public static class UserEngine
         catch (Exception e)
         {
             Global.GenerateErrorMessage("uengine-updt", $"Exception while updating users: {e.Message}");
-            return false;
         }
-
-        return true;
     }
 
     private static async Task<User> LoadUserFromDatabase(IUser user)

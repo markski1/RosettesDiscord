@@ -18,7 +18,6 @@ namespace Rosettes.Modules.Engine.Minigame
     public static class PetEngine
     {
         private static List<Pet> _petCache = [];
-        private static readonly PetRepository Interface = new();
 
         private static readonly Dictionary<int, (string fullName, string emoji)> PetChart = new()
         {
@@ -380,9 +379,10 @@ namespace Rosettes.Modules.Engine.Minigame
         {
             // make zero-indexed
             id--;
+            
             string pets = await FarmEngine.GetStrItem(dbUser, "pets");
 
-            return pets != null && pets[id] == '1';
+            return pets[id] == '1';
         }
 
         public static async Task ViewPet(SocketInteraction interaction, IUser user)
@@ -499,9 +499,8 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static async void SyncWithDatabase()
         {
-            foreach (Pet pet in _petCache)
+            foreach (var pet in _petCache.Where(pet => !pet.SyncUpToDate))
             {
-                if (pet.SyncUpToDate) continue;
                 await PetRepository.UpdatePet(pet);
                 pet.SyncUpToDate = true;
             }
@@ -509,10 +508,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static bool AcceptablePetMeal(string foodItem)
         {
-            if (!FarmEngine.inventoryItems.TryGetValue(foodItem, out var item))
-                return false;
-
-            return item.can_give;
+            return FarmEngine.inventoryItems.TryGetValue(foodItem, out var item) && item.can_give;
         }
 
         public static void TimedThings()
