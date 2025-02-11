@@ -11,7 +11,7 @@ public class PetRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = @"SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
+        const string sql = "SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
 
         try
         {
@@ -38,7 +38,7 @@ public class PetRepository
         {
             await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, Name = pet.GetBareName(), FoundDate = pet.GetFoundDate() });
 
-            sql = @"SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
+            sql = "SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
             var result = await db.QueryAsync<int>(sql,
                                           new { pet.ownerId, pet.Index });
             return result.Single();
@@ -63,7 +63,7 @@ public class PetRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), TimesPet = pet.GetTimesPet(), FoundDate = pet.GetFoundDate(), Happiness = pet.GetHappiness(), pet.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), TimesPet = pet.GetTimesPet(), FoundDate = pet.GetFoundDate(), Happiness = pet.GetHappiness(), pet.Id }) > 0;
         }
         catch (Exception ex)
         {

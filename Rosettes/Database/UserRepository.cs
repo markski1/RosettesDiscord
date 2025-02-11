@@ -7,12 +7,12 @@ namespace Rosettes.Database;
 
 public class UserRepository
 {
-    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    public static async Task<IEnumerable<User>> GetAllUsersAsync()
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT id, username, namecache, exp, mainpet FROM users";
+        const string sql = "SELECT id, username, namecache, exp, mainpet FROM users";
 
         try
         {
@@ -25,12 +25,12 @@ public class UserRepository
         }
     }
 
-    public async Task<bool> CheckUserExists(IUser user)
+    public static async Task<bool> CheckUserExists(IUser user)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT count(1) FROM users WHERE id=@Id";
+        const string sql = @"SELECT count(1) FROM users WHERE id=@Id";
 
         try
         {
@@ -43,12 +43,12 @@ public class UserRepository
         }
     }
 
-    public async Task<User> GetUserData(IUser user)
+    public static async Task<User> GetUserData(IUser user)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
+        const string sql = "SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
 
         try
         {
@@ -61,15 +61,17 @@ public class UserRepository
         }
     }
 
-    public async Task<bool> InsertUser(User user)
+    public static async Task<bool> InsertUser(User user)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"INSERT INTO users (id, username, namecache, mainpet)
-                        VALUES(@Id, @Username, @NameCache, @MainPet)";
+        const string sql = """
+                           INSERT INTO users (id, username, namecache, mainpet)
+                           VALUES(@Id, @Username, @NameCache, @MainPet)
+                           """;
 
-        var sql2 = @"INSERT INTO users_inventory (id) VALUES(@Id)";
+        const string sql2 = "INSERT INTO users_inventory (id) VALUES(@Id)";
 
         try
         {
@@ -83,14 +85,16 @@ public class UserRepository
         }
     }
 
-    public async Task<bool> UpdateUser(User user)
+    public static async Task<bool> UpdateUser(User user)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"UPDATE users
-                        SET id=@Id, username=@Username, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
-                        WHERE id = @Id";
+        const string sql = """
+                           UPDATE users
+                           SET id=@Id, username=@Username, namecache=@NameCache, mainpet=@MainPet, exp=@Exp
+                           WHERE id = @Id
+                           """;
 
         try
         {
@@ -108,10 +112,12 @@ public class UserRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT id
-                        FROM login_keys
-                        WHERE login_key = @rosettes_key
-                        LIMIT 1";
+        const string sql = """
+                           SELECT id
+                           FROM login_keys
+                           WHERE login_key = @rosettes_key
+                           LIMIT 1
+                           """;
 
         try
         {

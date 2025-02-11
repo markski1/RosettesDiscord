@@ -42,7 +42,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType })) > 0;
+            return await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType }) > 0;
         }
         catch (Exception ex)
         {
@@ -64,7 +64,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType })) > 0;
+            return await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType }) > 0;
         }
         catch (Exception ex)
         {
@@ -84,7 +84,7 @@ public class FarmRepository
                            """;
         try
         {
-            return (await db.ExecuteAsync(sql, new { crop.userId, crop.plotId })) > 0;
+            return await db.ExecuteAsync(sql, new { crop.userId, crop.plotId }) > 0;
         }
         catch (Exception ex)
         {
@@ -124,7 +124,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id })) ?? "invalid";
+            return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id }) ?? "invalid";
         }
         catch (Exception ex)
         {
@@ -145,7 +145,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { amount, id = user.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { amount, id = user.Id }) > 0;
         }
         catch (Exception ex)
         {
@@ -165,7 +165,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { newValue, id = user.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { newValue, id = user.Id }) > 0;
         }
         catch (Exception ex)
         {
@@ -174,7 +174,7 @@ public class FarmRepository
         }
     }
 
-    public async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
+    public static async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
     {
         if (!FarmEngine.IsValidItem(item)) return false;
 
@@ -185,7 +185,7 @@ public class FarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { id = user.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { id = user.Id }) > 0;
         }
         catch (Exception ex)
         {

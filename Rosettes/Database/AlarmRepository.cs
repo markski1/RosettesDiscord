@@ -24,7 +24,7 @@ public class AlarmRepository
         }
     }
 
-    public async Task<bool> InsertAlarm(Alarm alarm)
+    public static async Task<bool> InsertAlarm(Alarm alarm)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;

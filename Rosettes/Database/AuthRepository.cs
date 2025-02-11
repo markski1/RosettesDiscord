@@ -10,7 +10,7 @@ public static class AuthRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = @"SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
+        const string sql = "SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
 
         try
         {
@@ -31,7 +31,7 @@ public static class AuthRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { UserId = userId, AppId = appId })) > 0;
+            return await db.ExecuteAsync(sql, new { UserId = userId, AppId = appId }) > 0;
         }
         catch
         {
@@ -51,7 +51,7 @@ public static class AuthRepository
             return null;
         }
 
-        const string sql = @"SELECT app_id, user_id FROM app_auth_rel WHERE app_id=@AppId and user_id=@UserId";
+        const string sql = "SELECT app_id, user_id FROM app_auth_rel WHERE app_id=@AppId and user_id=@UserId";
 
         try
         {

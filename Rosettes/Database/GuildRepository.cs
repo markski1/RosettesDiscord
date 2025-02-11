@@ -12,7 +12,7 @@ public class GuildRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = @"SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
+        const string sql = "SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
 
         try
         {
@@ -52,7 +52,7 @@ public class GuildRepository
 
         try
         {
-            return (await db.QueryFirstOrDefaultAsync<Guild>(sql, new { id = guild.Id })) ?? new Guild(null);
+            return await db.QueryFirstOrDefaultAsync<Guild>(sql, new { id = guild.Id }) ?? new Guild(null);
         }
         catch (Exception ex)
         {
@@ -92,7 +92,7 @@ public class GuildRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { guild.Settings, guild.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { guild.Settings, guild.Id }) > 0;
         }
         catch (Exception ex)
         {
@@ -131,7 +131,7 @@ public class GuildRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId })) > 0;
+            return await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId }) > 0;
         }
         catch (Exception ex)
         {
@@ -152,7 +152,7 @@ public class GuildRepository
                            """;
         try
         {
-            return (await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.FarmChannel })) > 0;
+            return await db.ExecuteAsync(sql, new { guild.Id, guild.NameCache, guild.Members, guild.Settings, guild.OwnerId, guild.LogChannel, guild.FarmChannel }) > 0;
         }
         catch (Exception ex)
         {
