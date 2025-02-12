@@ -63,7 +63,7 @@ public static class EventManager
             {
                 PetEngine.LoadAllPetsFromDatabase();
                 GuildEngine.LoadAllGuildsFromDatabase();
-                AlarmManager.LoadAllAlarmsFromDatabase();
+                await AlarmManager.LoadAllAlarmsFromDatabase();
                 await AutoRolesEngine.SyncWithDatabase();
             });
         }
@@ -205,22 +205,18 @@ public static class EventManager
     // ONLY used for Join and Quit notifications. NOT interchangeable with Global's MakeRosettesEmbed.
     private static async Task<EmbedBuilder> MakeEmbedForUser(dynamic user)
     {
-        if (user is SocketUser or SocketGuildUser)
-        {
-            EmbedBuilder embed = await Global.MakeRosettesEmbed();
-            embed.Description = $"[{user.Username}]";
+        if (user is not (SocketUser or SocketGuildUser)) return await Global.MakeRosettesEmbed();
+        
+        EmbedBuilder embed = await Global.MakeRosettesEmbed();
+        embed.Description = $"[{user.Username}]";
 
-            if (user.GetAvatarUrl() != null)
-            {
-                embed.ImageUrl = user.GetAvatarUrl();
-            }
-
-            return embed;
-        }
-        else
+        if (user.GetAvatarUrl() != null)
         {
-            return await Global.MakeRosettesEmbed();
+            embed.ImageUrl = user.GetAvatarUrl();
         }
+
+        return embed;
+
     }
 
     private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
@@ -242,7 +238,7 @@ public static class EventManager
         if (success) return Task.CompletedTask;
         
         var cacheChannel = await channel.DownloadAsync();
-        await cacheChannel.SendMessageAsync($"There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
+        await cacheChannel.SendMessageAsync("There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
         return Task.CompletedTask;
     }
 
@@ -265,7 +261,7 @@ public static class EventManager
         if (success) return Task.CompletedTask;
         
         var cacheChannel = await channel.DownloadAsync();
-        await cacheChannel.SendMessageAsync($"There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
+        await cacheChannel.SendMessageAsync("There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
         return Task.CompletedTask;
     }
 }

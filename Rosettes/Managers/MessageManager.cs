@@ -23,19 +23,19 @@ public static class MessageManager
         var message = context.Message;
         var messageText = message.Content.ToLower();
 
-        if (messageText.Contains(@"store.steampowered.com/app/"))
+        if (messageText.Contains("store.steampowered.com/app/"))
         {
             await GetGameInfo(context);
             return;
         }
         // profile pattern disabled until get profile info does something
-        if (messageText.Contains(@"steamcommunity.com/profiles/") || messageText.Contains(@"steamcommunity.com/id/"))
+        if (messageText.Contains("steamcommunity.com/profiles/") || messageText.Contains("steamcommunity.com/id/"))
         {
             await GetProfileInfo(context);
             return;
         }
 
-        if (messageText.Contains(@"i.4cdn.org"))
+        if (messageText.Contains("i.4cdn.org"))
         {
             await MirrorExpiringMedia(context);
         }
@@ -49,7 +49,7 @@ public static class MessageManager
             ChannelType.NewsThread => false,
             ChannelType.PrivateThread => false,
             ChannelType.DM => false,
-            _ => true,
+            _ => true
         };
     }
 
@@ -194,7 +194,7 @@ public static class MessageManager
         if (player is null) return;
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
-        embed.Author = new EmbedAuthorBuilder() { Name = player.personaname, IconUrl = player.avatar };
+        embed.Author = new EmbedAuthorBuilder { Name = player.personaname, IconUrl = player.avatar };
         embed.Description = $"Steam ID: {steamId}";
 
         if (player.communityvisibilitystate is not null)
@@ -203,7 +203,7 @@ public static class MessageManager
             string visibility = switchElement switch
             {
                 3 => "Public",
-                _ => "Private",
+                _ => "Private"
             };
             embed.AddField("Profile visibility", visibility, true);
         }
@@ -220,7 +220,7 @@ public static class MessageManager
                 4 => "Snooze",
                 5 => "Looking to trade",
                 6 => "Looking to play",
-                _ => "Unknown",
+                _ => "Unknown"
             };
 
             embed.AddField("Status", state, true);

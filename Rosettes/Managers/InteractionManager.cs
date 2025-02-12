@@ -135,14 +135,16 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
     {
         _ = Task.Run(async () =>
         {
-            if (component.Data.CustomId is "buy" or "sell" or "sell_e")
+            switch (component.Data.CustomId)
             {
-                await FarmEngine.ShopAction(component);
+                case "buy" or "sell" or "sell_e":
+                    await FarmEngine.ShopAction(component);
+                    break;
+                case "defaultPet":
+                    await PetEngine.SetDefaultPet(component);
+                    break;
             }
-            if (component.Data.CustomId is "defaultPet")
-            {
-                await PetEngine.SetDefaultPet(component);
-            }
+
             if (component.Data.CustomId.Contains("petFeed_"))
             {
                 await PetEngine.FeedAPet(component);
