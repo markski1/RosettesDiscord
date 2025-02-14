@@ -12,7 +12,7 @@ public static class AlarmManager
     private static List<Alarm> _activeAlarms = [];
     private static readonly AlarmRepository Interface = new();
 
-    public static async void LoadAllAlarmsFromDatabase()
+    public static async Task LoadAllAlarmsFromDatabase()
     {
         IEnumerable<Alarm> activeAlarms = await AlarmRepository.GetAllAlarmsAsync();
         _activeAlarms = activeAlarms.ToList();
@@ -23,7 +23,7 @@ public static class AlarmManager
         try
         {
             Alarm newAlarm = new(dateTime, user, channel, minutes);
-            await Interface.InsertAlarm(newAlarm);
+            await AlarmRepository.InsertAlarm(newAlarm);
             _activeAlarms.Add(newAlarm);
 
             return true;

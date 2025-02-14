@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Rosettes.Modules.Commands.EmojiDownloader;
 
-public class EmojiDownloader
+public partial class EmojiDownloader
 {
     private IReadOnlyCollection<GuildEmote>? _emoteCollection;
 
@@ -29,15 +29,13 @@ public class EmojiDownloader
             await serverContext.Interaction.RespondAsync("There are no custom emoji in this server, or I failed to retrieve them for some reason.");
             return;
         }
-        else
-        {
-            statusField.Value = $"Progress: `0/{emoteAmount}`";
-            await serverContext.Interaction.RespondAsync(embed: embed.Build());
-        }
+
+        statusField.Value = $"Progress: `0/{emoteAmount}`";
+        await serverContext.Interaction.RespondAsync(embed: embed.Build());
 
         // clean up servername
         string serverName = serverContext.Guild.Name.Replace(" ", "");
-        Regex rgx = new("[^a-zA-Z0-9 -]");
+        Regex rgx = MyRegex();
         serverName = rgx.Replace(serverName, "");
 
         // ensure the folders to store the emoji exist.
@@ -84,7 +82,7 @@ public class EmojiDownloader
             }
         }
         // done, update message.
-        statusField.Value = $"Progress: `Done exporting. Compressing and uploading, please wait...`";
+        statusField.Value = "Progress: `Done exporting. Compressing and uploading, please wait...`";
         await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         try
         {
@@ -103,15 +101,18 @@ public class EmojiDownloader
             }
             File.Move(zipPath, $"/var/www/html/downloads/{serverName}.zip");
 
-            statusField.Value = $"Progress: `Done exporting. Done uploading.`";
+            statusField.Value = "Progress: `Done exporting. Done uploading.`";
             embed.AddField("Download link", $"<https://rosettes.markski.ar/downloads/{serverName}.zip>");
             await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
         catch (Exception ex)
         {
-            statusField.Value = $"Progress: `Failed. Sorry, the error has been reported.`";
+            statusField.Value = "Progress: `Failed. Sorry, the error has been reported.`";
             Global.GenerateErrorMessage("emojiExporter", $"{ex}");
             await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
         }
     }
+
+    [GeneratedRegex("[^a-zA-Z0-9 -]")]
+    private static partial Regex MyRegex();
 }

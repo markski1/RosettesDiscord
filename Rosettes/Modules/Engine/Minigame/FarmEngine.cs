@@ -9,9 +9,9 @@ namespace Rosettes.Modules.Engine.Minigame
 {
     public static class FarmEngine
     {
-        public static readonly FarmRepository _interface = new();
+        public static readonly FarmRepository Interface = new();
 
-        public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> inventoryItems = new()
+        public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> InventoryItems = new()
         {
 		//    db_name            name                   can_give  can_pet_eat
 			{ "fish",           ( "🐡 Common fish",     true,    true   ) },
@@ -30,7 +30,7 @@ namespace Rosettes.Modules.Engine.Minigame
             { "pets",           ( "[debug] pet list",   false,   false  ) }
         };
 
-        public static readonly Dictionary<string, (string name, int amount, int cost)> itemSaleChart = new()
+        private static readonly Dictionary<string, (string name, int amount, int cost)> ItemSaleChart = new()
         {
 		//   instruct   name         amount cost
 			{ "sell1", ("fish",         5,   3) },
@@ -45,23 +45,23 @@ namespace Rosettes.Modules.Engine.Minigame
 
         public static string GetItemName(string choice)
         {
-            if (!inventoryItems.ContainsKey(choice))
+            if (!InventoryItems.TryGetValue(choice, out var item))
                 return "invalid item";
 
-            return inventoryItems[choice].fullName;
+            return item.fullName;
         }
 
         public static bool IsValidGiveChoice(string choice)
         {
-            if (!inventoryItems.ContainsKey(choice))
+            if (!InventoryItems.TryGetValue(choice, out var item))
                 return false;
 
-            return inventoryItems[choice].can_give;
+            return item.can_give;
         }
 
         public static bool IsValidItem(string choice)
         {
-            return inventoryItems.ContainsKey(choice);
+            return InventoryItems.ContainsKey(choice);
         }
 
         public static async void ModifyItem(User dbUser, string choice, int amount)
@@ -69,14 +69,14 @@ namespace Rosettes.Modules.Engine.Minigame
             await FarmRepository.ModifyInventoryItem(dbUser, choice, amount);
         }
 
-        public static async void SetItem(User dbUser, string choice, int newValue)
+        private static async void SetItem(User dbUser, string choice, int newValue)
         {
             await FarmRepository.SetInventoryItem(dbUser, choice, newValue);
         }
 
         public static async void ModifyStrItem(User dbUser, string choice, string newValue)
         {
-            await _interface.ModifyStrInventoryItem(dbUser, choice, newValue);
+            await FarmRepository.ModifyStrInventoryItem(dbUser, choice, newValue);
         }
 
         public static async Task<int> GetItem(User dbUser, string name)
@@ -187,11 +187,11 @@ namespace Rosettes.Modules.Engine.Minigame
 
                 case "sell_e":
                 case "sell":
-                    bool sell_e = component.Data.CustomId.Contains("_e");
+                    bool sellE = component.Data.CustomId.Contains("_e");
 
-                    if (itemSaleChart.TryGetValue(component.Data.Values.Last(), out var values))
+                    if (ItemSaleChart.TryGetValue(component.Data.Values.Last(), out var values))
                     {
-                        text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sell_e);
+                        text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sellE);
                     }
 
                     break;
@@ -215,7 +215,7 @@ namespace Rosettes.Modules.Engine.Minigame
             }
         }
 
-        public static async Task<string> ItemBuy(User dbUser, string buying, int amount, int cost, bool setType = false)
+        private static async Task<string> ItemBuy(User dbUser, string buying, int amount, int cost, bool setType = false)
         {
             if (await GetItem(dbUser, "dabloons") >= cost)
             {
@@ -236,7 +236,7 @@ namespace Rosettes.Modules.Engine.Minigame
             }
         }
 
-        public static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost, bool everything)
+        private static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost, bool everything)
         {
             int availableAmount = await GetItem(dbUser, selling);
             if (availableAmount >= amount)
@@ -272,7 +272,7 @@ namespace Rosettes.Modules.Engine.Minigame
             }
         }
 
-        public static async Task<string> ListItems(User user, List<string> items)
+        private static async Task<string> ListItems(User user, List<string> items)
         {
             string list = "";
 
@@ -354,15 +354,15 @@ namespace Rosettes.Modules.Engine.Minigame
                     fishingCatch = "fish";
                     expIncrease = 10;
                     break;
-                case > 40 and <= 60:
+                case <= 60:
                     fishingCatch = "uncommonfish";
                     expIncrease = 15;
                     break;
-                case > 60 and <= 70:
+                case <= 70:
                     fishingCatch = "rarefish";
                     expIncrease = 18;
                     break;
-                case > 70 and < 90:
+                case < 90:
                     fishingCatch = "shrimp";
                     expIncrease = 12;
                     break;
@@ -430,8 +430,7 @@ namespace Rosettes.Modules.Engine.Minigame
 
             embed.AddField(
                 $"Items",
-                await ListItems(dbUser, fieldsToList),
-                false
+                await ListItems(dbUser, fieldsToList)
             );
 
             fieldsToList.Clear();
@@ -462,7 +461,6 @@ namespace Rosettes.Modules.Engine.Minigame
             ComponentBuilder comps = new();
 
             ActionRowBuilder buttonRow = new();
-            ;
             AddStandardButtons(ref buttonRow, except: "inventory");
             buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
 
@@ -484,7 +482,7 @@ namespace Rosettes.Modules.Engine.Minigame
         public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
         {
             var dbUser = await UserEngine.GetDbUser(user);
-            if (dbUser is null) return;
+            if (!dbUser.IsValid()) return;
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Description = $"The shop allows for buying and selling items for dabloons.";
@@ -574,9 +572,9 @@ namespace Rosettes.Modules.Engine.Minigame
 
             return
                 new ComponentBuilder()
-                .WithSelectMenu(buyMenu, 0)
-                .WithSelectMenu(sellMenu, 0)
-                .WithSelectMenu(sellAllMenu, 0)
+                .WithSelectMenu(buyMenu)
+                .WithSelectMenu(sellMenu)
+                .WithSelectMenu(sellAllMenu)
                 .AddRow(buttonRow);
         }
 

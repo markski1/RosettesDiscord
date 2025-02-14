@@ -18,7 +18,7 @@ public static class UserEngine
         {
             foreach (User user in _userCache)
             {
-                await Interface.UpdateUser(user);
+                await UserRepository.UpdateUser(user);
                 await Task.Delay(125);
             }
         }
@@ -31,14 +31,14 @@ public static class UserEngine
     private static async Task<User> LoadUserFromDatabase(IUser user)
     {
         User getUser;
-        if (await Interface.CheckUserExists(user))
+        if (await UserRepository.CheckUserExists(user))
         {
-            getUser = await Interface.GetUserData(user);
+            getUser = await UserRepository.GetUserData(user);
         }
         else
         {
             getUser = new User(user);
-            _ = Interface.InsertUser(getUser);
+            _ = UserRepository.InsertUser(getUser);
         }
         if (getUser.IsValid()) _userCache.Add(getUser);
         return getUser;
@@ -47,7 +47,7 @@ public static class UserEngine
     // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
     public static async Task<bool> LoadAllUsersFromDatabase()
     {
-        _userCache = (await Interface.GetAllUsersAsync()).ToList();
+        _userCache = (await UserRepository.GetAllUsersAsync()).ToList();
         return true;
     }
 
