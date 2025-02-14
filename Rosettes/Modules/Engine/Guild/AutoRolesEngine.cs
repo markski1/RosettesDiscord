@@ -59,25 +59,16 @@ public static class AutoRolesEngine
         return foundEntries;
     }
 
-    public static IEnumerable<AutoRoleEntry> GetMessageAutoroles(ulong messageid)
-    {
-        uint parentGroup = _autoRolesGroups.First(x => x.MessageId == messageid).Id;
-        IEnumerable<AutoRoleEntry> foundEntries = from role in _autoRolesEntries
-            where role.RoleGroupId == parentGroup
-            select role;
-        return foundEntries;
-    }
-
     public static async Task<bool> SyncWithDatabase()
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
+        var sql = "SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
 
         _autoRolesEntries = (await db.QueryAsync<AutoRoleEntry>(sql, new { })).ToList();
 
-        sql = @"SELECT id, guildid, messageid, name FROM autorole_groups";
+        sql = "SELECT id, guildid, messageid, name FROM autorole_groups";
 
         _autoRolesGroups = (await db.QueryAsync<AutoRoleGroup>(sql, new { })).ToList();
 
@@ -93,9 +84,11 @@ public static class AutoRolesEngine
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"UPDATE autorole_groups
-						SET messageid=@MessageId
-						WHERE id = @Code";
+        const string sql = """
+                           UPDATE autorole_groups
+                           SET messageid=@MessageId
+                           WHERE id = @Code
+                           """;
 
         await db.ExecuteAsync(sql, new { MessageId = messageId, Code = code });
 

@@ -20,9 +20,16 @@ public static class PollEngine
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { Id = id, Question = question, Option1 = option1, Option2 = option2,
-                Option3 = option3,
-                Option4 = option4 })) > 0;
+            return await db.ExecuteAsync(
+                sql, 
+                new { 
+                    Id = id, 
+                    Question = question,
+                    Option1 = option1,
+                    Option2 = option2,
+                    Option3 = option3,
+                    Option4 = option4 
+                }) > 0;
         }
         catch (Exception ex)
         {
@@ -93,30 +100,28 @@ public static class PollEngine
 
         Poll? pollResult = await db.QueryFirstOrDefaultAsync<Poll>(sql, new { pollMessage.Id });
 
-        if (pollResult is not null)
+        if (pollResult is null) return "Your vote has been counted.";
+        var comps = new ComponentBuilder();
+
+        comps.WithButton(label: $"{pollResult.Option1} - {pollResult.Count1} votes", customId: "1", row: 0);
+        comps.WithButton(label: $"{pollResult.Option2} - {pollResult.Count2} votes", customId: "2", row: 1);
+
+        if (pollResult.Option3 != "NOT_PROVIDED")
         {
-            var comps = new ComponentBuilder();
+            comps.WithButton(label: $"{pollResult.Option3} - {pollResult.Count3} votes", customId: "3", row: 2);
+        }
+        if (pollResult.Option4 != "NOT_PROVIDED")
+        {
+            comps.WithButton(label: $"{pollResult.Option4} - {pollResult.Count4} votes", customId: "4", row: 3);
+        }
 
-            comps.WithButton(label: $"{pollResult.Option1} - {pollResult.Count1} votes", customId: "1", row: 0);
-            comps.WithButton(label: $"{pollResult.Option2} - {pollResult.Count2} votes", customId: "2", row: 1);
-
-            if (pollResult.Option3 != "NOT_PROVIDED")
-            {
-                comps.WithButton(label: $"{pollResult.Option3} - {pollResult.Count3} votes", customId: "3", row: 2);
-            }
-            if (pollResult.Option4 != "NOT_PROVIDED")
-            {
-                comps.WithButton(label: $"{pollResult.Option4} - {pollResult.Count4} votes", customId: "4", row: 3);
-            }
-
-            try
-            {
-                await pollMessage.ModifyAsync(msg => msg.Components = comps.Build());
-            }
-            catch
-            {
-                return "Your vote was counted, but I can't update the poll results because I don't have permissions to this channel. Please tell an admin!";
-            }
+        try
+        {
+            await pollMessage.ModifyAsync(msg => msg.Components = comps.Build());
+        }
+        catch
+        {
+            return "Your vote was counted, but I can't update the poll results because I don't have permissions to this channel. Please tell an admin!";
         }
 
         return "Your vote has been counted.";

@@ -10,7 +10,6 @@ namespace Rosettes.Modules.Engine;
 public static class UserEngine
 {
     private static List<User> _userCache = [];
-    private static readonly UserRepository Interface = new();
 
     public static async void SyncWithDatabase()
     {
@@ -45,10 +44,9 @@ public static class UserEngine
     }
 
     // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
-    public static async Task<bool> LoadAllUsersFromDatabase()
+    public static async Task LoadAllUsersFromDatabase()
     {
         _userCache = (await UserRepository.GetAllUsersAsync()).ToList();
-        return true;
     }
 
     public static async Task<User> GetDbUser(IUser user)

@@ -63,7 +63,7 @@ namespace Rosettes.Modules.Engine.Minigame
             return value.emoji;
         }
 
-        public static async void LoadAllPetsFromDatabase()
+        public static async Task LoadAllPetsFromDatabase()
         {
             IEnumerable<Pet> petCacheTemp = await PetRepository.GetAllPetsAsync();
             _petCache = petCacheTemp.ToList();

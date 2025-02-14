@@ -56,10 +56,8 @@ public static class GuildEngine
             {
                 return false;
             }
-            else
-            {
-                await GuildRepository.InsertGuild(guild);
-            }
+
+            await GuildRepository.InsertGuild(guild);
         }
         return true;
     }
@@ -87,7 +85,7 @@ public static class GuildEngine
         return getGuild;
     }
 
-    public static async void LoadAllGuildsFromDatabase()
+    public static async Task LoadAllGuildsFromDatabase()
     {
         IEnumerable<Guild> guildCacheTemp = await GuildRepository.GetAllGuildsAsync();
         _guildCache = guildCacheTemp.ToList();
@@ -265,16 +263,15 @@ public class Guild
         _ = GuildRepository.SetGuildSettings(this);
     }
 
-    public async void SetRoleForEveryone(ulong roleid)
+    public async Task SetRoleForEveryone(ulong roleid)
     {
         var socketRef = GetDiscordSocketReference();
-        if (socketRef is not null)
+        if (socketRef is null) return;
+        
+        await socketRef.DownloadUsersAsync();
+        foreach (var user in socketRef.Users)
         {
-            await socketRef.DownloadUsersAsync();
-            foreach (var user in socketRef.Users)
-            {
-                await user.AddRoleAsync(roleid);
-            }
+            await user.AddRoleAsync(roleid);
         }
     }
 
@@ -294,20 +291,19 @@ public class Guild
     public async Task<bool> SetUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
     {
         var user = await GetGuildUser(userid);
-        if (user is not null)
+        if (user is null) return false;
+        
+        try
         {
-            try
+            foreach (var role in roles)
             {
-                foreach (var role in roles)
-                {
-                    await user.AddRoleAsync(role.RoleId);
-                }
-                return true;
+                await user.AddRoleAsync(role.RoleId);
             }
-            catch
-            {
-                return false;
-            }
+            return true;
+        }
+        catch
+        {
+            return false;
         }
         return false;
     }
@@ -315,20 +311,19 @@ public class Guild
     public async Task<bool> RemoveUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
     {
         var user = await GetGuildUser(userid);
-        if (user is not null)
+        if (user is null) return false;
+        
+        try
         {
-            try
+            foreach (var role in roles)
             {
-                foreach (var role in roles)
-                {
-                    await user.RemoveRoleAsync(role.RoleId);
-                }
-                return true;
+                await user.RemoveRoleAsync(role.RoleId);
             }
-            catch
-            {
-                return false;
-            }
+            return true;
+        }
+        catch
+        {
+            return false;
         }
         return false;
     }
@@ -338,7 +333,7 @@ public class Guild
         await GuildRepository.UpdateGuildRoles(this);
     }
 
-    public async void SendLogMessage(EmbedBuilder embed)
+    public async Task SendLogMessage(EmbedBuilder embed)
     {
         var guildref = GetDiscordSocketReference();
 

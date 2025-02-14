@@ -61,8 +61,8 @@ public static class EventManager
             await UserEngine.LoadAllUsersFromDatabase();
             _ = Task.Run(async () =>
             {
-                PetEngine.LoadAllPetsFromDatabase();
-                GuildEngine.LoadAllGuildsFromDatabase();
+                await PetEngine.LoadAllPetsFromDatabase();
+                await GuildEngine.LoadAllGuildsFromDatabase();
                 await AlarmManager.LoadAllAlarmsFromDatabase();
                 await AutoRolesEngine.SyncWithDatabase();
             });
@@ -183,7 +183,7 @@ public static class EventManager
         embed.Title = "User joined the server.";
         embed.AddField("Bot:", $"{user.IsBot}");
 
-        dbGuild.SendLogMessage(embed);
+        await dbGuild.SendLogMessage(embed);
 
         return Task.CompletedTask;
     }
@@ -197,7 +197,7 @@ public static class EventManager
         EmbedBuilder embed = await MakeEmbedForUser(user);
         embed.Title = "User left the server.";
 
-        dbGuild.SendLogMessage(embed);
+        await dbGuild.SendLogMessage(embed);
 
         return Task.CompletedTask;
     }

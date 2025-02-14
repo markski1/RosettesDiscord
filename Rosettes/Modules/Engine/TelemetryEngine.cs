@@ -42,7 +42,7 @@ public static class TelemetryEngine
         Timer.Enabled = true;
     }
 
-    private static async void SyncTelemetry(Object? source, System.Timers.ElapsedEventArgs e)
+    private static async void SyncTelemetry(object? source, System.Timers.ElapsedEventArgs e)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;

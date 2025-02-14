@@ -49,12 +49,13 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("Dice must have at least 1 face, and you must roll at least one die.", ephemeral: true);
             return;
         }
-        else if (diceFaces > 10000000 || diceCount > 50)
+
+        if (diceFaces > 10000000 || diceCount > 50)
         {
             await RespondAsync("Dice may not have more than 10 million faces, and you may roll no more than 50 dice at once.", ephemeral: true);
             return;
         }
-        
+
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
         embed.WithTitle($"Rolled {diceCount}d{diceFaces}.");
@@ -69,7 +70,7 @@ public class RandomCommands : InteractionModuleBase<SocketInteractionContext>
 
             for (int i = 0; i < diceCount; i++) results.Add(Global.Randomize(diceFaces) + 1);
 
-            embed.AddField("Roll results", String.Join(", ", results));
+            embed.AddField("Roll results", string.Join(", ", results));
             embed.AddField("Total", $"{results.Sum()}; average value {results.Sum() / diceCount}.");
         }
 
