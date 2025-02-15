@@ -30,7 +30,7 @@ public class UserRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = @"SELECT count(1) FROM users WHERE id=@Id";
+        const string sql = "SELECT count(1) FROM users WHERE id=@Id";
 
         try
         {
@@ -76,7 +76,7 @@ public class UserRepository
         try
         {
             await db.ExecuteAsync(sql2, new { user.Id });
-            return (await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet })) > 0;
+            return await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet }) > 0;
         }
         catch (Exception ex)
         {
@@ -98,7 +98,7 @@ public class UserRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet, user.Exp })) > 0;
+            return await db.ExecuteAsync(sql, new { user.Id, Username = await user.GetUsername(), NameCache = await user.GetName(), user.MainPet, user.Exp }) > 0;
         }
         catch (Exception ex)
         {

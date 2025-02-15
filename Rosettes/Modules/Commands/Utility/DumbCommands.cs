@@ -20,7 +20,7 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
         [Summary("unspoilered", "Generate a field with no spoilers.")] string unspoilered = "false"
     )
     {
-        if (difficulty < 1 || difficulty > 3)
+        if (difficulty is < 1 or > 3)
         {
             await RespondAsync("Difficulty must be from 1 to 3", ephemeral: true);
             return;
@@ -68,7 +68,7 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
         {
             1 => "Easy",
             2 => "Normal",
-            _ => "Hard",
+            _ => "Hard"
         };
 
 

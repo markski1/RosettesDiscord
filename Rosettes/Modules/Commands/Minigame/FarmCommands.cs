@@ -131,7 +131,7 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
         var topUsers = users.OrderByDescending(x => x.Exp).Take(10);
 
         string topList = "Top 10 by experience: ```";
-        topList += $"User                                 Level & Experience\n\n";
+        topList += "User                                 Level & Experience\n\n";
 
         foreach (var anUser in topUsers)
         {

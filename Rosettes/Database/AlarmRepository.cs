@@ -11,7 +11,7 @@ public class AlarmRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = @"SELECT datetime, user, channel FROM alarms";
+        const string sql = "SELECT datetime, user, channel FROM alarms";
 
         try
         {
@@ -38,7 +38,7 @@ public class AlarmRepository
 
         try
         {
-            return (await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id }) > 0;
         }
         catch (Exception ex)
         {
@@ -58,7 +58,7 @@ public class AlarmRepository
                            """;
         try
         {
-            return (await db.ExecuteAsync(sql, new { User = alarm.User.Id })) > 0;
+            return await db.ExecuteAsync(sql, new { User = alarm.User.Id }) > 0;
         }
         catch (Exception ex)
         {

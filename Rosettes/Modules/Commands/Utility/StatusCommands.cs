@@ -81,7 +81,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
         string serverText = "";
         if (checkServer == "NOTSPECIFIED")
         {
-            serverText = $"For world status, please specify a datacenter name. (/ffxiv <name>)\n";
+            serverText = "For world status, please specify a datacenter name. (/ffxiv <name>)\n";
         }
         else
         {
@@ -126,7 +126,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
                     serverNames.Add(server.ToString());
                 }
             }
-            if (!serverNames.Any())
+            if (serverNames.Count == 0)
             {
                 serverText = "The specified datacenter was not found.\n";
             }
@@ -136,13 +136,11 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
                 // we compare text names and put them in when we have a hit.
                 foreach (var world in worldObj.Cast<KeyValuePair<string, JToken>>().ToList())
                 {
-                    if (serverNames.Contains(world.Key))
-                    {
-                        int spacing = 16 - world.Key.Length;
-                        string serverName = $"{world.Key} {new(' ', spacing)}";
-
-                        serverText += $"{serverName}: {((int)world.Value == 1 ? "Online" : "Offline")}\n";
-                    }
+                    if (!serverNames.Contains(world.Key)) continue;
+                    
+                    int spacing = 16 - world.Key.Length;
+                    string serverName = $"{world.Key} {new(' ', spacing)}";
+                    serverText += $"{serverName}: {((int)world.Value == 1 ? "Online" : "Offline")}\n";
                 }
             }
         }
@@ -161,15 +159,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("minecraft", "Check the status of a given Minecraft server, Java or Bedrock.")]
     public async Task MinecraftCheck([Summary("address", "IP Address or URL of the server, optionally with port.")] string addr, [Summary("bedrock", "Specify 'true' if you're checking for a bedrock server.")] string bedrock = "false", [Summary("list-players", "Specify 'true' if you want a list of players.")] string listPlayers = "false")
     {
-        string checkReq;
-        if (bedrock == "false")
-        {
-            checkReq = $"https://api.mcsrvstat.us/2/{addr}";
-        }
-        else
-        {
-            checkReq = $"https://api.mcsrvstat.us/bedrock/2/{addr}";
-        }
+        var checkReq = bedrock == "false" ? $"https://api.mcsrvstat.us/2/{addr}" : $"https://api.mcsrvstat.us/bedrock/2/{addr}";
 
         var response = await Global.HttpClient.GetStringAsync(checkReq);
 
@@ -184,7 +174,7 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
         embed.Title = "Minecraft server status";
         embed.Description = addr;
 
-        embed.Footer = new EmbedFooterBuilder() { Text = "data by api.mcsrvstat.us" };
+        embed.Footer = new EmbedFooterBuilder { Text = "data by api.mcsrvstat.us" };
 
         if (dataObj.online == "false")
         {

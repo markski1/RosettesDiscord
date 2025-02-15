@@ -19,13 +19,13 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         string runtimeText = "";
         if (elapsed.Days > 0)
         {
-            runtimeText += $"{elapsed.Days} day{((elapsed.Days != 1) ? 's' : null)}, ";
+            runtimeText += $"{elapsed.Days} day{(elapsed.Days != 1 ? 's' : null)}, ";
         }
         if (elapsed.Hours > 0)
         {
-            runtimeText += $"{elapsed.Hours} hour{((elapsed.Hours != 1) ? 's' : null)}, ";
+            runtimeText += $"{elapsed.Hours} hour{(elapsed.Hours != 1 ? 's' : null)}, ";
         }
-        runtimeText += $"{elapsed.Minutes} minute{((elapsed.Minutes != 1) ? 's' : null)}.";
+        runtimeText += $"{elapsed.Minutes} minute{(elapsed.Minutes != 1 ? 's' : null)}.";
 
         var client = ServiceManager.GetService<DiscordSocketClient>();
 
@@ -78,12 +78,14 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (hasKey)
         {
-            sql = @"UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
+            sql = "UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
         }
         else
         {
-            sql = @"INSERT INTO login_keys (id, login_key)
-                        VALUES(@Id, @NewKey)";
+            sql = """
+                  INSERT INTO login_keys (id, login_key)
+                  VALUES(@Id, @NewKey)
+                  """;
         }
 
         string newKey = "";
@@ -116,11 +118,11 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (hasKey)
         {
-            await RespondAsync($"You have renewed your Rosettes key.");
+            await RespondAsync("You have renewed your Rosettes key.");
         }
         else
         {
-            await RespondAsync($"You have been issued a Rosettes key. This is an unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
+            await RespondAsync("You have been issued a Rosettes key. This is an unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
         }
 
         await ReplyAsync($"```{newKey}```");

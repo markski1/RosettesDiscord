@@ -16,7 +16,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         string getUri = Global.GrabUriFromText(message.Content);
 
         // first try to find any image attached
-        if (message.Attachments.Any())
+        if (message.Attachments.Count != 0)
         {
             string fileType = message.Attachments.First().ContentType.ToLower();
             if (fileType.Contains("image/"))

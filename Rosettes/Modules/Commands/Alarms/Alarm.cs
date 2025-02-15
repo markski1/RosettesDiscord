@@ -10,7 +10,6 @@ namespace Rosettes.Modules.Commands.Alarms;
 public static class AlarmManager
 {
     private static List<Alarm> _activeAlarms = [];
-    private static readonly AlarmRepository Interface = new();
 
     public static async Task LoadAllAlarmsFromDatabase()
     {
@@ -34,7 +33,7 @@ public static class AlarmManager
         }
     }
 
-    public static async void DeleteAlarm(Alarm alarm)
+    public static async Task DeleteAlarm(Alarm alarm)
     {
         alarm.Timer.Stop();
         await AlarmRepository.DeleteAlarm(alarm);
@@ -69,7 +68,7 @@ public class Alarm
         DateTime = dateTime;
         User = user;
 
-        Timer = new((minutes * 60) * 1000);
+        Timer = new(minutes * 60 * 1000);
         Timer.Elapsed += AlarmRing;
         Timer.AutoReset = false;
         Timer.Enabled = true;
@@ -106,10 +105,10 @@ public class Alarm
         Channel = client.GetChannel(channel) as ISocketMessageChannel;
     }
 
-    public async void AlarmRing(Object? source, System.Timers.ElapsedEventArgs e)
+    public async void AlarmRing(object? source, System.Timers.ElapsedEventArgs e)
     {
         // first remove the alarm off the database.
-        AlarmManager.DeleteAlarm(this);
+        await AlarmManager.DeleteAlarm(this);
         // if the database constructior failed to load the channel.
         IUser? discordRef = await User.GetDiscordReference();
         if (discordRef is null)
@@ -120,7 +119,7 @@ public class Alarm
         if (Channel is null)
         {
             // we establish a channel through DM.
-            Channel = (await discordRef.CreateDMChannelAsync() as ISocketMessageChannel);
+            Channel = await discordRef.CreateDMChannelAsync() as ISocketMessageChannel;
             // If we can't establish a channel, Rosettes has failed to alert the user.
             if (Channel is null)
             {

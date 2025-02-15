@@ -17,7 +17,7 @@ namespace Rosettes.Modules.Commands.Utility;
 )]
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 [Group("find", "Commands to find certain things")]
-public class FindCommands : InteractionModuleBase<SocketInteractionContext>
+public partial class FindCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("pokemon", "Search for information about a specified pokémon")]
     public async Task GetPokemon([Summary("name-or-id", "Enter the name or ID for the Pokémon to search for.")] string name = "none")
@@ -94,7 +94,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.AddField("Abilities", abilities, true);
 
-        if (getPokemon.HeldItems.Any())
+        if (getPokemon.HeldItems.Count > 0)
         {
             string mayHold = "";
             foreach (var item in getPokemon.HeldItems)
@@ -121,7 +121,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
     {
         if (!Regex.IsMatch(query, "^[a-zA-Z0-9 ]*$"))
         {
-            await RespondAsync($"The term must only contain letters and numbers.");
+            await RespondAsync("The term must only contain letters and numbers.");
             return;
         }
 
@@ -132,8 +132,8 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             Headers =
                 {
                     { "X-RapidAPI-Key", Settings.RapidApiKey },
-                    { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" },
-                },
+                    { "X-RapidAPI-Host", "mashape-community-urban-dictionary.p.rapidapi.com" }
+                }
         };
 
         try
@@ -159,7 +159,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
 
-            List<dynamic> parsedDefinitionList = new();
+            List<dynamic> parsedDefinitionList = [];
             foreach (var aDefinition in definitionList)
             {
                 dynamic? temp = JsonConvert.DeserializeObject(aDefinition.ToString());
@@ -212,7 +212,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (!results.Data.Any())
+        if (results.Data.Count > 0)
         {
             await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
             return;
@@ -261,7 +261,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 
         comps.WithButton("MyAnimeList", style: ButtonStyle.Link, url: result.Url);
 
-        if (result.Trailer is not null && result.Trailer.Url is not null)
+        if (result.Trailer?.Url != null)
             comps.WithButton("Trailer", style: ButtonStyle.Link, url: result.Trailer.Url);
 
         await RespondAsync(embed: embed.Build(), components: comps.Build());
@@ -282,7 +282,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (!results.Data.Any())
+        if (results.Data.Count > 0)
         {
             await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
             return;
@@ -364,7 +364,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
                 };
 
                 // remove HTML tags
-                embed.Description = Regex.Replace(embed.Description, @"<[^>]+>|&nbsp;", "").Trim();
+                embed.Description = MyRegex().Replace(embed.Description, "").Trim();
 
                 ComponentBuilder comps = new();
 
@@ -398,7 +398,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (!results.Data.Any())
+        if (results.Data.Count > 0)
         {
             await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
             return;
@@ -412,7 +412,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.Title = result.Name;
 
-        if (result.Nicknames.Any())
+        if (result.Nicknames.Count > 0)
         {
             string nicknames = "";
             foreach (var nickname in result.Nicknames)
@@ -431,7 +431,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 
             if (result.About.Length > 256)
             {
-                hygienizedAbout = $"{result.About[0..256]} [...]";
+                hygienizedAbout = $"{result.About[..256]} [...]";
             }
             else
             {
@@ -447,4 +447,7 @@ public class FindCommands : InteractionModuleBase<SocketInteractionContext>
 
         await RespondAsync(embed: embed.Build(), components: comps.Build());
     }
+
+    [GeneratedRegex("<[^>]+>|&nbsp;")]
+    private static partial Regex MyRegex();
 }

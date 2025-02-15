@@ -45,7 +45,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
         embed.Title = question;
-        embed.Footer = new EmbedFooterBuilder() { Text = "Choose one option, it cannot be changed.\nVoting is anonymous." };
+        embed.Footer = new EmbedFooterBuilder { Text = "Choose one option, it cannot be changed.\nVoting is anonymous." };
 
         var comps = new ComponentBuilder();
 
@@ -110,7 +110,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
 
-            List<Emoji> emojis = new();
+            List<Emoji> emojis = [];
 
             string text = "";
 
@@ -129,11 +129,11 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
             {
                 emojis.Add(new Emoji(role.Emote));
                 string roleName = "";
-                if (socketGuild is not null && socketGuild.GetRole(role.RoleId) is not null)
+                if (socketGuild?.GetRole(role.RoleId) != null)
                 {
                     roleName = socketGuild.GetRole(role.RoleId).Mention;
                 }
-                else if (restGuild is not null && restGuild.GetRole(role.RoleId) is not null)
+                else if (restGuild?.GetRole(role.RoleId) != null)
                 {
                     roleName = restGuild.GetRole(role.RoleId).Mention;
                 }
@@ -224,7 +224,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         embed.Title = $"{dbGuild.NameCache} | Settings";
 
-        embed.Footer = new EmbedFooterBuilder() { Text = "You may also use the web panel for more comprehensive settings,\nsuch as setting up AutoRoles.\nhttps://rosettes.markski.ar/" };
+        embed.Footer = new EmbedFooterBuilder { Text = "You may also use the web panel for more comprehensive settings,\nsuch as setting up AutoRoles.\nhttps://rosettes.markski.ar/" };
 
         await RespondAsync(embed: embed.Build(), components: component);
 
@@ -236,17 +236,15 @@ public static class AdminHelper
 {
     public static MessageComponent GetGuildSettingsButtons(Guild dbGuild)
     {
-        string enabledText;
-
         ActionRowBuilder firstRow = new();
-        enabledText = (dbGuild.MessageAnalysis()) ? "Enabled" : "Disabled";
+        string enabledText = dbGuild.MessageAnalysis() ? "Enabled" : "Disabled";
         firstRow.WithButton($"Message parsing: {enabledText}", "toggle_msg");
 
         ActionRowBuilder secondRow = new();
-        enabledText = (dbGuild.AllowsFarm()) ? "Enabled" : "Disabled";
+        enabledText = dbGuild.AllowsFarm() ? "Enabled" : "Disabled";
         secondRow.WithButton($"Farm minigame: {enabledText}", "toggle_farm");
 
-        enabledText = (dbGuild.MonitorsVc()) ? "Enabled" : "Disabled";
+        enabledText = dbGuild.MonitorsVc() ? "Enabled" : "Disabled";
         secondRow.WithButton($"Announce VC joins/quit: {enabledText}", "toggle_monitorvc");
 
         ActionRowBuilder fourthRow = new();
@@ -267,11 +265,11 @@ public static class AdminHelper
 
     public static async Task ChangeSettings(SocketMessageComponent component)
     {
-        if (component.GuildId is ulong guildId)
+        if (component.GuildId is { } guildId)
         {
             var dbGuild = GuildEngine.GetDbGuildById(guildId);
             var guildRef = dbGuild.GetDiscordSocketReference();
-            if (guildRef.OwnerId != component.User.Id)
+            if (guildRef != null && guildRef.OwnerId != component.User.Id)
             {
                 await component.RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
             }
@@ -291,7 +289,7 @@ public static class AdminHelper
                     break;
             }
 
-            var buttonComponent = AdminHelper.GetGuildSettingsButtons(dbGuild);
+            var buttonComponent = GetGuildSettingsButtons(dbGuild);
 
             try
             {

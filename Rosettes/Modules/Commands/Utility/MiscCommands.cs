@@ -97,15 +97,15 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (unit.ToLower().Contains("minute"))
+        if (unit.Contains("minute", StringComparison.CurrentCultureIgnoreCase))
         {
             // nothing as the function receives minutes
         }
-        else if (unit.ToLower().Contains("hour"))
+        else if (unit.Contains("hour", StringComparison.CurrentCultureIgnoreCase))
         {
             amount *= 60;
         }
-        else if (unit.ToLower().Contains("day"))
+        else if (unit.Contains("day", StringComparison.CurrentCultureIgnoreCase))
         {
             amount = amount * 60 * 24;
         }
@@ -152,7 +152,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         Alarm? alarm = AlarmManager.GetUserAlarm(Context.User);
         if (alarm != null)
         {
-            AlarmManager.DeleteAlarm(alarm);
+            await AlarmManager.DeleteAlarm(alarm);
             await RespondAsync("Your alarm has been cancelled.");
         }
         else

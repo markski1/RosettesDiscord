@@ -117,17 +117,13 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                         await DeclareDownloadFailure("This tweet seems to only contain images.");
                         return;
                     }
-                    else
+
+                    foreach (var item in responseData.picker)
                     {
-                        foreach (var item in responseData.picker)
-                        {
-                            if (item.type == "video")
-                            {
-                                mediaUri = item.url;
-                                baseName = item.filename;
-                                break;
-                            }
-                        }
+                        if (item.type != "video") continue;
+                        mediaUri = item.url;
+                        baseName = item.filename;
+                        break;
                     }
                 }
                 else
@@ -153,9 +149,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
             fileName = $"./temp/media/rosettes_{Global.Randomize(99) + 1}_{baseName}";
 
-            int seconds = 6;
-
-            bool success = await Global.DownloadFile(fileName, mediaUri, seconds);
+            bool success = await Global.DownloadFile(fileName, mediaUri, 6);
 
             if (!success)
             {
