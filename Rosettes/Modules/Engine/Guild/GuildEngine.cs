@@ -305,7 +305,6 @@ public class Guild
         {
             return false;
         }
-        return false;
     }
 
     public async Task<bool> RemoveUserRole(ulong userid, IEnumerable<AutoRoleEntry> roles)
@@ -325,7 +324,6 @@ public class Guild
         {
             return false;
         }
-        return false;
     }
 
     public async void UpdateRoles()

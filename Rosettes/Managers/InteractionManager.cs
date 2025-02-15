@@ -123,7 +123,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 {
                     string newName = components.First(x => x.CustomId == "newName").Value;
 
-                    PetEngine.SetPetName(modal, newName);
+                    await PetEngine.SetPetName(modal, newName);
                     break;
                 }
             }

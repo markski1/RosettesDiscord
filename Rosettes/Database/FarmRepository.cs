@@ -42,7 +42,8 @@ public class FarmRepository
 
         try
         {
-            return await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType }) > 0;
+            return await db.ExecuteAsync(sql, new { plotId = crop.PlotId, userId = crop.UserId, unixGrowth = crop.UnixGrowth, unixNextWater = crop.UnixNextWater,
+                cropType = crop.CropType }) > 0;
         }
         catch (Exception ex)
         {
@@ -64,7 +65,8 @@ public class FarmRepository
 
         try
         {
-            return await db.ExecuteAsync(sql, new { crop.plotId, crop.userId, crop.unixGrowth, crop.unixNextWater, crop.cropType }) > 0;
+            return await db.ExecuteAsync(sql, new { plotId = crop.PlotId, userId = crop.UserId, unixGrowth = crop.UnixGrowth, unixNextWater = crop.UnixNextWater,
+                cropType = crop.CropType }) > 0;
         }
         catch (Exception ex)
         {
@@ -84,7 +86,7 @@ public class FarmRepository
                            """;
         try
         {
-            return await db.ExecuteAsync(sql, new { crop.userId, crop.plotId }) > 0;
+            return await db.ExecuteAsync(sql, new { userId = crop.UserId, plotId = crop.PlotId }) > 0;
         }
         catch (Exception ex)
         {

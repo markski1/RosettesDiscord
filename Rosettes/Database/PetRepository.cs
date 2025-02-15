@@ -36,11 +36,11 @@ public class PetRepository
 
         try
         {
-            await db.ExecuteAsync(sql, new { pet.Index, pet.ownerId, Name = pet.GetBareName(), FoundDate = pet.GetFoundDate() });
+            await db.ExecuteAsync(sql, new { pet.Index, pet.OwnerId, Name = pet.GetBareName(), FoundDate = pet.GetFoundDate() });
 
             sql = "SELECT pet_id FROM pets WHERE owner_id=@ownerId AND pet_index=@Index";
             var result = await db.QueryAsync<int>(sql,
-                                          new { pet.ownerId, pet.Index });
+                                          new { pet.OwnerId, pet.Index });
             return result.Single();
         }
         catch (Exception ex)
