@@ -449,11 +449,11 @@ public static class Farm
     }
 }
 
-public class Crop(int plotId, ulong userId, int unixGrowth, int unixNextWater, int cropType)
+public class Crop(int plot_id, ulong user_id, int unix_growth, int unix_next_water, int crop_type)
 {
-    public int PlotId = plotId;
-    public ulong UserId = userId;
-    public int UnixGrowth = unixGrowth;
-    public int UnixNextWater = unixNextWater;
-    public int CropType = cropType;
+    public int PlotId = plot_id;
+    public ulong UserId = user_id;
+    public int UnixGrowth = unix_growth;
+    public int UnixNextWater = unix_next_water;
+    public int CropType = crop_type;
 }
