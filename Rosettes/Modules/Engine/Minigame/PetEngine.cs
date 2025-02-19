@@ -21,30 +21,30 @@ public static class PetEngine
 
     private static readonly Dictionary<int, (string fullName, string emoji)> PetChart = new()
     {
-        //  db_id   name             emoji
-        { 1,  ( "🐕 Dog",        "🐕" ) },
-        { 2,  ( "🦊 Fox",        "🦊" ) },
-        { 3,  ( "🐈 Cat",        "🐈" ) },
-        { 4,  ( "🐐 Goat",       "🐐" ) },
-        { 5,  ( "🐇 Rabbit",     "🐇" ) },
-        { 6,  ( "🦇 Bat",        "🦇" ) },
-        { 7,  ( "🐦 Bird",       "🐦" ) },
-        { 8,  ( "🦎 Lizard",     "🦎" ) },
-        { 9,  ( "🐹 Hamster",    "🐹" ) },
-        { 10, ( "🐸 Frog",       "🐸" ) },
-        { 11, ( "🦝 Raccoon",    "🦝" ) },
-        { 12, ( "🐼 Panda",      "🐼" ) },
-        { 13, ( "🐁 Mouse",      "🐁" ) },
-        { 14, ( "🐊 Crocodile",  "🐊" ) },
-        { 15, ( "🐢 Turtle",     "🐢" ) },
-        { 16, ( "🦦 Otter",      "🦦" ) },
-        { 17, ( "🦜 Parrot",     "🦜" ) },
-        { 18, ( "🦨 Skunk",      "🦨" ) },
-        { 19, ( "🐿 Chipmunk",   "🐿" ) },
-        { 20, ( "🐝 Bee",        "🐝" ) },
-        { 21, ( "🦉 Owl",        "🦉" ) },
-        { 22, ( "🐺 Wolf",       "🐺" ) },
-        { 23, ( "🦈 Shark",      "🦈" ) }
+        //  db_id   name          emoji
+        {   1,    ( "Dog",        "🐕" ) },
+        {   2,    ( "Fox",        "🦊" ) },
+        {   3,    ( "Cat",        "🐈" ) },
+        {   4,    ( "Goat",       "🐐" ) },
+        {   5,    ( "Rabbit",     "🐇" ) },
+        {   6,    ( "Bat",        "🦇" ) },
+        {   7,    ( "Bird",       "🐦" ) },
+        {   8,    ( "Lizard",     "🦎" ) },
+        {   9,    ( "Hamster",    "🐹" ) },
+        {   10,   ( "Frog",       "🐸" ) },
+        {   11,   ( "Raccoon",    "🦝" ) },
+        {   12,   ( "Panda",      "🐼" ) },
+        {   13,   ( "Mouse",      "🐁" ) },
+        {   14,   ( "Crocodile",  "🐊" ) },
+        {   15,   ( "Turtle",     "🐢" ) },
+        {   16,   ( "Otter",      "🦦" ) },
+        {   17,   ( "Parrot",     "🦜" ) },
+        {   18,   ( "Skunk",      "🦨" ) },
+        {   19,   ( "Chipmunk",   "🐿" ) },
+        {   20,   ( "Bee",        "🐝" ) },
+        {   21,   ( "Owl",        "🦉" ) },
+        {   22,   ( "Wolf",       "🐺" ) },
+        {   23,   ( "Shark",      "🦈" ) }
     };
 
     public static string PetNames(int id)
@@ -52,7 +52,7 @@ public static class PetEngine
         if (!PetChart.TryGetValue(id, out var value))
             return "? Invalid Pet";
 
-        return value.fullName;
+        return $"{value.emoji} {value.fullName}";
     }
 
     public static string PetEmojis(int id)
