@@ -33,18 +33,17 @@ public static class Global
         return percentage > Randomizer.Next(100);
     }
 
-    public static async Task<bool> DownloadFile(string path, string uri, int timeoutS = 5)
+    public static async Task<bool> DownloadFile(string path, string uri, ulong maxSize)
     {
         try
         {
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromSeconds(timeoutS));
-
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var client = new HttpClient();
+        
             HttpResponseMessage response;
-
             try
             {
-                response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
             }
             catch
             {
@@ -56,10 +55,25 @@ public static class Global
                 return false;
             }
 
-            await using Stream stream = await response.Content.ReadAsStreamAsync(cts.Token);
+            var fileSize = response.Content.Headers.ContentLength;
+            
+            if (fileSize > (long?)maxSize)
+            {
+                return false;
+            }
+
+            await using Stream stream = await response.Content.ReadAsStreamAsync();
             await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
 
-            await stream.CopyToAsync(fileStream, cts.Token);
+            try
+            {
+                // Copy data in chunks, enforcing timeout
+                await stream.CopyToAsync(fileStream, 81920, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
 
             return true;
         }

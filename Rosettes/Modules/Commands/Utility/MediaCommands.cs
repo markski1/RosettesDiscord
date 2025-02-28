@@ -107,14 +107,14 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             mediaUri = responseData.url;
             string? baseName = responseData.filename;
 
-            // In some cases, such as Tweets, a direct URI might be unavailable, but there could be a picker.
+            // In some cases, such as x.com posts, a direct URI might be unavailable, but there could be a picker.
             if (mediaUri is null)
             {
                 if (responseData.pickerType is not null)
                 {
                     if (responseData.pickerType == "images")
                     {
-                        await DeclareDownloadFailure("This tweet seems to only contain images.");
+                        await DeclareDownloadFailure("This post seems to only contain images.");
                         return;
                     }
 
@@ -128,14 +128,14 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                 }
                 else
                 {
-                    await DeclareDownloadFailure("No media found in the tweet.");
+                    await DeclareDownloadFailure("No media found in the post.");
                     return;
                 }
             }
 
             if (mediaUri is null)
             {
-                await DeclareDownloadFailure("No media found in the tweet.");
+                await DeclareDownloadFailure("No media found in the post.");
                 return;
             }
 
@@ -149,17 +149,21 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
             fileName = $"./temp/media/rosettes_{Global.Randomize(99) + 1}_{baseName}";
 
-            bool success = await Global.DownloadFile(fileName, mediaUri, 6);
+            ulong sizeLimit = 0;
+
+            if (Context.Guild is not null) sizeLimit = Context.Guild.MaxUploadLimit;
+
+            bool success = await Global.DownloadFile(fileName, mediaUri, sizeLimit);
 
             if (!success)
             {
-                await DeclareDownloadFailure("Error downloading the file, maybe it was too large.", mediaUri);
+                await DeclareDownloadFailure("Error, file might be too large.", mediaUri);
                 return;
             }
 
             if (cacheMedia) MediaCache[uri] = fileName;
         }
-            
+        
         ulong size = (ulong)new FileInfo(fileName).Length;
 
         // check if the guild supports a file this large, otherwise fail.
@@ -171,12 +175,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
             catch
             {
-                await DeclareDownloadFailure("Error uploading the file, maybe it was too large.", mediaUri);
+                await DeclareDownloadFailure("Error uploading the file. Might be too large.", mediaUri);
             }
         }
         else
         {
-            await DeclareDownloadFailure("File could not be uploaded, it is too large.", mediaUri);
+            await DeclareDownloadFailure("Cannot upload file, too large.", mediaUri);
         }
     }
 
