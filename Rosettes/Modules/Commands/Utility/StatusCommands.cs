@@ -11,8 +11,8 @@ namespace Rosettes.Modules.Commands.Utility;
 [Group("status", "Status checking commands")]
 public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    [SlashCommand("csgo", "Check the status of Steam and CSGO matchmaking.")]
-    public async Task CsgoStatus()
+    [SlashCommand("counterstrike", "Check the status of Steam and Counter-Strike matchmaking.")]
+    public async Task CsStatus()
     {
         try
         {
@@ -36,17 +36,17 @@ public class StatusCommands : InteractionModuleBase<SocketInteractionContext>
 
             steamStatus.AddField("Steam Community", result.services.SteamCommunity, true);
 
-            EmbedBuilder csgoStatus = await Global.MakeRosettesEmbed();
+            EmbedBuilder csStatus = await Global.MakeRosettesEmbed();
 
-            csgoStatus.Title = "CS:GO Status";
+            csStatus.Title = "CS:GO Status";
 
-            csgoStatus.AddField("Matchmaking", result.matchmaking.scheduler, true);
-            csgoStatus.AddField("Online players", $"{result.matchmaking.online_players:N0}", true);
-            csgoStatus.AddField("Online servers", $"{result.matchmaking.online_servers:N0}", true);
-            csgoStatus.AddField("Searching game", $"{result.matchmaking.searching_players:N0}", true);
-            csgoStatus.AddField("Average wait", $"{waitTime.Minutes} minute{(waitTime.Minutes != 1 ? 's' : null)}, {waitTime.Seconds} seconds.\n", true);
+            csStatus.AddField("Matchmaking", result.matchmaking.scheduler, true);
+            csStatus.AddField("Online players", $"{result.matchmaking.online_players:N0}", true);
+            csStatus.AddField("Online servers", $"{result.matchmaking.online_servers:N0}", true);
+            csStatus.AddField("Searching game", $"{result.matchmaking.searching_players:N0}", true);
+            csStatus.AddField("Average wait", $"{waitTime.Minutes} minute{(waitTime.Minutes != 1 ? 's' : null)}, {waitTime.Seconds} seconds.\n", true);
 
-            Embed[] embeds = [steamStatus.Build(), csgoStatus.Build()];
+            Embed[] embeds = [steamStatus.Build(), csStatus.Build()];
 
             await RespondAsync(embeds: embeds);
         }
