@@ -61,13 +61,13 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = @"SELECT count(1) FROM login_keys WHERE id=@Id";
+        var sql = "SELECT count(*) FROM login_keys WHERE id=@Id";
 
-        bool hasKey;
+        int keyCount;
 
         try
         {
-            hasKey = await db.ExecuteScalarAsync<bool>(sql, new { Context.User.Id });
+            keyCount = await db.ExecuteScalarAsync<int>(sql, new { Context.User.Id });
         }
         catch (Exception ex)
         {
@@ -76,30 +76,20 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (hasKey)
+        if (keyCount > 0)
         {
             sql = "UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
         }
         else
         {
-            sql = """
-                  INSERT INTO login_keys (id, login_key)
-                  VALUES(@Id, @NewKey)
-                  """;
+            sql = "INSERT INTO login_keys (id, login_key) VALUES(@Id, @NewKey)";
         }
 
         string newKey = "";
+        // Generate a random string of 24 characters.
         for (int i = 0; i < 24; i++)
         {
-            int offset;
-            if (Global.Randomize(2) == 0)
-            {
-                offset = 65;
-            }
-            else
-            {
-                offset = 97;
-            }
+            var offset = Global.Randomize(2) == 0 ? 65 : 97;
             var randNumber = Global.Randomize(0, 26);
             var character = Convert.ToChar(randNumber + offset);
             newKey += character;
@@ -116,7 +106,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (hasKey)
+        if (keyCount > 0)
         {
             await RespondAsync("You have renewed your Rosettes key.");
         }
