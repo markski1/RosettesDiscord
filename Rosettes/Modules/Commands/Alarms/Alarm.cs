@@ -81,7 +81,7 @@ public class Alarm
     public Alarm(DateTime dateTime, ulong user, ulong channel)
     {
         DateTime = dateTime;
-        User = UserEngine.GetDbUserById(user);
+        User = UserEngine.GetCachedDbUserById(user);
 
         double amount;
         // if we are still in time, just restart the alarm as intended.

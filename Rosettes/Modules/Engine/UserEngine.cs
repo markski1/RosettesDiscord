@@ -43,7 +43,8 @@ public static class UserEngine
         return getUser;
     }
 
-    // return true just for the sake of returning anything in order to be able to use 'await'. We need to await for all users to be loaded.
+    // Return true just for the sake of returning anything to be able to use 'await'.
+    // We need to await for all users to be loaded.
     public static async Task LoadAllUsersFromDatabase()
     {
         _userCache = (await UserRepository.GetAllUsersAsync()).ToList();
@@ -60,9 +61,23 @@ public static class UserEngine
             return await LoadUserFromDatabase(user);
         }
     }
+    
+    public static async Task<User> GetDbUserById(ulong userId)
+    {
+        try
+        {
+            return _userCache.First(item => item.Id == userId);
+        }
+        catch
+        {
+            var user = await GetUserReferenceById(userId);
+            if (user is null) return new User(null);
+            return await LoadUserFromDatabase(user);
+        }
+    }
 
     // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
-    public static User GetDbUserById(ulong user)
+    public static User GetCachedDbUserById(ulong user)
     {
         try
         {
@@ -98,7 +113,7 @@ public static class UserEngine
     {
         ulong? result = await UserRepository.GetUserByRosettesKey(rosettesKey);
 
-        return result is null ? new User(null) : GetDbUserById((ulong)result);
+        return result is null ? new User(null) : await GetDbUserById((ulong)result);
     }
 }
 

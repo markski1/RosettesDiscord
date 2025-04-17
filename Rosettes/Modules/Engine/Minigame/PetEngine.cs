@@ -198,7 +198,7 @@ public static class PetEngine
         string action = component.Data.CustomId;
         ulong id = ulong.Parse(action[6..]);
 
-        User receiverUser = UserEngine.GetDbUserById(id);
+        User receiverUser = UserEngine.GetCachedDbUserById(id);
         Pet? receivingPet = await GetUserPet(receiverUser);
 
         if (receivingPet is null)

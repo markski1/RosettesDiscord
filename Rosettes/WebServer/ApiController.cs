@@ -77,66 +77,70 @@ public class ApiController : ControllerBase
         }        
     }
 
-    [HttpGet("Identify")]
-    public async Task<dynamic> Identify(string applicationKey, string userKey)
-    {
-        userKey = userKey.Trim();
-
-        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
-
-        if (appData == null)
-        {
-            return GenericResponse.GenerateError("Application key does not exist.");
-        }
-
-        var user = await UserEngine.GetUserByRosettesKey(userKey);
-
-        if (!user.IsValid())
-        {
-            return GenericResponse.GenerateError("User key does not exist.");
-        }
-
-        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
-
-        if (rel != null) return user;
-        
-        await AuthRepository.AuthUser(appData.Id, user.Id);
-
-        await user.SendDirectMessage($"Auth notice: ```Your Rosettes key has been used to authorize you to the following application: {appData.Name}```");
-
-        return user;
-    }
-
-
-    [HttpGet("GetUser")]
+    [HttpGet("RequestIdentification")]
     public async Task<dynamic> Identify(string applicationKey, ulong userId)
     {
         var appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData == null)
         {
-            return GenericResponse.GenerateError("Application key does not exist.");
+            return GenericResponse.Error("application_not_found");
         }
 
-        var user = UserEngine.GetDbUserById(userId);
+        var user = await UserEngine.GetDbUserById(userId);
 
         if (!user.IsValid())
         {
-            return GenericResponse.GenerateError("Rosettes doesn't know that user ID.");
+            return GenericResponse.Error("");
+        }
+
+        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
+        
+        if (rel != null) return user;
+        
+        bool success = await AuthRepository.AuthUser(appData.Id, user.Id);
+
+        return GenericResponse.Success(success ? "request_made" : "request_failed");
+    }
+
+
+    [HttpGet("GetUser")]
+    public async Task<dynamic> GetUser(string applicationKey, ulong userId)
+    {
+        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
+
+        if (appData == null)
+        {
+            return GenericResponse.Error("application_not_found");
+        }
+
+        var user = await UserEngine.GetDbUserById(userId);
+
+        if (!user.IsValid())
+        {
+            return GenericResponse.Error("user_unknown");
         }
 
         var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
 
         if (rel != null) return user;
         
-        return GenericResponse.GenerateError("The user ID provided has not authorized your application.");
-
+        return GenericResponse.Error("user_not_authorized");
     }
 }
 
 public static class GenericResponse
 {
-    public static Dictionary<string, dynamic> GenerateError(string message)
+    public static Dictionary<string, dynamic> Error(string message)
+    {
+        return new Dictionary<string, dynamic>
+        {
+            { "success", false },
+            { "message", message }
+        };
+    }
+    
+    public static Dictionary<string, dynamic> Success(string message)
     {
         return new Dictionary<string, dynamic>
         {
