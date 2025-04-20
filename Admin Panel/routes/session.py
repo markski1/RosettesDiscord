@@ -8,7 +8,7 @@ session_bp = Blueprint("session", __name__, url_prefix="/session")
 
 @session_bp.route("/")
 def index():
-    return "nothing here"
+    return "No one here but us sneps!"
 
 
 @session_bp.post("/login")

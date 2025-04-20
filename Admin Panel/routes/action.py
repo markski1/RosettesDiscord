@@ -3,8 +3,9 @@ import json
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 
-from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole
-from utils.miscfuncs import ownership_required
+from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
+    insert_application
+from utils.miscfuncs import ownership_required, generate_random_string
 
 action_bp = Blueprint("action", __name__, url_prefix="/action")
 
@@ -12,7 +13,7 @@ action_bp = Blueprint("action", __name__, url_prefix="/action")
 @action_bp.route("/")
 @login_required
 def index():
-    return "Nothing here but us sneps!"
+    return "No one here but us sneps!"
 
 
 @action_bp.post("/<int:server_id>/update-settings")
@@ -56,3 +57,31 @@ def post_new_autoroles(server_id):
         template_name_or_list="prompts/success.jinja2",
         message=f"Autorole group created successfully. Use `/setautorole {autorole_id}` in the desired channel."
     )
+
+
+@action_bp.post("/create-app")
+@login_required
+def post_new_app():
+    name = request.form.get("name")
+
+    if not name:
+        return "Invalid parameters."
+
+    existing = get_app_by_name(name)
+
+    if existing:
+        return "An app with this name already exists."
+
+    app_token = generate_random_string(32)
+    success = insert_application(name, app_token)
+
+    if success:
+        return render_template(
+            template_name_or_list="prompts/success.jinja2",
+            message=f"App created successfully."
+        )
+    else:
+        return render_template(
+            template_name_or_list="prompts/error.jinja2",
+            message=f"An error occurred while creating the app."
+        )

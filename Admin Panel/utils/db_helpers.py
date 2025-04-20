@@ -1,3 +1,5 @@
+from flask_login import current_user
+
 from core.database import get_db_conn, pool_db_conn
 
 
@@ -70,3 +72,20 @@ def insert_role_for_autorole(guild_id, autorole_id, role):
                guild_id, role['roleEmoji'], role['roleId'], autorole_id)
 
     pool_db_conn(db)
+
+
+def get_app_by_name(name):
+    db = get_db_conn()
+    db.execute("SELECT * FROM app_auth WHERE name = %s", name)
+    result = db.fetch_one()
+    pool_db_conn(db)
+    return result
+
+
+def insert_application(name, app_token):
+    db = get_db_conn()
+    db.execute("INSERT INTO app_auth (name, owner_id, key) VALUES(%s, %s, %s)",
+               name, current_user.id, app_token)
+    result = db.last_insert_id()
+    pool_db_conn(db)
+    return result

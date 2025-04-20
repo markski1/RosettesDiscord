@@ -1,0 +1,16 @@
+{% extends "layout.jinja2" %}
+{% block title %}Creating application{% endblock %}
+
+{% block main %}
+
+    <p><a href="/panel/">Go back</a></p>
+
+    <h3>Creating an application.</h3>
+
+    <p>Applications allow you to authorize and verify Discord users through Rosettes' API.</p>
+    <form method="POST" action="/action/create-app">
+        <p><label>Name: <input type="text" name="name" /></label></p>
+        <input type="submit" value="Create application">
+    </form>
+
+{% endblock %}

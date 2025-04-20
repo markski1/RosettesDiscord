@@ -20,4 +20,15 @@
         <p>You do not have any servers in which Rosettes has been added.</p>
     {% endfor %}
 
+    <h2>Applications</h2>
+    <hr>
+    {% for app in apps %}
+        <div class="block">
+            <p style="font-size: 1.3rem; font-weight: bold; margin: .75rem 0;">{{ app['name'] }}</p>
+            <p><a href="/panel/app/{{ app['id'] }}">Manage</a></p>
+        </div>
+    {% else %}
+        <p>You have no applications registered. <a href="/panel/apps/new">Create an app</a>.</p>
+    {% endfor %}
+
 {% endblock %}

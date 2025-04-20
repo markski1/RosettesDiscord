@@ -53,3 +53,9 @@ def autoroles_maker(server_id):
     rolelist = get_server_roles(server_id)
 
     return render_template("create-autoroles.jinja2", server=server, roles=rolelist)
+
+
+@panel_bp.get("/apps/new")
+@login_required
+def app_make():
+    return render_template("create-app.jinja2")
