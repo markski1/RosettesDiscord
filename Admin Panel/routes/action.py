@@ -6,6 +6,7 @@ from flask_login import login_required
 from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
     insert_application
 from utils.miscfuncs import ownership_required, generate_random_string
+from utils.page_helpers import render_success, render_error
 
 action_bp = Blueprint("action", __name__, url_prefix="/action")
 
@@ -26,14 +27,14 @@ def post_settings(server_id):
         gambling = abs(int(request.form["gambling"]))
         announce = abs(int(request.form["announce"]))
     except:
-        return "Invalid parameters."
+        return render_error("Invalid parameters.")
 
     if int(msgparse) > 1 or int(minigame) > 1 or int(gambling) > 1 or int(announce) > 2:
-        return "Invalid parameters."
+        return render_error("Invalid parameters.")
 
     new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
     set_server_settings(server_id, new_settings)
-    return render_template("prompts/success.jinja2", message="Settings updated successfully.")
+    return render_success("Settings updated successfully.")
 
 
 @action_bp.post("/<int:server_id>/create-autoroles")
@@ -45,7 +46,7 @@ def post_new_autoroles(server_id):
 
     for role in role_list:
         if not role['roleId'].isnumeric():
-            return "Invalid parameters. [Role ID must be an integer.]"
+            return render_error("Invalid parameters. [Role ID must be an integer.]")
 
     autorole_id = insert_new_autorole(server_id, role_name)
 
@@ -53,10 +54,7 @@ def post_new_autoroles(server_id):
     for role in role_list:
         insert_role_for_autorole(server_id, autorole_id, role)
 
-    return render_template(
-        template_name_or_list="prompts/success.jinja2",
-        message=f"Autorole group created successfully. Use `/setautorole {autorole_id}` in the desired channel."
-    )
+    return render_success("Autorole group created successfully. Use `/setautorole {autorole_id}` in the desired channel.")
 
 
 @action_bp.post("/create-app")
@@ -65,23 +63,17 @@ def post_new_app():
     name = request.form.get("name")
 
     if not name:
-        return "Invalid parameters."
+        return render_error("Invalid parameters.")
 
     existing = get_app_by_name(name)
 
     if existing:
-        return "An app with this name already exists."
+        return render_error("An app with this name already exists.")
 
     app_token = generate_random_string(32)
     success = insert_application(name, app_token)
 
     if success:
-        return render_template(
-            template_name_or_list="prompts/success.jinja2",
-            message=f"App created successfully."
-        )
+        return render_success("App created successfully.")
     else:
-        return render_template(
-            template_name_or_list="prompts/error.jinja2",
-            message=f"An error occurred while creating the app."
-        )
+        return render_error("An error occurred while creating the app.")
