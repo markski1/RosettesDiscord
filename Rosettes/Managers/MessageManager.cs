@@ -38,6 +38,13 @@ public static class MessageManager
         if (messageText.Contains("i.4cdn.org"))
         {
             await MirrorExpiringMedia(context);
+            return;
+        }
+
+        if (message.MentionedUsers.Any(user => user.Id == Global.GetSelfId()))
+        {
+            string response = await LanguageEngine.GetResponseAsync(messageText);
+            context.Channel.SendMessageAsync(response);
         }
     }
 

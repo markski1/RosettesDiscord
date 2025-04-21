@@ -183,13 +183,18 @@ public static class Global
         }
     }
 
-    private static SocketGuildUser GetSelfGuildUser(SocketGuild guild)
+    public static ulong GetSelfId()
     {
     #if DEBUG
-        return guild.GetUser(815231883944263681);
+        return 815231883944263681;
     #else
-        return guild.GetUser(970176524110147605);
+        return 970176524110147605;
     #endif
+    }
+
+    private static SocketGuildUser GetSelfGuildUser(SocketGuild guild)
+    {
+        return guild.GetUser(GetSelfId());
     }
 
     public static bool CanSendMessage(SocketInteractionContext context)

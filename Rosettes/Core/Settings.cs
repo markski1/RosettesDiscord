@@ -22,6 +22,7 @@ public static class Settings
     public static readonly string RapidApiKey = LoadSetting("rapidapi");
     public static readonly string SauceNao = LoadSetting("saucenao");
     public static readonly string SecretKey = LoadSetting("secretkey");
+    public static readonly string OpenAi = LoadSetting("openai");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
 
