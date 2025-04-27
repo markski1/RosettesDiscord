@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
-from utils.db_helpers import get_owned_servers, get_user_data, get_server_data, get_server_roles, get_server_autoroles
+from utils.db_helpers import get_owned_servers, get_user_data, get_server_data, get_server_roles, \
+    get_server_autoroles, get_apps_for_user, get_app_by_id
 from utils.miscfuncs import ownership_required
+from utils.page_helpers import render_error
 
 panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
 
@@ -12,8 +14,9 @@ panel_bp = Blueprint("panel", __name__, url_prefix="/panel")
 def index():
     servers = get_owned_servers(current_user.id)
     user = get_user_data(current_user.id)
+    apps = get_apps_for_user(current_user.id)
 
-    return render_template("panel.jinja2", servers=servers, user=user)
+    return render_template("panel.jinja2", servers=servers, user=user, apps=apps)
 
 
 @panel_bp.get("/<int:server_id>/settings")
@@ -59,3 +62,15 @@ def autoroles_maker(server_id):
 @login_required
 def app_make():
     return render_template("create-app.jinja2")
+
+
+@panel_bp.get("/apps/<int:app_id>")
+@login_required
+def app_manage(app_id):
+    app = get_app_by_id(app_id)
+    if not app:
+        return render_error("App not found.")
+    # users = get_users_for_app(app_id)
+    users = []
+
+    return render_template("manage-app.jinja2", app=app, users=users)

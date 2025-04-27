@@ -82,10 +82,26 @@ def get_app_by_name(name):
     return result
 
 
+def get_app_by_id(app_id):
+    db = get_db_conn()
+    db.execute("SELECT * FROM app_auth WHERE id = %s", app_id)
+    result = db.fetch_one()
+    pool_db_conn(db)
+    return result
+
+
 def insert_application(name, app_token):
     db = get_db_conn()
-    db.execute("INSERT INTO app_auth (name, owner_id, key) VALUES(%s, %s, %s)",
+    db.execute("INSERT INTO app_auth (name, owner_id, token_key) VALUES(%s, %s, %s)",
                name, current_user.id, app_token)
     result = db.last_insert_id()
+    pool_db_conn(db)
+    return result
+
+
+def get_apps_for_user(user_id):
+    db = get_db_conn()
+    db.execute("SELECT * FROM app_auth WHERE owner_id = %s", user_id)
+    result = db.fetch_all()
     pool_db_conn(db)
     return result

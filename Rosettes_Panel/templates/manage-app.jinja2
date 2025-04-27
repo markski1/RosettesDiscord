@@ -1,0 +1,22 @@
+{% extends "layout.jinja2" %}
+{% block title %}{{ app['name'] }}{% endblock %}
+
+{% block main %}
+
+    <p><a href="/panel/">Go back</a></p>
+
+    <h2>App information.</h2>
+
+    <p>Your app is called "{{ app['name'] }}". It's ID is #{{ app['id'] }}</p>
+    <h3>Users</h3>
+    <hr>
+    {% for user in users %}
+        <p>{{ user['namecache'] }} | username: {{ user['username'] }} | id: {{ user['id'] }}</p>
+    {% else %}
+        <p>No user has yet approved your application for auth.</p>
+    {% endfor %}
+    <h3>API Information.</h3>
+    <hr>
+    <p>Your application's token is: {{ app['token_key'] }}</p>
+    <p>API Documentation soon.</p>
+{% endblock %}

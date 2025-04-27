@@ -54,7 +54,8 @@ def post_new_autoroles(server_id):
     for role in role_list:
         insert_role_for_autorole(server_id, autorole_id, role)
 
-    return render_success("Autorole group created successfully. Use `/setautorole {autorole_id}` in the desired channel.")
+    return render_success("Autorole group created successfully. "
+                          "Use `/setautorole {autorole_id}` in the desired channel.")
 
 
 @action_bp.post("/create-app")
@@ -69,6 +70,9 @@ def post_new_app():
 
     if existing:
         return render_error("An app with this name already exists.")
+
+    if len(name) < 3 or len(name) > 50:
+        return render_error("Name must be between 3 and 50 characters long.")
 
     app_token = generate_random_string(32)
     success = insert_application(name, app_token)
