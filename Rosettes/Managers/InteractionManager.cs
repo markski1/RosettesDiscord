@@ -49,10 +49,17 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 return;
             }
 
-            // petting stuff
+            // pet stuff
             if (action.Contains("doPet_"))
             {
                 await PetEngine.PetAPet(component);
+                return;
+            }
+            
+            // auth stuff
+            if (action.Contains("auth_"))
+            {
+                // TODO
                 return;
             }
 

@@ -44,7 +44,7 @@ public static class MessageManager
         if (message.MentionedUsers.Any(user => user.Id == Global.GetSelfId()))
         {
             string response = await LanguageEngine.GetResponseAsync(messageText);
-            context.Channel.SendMessageAsync(response);
+            _ = context.Channel.SendMessageAsync(response);
         }
     }
 
@@ -91,6 +91,7 @@ public static class MessageManager
         if (result.result != 1) return;
         await context.Channel.SendMessageAsync($"^ Playing right now: {result.player_count:N0}");
     }
+    
     private static async Task MirrorExpiringMedia(SocketCommandContext context)
     {
         string message = context.Message.Content;
@@ -192,7 +193,7 @@ public static class MessageManager
 
         dynamic? player = null;
 
-        // only one player in the object, but this is an easier way to extract as json deserialized objects do not support LINQ
+        // only one player in the object, but this is an easier way to extract as JSON deserialized objects do not support LINQ
         foreach (var extractPlayer in moreDataObj)
         {
             player = extractPlayer;
@@ -256,8 +257,7 @@ public static class MessageManager
         {
             embed.AddField("Account created", $"<t:{player.timecreated}:f>", true);
         }
-
-
+        
         await context.Channel.SendMessageAsync(embed: embed.Build());
     }
 }
