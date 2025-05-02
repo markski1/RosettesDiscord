@@ -9,11 +9,11 @@ namespace Rosettes.WebServer.API;
 public class AuthController : ControllerBase
 {
     [HttpGet("request")]
-    public async Task<dynamic> Identify(string applicationKey, ulong userId)
+    public async Task<dynamic> RequestAuth(string applicationKey, ulong userId)
     {
-        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
+        ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
-        if (appData == null)
+        if (appData is null)
         {
             return GenericResponse.Error("application_not_found");
         }
@@ -22,17 +22,18 @@ public class AuthController : ControllerBase
 
         if (!user.IsValid())
         {
-            return GenericResponse.Error("");
+            return GenericResponse.Error("user_not_found");
         }
 
-        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
+        // Check if this application-user relation already exists.
+        ApplicationRelation? rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
         
-        if (rel == null)
+        if (rel is not null)
         {
-            return user;
+            return GenericResponse.Success("user_already_authorized");
         }
         
-        bool success = await AuthEngine.RequestApplicationAuth(appData.Name, "Login", user);
+        bool success = await AuthEngine.RequestApplicationAuth(appData, user);
         
         if (success) return GenericResponse.Success("request_made");
         else return GenericResponse.Error("request_failed");
@@ -42,9 +43,9 @@ public class AuthController : ControllerBase
     [HttpGet("user")]
     public async Task<dynamic> GetUser(string applicationKey, ulong userId)
     {
-        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
+        ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
-        if (appData == null)
+        if (appData is null)
         {
             return GenericResponse.Error("application_not_found");
         }
@@ -56,9 +57,9 @@ public class AuthController : ControllerBase
             return GenericResponse.Error("user_unknown");
         }
 
-        var rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
+        ApplicationRelation? rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
 
-        if (rel == null) return GenericResponse.Error("user_not_authorized");
+        if (rel is null) return GenericResponse.Error("user_not_authorized");
 
         return user;
     }
@@ -66,9 +67,9 @@ public class AuthController : ControllerBase
     [HttpPost("notify")]
     public async Task<dynamic> NotifyUser(string applicationKey, ulong userId, string message)
     {
-        var appData = await AuthRepository.GetApplicationAuth(applicationKey);
+        ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
-        if (appData == null)
+        if (appData is null)
         {
             return GenericResponse.Error("application_not_found");
         }

@@ -207,7 +207,7 @@ public static class PetEngine
             return;
         }
 
-        // In order to get guild display names...
+        // To get guild display names...
         if (component.User is not SocketGuildUser userGuildRef)
         {
             await component.RespondAsync("Sorry, there was an error finding that pet's owner in the guild!", ephemeral: true);

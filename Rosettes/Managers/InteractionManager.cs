@@ -59,7 +59,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             // auth stuff
             if (action.Contains("auth_"))
             {
-                // TODO
+                await AuthEngine.HandleAuthInteraction(component);
                 return;
             }
 
