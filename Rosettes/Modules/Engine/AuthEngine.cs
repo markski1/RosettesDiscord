@@ -101,9 +101,15 @@ public static class AuthEngine
             }
             else
             {
-                embed.Title = "Request denied.";
-                embed.Description = "You have denied this application's request. No further action is required.";
+                embed.Title = "Unable to authorize.";
+                embed.Description = "You have chosen to authorized this application's request, however, an internal error has ocurred.\n" +
+                                    "Please try again in a while, and sorry for the inconvenience.";
             }
+        }
+        else // Anything else means denied.
+        {
+            embed.Title = "Request denied.";
+            embed.Description = "You have denied this application's request. No further action is required.";
         }
         
         await component.RespondAsync(embed: embed.Build());
