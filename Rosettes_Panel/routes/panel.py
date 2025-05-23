@@ -2,7 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
 from utils.db_helpers import get_owned_servers, get_user_data, get_server_data, get_server_roles, \
-    get_server_autoroles, get_apps_for_user, get_app_by_id
+    get_server_autoroles, get_apps_for_user, get_app_by_id, get_users_for_app
 from utils.miscfuncs import ownership_required
 from utils.page_helpers import render_error
 
@@ -70,7 +70,6 @@ def app_manage(app_id):
     app = get_app_by_id(app_id)
     if not app:
         return render_error("App not found.")
-    # users = get_users_for_app(app_id)
-    users = []
+    users = get_users_for_app(app_id)
 
     return render_template("manage-app.jinja2", app=app, users=users)

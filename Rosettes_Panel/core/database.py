@@ -15,6 +15,11 @@ db_pool = []
 
 
 class Database:
+    """
+        A database connection.
+        Can be interacted with directly if fetched through get_database(), but I'd recommend
+        just using the db_* helpers when possible.
+    """
     def __init__(self):
         db_config = {
             'user': db_user,
@@ -26,6 +31,21 @@ class Database:
         self.conn = mysql.connector.connect(**db_config)
         self.conn.autocommit = True
         self.cursor = self.conn.cursor(buffered=True)
+
+    def get_cursor(self):
+        if not self.conn.is_connected():
+            self.conn.reconnect()
+            self.conn.autocommit = True
+            self.cursor = self.conn.cursor(buffered=True)
+
+        return self.cursor
+
+    def fix_cursor(self):
+        self.conn.disconnect()
+        self.conn.reconnect()
+        self.conn.autocommit = True
+        self.cursor = self.conn.cursor(buffered=True)
+        return self.cursor
 
     def execute(self, query, *params) -> None:
         if not self.conn.is_connected():
@@ -69,7 +89,13 @@ class Database:
         Returns the database connection to the pool.
         """
         global db_pool
-        db_pool.append(self)
+        if len(db_pool) < 10:
+            db_pool.append(self)
+            # do 'fetchall()' to clear the buffer. This has caused stale data issues.
+            try:
+                self.cursor.fetchall()
+            except:
+                return
 
     def is_healthy(self) -> bool:
         """
@@ -82,12 +108,12 @@ class Database:
         return False
 
 
-# Pooling helpers
+# Helpers
 
 
 def get_db_conn() -> Database:
     """
-    Fetches a pooled database connection if available, or starts a new one.
+    Fetches a pooled database connection if available or starts a new one.
     :return: A Database object.
     """
     global db_pool
@@ -99,3 +125,61 @@ def get_db_conn() -> Database:
             return db
 
     return Database()
+
+
+def db_execute(query: str, *params) -> Optional[int]:
+    """
+    Executes a query.
+    :param query: Query to be executed.
+    :param params: Parameters to be prepared on execution.
+    :return: If an INSERT, returns the inserted row ID, otherwise None.
+    """
+    db = get_db_conn()
+    cursor = db.get_cursor()
+    try:
+        cursor.execute(query, params)
+    except:
+        cursor = db.fix_cursor()
+        cursor.execute(query, params)
+
+    value = db.cursor.lastrowid
+    db.pool()
+    return value
+
+
+def db_fetch_one(query: str, *params) -> Optional[dict]:
+    """
+    Executes a query and returns the first or only row.
+    :param query: Query to be executed.
+    :param params: Parameters to be prepared on execution.
+    :return: A dictionary, where each key is the name for each field. Or None, if no results.
+    """
+    db = get_db_conn()
+    cursor = db.get_cursor()
+    try:
+        cursor.execute(query, params)
+    except:
+        cursor = db.fix_cursor()
+        cursor.execute(query, params)
+    result = db.fetch_one()
+    db.pool()
+    return result
+
+
+def db_fetch_all(query: str, *params) -> List[dict]:
+    """
+    Executes a query and returns every row.
+    :param query: Query to be executed.
+    :param params: Parameters to be prepared on execution.
+    :return: A list of dictionaries, one per row, where each key is the name for each field.
+    """
+    db = get_db_conn()
+    cursor = db.get_cursor()
+    try:
+        cursor.execute(query, params)
+    except:
+        cursor = db.fix_cursor()
+        cursor.execute(query, params)
+    result = db.fetch_all()
+    db.pool()
+    return result
