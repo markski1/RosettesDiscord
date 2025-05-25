@@ -28,6 +28,7 @@ public static class MessageManager
             await GetGameInfo(context);
             return;
         }
+        
         // profile pattern disabled until get profile info does something
         if (messageText.Contains("steamcommunity.com/profiles/") || messageText.Contains("steamcommunity.com/id/"))
         {
@@ -39,12 +40,6 @@ public static class MessageManager
         {
             await MirrorExpiringMedia(context);
             return;
-        }
-
-        if (message.MentionedUsers.Any(user => user.Id == Global.GetSelfId()))
-        {
-            string response = await LanguageEngine.GetResponseAsync(messageText);
-            _ = context.Channel.SendMessageAsync(response);
         }
     }
 

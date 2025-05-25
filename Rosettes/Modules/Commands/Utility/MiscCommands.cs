@@ -42,6 +42,17 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync(embed: embed.Build());
     }
 
+    [SlashCommand("ask", "Ask Rosettes a question. [LLM]")]
+    public async Task Ask(string question)
+    {
+        var dbUser = await UserEngine.GetDbUser(Context.User);
+        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        await DeferAsync();
+        embed.AddField("Question", question);
+        embed.AddField("Answer", await LanguageEngine.GetResponseAsync(question));
+        await FollowupAsync(embed: embed.Build());
+    }
+
     [SlashCommand("serverinfo", "Display server information.")]
     public async Task ServerInfo()
     {
