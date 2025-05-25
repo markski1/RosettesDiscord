@@ -7,7 +7,7 @@ using Rosettes.Managers;
 namespace Rosettes.WebServer;
 
 [ApiController]
-[Route("api")]
+[Route("rosapi")]
 public class RootController : ControllerBase
 {
     [HttpGet("alive")]

@@ -44,7 +44,14 @@ public static class PetEngine
         {   20,   ( "Bee",        "🐝" ) },
         {   21,   ( "Owl",        "🦉" ) },
         {   22,   ( "Wolf",       "🐺" ) },
-        {   23,   ( "Shark",      "🦈" ) }
+        {   23,   ( "Shark",      "🦈" ) },
+        {   24,   ( "Sheep",      "🐑" ) },
+        {   25,   ( "Deer",       "🦌" ) },
+        {   26,   ( "Butterfly",  "🦋" ) },
+        {   27,   ( "Penguin",    "🐧" ) },
+        {   28,   ( "Snake",      "🐍" ) },
+        {   29,   ( "Duck",       "🦆" ) },
+        {   30,   ( "Pig",        "🐖" ) }
     };
 
     public static string PetNames(int id)
@@ -263,12 +270,12 @@ public static class PetEngine
         
         while (true)
         {
-            pet = Global.Randomize(23);
+            pet = Global.Randomize(PetChart.Count);
             if (await HasPet(dbUser, pet + 1) == false) break;
 
-            // if after 5 attempts there's only repeated pets, don't get a pet.
+            // if after 4 attempts there are only repeated pets, don't get a pet.
             attempts++;
-            if (attempts == 5) return 0;
+            if (attempts == 4) return 0;
         }
 
         string userPets = await FarmEngine.GetStrItem(dbUser, "pets");
@@ -290,7 +297,7 @@ public static class PetEngine
 
         int petRequested = int.Parse(component.Data.Values.Last());
 
-        if (petRequested is < 1 or > 23)
+        if (petRequested < 1 || petRequested > PetChart.Count)
         {
             dbUser.SetPet(0);
             embed.Title = "Pet unequipped.";
@@ -538,14 +545,14 @@ public static class PetEngine
                     if (Global.Chance(80)) pet.ModifyHappiness(-1);
                     break;
                 }
-                case > 40:
+                case > 60:
                 {
-                    if (Global.Chance(50)) pet.ModifyHappiness(-1);
+                    if (Global.Chance(40)) pet.ModifyHappiness(-1);
                     break;
                 }
                 default:
                 {
-                    if (Global.Chance(20)) pet.ModifyHappiness(-1);
+                    if (Global.Chance(15)) pet.ModifyHappiness(-1);
                     break;
                 }
             }

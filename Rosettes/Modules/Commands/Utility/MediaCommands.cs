@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using System.Text;
+using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -16,6 +17,18 @@ namespace Rosettes.Modules.Commands.Utility;
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private static readonly Dictionary<string, string> MediaCache = [];
+    
+    [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+    [SlashCommand("ask", "Ask Rosettes a question. [LLM]")]
+    public async Task Ask(string question)
+    {
+        var dbUser = await UserEngine.GetDbUser(Context.User);
+        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        await DeferAsync();
+        embed.AddField("Question", question);
+        embed.AddField("Answer", await LanguageEngine.GetResponseAsync(question));
+        await FollowupAsync(embed: embed.Build());
+    }
 
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)

@@ -5,7 +5,7 @@ using Rosettes.Modules.Engine;
 namespace Rosettes.WebServer.API;
 
 [ApiController]
-[Route("api/auth")]
+[Route("rosapi/auth")]
 public class AuthController : ControllerBase
 {
     [HttpGet("request")]

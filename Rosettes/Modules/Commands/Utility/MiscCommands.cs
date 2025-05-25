@@ -42,17 +42,6 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync(embed: embed.Build());
     }
 
-    [SlashCommand("ask", "Ask Rosettes a question. [LLM]")]
-    public async Task Ask(string question)
-    {
-        var dbUser = await UserEngine.GetDbUser(Context.User);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-        await DeferAsync();
-        embed.AddField("Question", question);
-        embed.AddField("Answer", await LanguageEngine.GetResponseAsync(question));
-        await FollowupAsync(embed: embed.Build());
-    }
-
     [SlashCommand("serverinfo", "Display server information.")]
     public async Task ServerInfo()
     {
@@ -73,6 +62,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         embed.AddField("Owner", guild.Owner.Username);
         embed.AddField("Stickers", guild.Stickers.Count, true);
         embed.AddField("Emoji", guild.Emotes.Count, true);
+        
         if (guild.SplashUrl is not null)
         {
             embed.AddField("Splash image URL", $"<{guild.SplashUrl}>");
