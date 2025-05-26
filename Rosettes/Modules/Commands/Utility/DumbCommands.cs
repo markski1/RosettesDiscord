@@ -9,7 +9,6 @@ namespace Rosettes.Modules.Commands.Utility;
     InteractionContextType.PrivateChannel, 
     InteractionContextType.Guild
 )]
-[IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
@@ -126,7 +125,7 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
                     if (j != gridHeight - 1 && playingField[i - 1, j + 1] == -1)
                         count++;
                 }
-                // check to the right, if we're not at the very right.
+                // check to the right if we're not at the very right.
                 if (i != gridWidth - 1)
                 {
                     if (playingField[i + 1, j] == -1)

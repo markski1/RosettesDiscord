@@ -19,15 +19,31 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     private static readonly Dictionary<string, string> MediaCache = [];
     
     [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
-    [SlashCommand("ask", "Ask Rosettes a question. [LLM]")]
+    [SlashCommand("ask", "Ask Rosettes a question. [Chatbot]")]
     public async Task Ask(string question)
     {
-        var dbUser = await UserEngine.GetDbUser(Context.User);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
         await DeferAsync();
-        embed.AddField("Question", question);
-        embed.AddField("Answer", await LanguageEngine.GetResponseAsync(question));
-        await FollowupAsync(embed: embed.Build());
+        
+        
+
+        var (success, response) = await LanguageEngine.GetResponseAsync(
+                userId: Context.User.Id,
+                channelId: Context.Channel.Id,
+                message: question
+            );
+
+        if (success)
+        {
+            var dbUser = await UserEngine.GetDbUser(Context.User);
+            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+            embed.AddField("Question", question);
+            embed.AddField("Answer", response);
+            await FollowupAsync(embed: embed.Build());
+        }
+        else
+        {
+            await FollowupAsync("Sorry, I don't know the answer to that question.", ephemeral: true);
+        }
     }
 
     [MessageCommand("Extract video")]
@@ -84,7 +100,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                 }
             );
 
-            HttpRequestMessage request = new(HttpMethod.Post, "http://snep.vps.webdock.cloud:9000/");
+            HttpRequestMessage request = new(HttpMethod.Post, "http://127.0.0.1:9000");
 
             request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             request.Content = new StringContent(requestData, Encoding.UTF8);
