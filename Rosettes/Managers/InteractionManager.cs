@@ -175,7 +175,6 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
     public async Task SetupAsync()
     {
         await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
-
         await commands.RegisterCommandsGloballyAsync();
 
         client.InteractionCreated += OnInteraction;

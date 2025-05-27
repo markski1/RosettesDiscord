@@ -38,7 +38,18 @@ public static class Settings
         return true;
     }
 
-    private static string LoadSetting(string name) => File.ReadAllText($"{KeyLoc}/{name}.txt").Replace("\n", string.Empty);
+    private static string LoadSetting(string name)
+    {
+        try
+        {
+            return File.ReadAllText($"{KeyLoc}/{name}.txt").Replace("\n", string.Empty);
+        }
+        catch
+        {
+            Global.GenerateErrorMessage("settings", $"Key not loaded: {name}");
+            return "";
+        }
+    }
 
     // Supressing this warning, because if this were to be null, crashing on launch IS the desired effect.
     // Rosettes cannot and should not work with misconfused keys.

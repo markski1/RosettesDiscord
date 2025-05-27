@@ -10,12 +10,12 @@ public static class LanguageEngine
         apiKey: Settings.OpenAi
     );
     
-    private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = new();
+    private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = [];
     
     public static async Task<(bool, string)> GetResponseAsync(ulong userId, ulong channelId, string message)
     {
         List<ChatMessage> messages;
-        
+
         // If the given user already had spoken in this channel, fetch their context.
         if (ConversationContexts.TryGetValue((userId, channelId), out var context))
         {
@@ -35,11 +35,11 @@ public static class LanguageEngine
                 ChatMessage.CreateSystemMessage(Settings.OpenAiPrompt)
             ];
         }
-        
+
         // Add the user's query to the message list and request a completion.
         messages.Add(ChatMessage.CreateUserMessage(message));
         ChatCompletion completion = await GptClient.CompleteChatAsync(messages);
-        
+
         try
         {
             string response = completion.Content[0].Text;

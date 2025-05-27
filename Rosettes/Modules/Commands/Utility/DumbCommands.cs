@@ -4,11 +4,6 @@ using Rosettes.Core;
 
 namespace Rosettes.Modules.Commands.Utility;
 
-[CommandContextType(
-    InteractionContextType.BotDm, 
-    InteractionContextType.PrivateChannel, 
-    InteractionContextType.Guild
-)]
 public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]

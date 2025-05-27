@@ -12,23 +12,24 @@ namespace Rosettes.Modules.Commands.Utility;
     InteractionContextType.PrivateChannel,
     InteractionContextType.Guild
 )]
-
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private static readonly Dictionary<string, string> MediaCache = [];
-    
-    [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+  
     [SlashCommand("ask", "Ask Rosettes a question. [Chatbot]")]
     public async Task Ask(string question)
     {
         await DeferAsync();
-        
-        
+
+        ulong channelId;
+
+        if (Context.Channel is null) channelId = 0;
+        else channelId = Context.Channel.Id;
 
         var (success, response) = await LanguageEngine.GetResponseAsync(
                 userId: Context.User.Id,
-                channelId: Context.Channel.Id,
+                channelId: channelId,
                 message: question
             );
 
@@ -42,10 +43,11 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            await FollowupAsync("Sorry, I don't know the answer to that question.", ephemeral: true);
+            await FollowupAsync("Sorry, I'm currently unable to answer that.");
         }
     }
 
+    
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
     {

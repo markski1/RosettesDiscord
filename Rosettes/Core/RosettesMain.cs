@@ -52,7 +52,7 @@ public class RosettesMain
         await EventManager.SetupAsync();
         TelemetryEngine.Setup();
 
-        // TenMinutyTimer(); defined below, runs every 20 minutes, or 1200 seconds
+        // SyncThings(); defined below, runs every 20 minutes, or 1200 seconds
         _syncTimer.Elapsed += SyncThings;
         _syncTimer.Interval = 1200000;
         _syncTimer.AutoReset = true;

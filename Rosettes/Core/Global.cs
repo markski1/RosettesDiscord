@@ -130,7 +130,8 @@ public static class Global
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();
         if (client.GetChannel(984608927775854594) is not ITextChannel impawtantChannel) return;
-
+        
+        Console.WriteLine(message);
         impawtantChannel.SendMessageAsync(message);
     }
 
@@ -199,6 +200,8 @@ public static class Global
 
     public static bool CanSendMessage(SocketInteractionContext context)
     {
+        if (context.Channel is null) return false;
+        
         var selfUser = GetSelfGuildUser(context.Guild);
         var access = selfUser.GetPermissions(context.Channel as IGuildChannel);
 
