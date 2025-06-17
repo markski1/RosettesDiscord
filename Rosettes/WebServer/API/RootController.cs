@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Rosettes.Core;
 using Rosettes.Managers;
 
-namespace Rosettes.WebServer;
+namespace Rosettes.WebServer.API;
 
 [ApiController]
 [Route("rosapi")]

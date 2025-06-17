@@ -17,8 +17,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private static readonly Dictionary<string, string> MediaCache = [];
   
-    [SlashCommand("ask", "Ask Rosettes a question. [Chatbot]")]
-    public async Task Ask(string question)
+    [SlashCommand("chat", "Chat with Rosettes [Chatbot, experimental]")]
+    public async Task Chat(string question)
     {
         await DeferAsync();
 
@@ -27,7 +27,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         if (Context.Channel is null) channelId = 0;
         else channelId = Context.Channel.Id;
 
-        var (success, response) = await LanguageEngine.GetResponseAsync(
+        var (isNewChat, success, response) = await LanguageEngine.GetResponseAsync(
                 userId: Context.User.Id,
                 channelId: channelId,
                 message: question
@@ -39,11 +39,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.AddField("Question", question);
             embed.AddField("Answer", response);
+            if (isNewChat) embed.Footer = new EmbedFooterBuilder { Text = "Use `/chat` to respond, or `/chat clear` and I'll forget this conversation." };
             await FollowupAsync(embed: embed.Build());
         }
         else
         {
-            await FollowupAsync("Sorry, I'm currently unable to answer that.");
+            await FollowupAsync(response);
         }
     }
 
@@ -183,6 +184,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             ulong sizeLimit = 0;
 
             if (Context.Guild is not null) sizeLimit = Context.Guild.MaxUploadLimit;
+            
+            mediaUri = mediaUri.Replace("https://cobalt.markski.ar", "http://127.0.0.1:9000");
 
             bool success = await Global.DownloadFile(fileName, mediaUri, sizeLimit);
 
@@ -224,7 +227,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         EmbedFieldBuilder result = new() { Name = "Result", Value = message, IsInline = true };
         embed.AddField(result);
 
-        if (mediaUri is not null)
+        if (mediaUri is not null && !mediaUri.Contains("127.0.0.1"))
         {
             embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
             await FollowupAsync(embed: embed.Build());

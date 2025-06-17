@@ -6,15 +6,26 @@ namespace Rosettes.Modules.Engine;
 public static class LanguageEngine
 {
     private static readonly ChatClient GptClient = new(
-        model: "gpt-4.1-mini", 
+        model: "o4-mini", 
         apiKey: Settings.OpenAi
     );
     
     private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = [];
     
-    public static async Task<(bool, string)> GetResponseAsync(ulong userId, ulong channelId, string message)
+    public static async Task<(bool, bool, string)> GetResponseAsync(ulong userId, ulong channelId, string message)
     {
         List<ChatMessage> messages;
+        bool isNewChat = false;
+
+        if (message == "clear")
+        {
+            if (ConversationContexts.TryGetValue((userId, channelId), out var existingContext))
+            {
+                existingContext.Clear();
+                ConversationContexts[(userId, channelId)] = existingContext;
+                return (isNewChat, false, "Context cleared: I have forgotten our conversation.");
+            }
+        }
 
         // If the given user already had spoken in this channel, fetch their context.
         if (ConversationContexts.TryGetValue((userId, channelId), out var context))
@@ -32,8 +43,11 @@ public static class LanguageEngine
         {
             // Create new with system prompt
             messages = [
-                ChatMessage.CreateSystemMessage(Settings.OpenAiPrompt)
+                ChatMessage.CreateSystemMessage(
+                    $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/mm/yyyy format.;\n{Settings.OpenAiPrompt}"
+                    )
             ];
+            isNewChat = true;
         }
 
         // Add the user's query to the message list and request a completion.
@@ -46,12 +60,12 @@ public static class LanguageEngine
             // Add the response to the stored context.
             messages.Add(ChatMessage.CreateAssistantMessage(response));
             ConversationContexts[(userId, channelId)] = messages;
-            return (true, response);
+            return (isNewChat, true, response);
         }
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("gpt-response", $"Error returning response: {ex.Message}");
-            return (false, "Sorry, I am unable to respond at this moment.");
+            return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
         }
     }
 }
