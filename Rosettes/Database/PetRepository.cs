@@ -4,7 +4,7 @@ using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Database;
 
-public class PetRepository
+public abstract class PetRepository
 {
     public static async Task<IEnumerable<Pet>> GetAllPetsAsync()
     {
@@ -21,6 +21,24 @@ public class PetRepository
         {
             Global.GenerateErrorMessage("sql-getallpets", $"sqlException code {ex.Message}");
             return new List<Pet>();
+        }
+    }
+
+    public static async Task<bool> CheckHasPet(ulong userId, int petSpeciesId)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+        
+        const string sql = "SELECT count(1) FROM pets WHERE owner_id=@userId AND pet_index=@petSpeciesId";
+
+        try
+        {
+            return await db.QueryFirstOrDefaultAsync<bool>(sql, new { userId, petSpeciesId });
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-checkhaspet", $"sqlException code {ex.Message}");
+            return false;
         }
     }
 

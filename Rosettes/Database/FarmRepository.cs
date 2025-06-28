@@ -5,20 +5,7 @@ using Rosettes.Modules.Engine.Minigame;
 
 namespace Rosettes.Database;
 
-/*
- * A deadly sin is committed through this source file!
- *
- * There are indeed several instances of forming queries through variable string concatenation, rather than
- * by database preparation through the ORM. Gasp!
- *
- * However, the query is formed by the string name of an item, which is checked against the minigame manager
- * before being let through. So, no matter how bad it looks, this cannot be used to forge an injection.
- *
- * If I am wrong here, I would be happy to stand corrected. But so far I've found no issue with this other than
- * how it looks.
- */
-
-public class FarmRepository
+public static class FarmRepository
 {
     public static async Task<IEnumerable<Crop>> GetUserCrops(User user)
     {
@@ -178,6 +165,7 @@ public class FarmRepository
 
     public static async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
     {
+        // Valid item check to avoid injection, since 'item' is concatenated into a query below.
         if (!FarmEngine.IsValidItem(item)) return false;
 
         using var getConn = DatabasePool.GetConnection();

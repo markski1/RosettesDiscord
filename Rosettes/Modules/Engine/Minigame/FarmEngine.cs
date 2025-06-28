@@ -11,7 +11,7 @@ public static class FarmEngine
 {
     public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> InventoryItems = new()
     {
-        //    db_name            name                   can_give  can_pet_eat
+        // db_name / name / can_give / can_pet_eat
         { "fish",           ( "🐡 Common fish",     true,    true   ) },
         { "uncommonfish",   ( "🐟 Uncommon fish",   true,    true   ) },
         { "rarefish",       ( "🐠 Rare fish",       true,    true   ) },
@@ -30,15 +30,15 @@ public static class FarmEngine
 
     private static readonly Dictionary<string, (string name, int amount, int cost)> ItemSaleChart = new()
     {
-        //   instruct   name         amount cost
-        { "sell1", ("fish",         5,   3) },
-        { "sell2", ("uncommonfish", 5,   6) },
-        { "sell3", ("rarefish",     1,   5) },
-        { "sell4", ("shrimp",       5,   5) },
-        { "sell5", ("tomato",       10,  6) },
-        { "sell6", ("carrot",       10,  5) },
-        { "sell7", ("potato",       10,  4) },
-        { "sell8", ("garbage",      5,   3) }
+        // instruct / name / amount / cost
+        { "sell1", ("fish",         5,     3) },
+        { "sell2", ("uncommonfish", 5,     6) },
+        { "sell3", ("rarefish",     1,     5) },
+        { "sell4", ("shrimp",       5,     5) },
+        { "sell5", ("tomato",       10,    6) },
+        { "sell6", ("carrot",       10,    5) },
+        { "sell7", ("potato",       10,    4) },
+        { "sell8", ("garbage",      5,     3) }
     };
 
     public static string GetItemName(string choice)

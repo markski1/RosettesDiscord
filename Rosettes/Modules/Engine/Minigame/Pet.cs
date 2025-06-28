@@ -1,4 +1,7 @@
 ﻿using Rosettes.Core;
+using Rosettes.Database;
+
+// ReSharper disable InconsistentNaming
 
 namespace Rosettes.Modules.Engine.Minigame;
 
@@ -52,7 +55,7 @@ public class Pet
     }
 
     // If the animal can be pet, apply the appropiate effects and return the gained happiness.
-    // Otherwise return a negative.
+    // Otherwise, return a negative.
     public int DoPet()
     {
         if (Global.CurrentUnix() <= LastPet) return -1;
@@ -74,7 +77,7 @@ public class Pet
         }
 
         if (Global.CurrentUnix() <= LastFed) {
-            return -2; // Error: Pets may only be fed once in a 5 minute window.
+            return -2; // Error: Pets may only be fed once in a 5-minute window.
         }
         
         LastFed = Global.CurrentUnix() + 300;
@@ -138,5 +141,13 @@ public class Pet
     internal int GetHappiness()
     {
         return _happiness;
+    }
+
+    public async Task<bool> UpdateSelf()
+    {
+        if (SyncUpToDate) return false;
+        await PetRepository.UpdatePet(this);
+        SyncUpToDate = true;
+        return true;
     }
 }

@@ -210,14 +210,14 @@ public static class PetEngine
 
         if (receivingPet is null)
         {
-            await component.RespondAsync("Sorry, there was an error finding that pet!", ephemeral: true);
+            await component.RespondAsync("Sorry, there was an error finding that pet.", ephemeral: true);
             return;
         }
 
         // To get guild display names...
         if (component.User is not SocketGuildUser userGuildRef)
         {
-            await component.RespondAsync("Sorry, there was an error finding that pet's owner in the guild!", ephemeral: true);
+            await component.RespondAsync("Sorry, there was an error finding that pet's owner in the guild.", ephemeral: true);
             return;
         }
 
@@ -225,7 +225,7 @@ public static class PetEngine
 
         if (happinessGained < 0)
         {
-            await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds", ephemeral: true);
+            await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds.", ephemeral: true);
             return;
         }
 
@@ -390,12 +390,7 @@ public static class PetEngine
 
     private static async Task<bool> HasPet(User dbUser, int id)
     {
-        // make zero-indexed
-        id--;
-            
-        string pets = await FarmEngine.GetStrItem(dbUser, "pets");
-
-        return pets[id] == '1';
+        return await PetRepository.CheckHasPet(dbUser.Id, id);
     }
 
     public static async Task ViewPet(SocketInteraction interaction, IUser user)
@@ -514,10 +509,9 @@ public static class PetEngine
     {
         try
         {
-            foreach (var pet in _petCache.Where(pet => !pet.SyncUpToDate))
+            foreach (var pet in _petCache)
             {
-                await PetRepository.UpdatePet(pet);
-                pet.SyncUpToDate = true;
+                await pet.UpdateSelf();
             }
         }
         catch (Exception ex)
@@ -539,7 +533,7 @@ public static class PetEngine
 
             switch (happiness)
             {
-                // Depending on how the happiness range, the pet may lose happiness.
+                // Depending on how the happiness ranges, the pet may lose happiness.
                 case > 80:
                 {
                     if (Global.Chance(80)) pet.ModifyHappiness(-1);

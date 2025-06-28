@@ -131,11 +131,11 @@ public class Alarm
         EmbedBuilder embed = await Global.MakeRosettesEmbed(User);
 
         embed.Title = "Ring!";
-        embed.Description = $"Alarm for {discordRef.Mention}!";
+        embed.Description = $"Alarm for {discordRef.Mention}.";
 
         if (_success)
         {
-            await Channel.SendMessageAsync(embed: embed.Build());
+            await Channel.SendMessageAsync($"{discordRef.Mention}", embed: embed.Build());
         }
         else
         {
