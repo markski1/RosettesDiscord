@@ -73,13 +73,13 @@ public static class TelemetryEngine
         {
             case TelemetryType.Command:
                 _commandCount++;
-                break;
+                return;
             case TelemetryType.Interaction:
                 _interactionCount++;
-                break;
+                return;
             case TelemetryType.Message:
                 _messageCount++;
-                break;
+                return;
         }
     }
 

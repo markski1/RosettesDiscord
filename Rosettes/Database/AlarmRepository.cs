@@ -4,7 +4,7 @@ using Rosettes.Modules.Commands.Alarms;
 
 namespace Rosettes.Database;
 
-public class AlarmRepository
+public static class AlarmRepository
 {
     public static async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {

@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+// ReSharper disable InconsistentNaming
 
 namespace Rosettes.Modules.Engine.Minigame;
 
@@ -105,8 +106,10 @@ public static class Farm
         {
             embed.AddField("💦 Fishing Pond", $"You may fish again <t:{dbUser.GetFishTime()}:R>.");
         }
-
-        EmbedFooterBuilder footer = new() { Text = $"TODO: Seeds" };
+        
+        int seeds = await FarmRepository.FetchInventoryItem(dbUser, "seedbag");
+        
+        embed.Footer = new() { Text = $"{seeds} seeds." };
 
         ComponentBuilder comps = new();
 
@@ -449,6 +452,7 @@ public static class Farm
     }
 }
 
+// Database constructor for crops.
 public class Crop(int plot_id, ulong user_id, int unix_growth, int unix_next_water, int crop_type)
 {
     public int PlotId = plot_id;
