@@ -178,8 +178,8 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
-    [SlashCommand("setfarmchan", "Sets the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
-    public async Task SetFarmChan(string disable = "false")
+    [SlashCommand("setfarmchan", "Sets or unset the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
+    public async Task SetFarmChan()
     {
         if (Context.Guild.OwnerId != Context.User.Id)
         {
@@ -188,17 +188,15 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
 
         var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
 
-        if (disable == "false")
+        if (dbGuild.FarmChannel != Context.Channel.Id)
         {
             dbGuild.FarmChannel = Context.Channel.Id;
-
             await RespondAsync("Got it, Rosettes will now only allow Farm/Fishing commands in this channel.");
         }
         else
         {
             dbGuild.FarmChannel = 0;
-
-            await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless disabled from the web panel).");
+            await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless globally disabled).");
         }
     }
 

@@ -9,9 +9,11 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("makesweeper", "Make a minesweeper with a given emoji.")]
     public async Task MakeSweeper(
         [Summary("emoji", "Emoji to be used as a mine.")] string anEmoji, 
-        [Summary("difficulty", "Difficulty of the resulting minesweeper, 1-3.")] int difficulty = 2, 
-        [Summary("hide-zeros", "Should zeros be hidden? true/false.")] string hideZeros = "false", 
-        [Summary("unspoilered", "Generate a field with no spoilers.")] string unspoilered = "false"
+        [Summary("difficulty", "Difficulty of the resulting minesweeper, 1-3.")] 
+        [Choice("Easy", 1)]
+        [Choice("Medium", 2)]
+        [Choice("Hard", 3)]
+        int difficulty = 2
     )
     {
         if (difficulty is < 1 or > 3)
@@ -34,18 +36,6 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
             {
                 await RespondAsync("Invalid emoji entered", ephemeral: true);
             }
-            return;
-        }
-
-        if (unspoilered != "false" && unspoilered != "true")
-        {
-            await RespondAsync("Valid values for unspoilered: 'false', 'true'", ephemeral: true);
-            return;
-        }
-
-        if (hideZeros != "false" && hideZeros != "true")
-        {
-            await RespondAsync("Valid values for hideZeros: 'false', 'true'", ephemeral: true);
             return;
         }
 
@@ -97,11 +87,7 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
                 // If the space contains a "mine", fill in the emoji.
                 if (playingField[i, j] == -1)
                 {
-                    if (unspoilered == "true")
-                        board += $"{anEmoji}";
-                    else
-                        board += $"||{anEmoji}||";
-
+                    board += $"||{anEmoji}||";
                     continue;
                 }
 
@@ -141,15 +127,8 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 
                 playingField[i, j] = count;
 
-                // don't spoiler if that was requested.
-                if (unspoilered == "true")
-                {
-                    board += $"{new Emoji($"{count}⃣")}";
-                    continue;
-                }
-
                 // if the count is greater than 0, add a spoilered emoji with the count, otherwise just a zero - unless the user requested zeros are hidden too.
-                if (count > 0 || hideZeros == "true") board += $"||{new Emoji($"{count}⃣")}||";
+                if (count > 0) board += $"||{new Emoji($"{count}⃣")}||";
                 else board += "0⃣";
             }
             // when done with a row, break line
@@ -158,15 +137,8 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
 
-        if (unspoilered == "false")
-        {
-            embed.Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.";
-            embed.Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s.";
-        }
-        else
-        {
-            embed.Title = $"Non-playable {anEmoji}-sweeper board generated.";
-        }
+        embed.Title = $"{anEmoji}-Sweeper! - {diffName} difficulty.";
+        embed.Description = $"In a {gridWidth}x{gridHeight} board; clear all the free squares, avoid the {mineCount} {anEmoji}'s.";
 
         await RespondAsync(embed: embed.Build());
         // if the difficulty is 3, we send the first chunk of the board first.

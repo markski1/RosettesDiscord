@@ -90,7 +90,13 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
-    public async Task Alarm([Summary("amount", "Amount of time until alarm sounds. In minutes unless specified otherwise.")] int amount, [Summary("unit", "Unit of time for the amount of time provided. Can be minutes/hours/days")] string unit = "minute")
+    public async Task Alarm(
+        [Summary("amount", "Amount of time until alarm sounds.")] int amount,
+        [Summary("unit", "Unit of time for the amount of time provided.")]
+        [Choice("Minutes", "minutes")]
+        [Choice("Hours",   "hours")]
+        [Choice("Days",    "days")]
+        string unit = "minutes")
     {
         if (AlarmManager.CheckUserHasAlarm(Context.User))
         {
@@ -98,21 +104,20 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (unit.Contains("minute", StringComparison.CurrentCultureIgnoreCase))
+        switch (unit)
         {
-            // nothing as the function receives minutes
-        }
-        else if (unit.Contains("hour", StringComparison.CurrentCultureIgnoreCase))
-        {
-            amount *= 60;
-        }
-        else if (unit.Contains("day", StringComparison.CurrentCultureIgnoreCase))
-        {
-            amount = amount * 60 * 24;
-        }
-        else
-        {
-            await RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
+            case "minutes":
+                // nothing, since the function receives minutes
+                break;
+            case "hours":
+                amount *= 60;
+                break;
+            case "days":
+                amount = amount * 60 * 24;
+                break;
+            default:
+                await RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
+                break;
         }
 
         if (amount <= 0)
