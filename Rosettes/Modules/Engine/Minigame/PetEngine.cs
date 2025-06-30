@@ -3,16 +3,6 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
 
-/*
-	The pet system is currently overcomplicated due to a lack of foresight when I added pets.
-	They were initially just collectibles, treated as a commodity which couldn't be individually addressed.
-
-	As the pet system got further developed into becoming, well, a system, it became a necessity to 
-	append the new functionality onto that rather janky foundation.
-
-	It's not terrible or unworkable, but it's complex, and complexity is bad. I will address this, eventually.
-*/
-
 namespace Rosettes.Modules.Engine.Minigame;
 
 public static class PetEngine
@@ -85,8 +75,8 @@ public static class PetEngine
             if (pet is not null) return pet;
                 
             pet = new(index, ownerId, "[not named]");
-            _petCache.Add(pet);
             pet.Id = await PetRepository.InsertPet(pet);
+            _petCache.Add(pet);
             return pet;
         }
         catch
@@ -109,6 +99,11 @@ public static class PetEngine
         }
     }
 
+    private static List<Pet> GetAllUserPets(User user)
+    {
+        return _petCache.FindAll(x => x.OwnerId == user.Id);
+    }
+
     public static async Task ShowPets(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
@@ -119,31 +114,18 @@ public static class PetEngine
         embed.Title = "Pets";
 
         string petString = "", petString2 = "";
-        List<Pet> petList = [];
 
-        string petsOwned = await FarmEngine.GetStrItem(dbUser, "pets");
-
-        int count = 1;
+        List<Pet> ownedPets = GetAllUserPets(dbUser);
 
         bool toggle = true;
-        foreach (char aPet in petsOwned)
+        foreach (Pet aPet in ownedPets)
         {
-            if (aPet == '1')
-            {
-                Pet? getPet = await EnsurePetExists(dbUser.Id, count);
-                if (getPet is not null)
-                {
-                    petList.Add(getPet);
+            if (toggle)
+                petString += $"{aPet.GetName()}\n";
+            else
+                petString2 += $"{aPet.GetName()}\n";
 
-                    if (toggle)
-                        petString += $"{getPet.GetName()}\n";
-                    else
-                        petString2 += $"{getPet.GetName()}\n";
-
-                    toggle = !toggle;
-                }
-            }
-            count++;
+            toggle = !toggle;
         }
 
         if (petString == "")
@@ -170,7 +152,7 @@ public static class PetEngine
             CustomId = "defaultPet"
         };
         petMenu.AddOption(label: "None", value: "0");
-        foreach (Pet aPet in petList)
+        foreach (Pet aPet in ownedPets)
         {
             petMenu.AddOption(label: aPet.GetName(), value: $"{aPet.Index}");
         }
@@ -270,23 +252,17 @@ public static class PetEngine
         
         while (true)
         {
-            pet = Global.Randomize(PetChart.Count);
-            if (await HasPet(dbUser, pet + 1) == false) break;
+            pet = Global.Randomize(PetChart.Count) + 1;
+            if (await HasPet(dbUser, pet) == false) break;
 
             // if after 4 attempts there are only repeated pets, don't get a pet.
             attempts++;
             if (attempts == 4) return 0;
         }
+        
+        await EnsurePetExists(dbUser.Id, pet);
 
-        string userPets = await FarmEngine.GetStrItem(dbUser, "pets");
-
-        char[] petsAsChars = userPets.ToCharArray();
-
-        petsAsChars[pet] = '1';
-
-        await FarmEngine.ModifyStrItem(dbUser, "pets", new string(petsAsChars));
-
-        return pet + 1;
+        return pet;
     }
 
     public static async Task SetDefaultPet(SocketMessageComponent component)

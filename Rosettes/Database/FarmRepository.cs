@@ -102,26 +102,6 @@ public static class FarmRepository
         }
     }
 
-    public static async Task<string> FetchInventoryStringItem(User user, string item)
-    {
-        if (!FarmEngine.IsValidItem(item)) return "err";
-
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
-
-        try
-        {
-            return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = user.Id }) ?? "invalid";
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
-            return "invalid";
-        }
-    }
-
     public static async Task<bool> ModifyInventoryItem(User user, string item, int amount)
     {
         if (!FarmEngine.IsValidItem(item)) return false;
@@ -155,27 +135,6 @@ public static class FarmRepository
         try
         {
             return await db.ExecuteAsync(sql, new { newValue, id = user.Id }) > 0;
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
-            return false;
-        }
-    }
-
-    public static async Task<bool> ModifyStrInventoryItem(User user, string item, string newValue)
-    {
-        // Valid item check to avoid injection, since 'item' is concatenated into a query below.
-        if (!FarmEngine.IsValidItem(item)) return false;
-
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        var sql = $"UPDATE users_inventory SET `{item}` = '{newValue}' WHERE id=@id";
-
-        try
-        {
-            return await db.ExecuteAsync(sql, new { id = user.Id }) > 0;
         }
         catch (Exception ex)
         {

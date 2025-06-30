@@ -25,7 +25,6 @@ public static class FarmEngine
         { "fishpole",       ( "🎣 Fishing pole",    false,   false  ) },
         { "farmtools",      ( "🧰 Farming tools",   false,   false  ) },
         { "plots",          ( "🌿 Plot of land",    false,   false  ) },
-        { "pets",           ( "[debug] pet list",   false,   false  ) }
     };
 
     private static readonly Dictionary<string, (string name, int amount, int cost)> ItemSaleChart = new()
@@ -71,20 +70,10 @@ public static class FarmEngine
     {
         await FarmRepository.SetInventoryItem(dbUser, choice, newValue);
     }
-
-    public static async Task ModifyStrItem(User dbUser, string choice, string newValue)
-    {
-        await FarmRepository.ModifyStrInventoryItem(dbUser, choice, newValue);
-    }
-
+    
     public static async Task<int> GetItem(User dbUser, string name)
     {
         return await FarmRepository.FetchInventoryItem(dbUser, name);
-    }
-
-    public static async Task<string> GetStrItem(User dbUser, string name)
-    {
-        return await FarmRepository.FetchInventoryStringItem(dbUser, name);
     }
 
     public static async Task<string> CanUseFarmCommand(SocketInteractionContext context)
