@@ -2,9 +2,12 @@
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Modules.Engine;
+using Rosettes.Modules.Minigame.Pets;
+
 // ReSharper disable InconsistentNaming
 
-namespace Rosettes.Modules.Engine.Minigame;
+namespace Rosettes.Modules.Minigame.Farming;
 
 public static class Farm
 {

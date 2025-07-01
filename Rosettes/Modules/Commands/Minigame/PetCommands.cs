@@ -1,5 +1,5 @@
 ﻿using Discord.Interactions;
-using Rosettes.Modules.Engine.Minigame;
+using Rosettes.Modules.Minigame.Pets;
 
 namespace Rosettes.Modules.Commands.Minigame;
 

@@ -3,7 +3,7 @@ using Rosettes.Database;
 
 // ReSharper disable InconsistentNaming
 
-namespace Rosettes.Modules.Engine.Minigame;
+namespace Rosettes.Modules.Minigame.Pets;
 
 public class Pet
 {

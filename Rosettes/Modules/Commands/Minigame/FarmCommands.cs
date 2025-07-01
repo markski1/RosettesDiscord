@@ -2,7 +2,7 @@
 using Discord.Interactions;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Minigame;
+using Rosettes.Modules.Minigame.Farming;
 
 namespace Rosettes.Modules.Commands.Minigame;
 
@@ -72,7 +72,7 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (user == Context.User)
         {
-            await RespondAsync("That's you! Give stuff to someone else!", ephemeral: true);
+            await RespondAsync("That's you! Give stuff to someone else.", ephemeral: true);
             return;
         }
 

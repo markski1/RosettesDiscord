@@ -2,8 +2,10 @@
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Modules.Engine;
+using Rosettes.Modules.Minigame.Farming;
 
-namespace Rosettes.Modules.Engine.Minigame;
+namespace Rosettes.Modules.Minigame.Pets;
 
 public static class PetEngine
 {

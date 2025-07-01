@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using Rosettes.Core;
-using Rosettes.Modules.Engine.Minigame;
+using Rosettes.Modules.Minigame.Pets;
 
 namespace Rosettes.Database;
 

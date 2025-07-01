@@ -4,8 +4,9 @@ using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
-using Rosettes.Modules.Engine.Minigame;
 using System.Reflection;
+using Rosettes.Modules.Minigame.Farming;
+using Rosettes.Modules.Minigame.Pets;
 
 namespace Rosettes.Managers;
 

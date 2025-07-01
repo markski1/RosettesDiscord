@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using Rosettes.Managers;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
-using Rosettes.Modules.Engine.Minigame;
+using Rosettes.Modules.Minigame.Pets;
 
 namespace Rosettes.Core;
 

@@ -3,9 +3,11 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
+using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
+using Rosettes.Modules.Minigame.Pets;
 
-namespace Rosettes.Modules.Engine.Minigame;
+namespace Rosettes.Modules.Minigame.Farming;
 
 public static class FarmEngine
 {
