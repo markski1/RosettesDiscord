@@ -13,7 +13,7 @@ public static class FarmEngine
 {
     public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> InventoryItems = new()
     {
-        // db_name / name / can_give / can_pet_eat
+        // db_name / (name / can_give / can_pet_eat)
         { "fish",           ( "🐡 Common fish",     true,    true   ) },
         { "uncommonfish",   ( "🐟 Uncommon fish",   true,    true   ) },
         { "rarefish",       ( "🐠 Rare fish",       true,    true   ) },
@@ -41,6 +41,16 @@ public static class FarmEngine
         { "sell7", ("potato",       10,    4) },
         { "sell8", ("garbage",      5,     3) }
     };
+    
+    private static readonly Dictionary<string, int> ItemBuyChart = new()
+    {
+        // name / price
+        { "seedbag",      5 },
+        { "fishpole",     10 },
+        { "farmtools",    15 },
+        { "plots",        200 }
+    };
+    
 
     public static string GetItemName(string choice)
     {
@@ -103,87 +113,83 @@ public static class FarmEngine
     public static async Task ShopAction(SocketMessageComponent component)
     {
         var dbUser = await UserEngine.GetDbUser(component.User);
-
+        
+        var parts = component.Data.Values.Last().Split(':');
         string text = "";
-
+        
         switch (component.Data.CustomId)
         {
-            case "buy":
-                switch (component.Data.Values.Last())
+            // A purchase is composed by the name of the item purchased, and its amount (i.e., seedbag:5, fishpole:1)
+            case "buy" when parts.Length == 2:
+            {
+                string item = parts[0];
+                int amount = int.Parse(parts[1]);
+                
+                if (!ItemBuyChart.TryGetValue(item, out var price))
                 {
-                    case "buy1":
-                        text = await ItemBuy(dbUser, buying: "seedbag", amount: 1, cost: 5);
-                        break;
-                    case "buy2":
-                        text = await ItemBuy(dbUser, buying: "seedbag", amount: 5, cost: 25);
-                        break;
-                    case "buy3":
-                        text = await ItemBuy(dbUser, buying: "seedbag", amount: 10, cost: 50);
-                        break;
-                    case "buy4":
-                        if (await GetItem(dbUser, "fishpole") >= 25)
+                    text = "There was an error parsing your shop request.";
+                    break;
+                }
+
+                if (await GetItem(dbUser, "dabloons") < price)
+                {
+                    text = $"You don't have {price} {GetItemName("dabloons")}";
+                    break;
+                }
+                
+                text = $"You have purchased {GetItemName(item)} for {price} {GetItemName("dabloons")}";
+                
+                switch (item)
+                {
+                    case "fishpole":
+                        if (await GetItem(dbUser, "fishpole") >= 30)
                         {
                             text = $"Your current {GetItemName("fishpole")} is still in good shape.";
+                            break;
                         }
-                        else if (await GetItem(dbUser, "dabloons") >= 5)
-                        {
-                            ModifyItem(dbUser, "dabloons", -10);
-                            SetItem(dbUser, "fishpole", 100);
-                            text = $"You have purchased {GetItemName("fishpole")} for 10 {GetItemName("dabloons")}";
-                        }
-                        else
-                        {
-                            text = $"You don't have 10 {GetItemName("dabloons")}";
-                        }
+                        ModifyItem(dbUser, "dabloons", -10);
+                        SetItem(dbUser, "fishpole", 100);
                         break;
-                    case "buy5":
-                        if (await GetItem(dbUser, "farmtools") >= 25)
+                    case "farmtools":
+                        if (await GetItem(dbUser, "farmtools") >= 30)
                         {
                             text = $"Your current {GetItemName("farmtools")} are still in good shape.";
+                            break;
                         }
-                        else if (await GetItem(dbUser, "dabloons") >= 10)
-                        {
-                            ModifyItem(dbUser, "dabloons", -15);
-                            SetItem(dbUser, "farmtools", 100);
-                            text = $"You have purchased {GetItemName("farmtools")} for 15 {GetItemName("dabloons")}";
-                        }
-                        else
-                        {
-                            text = $"You don't have 15 {GetItemName("dabloons")}";
-                        }
+                        ModifyItem(dbUser, "dabloons", -15);
+                        SetItem(dbUser, "farmtools", 100);
                         break;
-                    case "buy6":
-                        if (await GetItem(dbUser, "dabloons") >= 200)
+                    case "plots":
+                        if (await GetItem(dbUser, "plots") >= 3)
                         {
-                            if (await GetItem(dbUser, "plots") >= 3)
-                            {
-                                text = "For the time being, you may not own more than 3 plots of land.";
-                            }
-                            else
-                            {
-                                ModifyItem(dbUser, "dabloons", -200);
-                                ModifyItem(dbUser, "plots", +1);
-                                text = $"You have purchased a plot of land for 200 {GetItemName("dabloons")}";
-                            }
+                            text = "For the time being, you may not own more than 3 plots of land.";
+                            break;
                         }
-                        else
-                        {
-                            text = $"You don't have 200 {GetItemName("dabloons")}";
-                        }
+                        ModifyItem(dbUser, "dabloons", -200);
+                        ModifyItem(dbUser, "plots", +1);
+                        break;
+                    default:
+                        text = ItemBuy(dbUser, boughtItem: item, amount: amount, cost: price * amount);
                         break;
                 }
                 break;
+            }
+            
+            // A sale is a preset 'operation' with an ID (i.e., sell1, sell2).
+            case "sell_e" when parts.Length == 1:
+            case "sell" when parts.Length == 1:
+            {
+                string item = parts[0];
+                
+                bool sellEverything = component.Data.CustomId.Contains("_e");
 
-            case "sell_e":
-            case "sell":
-                bool sellE = component.Data.CustomId.Contains("_e");
-
-                if (ItemSaleChart.TryGetValue(component.Data.Values.Last(), out var values))
+                if (ItemSaleChart.TryGetValue(item, out var values))
                 {
-                    text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sellE);
+                    text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sellEverything);
                 }
-
+                
                 break;
+            }
         }
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
@@ -204,23 +210,18 @@ public static class FarmEngine
         }
     }
 
-    private static async Task<string> ItemBuy(User dbUser, string buying, int amount, int cost, bool setType = false)
+    private static string ItemBuy(User dbUser, string boughtItem, int amount, int cost, bool setType = false)
     {
-        if (await GetItem(dbUser, "dabloons") >= cost)
+        ModifyItem(dbUser, "dabloons", -cost);
+        if (setType)
         {
-            ModifyItem(dbUser, "dabloons", -cost);
-            if (setType)
-            {
-                SetItem(dbUser, buying, amount);
-            }
-            else
-            {
-                ModifyItem(dbUser, buying, +amount);
-            }
-            return $"You have purchased {amount} {GetItemName("seedbag")} for {cost} {GetItemName("dabloons")}";
+            SetItem(dbUser, boughtItem, amount);
         }
-
-        return $"You don't have {cost} {GetItemName("dabloons")}";
+        else
+        {
+            ModifyItem(dbUser, boughtItem, +amount);
+        }
+        return $"You have purchased {amount} {GetItemName(boughtItem)} for {cost} {GetItemName("dabloons")}";
     }
 
     private static async Task<string> ItemSell(User dbUser, string selling, int amount, int cost, bool everything)
@@ -486,12 +487,12 @@ public static class FarmEngine
         };
         if (!empty)
         {
-            buyMenu.AddOption(label: $"1 {GetItemName("seedbag")}", description: $"5 {GetItemName("dabloons")}", value: "buy1");
-            buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"25 {GetItemName("dabloons")}", value: "buy2");
-            buyMenu.AddOption(label: $"10 {GetItemName("seedbag")}", description: $"50 {GetItemName("dabloons")}", value: "buy3");
-            buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"10 {GetItemName("dabloons")}", value: "buy4");
-            buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"15 {GetItemName("dabloons")}", value: "buy5");
-            buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "buy6");
+            buyMenu.AddOption(label: $"1 {GetItemName("seedbag")}", description: $"5 {GetItemName("dabloons")}", value: "seedbag:1");
+            buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"25 {GetItemName("dabloons")}", value: "seedbag:5");
+            buyMenu.AddOption(label: $"10 {GetItemName("seedbag")}", description: $"50 {GetItemName("dabloons")}", value: "seedbag:10");
+            buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"10 {GetItemName("dabloons")}", value: "fishpole:1");
+            buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"15 {GetItemName("dabloons")}", value: "farmtools:1");
+            buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "plots:1");
         }
         else
         {
