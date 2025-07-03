@@ -93,7 +93,7 @@ public class Pet
     {
         _happiness += modify;
         if (_happiness > 100) _happiness = 100;
-        else if (_happiness < 0) _happiness = 0;
+        if (_happiness < 0) _happiness = 0;
     }
 
     // Returns the pet's custom name, or the generic animal name if the pet has not been named.
@@ -103,6 +103,10 @@ public class Pet
         {
             return $"{PetEngine.PetEmojis(Index)} {_name}";
         }
+        
+        // Getting the name usually means the owner is doing something.
+        // If the owner is doing something, the pet is going along, so, a small chance to gain exp. Seems fine.
+        if (Global.Chance(10)) AddExp(1);
 
         return PetEngine.PetNames(Index);
     }

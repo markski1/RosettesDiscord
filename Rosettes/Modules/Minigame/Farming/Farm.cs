@@ -65,28 +65,16 @@ public static class Farm
             }
             else
             {
-                bool canBeHarvested = false;
-                bool canBeWatered = false;
-                if (currentCrop.UnixGrowth < currentUnix)
-                {
-                    canBeHarvested = true;
-                    anyCanBeHarvested = true;
-                }
-                else if (currentCrop.UnixNextWater < currentUnix)
-                {
-                    canBeWatered = true;
-                    anyCanBeWatered = true;
-                }
-
                 string plotText;
-
-                if (canBeWatered)
-                {
-                    plotText = $"Crops are growing in this plot.\n They can be watered right now.\nThey'll be ready to harvest <t:{currentCrop.UnixGrowth}:R>";
-                }
-                else if (canBeHarvested)
+                if (currentCrop.UnixGrowth < currentUnix) // The growth time has passed
                 {
                     plotText = $"{FarmEngine.GetItemName(GetHarvest(currentCrop.CropType))} has grown in this plot.\nThey can be harvested right now.";
+                    anyCanBeHarvested = true;
+                }
+                else if (currentCrop.UnixNextWater < currentUnix) // The watering time has passed
+                {
+                    plotText = $"Crops are growing in this plot.\n They can be watered right now.\nThey'll be ready to harvest <t:{currentCrop.UnixGrowth}:R>";
+                    anyCanBeWatered = true;
                 }
                 else
                 {
@@ -116,12 +104,9 @@ public static class Farm
 
         ComponentBuilder comps = new();
 
-        ActionRowBuilder buttonRow = new();
-
-        ActionRowBuilder actionRow = new();
-
         if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered)
         {
+            ActionRowBuilder actionRow = new();
             if (anyCanBeHarvested)
             {
                 actionRow.WithButton(label: "Harvest crops", customId: "crops_harvest", style: ButtonStyle.Success);
@@ -137,8 +122,8 @@ public static class Farm
             comps.AddRow(actionRow);
         }
 
+        ActionRowBuilder buttonRow = new();
         FarmEngine.AddStandardButtons(ref buttonRow);
-
         comps.AddRow(buttonRow);
 
         await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());

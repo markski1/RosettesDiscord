@@ -400,41 +400,24 @@ public static class FarmEngine
 
         await interaction.DeferAsync();
 
-        List<string> fieldsToList = [];
-
         EmbedFooterBuilder footer = new() { Text = $"{await GetItem(dbUser, "dabloons")} {GetItemName("dabloons")} | {await GetItem(dbUser, "seedbag")} {GetItemName("seedbag")}\n{dbUser.Exp} experience" };
 
         embed.Footer = footer;
 
-        fieldsToList.Add("garbage");
-        fieldsToList.Add("fishpole");
-        fieldsToList.Add("farmtools");
-
         embed.AddField(
             "Items",
-            await ListItems(dbUser, fieldsToList)
+            await ListItems(dbUser, ["garbage", "fishpole", "farmtools"])
         );
-
-        fieldsToList.Clear();
-        fieldsToList.Add("fish");
-        fieldsToList.Add("uncommonfish");
-        fieldsToList.Add("rarefish");
-        fieldsToList.Add("shrimp");
 
         embed.AddField(
             "Catch",
-            await ListItems(dbUser, fieldsToList),
+            await ListItems(dbUser, ["fish", "uncommonfish", "rarefish", "shrimp"]),
             true
         );
 
-        fieldsToList.Clear();
-        fieldsToList.Add("tomato");
-        fieldsToList.Add("carrot");
-        fieldsToList.Add("potato");
-
         embed.AddField(
             "Harvest",
-            await ListItems(dbUser, fieldsToList),
+            await ListItems(dbUser, ["tomato", "carrot", "potato"]),
             true
         );
 
