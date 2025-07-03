@@ -29,17 +29,17 @@ public static class FarmEngine
         { "plots",          ( "🌿 Plot of land",    false,   false  ) },
     };
 
-    private static readonly Dictionary<string, (string name, int amount, int cost)> ItemSaleChart = new()
+    private static readonly Dictionary<string, (int amount, int cost)> ItemSaleChart = new()
     {
-        // instruct / name / amount / cost
-        { "sell1", ("fish",         5,     3) },
-        { "sell2", ("uncommonfish", 5,     6) },
-        { "sell3", ("rarefish",     1,     5) },
-        { "sell4", ("shrimp",       5,     5) },
-        { "sell5", ("tomato",       10,    6) },
-        { "sell6", ("carrot",       10,    5) },
-        { "sell7", ("potato",       10,    4) },
-        { "sell8", ("garbage",      5,     3) }
+        // name / (amount / cost)
+        { "fish",         (5,     3) },
+        { "uncommonfish", (5,     6) },
+        { "rarefish",     (1,     5) },
+        { "shrimp",       (5,     5) },
+        { "tomato",       (10,    6) },
+        { "carrot",       (10,    5) },
+        { "potato",       (10,    4) },
+        { "garbage",      (5,     3) }
     };
     
     private static readonly Dictionary<string, int> ItemBuyChart = new()
@@ -185,7 +185,7 @@ public static class FarmEngine
 
                 if (ItemSaleChart.TryGetValue(item, out var values))
                 {
-                    text = await ItemSell(dbUser, selling: values.name, amount: values.amount, cost: values.cost, everything: sellEverything);
+                    text = await ItemSell(dbUser, selling: item, amount: values.amount, cost: values.cost, everything: sellEverything);
                 }
                 
                 break;
@@ -487,12 +487,24 @@ public static class FarmEngine
         };
         if (!empty)
         {
-            buyMenu.AddOption(label: $"1 {GetItemName("seedbag")}", description: $"5 {GetItemName("dabloons")}", value: "seedbag:1");
-            buyMenu.AddOption(label: $"5 {GetItemName("seedbag")}", description: $"25 {GetItemName("dabloons")}", value: "seedbag:5");
-            buyMenu.AddOption(label: $"10 {GetItemName("seedbag")}", description: $"50 {GetItemName("dabloons")}", value: "seedbag:10");
-            buyMenu.AddOption(label: $"1 {GetItemName("fishpole")}", description: $"10 {GetItemName("dabloons")}", value: "fishpole:1");
-            buyMenu.AddOption(label: $"1 {GetItemName("farmtools")}", description: $"15 {GetItemName("dabloons")}", value: "farmtools:1");
-            buyMenu.AddOption(label: $"1 🌿 Plot of land", description: $"200 {GetItemName("dabloons")}", value: "plots:1");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("seedbag")}", value: "seedbag:1",
+                description: $"{ItemBuyChart["seedbag"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"5 {GetItemName("seedbag")}", value: "seedbag:5",
+                description: $"{ItemBuyChart["seedbag"] * 5} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"10 {GetItemName("seedbag")}", value: "seedbag:10",
+                description: $"{ItemBuyChart["seedbag"] * 10} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("fishpole")}", value: "fishpole:1",
+                description: $"{ItemBuyChart["fishpole"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("farmtools")}", value: "farmtools:1",
+                description: $"{ItemBuyChart["farmtools"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("plots")}", value: "plots:1",
+                description: $"{ItemBuyChart["plots"]} {GetItemName("dabloons")}");
         }
         else
         {
@@ -509,14 +521,14 @@ public static class FarmEngine
         };
         if (!empty)
         {
-            sellMenu.AddOption(label: $"5 {GetItemName("fish")}", description: $"3 {GetItemName("dabloons")}", value: "sell1");
-            sellMenu.AddOption(label: $"5 {GetItemName("uncommonfish")}", description: $"6 {GetItemName("dabloons")}", value: "sell2");
-            sellMenu.AddOption(label: $"1 {GetItemName("rarefish")}", description: $"5 {GetItemName("dabloons")}", value: "sell3");
-            sellMenu.AddOption(label: $"5 {GetItemName("shrimp")}", description: $"5 {GetItemName("dabloons")}", value: "sell4");
-            sellMenu.AddOption(label: $"10 {GetItemName("tomato")}", description: $"6 {GetItemName("dabloons")}", value: "sell5");
-            sellMenu.AddOption(label: $"10 {GetItemName("carrot")}", description: $"5 {GetItemName("dabloons")}", value: "sell6");
-            sellMenu.AddOption(label: $"10 {GetItemName("potato")}", description: $"4 {GetItemName("dabloons")}", value: "sell7");
-            sellMenu.AddOption(label: $"5 {GetItemName("garbage")}", description: $"3 {GetItemName("dabloons")}", value: "sell8");
+            foreach (var item in ItemSaleChart.Keys)
+            {
+                sellMenu.AddOption(
+                    label: $"{ItemSaleChart[item].amount} {GetItemName(item)}",
+                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")}",
+                    value: item
+                );
+            }
         }
         else
         {
@@ -533,14 +545,14 @@ public static class FarmEngine
         };
         if (!empty)
         {
-            sellAllMenu.AddOption(label: GetItemName("fish"), description: $"3 {GetItemName("dabloons")} per every 5", value: "sell1");
-            sellAllMenu.AddOption(label: GetItemName("uncommonfish"), description: $"6 {GetItemName("dabloons")} per every 5", value: "sell2");
-            sellAllMenu.AddOption(label: GetItemName("rarefish"), description: $"5 {GetItemName("dabloons")} per every 1", value: "sell3");
-            sellAllMenu.AddOption(label: GetItemName("shrimp"), description: $"5 {GetItemName("dabloons")} per every 5", value: "sell4");
-            sellAllMenu.AddOption(label: GetItemName("tomato"), description: $"6 {GetItemName("dabloons")} per every 10", value: "sell5");
-            sellAllMenu.AddOption(label: GetItemName("carrot"), description: $"5 {GetItemName("dabloons")} per every 10", value: "sell6");
-            sellAllMenu.AddOption(label: GetItemName("potato"), description: $"4 {GetItemName("dabloons")} per every 10", value: "sell7");
-            sellAllMenu.AddOption(label: GetItemName("garbage"), description: $"3 {GetItemName("dabloons")} per every 5", value: "sell8");
+            foreach (var item in ItemSaleChart.Keys)
+            {
+                sellAllMenu.AddOption(
+                    label: GetItemName(item),
+                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")} per every {ItemSaleChart[item].amount}",
+                    value: item
+                );
+            }
         }
         else
         {
