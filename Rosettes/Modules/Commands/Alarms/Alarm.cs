@@ -40,15 +40,9 @@ public static class AlarmManager
         _activeAlarms.Remove(alarm);
     }
 
-    public static bool CheckUserHasAlarm(IUser user)
+    public static List<Alarm> GetUserAlarms(IUser user)
     {
-        Alarm? findAlarm =  _activeAlarms.Find(item => item.User.Id == user.Id);
-        return findAlarm != null;
-    }
-
-    public static Alarm? GetUserAlarm(IUser user)
-    {
-        Alarm? findAlarm = _activeAlarms.Find(item => item.User.Id == user.Id);
+        List<Alarm> findAlarm = _activeAlarms.Where(item => item.User.Id == user.Id).ToList();
         return findAlarm;
     }
 }

@@ -98,12 +98,6 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         [Choice("Days",    "days")]
         string unit = "minutes")
     {
-        if (AlarmManager.CheckUserHasAlarm(Context.User))
-        {
-            await RespondAsync("You already have an alarm set! Only one alarm per user. You may also cancel your current alarm with /cancelalarm.", ephemeral: true);
-            return;
-        }
-
         switch (unit)
         {
             case "minutes":
@@ -143,27 +137,6 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         else
         {
             await RespondAsync("Sorry, there was an error setting an alarm.", ephemeral: true);
-        }
-    }
-
-    [SlashCommand("alarm-cancel", "Cancels your current alarm.")]
-    public async Task CancelAlarm()
-    {
-        if (!AlarmManager.CheckUserHasAlarm(Context.User))
-        {
-            await RespondAsync("You don't have any alarm set.");
-            return;
-        }
-
-        Alarm? alarm = AlarmManager.GetUserAlarm(Context.User);
-        if (alarm != null)
-        {
-            await AlarmManager.DeleteAlarm(alarm);
-            await RespondAsync("Your alarm has been cancelled.");
-        }
-        else
-        {
-            await RespondAsync("There was an error deleting your alarm.");
         }
     }
 
