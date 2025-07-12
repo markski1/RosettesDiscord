@@ -17,11 +17,11 @@ public static class AlarmManager
         _activeAlarms = activeAlarms.ToList();
     }
 
-    public static async Task<bool> CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes)
+    public static async Task<bool> CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes, string message)
     {
         try
         {
-            Alarm newAlarm = new(dateTime, user, channel, minutes);
+            Alarm newAlarm = new(dateTime, user, channel, minutes, message);
             await AlarmRepository.InsertAlarm(newAlarm);
             _activeAlarms.Add(newAlarm);
 
@@ -49,6 +49,8 @@ public static class AlarmManager
 
 public class Alarm
 {
+    public int Id;
+    public string Message;
     public readonly DateTime DateTime;
     public readonly User User;
     public readonly System.Timers.Timer Timer;
@@ -57,7 +59,7 @@ public class Alarm
     private readonly bool _success;
 
     // constructor used by /alarm
-    public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes)
+    public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes, string message)
     {
         DateTime = dateTime;
         User = user;
@@ -67,15 +69,19 @@ public class Alarm
         Timer.AutoReset = false;
         Timer.Enabled = true;
         Channel = channel;
+        Id = 0;
+        Message = message;
 
         _success = true;
     }
 
     // constructor used when loading from database
-    public Alarm(DateTime dateTime, ulong user, ulong channel)
+    public Alarm(int id, DateTime dateTime, ulong user, ulong channel, string message)
     {
         DateTime = dateTime;
         User = UserEngine.GetCachedDbUserById(user);
+        Id = id;
+        Message = message;
 
         double amount;
         // if we are still in time, just restart the alarm as intended.

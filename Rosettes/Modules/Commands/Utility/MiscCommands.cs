@@ -96,7 +96,8 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         [Choice("Minutes", "minutes")]
         [Choice("Hours",   "hours")]
         [Choice("Days",    "days")]
-        string unit = "minutes")
+        string unit = "minutes",
+        [Summary("message", "An optional message to be included in the alarm ring.")] string message = "")
     {
         switch (unit)
         {
@@ -121,7 +122,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         var dbUser = await UserEngine.GetDbUser(Context.User);
-        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, Context.Channel, amount);
+        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, Context.Channel, amount, message);
 
         if (success)
         {

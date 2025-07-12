@@ -8,12 +8,13 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 -- Volcando estructura para tabla bot_db.alarms
-CREATE TABLE IF NOT EXISTS `alarms` (
-  `datetime` datetime NOT NULL,
-  `user` bigint(20) unsigned NOT NULL DEFAULT 0,
-  `channel` bigint(20) unsigned NOT NULL DEFAULT 0,
-  PRIMARY KEY (`user`),
-  UNIQUE KEY `user` (`user`)
+CREATE TABLE `alarms` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `datetime` DATETIME NOT NULL,
+  `user` BIGINT(20) UNSIGNED NOT NULL DEFAULT '0',
+  `channel` BIGINT(20) UNSIGNED NOT NULL DEFAULT '0',
+  `message` VARCHAR(256) NOT NULL DEFAULT '' COLLATE 'utf8mb4_unicode_ci',
+  PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- La exportación de datos fue deseleccionada.

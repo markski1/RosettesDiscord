@@ -11,7 +11,7 @@ public static class AlarmRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = "SELECT datetime, user, channel FROM alarms";
+        const string sql = "SELECT id, datetime, user, channel, message FROM alarms";
 
         try
         {
@@ -30,15 +30,15 @@ public static class AlarmRepository
         var db = getConn.Db;
 
         const string sql = """
-                           INSERT INTO alarms (datetime, user, channel)
-                           VALUES(@DateTime, @User, @Channel)
+                           INSERT INTO alarms (datetime, user, channel, message)
+                           VALUES(@DateTime, @User, @Channel, @Message)
                            """;
 
         if (alarm.Channel is null) return false;
 
         try
         {
-            return await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id }) > 0;
+            return await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id, Message = alarm.Message }) > 0;
         }
         catch (Exception ex)
         {
@@ -54,11 +54,11 @@ public static class AlarmRepository
 
         const string sql = """
                            DELETE FROM alarms
-                           WHERE user = @User
+                           WHERE id = @Id
                            """;
         try
         {
-            return await db.ExecuteAsync(sql, new { User = alarm.User.Id }) > 0;
+            return await db.ExecuteAsync(sql, new { Id = alarm.Id }) > 0;
         }
         catch (Exception ex)
         {
