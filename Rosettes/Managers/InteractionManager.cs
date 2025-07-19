@@ -5,6 +5,7 @@ using Rosettes.Core;
 using Rosettes.Modules.Commands;
 using Rosettes.Modules.Engine;
 using System.Reflection;
+using Rosettes.Modules.Commands.Utility;
 using Rosettes.Modules.Minigame.Farming;
 using Rosettes.Modules.Minigame.Pets;
 
@@ -132,6 +133,22 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     string newName = components.First(x => x.CustomId == "newName").Value;
 
                     await PetEngine.SetPetName(modal, newName);
+                    break;
+                }
+                case "reminderMaker":
+                {
+                    var success = int.TryParse(components.First(x => x.CustomId == "time").Value, out var time);
+
+                    if (!success)
+                    {
+                        await modal.RespondAsync("The 'time' amount entered is not a number.", ephemeral: true);
+                        return;
+                    }
+                    
+                    string unit =  components.First(x => x.CustomId == "unit").Value;
+                    string message =  components.First(x => x.CustomId == "message").Value;
+
+                    MiscCommands.FollowUpReminder(time, unit, message, modal);
                     break;
                 }
             }

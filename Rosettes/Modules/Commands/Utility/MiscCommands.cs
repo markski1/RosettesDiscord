@@ -89,15 +89,23 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         _ = new EmojiDownloader.EmojiDownloader().DownloadEmojis(Context);
     }
 
-    [SlashCommand("alarm", "Sets an alarm to ring after a given period of time (by default, in minutes).")]
-    public async Task Alarm(
-        [Summary("amount", "Amount of time until alarm sounds.")] int amount,
-        [Summary("unit", "Unit of time for the amount of time provided.")]
-        [Choice("Minutes", "minutes")]
-        [Choice("Hours",   "hours")]
-        [Choice("Days",    "days")]
-        string unit = "minutes",
-        [Summary("message", "An optional message to be included in the alarm ring.")] string message = "")
+    [SlashCommand("reminder", "Creates a reminder.")]
+    public async Task Reminder()
+    {
+        ModalBuilder modal = new()
+        {
+            Title = "Create reminder",
+            CustomId = "reminderMaker"
+        };
+
+        modal.AddTextInput("Time", "time", required: true);
+        modal.AddTextInput("Unit", "unit", required: true);
+        modal.AddTextInput("Message", "message");
+
+        await RespondWithModalAsync(modal.Build());
+    }
+
+    public static async Task FollowUpReminder(int amount, string unit, string message, SocketModal component)
     {
         switch (unit)
         {
@@ -111,18 +119,18 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
                 amount = amount * 60 * 24;
                 break;
             default:
-                await RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
+                await component.RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
                 break;
         }
 
         if (amount <= 0)
         {
-            await RespondAsync("Time don't go in that direction.", ephemeral: true);
+            await component.RespondAsync("Time don't go in that direction.", ephemeral: true);
             return;
         }
 
-        var dbUser = await UserEngine.GetDbUser(Context.User);
-        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, Context.Channel, amount, message);
+        var dbUser = await UserEngine.GetDbUser(component.User);
+        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, component.Channel, amount, message);
 
         if (success)
         {
@@ -133,11 +141,11 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
 
             embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
 
-            await RespondAsync(embed: embed.Build());
+            await component.RespondAsync(embed: embed.Build());
         }
         else
         {
-            await RespondAsync("Sorry, there was an error setting an alarm.", ephemeral: true);
+            await component.RespondAsync("Sorry, there was an error setting an alarm.", ephemeral: true);
         }
     }
 
