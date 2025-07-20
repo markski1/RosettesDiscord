@@ -58,7 +58,7 @@ public class Alarm
 
     private readonly bool _success;
 
-    // constructor used by /alarm
+    // constructor used by /reminder
     public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes, string message)
     {
         DateTime = dateTime;
@@ -113,7 +113,7 @@ public class Alarm
         IUser? discordRef = await User.GetDiscordReference();
         if (discordRef is null)
         {
-            Global.GenerateErrorMessage("alarm", $"Sadly, I have failed to deliver an alarm to {await User.GetName()}. Error 1");
+            Global.GenerateErrorMessage("reminder", $"Sadly, I have failed to deliver a reminder to {await User.GetName()}. Error 1");
             return;
         }
         if (Channel is null)
@@ -123,15 +123,20 @@ public class Alarm
             // If we can't establish a channel, Rosettes has failed to alert the user.
             if (Channel is null)
             {
-                Global.GenerateErrorMessage("alarm", $"Sadly, I have failed to deliver an alarm to {await User.GetName()}. Error 2");
+                Global.GenerateErrorMessage("reminder", $"Sadly, I have failed to deliver a reminder to {await User.GetName()}. Error 2");
                 return;
             }
         }
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(User);
 
-        embed.Title = "Ring!";
-        embed.Description = $"Alarm for {discordRef.Mention}.";
+        embed.Title = "Hey!";
+        embed.Description = $"Reminder for {discordRef.Mention}.";
+
+        if (Message.Length > 0)
+        {
+            embed.AddField("Message", Message);
+        }
 
         if (_success)
         {
@@ -142,7 +147,7 @@ public class Alarm
             var findUser = await User.GetDiscordReference();
             if (findUser is not null)
             {
-                await Channel.SendMessageAsync($"I'm sorry, {findUser.Mention} - It seems like I was shut down during the time I was meant to deliver your alarm... ({DateTime:ddd, dd MMM yyy; HH: mm: ss})");   
+                await Channel.SendMessageAsync($"I'm sorry, {findUser.Mention} - It seems like I was shut down during the time I was meant to deliver your reminder... ({DateTime:ddd, dd MMM yyy; HH: mm: ss})");   
             }
         }
     }

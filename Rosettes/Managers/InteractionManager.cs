@@ -119,21 +119,20 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             {
                 case "pollMaker":
                 {
-                    string question = components.First(x => x.CustomId == "question").Value;
-                    string option1 = components.First(x => x.CustomId == "option1").Value;
-                    string option2 = components.First(x => x.CustomId == "option2").Value;
-                    string option3 = components.First(x => x.CustomId == "option3").Value;
-                    string option4 = components.First(x => x.CustomId == "option4").Value;
-
-                    await AdminCommands.FollowUpPoll(question, option1, option2, option3, option4, modal);
+                    await AdminCommands.FollowUpPoll(
+                        question: components.First(x => x.CustomId == "question").Value, 
+                        option1: components.First(x => x.CustomId == "option1").Value, 
+                        option2: components.First(x => x.CustomId == "option2").Value, 
+                        option3: components.First(x => x.CustomId == "option3").Value, 
+                        option4: components.First(x => x.CustomId == "option4").Value, 
+                        modal
+                    );
                     return;
                 }
                 case "petNamechange":
                 {
-                    string newName = components.First(x => x.CustomId == "newName").Value;
-
-                    await PetEngine.SetPetName(modal, newName);
-                    break;
+                    await PetEngine.SetPetName(modal, components.First(x => x.CustomId == "newName").Value);
+                    return;
                 }
                 case "reminderMaker":
                 {
@@ -148,8 +147,8 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     string unit =  components.First(x => x.CustomId == "unit").Value;
                     string message =  components.First(x => x.CustomId == "message").Value;
 
-                    MiscCommands.FollowUpReminder(time, unit, message, modal);
-                    break;
+                    await MiscCommands.FollowUpReminder(time, unit, message, modal);
+                    return;
                 }
             }
         });

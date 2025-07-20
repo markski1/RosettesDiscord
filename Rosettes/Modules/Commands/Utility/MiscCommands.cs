@@ -98,34 +98,44 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             CustomId = "reminderMaker"
         };
 
-        modal.AddTextInput("Time", "time", required: true);
-        modal.AddTextInput("Unit", "unit", required: true);
-        modal.AddTextInput("Message", "message");
+        modal.AddTextInput("Time", "time", placeholder: "Number of hours/minutes/days.", maxLength: 10, required: true);
+        modal.AddTextInput("Unit", "unit", placeholder: "'Hours', 'Minutes' or 'Days'.", maxLength: 10, required: true);
+        modal.AddTextInput("Message", "message", placeholder: "Optional. Message to be included in reminder.", maxLength: 255);
 
         await RespondWithModalAsync(modal.Build());
     }
 
     public static async Task FollowUpReminder(int amount, string unit, string message, SocketModal component)
     {
-        switch (unit)
+        unit = unit.ToLower();
+
+        if (unit.Contains("minute"))
         {
-            case "minutes":
-                // nothing, since the function receives minutes
-                break;
-            case "hours":
-                amount *= 60;
-                break;
-            case "days":
-                amount = amount * 60 * 24;
-                break;
-            default:
-                await component.RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
-                break;
+            // nothing, since the function receives minutes
+        }
+        else if (unit.Contains("hour"))
+        {
+            amount *= 60;
+        }
+        else if (unit.Contains("days"))
+        {
+            amount = amount * 60 * 24;
+        }
+        else
+        {
+            await component.RespondAsync("Valid units: 'minutes', 'hours', 'days'.", ephemeral: true);
+            return;
         }
 
         if (amount <= 0)
         {
             await component.RespondAsync("Time don't go in that direction.", ephemeral: true);
+            return;
+        }
+
+        if (message.Length > 255)
+        {
+            await component.RespondAsync("Sorry, your message is too long. Discord shouldn't even let you do that...", ephemeral: true);
             return;
         }
 
@@ -136,8 +146,8 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         {
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-            embed.Title = "Alarm set.";
-            embed.Description = $"An alarm has been set. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
+            embed.Title = "Reminder set.";
+            embed.Description = $"A reminder has been set. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
 
             embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
 
@@ -145,7 +155,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            await component.RespondAsync("Sorry, there was an error setting an alarm.", ephemeral: true);
+            await component.RespondAsync("Sorry, there was an error creating your reminder.", ephemeral: true);
         }
     }
 
