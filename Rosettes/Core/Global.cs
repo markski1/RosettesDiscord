@@ -33,7 +33,7 @@ public static class Global
         return percentage > Randomizer.Next(100);
     }
 
-    public static async Task<bool> DownloadFile(string path, string uri, ulong maxSize)
+    public static async Task<(bool, string)> DownloadFile(string path, string uri, ulong maxSize = 0)
     {
         try
         {
@@ -47,19 +47,19 @@ public static class Global
             }
             catch
             {
-                return false;
+                return (false, "Connection error");
             }
 
             if (!response.IsSuccessStatusCode)
             {
-                return false;
+                return (false, "Unsuccesful response");
             }
 
             var fileSize = response.Content.Headers.ContentLength;
             
-            if (fileSize > (long?)maxSize)
+            if (maxSize > 0 && fileSize > (long?)maxSize)
             {
-                return false;
+                return (false, "File is too large");
             }
 
             await using Stream stream = await response.Content.ReadAsStreamAsync();
@@ -72,14 +72,14 @@ public static class Global
             }
             catch (OperationCanceledException)
             {
-                return false;
+                return (false, "Opeartion took too long");
             }
 
-            return true;
+            return (true, "");
         }
         catch
         {
-            return false;
+            return (false, "Exception found");
         }
     }
 

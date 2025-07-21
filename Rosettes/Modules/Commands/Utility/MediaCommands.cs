@@ -187,11 +187,11 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             
             mediaUri = mediaUri.Replace("https://cobalt.markski.ar", "http://127.0.0.1:9000");
 
-            bool success = await Global.DownloadFile(fileName, mediaUri, sizeLimit);
+            var (success, failureReason) = await Global.DownloadFile(fileName, mediaUri, sizeLimit);
 
             if (!success)
             {
-                await DeclareDownloadFailure("Error, file might be too large.", mediaUri);
+                await DeclareDownloadFailure($"Error. `{failureReason}`", mediaUri);
                 return;
             }
 

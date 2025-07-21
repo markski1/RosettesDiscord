@@ -111,7 +111,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (unit.Contains("minute"))
         {
-            // nothing, since the function receives minutes
+            // do nothing, since the function receives minutes
         }
         else if (unit.Contains("hour"))
         {
