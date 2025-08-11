@@ -1,4 +1,5 @@
 ﻿using OpenAI.Chat;
+using OpenAI.Responses;
 using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine;
@@ -6,7 +7,7 @@ namespace Rosettes.Modules.Engine;
 public static class LanguageEngine
 {
     private static readonly ChatClient GptClient = new(
-        model: "o4-mini", 
+        model: "gpt-5-mini", 
         apiKey: Settings.OpenAi
     );
     
@@ -16,7 +17,7 @@ public static class LanguageEngine
     {
         List<ChatMessage> messages;
         bool isNewChat = false;
-
+        
         if (message == "clear")
         {
             if (ConversationContexts.TryGetValue((userId, channelId), out var existingContext))
@@ -32,8 +33,8 @@ public static class LanguageEngine
         {
             messages = context;
             
-            // We hold onto no more than 10 exchanges worth of context.
-            if (messages.Count > 11)
+            // We hold onto no more than 20 exchanges worth of context.
+            if (messages.Count > 21)
             {
                 // Skip the 1st 'cause that's the system prompt.
                 messages.RemoveRange(1, 3);
