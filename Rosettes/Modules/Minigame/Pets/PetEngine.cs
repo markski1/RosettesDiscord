@@ -421,7 +421,7 @@ public static class PetEngine
         await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
     }
 
-    public static async void BeginNameChange(SocketMessageComponent component)
+    public static async Task BeginNameChange(SocketMessageComponent component)
     {
         var dbUser = await UserEngine.GetDbUser(component.User);
         Pet? pet = await GetUserPet(dbUser);

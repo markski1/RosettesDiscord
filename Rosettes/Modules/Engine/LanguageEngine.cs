@@ -1,5 +1,4 @@
 ﻿using OpenAI.Chat;
-using OpenAI.Responses;
 using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine;

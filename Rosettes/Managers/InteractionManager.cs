@@ -98,7 +98,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     await PetEngine.ViewPet(component, component.User);
                     break;
                 case "pet_namechange":
-                    PetEngine.BeginNameChange(component);
+                    await PetEngine.BeginNameChange(component);
                     break;
 
                 // if nothing else, it's poll stuff

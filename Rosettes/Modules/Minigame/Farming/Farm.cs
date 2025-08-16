@@ -134,7 +134,7 @@ public static class Farm
         User dbUser = await UserEngine.GetDbUser(user);
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-        embed.Title = $"Planting seeds";
+        embed.Title = "Planting seeds";
 
         ComponentBuilder comps = new();
 
@@ -270,7 +270,7 @@ public static class Farm
         User dbUser = await UserEngine.GetDbUser(user);
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
-        embed.Title = $"Watering crops";
+        embed.Title = "Watering crops";
 
         int count = 0;
 

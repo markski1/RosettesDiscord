@@ -46,7 +46,7 @@ def get_app_by_id(app_id: int) -> Optional[dict]:
     return db_fetch_one("SELECT * FROM app_auth WHERE id = %s", app_id)
 
 
-def insert_application(name: str, app_token: str) -> None:
+def insert_application(name: str, app_token: str) -> int:
     return db_execute("INSERT INTO app_auth (name, owner_id, token_key) VALUES(%s, %s, %s)",
                       name, current_user.id, app_token)
 

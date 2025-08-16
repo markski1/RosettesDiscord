@@ -80,6 +80,8 @@ public static class TelemetryEngine
             case TelemetryType.Message:
                 _messageCount++;
                 return;
+            default:
+                return;
         }
     }
 
