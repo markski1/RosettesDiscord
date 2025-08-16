@@ -8,7 +8,7 @@ namespace Rosettes.WebServer.API;
 [Route("rosapi/auth")]
 public class AuthController : ControllerBase
 {
-    [HttpGet("request")]
+    [HttpPost("request")]
     public async Task<dynamic> RequestAuth(string applicationKey, ulong userId)
     {
         ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);

@@ -18,5 +18,13 @@
     <h3>API Information.</h3>
     <hr>
     <p>Your application's token is: {{ app['token_key'] }}</p>
-    <p>API Documentation soon.</p>
+    <hr>
+    <h3>Endpoints</h3>
+    <p>Largely WIP, probably unstable.<br>All under https://rosettes.markski.ar/api/</p>
+    <ul>
+        <li><b>[POST] request</b> - Request authorization from an user. - params: [str]applicationKey, [ulong]userId</li>
+        <li><b>[POST] notify</b> - Send message to an user. - params: [str]applicationKey, [ulong]userId, [str]message</li>
+        <li><b>[GET] user</b> - Get user data, if authorized. - params: [str]applicationKey, [ulong]userId</li>
+    </ul>
+    <p>Currently the only way to check if a user accepted auth is by polling 'user'. Eventually this should probably call a webhook on your side, if desired.</p>
 {% endblock %}
