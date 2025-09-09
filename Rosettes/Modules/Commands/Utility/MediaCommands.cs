@@ -22,6 +22,12 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     {
         await DeferAsync();
 
+        if (question.Length > 1024)
+        {
+            await RespondAsync($"Sorry, please keep your question below 1024 characters. \n" +
+                               $"For your convenience, here it is: ```{question}```");
+        }
+        
         ulong channelId;
 
         if (Context.Channel is null) channelId = 0;
@@ -37,10 +43,22 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         {
             var dbUser = await UserEngine.GetDbUser(Context.User);
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-            embed.AddField("Question", question);
-            embed.AddField("Answer", response);
             if (isNewChat) embed.Footer = new EmbedFooterBuilder { Text = "Use `/chat` to respond, or `/chat clear` and I'll forget this conversation." };
-            await FollowupAsync(embed: embed.Build());
+            embed.AddField("Question", question);
+            if (response.Length < 1024)
+            {
+                embed.AddField("Answer", response);
+                await FollowupAsync(embed: embed.Build());
+            }
+            else
+            {
+                embed.AddField("Answer", "Response attached as file due to character count constraints.");
+                
+                int randomNumber = Global.Randomize(99999) + 1;
+                string filePath = $"./temp/media/{randomNumber}.txt";
+                await File.WriteAllTextAsync(filePath, response);
+                await FollowupWithFileAsync(filePath: filePath, embed: embed.Build());
+            }
         }
         else
         {
