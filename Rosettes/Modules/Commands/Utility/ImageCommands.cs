@@ -169,6 +169,8 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             // make width 100% and height 15% of the image being overlaid onto.
             int bubbleWidth = baseImage.Width;
             int bubbleHeight = (int)(baseImage.Height * 0.15);
+            if (bubbleHeight < bubbleWidth / 10) bubbleHeight = bubbleWidth / 10;
+            if (bubbleHeight > baseImage.Height / 5) bubbleHeight = baseImage.Height / 5;
             bubbleOverlay.Mutate(x => x.Resize(bubbleWidth, bubbleHeight));
             
             baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, 0), 1f));
@@ -177,14 +179,9 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             await baseImage.SaveAsync(outputStream, new PngEncoder());
             outputStream.Position = 0;
             
-            EmbedBuilder embed = await Global.MakeRosettesEmbed();
-            embed.Title = "Speech Bubble";
-            embed.ImageUrl = "attachment://bubble-result.png";
-            
             await FollowupWithFileAsync(
                 fileStream: outputStream,
-                fileName: "bubble-result.png",
-                embed: embed.Build()
+                fileName: $"{image.Filename.Split('.').First()}-bubble.png"
             );
         }
         catch (Exception ex)
