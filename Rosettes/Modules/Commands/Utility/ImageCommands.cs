@@ -4,6 +4,10 @@ using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.Encodings.Web;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Png;
+using Point = SixLabors.ImageSharp.Point;
+using Size = SixLabors.ImageSharp.Size;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -142,5 +146,50 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         comps.WithButton("See results on SauceNAO", style: ButtonStyle.Link, url: $"https://saucenao.com/search.php?url={url}");
 
         await FollowupAsync(embed: embed.Build(), components: comps.Build());
+    }
+    
+    [SlashCommand("bubble", "Add a bubble overlay on an image.")]
+    public async Task Bubble([Summary("image", "Attached image to be used.")] IAttachment image)
+    {
+        if (image.ContentType == null || !image.ContentType.StartsWith("image/"))
+        {
+            await RespondAsync("Please attach a valid image file.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync();
+        try
+        {
+            var httpClient = new HttpClient();
+            var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(image.Url));
+            
+            string bubblePath = Path.Combine("Assets", "speech-bubble.png");
+            var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
+            
+            // make width 100% and height 15% of the image being overlaid onto.
+            int bubbleWidth = baseImage.Width;
+            int bubbleHeight = (int)(baseImage.Height * 0.15);
+            bubbleOverlay.Mutate(x => x.Resize(bubbleWidth, bubbleHeight));
+            
+            baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, 0), 1f));
+            
+            using var outputStream = new MemoryStream();
+            await baseImage.SaveAsync(outputStream, new PngEncoder());
+            outputStream.Position = 0;
+            
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+            embed.Title = "Speech Bubble";
+            embed.ImageUrl = "attachment://bubble-result.png";
+            
+            await FollowupWithFileAsync(
+                fileStream: outputStream,
+                fileName: "bubble-result.png",
+                embed: embed.Build()
+            );
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"An error occurred while processing the image: {ex.Message}", ephemeral: true);
+        }
     }
 }
