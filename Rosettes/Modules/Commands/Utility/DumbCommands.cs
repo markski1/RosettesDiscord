@@ -1,6 +1,10 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Rosettes.Core;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Png;
+using Point = SixLabors.ImageSharp.Point;
+using Size = SixLabors.ImageSharp.Size;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -159,5 +163,52 @@ public class DumbCommands : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync($"▪️▪️▪️▪️▪️▪️▪️⬛⬛⬛\n▪️▪️▪️▪️▪️⬛⬛{anEmoji}{anEmoji}⬛⬛\n▪️▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛\n▪️▪️⬛⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n▪️⬛{anEmoji}⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}⬛{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}{glassEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}⬛⬛⬛⬛⬛⬛");
 
         await ReplyAsync($"⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n⬛{anEmoji}{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️⬛{anEmoji}⬛{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}{anEmoji}⬛\n▪️▪️⬛⬛{anEmoji}{anEmoji}⬛⬛⬛⬛⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛{anEmoji}{anEmoji}⬛▪️▪️▪️⬛{anEmoji}⬛\n▪️▪️▪️⬛⬛⬛⬛▪️▪️▪️⬛⬛⬛");
+    }
+    
+        [SlashCommand("bubble", "Add a bubble overlay on an image.")]
+    public async Task Bubble([Summary("image", "Attached image to be used.")] IAttachment image)
+    {
+        if (image.ContentType == null || !image.ContentType.StartsWith("image/"))
+        {
+            await RespondAsync("Please attach a valid image file.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync();
+        try
+        {
+            var httpClient = new HttpClient();
+            var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(image.Url););
+            
+            string bubblePath = Path.Combine("Assets", "speech-bubble.png");
+            var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
+            
+            bubbleOverlay.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Size = new Size(baseImage.Width, baseImage.Height),
+                Mode = ResizeMode.Max
+            }));
+            
+            baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, 0), 1f));
+            
+            using var outputStream = new MemoryStream();
+            await baseImage.SaveAsync(outputStream, new PngEncoder());
+            outputStream.Position = 0;
+            
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+            embed.Title = "Speech Bubble";
+            embed.ImageUrl = "attachment://bubble-result.png";
+            
+            await FollowupWithFileAsync(
+                fileStream: outputStream,
+                fileName: "bubble-result.png",
+                embed: embed.Build()
+            );
+        }
+        catch (Exception ex)
+        {
+            await FollowupAsync($"An error occurred while processing the image: {ex.Message}", ephemeral: true);
+        }
+
     }
 }
