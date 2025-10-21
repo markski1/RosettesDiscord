@@ -76,11 +76,11 @@ public class Alarm
     }
 
     // constructor used when loading from database
-    public Alarm(int id, DateTime dateTime, ulong user, ulong channel, string message)
+    public Alarm(uint id, DateTime dateTime, ulong user, ulong channel, string message)
     {
         DateTime = dateTime;
         User = UserEngine.GetCachedDbUserById(user);
-        Id = id;
+        Id = (int)id;
         Message = message;
 
         double amount;
