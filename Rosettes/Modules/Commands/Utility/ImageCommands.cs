@@ -7,7 +7,6 @@ using System.Text.Encodings.Web;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Point = SixLabors.ImageSharp.Point;
-using Size = SixLabors.ImageSharp.Size;
 
 namespace Rosettes.Modules.Commands.Utility;
 
@@ -149,7 +148,11 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     }
     
     [SlashCommand("bubble", "Add a bubble overlay on an image.")]
-    public async Task Bubble([Summary("image", "Attached image to be used.")] IAttachment image)
+    public async Task Bubble(
+        [Summary("image", "Attached image to be used.")] IAttachment image,
+        [Summary("down", "Wether the bubble should aim down")] bool down = false,
+        [Summary("left", "Wether the bubble should aim left")] bool left = false
+    )
     {
         if (image.ContentType == null || !image.ContentType.StartsWith("image/"))
         {
@@ -172,8 +175,18 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             if (bubbleHeight < bubbleWidth / 10) bubbleHeight = bubbleWidth / 10;
             if (bubbleHeight > baseImage.Height / 5) bubbleHeight = baseImage.Height / 5;
             bubbleOverlay.Mutate(x => x.Resize(bubbleWidth, bubbleHeight));
+
+            // vertical pos, depends on if 'down' is set.
+            int yPosition = 0;
+
+            if (left) bubbleOverlay.Mutate(x => x.Flip(FlipMode.Horizontal));
+            if (down)
+            {
+                bubbleOverlay.Mutate(x => x.Flip(FlipMode.Vertical));
+                yPosition = baseImage.Height - bubbleHeight;
+            }
             
-            baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, 0), 1f));
+            baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, yPosition), 1f));
             
             using var outputStream = new MemoryStream();
             await baseImage.SaveAsync(outputStream, new PngEncoder());
