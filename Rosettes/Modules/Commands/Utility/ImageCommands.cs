@@ -148,8 +148,34 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         await FollowupAsync(embed: embed.Build(), components: comps.Build());
     }
     
+    [MessageCommand("Add speech bubble")]
+    public async Task CtxAddBubble(IMessage message)
+    {
+        string getUri = Global.GrabUriFromText(message.Content);
+        string cntType = "invalid";
+        
+        // try to find any image attached
+        if (message.Attachments.Count != 0)
+        {
+            string fileType = message.Attachments.First().ContentType.ToLower();
+            if (fileType.Contains("image/"))
+            {
+                getUri = message.Attachments.First().ProxyUrl;
+                cntType = fileType;
+            }
+        }
+
+        if (getUri == "0")
+        {
+            await RespondAsync("No images found in this message.", ephemeral: true);
+            return;
+        }
+       
+        await BubbleImage.CreateBubbleImage(Context, getUri, new Uri(getUri).LocalPath, cntType, false, false);
+    }
+    
     [SlashCommand("bubble", "Add a bubble overlay on an image.")]
-    public async Task Bubble(
+    public async Task CmdBubble(
         [Summary("image", "Attached image to be used.")] IAttachment image,
         [Summary("down", "Wether the bubble should aim down")] bool down = false,
         [Summary("left", "Wether the bubble should aim left")] bool left = false
@@ -160,13 +186,21 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("Please attach a valid image file.", ephemeral: true);
             return;
         }
+        
+        await BubbleImage.CreateBubbleImage(Context, image.Url, image.Filename, image.ContentType, down, left);
+    }
+}
 
-        await DeferAsync();
+public static class BubbleImage
+{
+    public static async Task CreateBubbleImage(SocketInteractionContext ctx, string imageUri, string imageName, string cntType, bool down, bool left)
+    {
+        await ctx.Interaction.DeferAsync();
         try
         {
             var httpClient = new HttpClient();
-            var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(image.Url));
-            bool gif = image.ContentType.Equals("image/gif", StringComparison.OrdinalIgnoreCase);
+            var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(imageUri));
+            bool gif = cntType.Equals("image/gif", StringComparison.OrdinalIgnoreCase);
             
             string bubblePath = Path.Combine("Assets", "speech-bubble.png");
             var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
@@ -189,7 +223,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
                 bubbleOverlay.Mutate(x => x.Flip(FlipMode.Vertical));
                 yPosition = baseImage.Height - bubbleHeight;
             }
-
+            
             // if it's a gif then we gotta do all the frames.
             if (gif && baseImage.Frames.Count > 1)
             {
@@ -209,9 +243,9 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 
                 // TODO: in many cases this looks like SHIT
                 // must find a way to flatten good keyframe frames, problem for the future, but must be done.
-                await FollowupWithFileAsync(
+                await ctx.Interaction.FollowupWithFileAsync(
                     fileStream: outputStream,
-                    fileName: $"{image.Filename.Split('.').First()}-bubble.gif"
+                    fileName: $"{imageName.Split('.').First()}-bubble.gif"
                 );
             }
             else // otherwise just overlay the one image and send as png
@@ -222,15 +256,15 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
                 await baseImage.SaveAsync(outputStream, new PngEncoder());
                 outputStream.Position = 0;
                 
-                await FollowupWithFileAsync(
+                await ctx.Interaction.FollowupWithFileAsync(
                     fileStream: outputStream,
-                    fileName: $"{image.Filename.Split('.').First()}-bubble.png"
+                    fileName: $"{imageName.Split('.').First()}-bubble.png"
                 );
             }
         }
         catch
         {
-            await FollowupAsync($"An error occurred while processing the image.", ephemeral: true);
+            await ctx.Interaction.FollowupAsync($"An error occurred while processing the image.", ephemeral: true);
         }
     }
 }
