@@ -170,10 +170,17 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync("No images found in this message.", ephemeral: true);
             return;
         }
+        
+        if (getUri.Contains(".mp4"))
+        {
+            await RespondAsync("Sorry, this seems to be encoded as an MP4 file, I cannot work with these.", ephemeral: true);
+            return;       
+        }
        
         await BubbleImage.CreateBubbleImage(Context, getUri, new Uri(getUri).LocalPath, cntType, false, false);
     }
     
+    [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
     [SlashCommand("bubble", "Add a bubble overlay on an image.")]
     public async Task CmdBubble(
         [Summary("image", "Attached image to be used.")] IAttachment image,
@@ -181,12 +188,6 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         [Summary("left", "Wether the bubble should aim left")] bool left = false
     )
     {
-        if (image.ContentType == null || !image.ContentType.StartsWith("image/"))
-        {
-            await RespondAsync("Please attach a valid image file.", ephemeral: true);
-            return;
-        }
-        
         await BubbleImage.CreateBubbleImage(Context, image.Url, image.Filename, image.ContentType, down, left);
     }
 }
@@ -195,6 +196,12 @@ public static class BubbleImage
 {
     public static async Task CreateBubbleImage(SocketInteractionContext ctx, string imageUri, string imageName, string cntType, bool down, bool left)
     {
+        if (!cntType.StartsWith("image/"))
+        {
+            await ctx.Interaction.RespondAsync("Please attach a valid image file.", ephemeral: true);
+            return;
+        }
+        
         await ctx.Interaction.DeferAsync();
         try
         {
@@ -262,9 +269,9 @@ public static class BubbleImage
                 );
             }
         }
-        catch
+        catch (Exception ex)
         {
-            await ctx.Interaction.FollowupAsync($"An error occurred while processing the image.", ephemeral: true);
+            await ctx.Interaction.FollowupAsync($"An error occurred while processing the image. {ex.Message}", ephemeral: true);
         }
     }
 }
