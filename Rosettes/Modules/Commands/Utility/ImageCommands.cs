@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.Encodings.Web;
+using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
 using Point = SixLabors.ImageSharp.Point;
@@ -165,6 +166,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         {
             var httpClient = new HttpClient();
             var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(image.Url));
+            bool gif = image.ContentType.Equals("image/gif", StringComparison.OrdinalIgnoreCase);
             
             string bubblePath = Path.Combine("Assets", "speech-bubble.png");
             var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
@@ -172,6 +174,8 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             // make width 100% and height 15% of the image being overlaid onto.
             int bubbleWidth = baseImage.Width;
             int bubbleHeight = (int)(baseImage.Height * 0.15);
+            
+            // don't let the height be too little or too much.
             if (bubbleHeight < bubbleWidth / 10) bubbleHeight = bubbleWidth / 10;
             if (bubbleHeight > baseImage.Height / 5) bubbleHeight = baseImage.Height / 5;
             bubbleOverlay.Mutate(x => x.Resize(bubbleWidth, bubbleHeight));
@@ -185,21 +189,48 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
                 bubbleOverlay.Mutate(x => x.Flip(FlipMode.Vertical));
                 yPosition = baseImage.Height - bubbleHeight;
             }
-            
-            baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, yPosition), 1f));
-            
-            using var outputStream = new MemoryStream();
-            await baseImage.SaveAsync(outputStream, new PngEncoder());
-            outputStream.Position = 0;
-            
-            await FollowupWithFileAsync(
-                fileStream: outputStream,
-                fileName: $"{image.Filename.Split('.').First()}-bubble.png"
-            );
+
+            // if it's a gif then we gotta do all the frames.
+            if (gif && baseImage.Frames.Count > 1)
+            {
+                for (int i = 0; i < baseImage.Frames.Count; i++)
+                {
+                    // convert imageframe to image so we can use Mutate
+                    using var frameImage = baseImage.Frames.CloneFrame(i);
+                    frameImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, yPosition), 1f));
+                    // replace the frame at the baseImage
+                    baseImage.Frames.RemoveFrame(i);
+                    baseImage.Frames.InsertFrame(i, frameImage.Frames.RootFrame);
+                }
+
+                using var outputStream = new MemoryStream();
+                await baseImage.SaveAsync(outputStream, new GifEncoder());
+                outputStream.Position = 0;
+
+                // TODO: in many cases this looks like SHIT
+                // must find a way to flatten good keyframe frames, problem for the future, but must be done.
+                await FollowupWithFileAsync(
+                    fileStream: outputStream,
+                    fileName: $"{image.Filename.Split('.').First()}-bubble.gif"
+                );
+            }
+            else // otherwise just overlay the one image and send as png
+            {
+                baseImage.Mutate(x => x.DrawImage(bubbleOverlay, new Point(0, yPosition), 1f));
+                
+                using var outputStream = new MemoryStream();
+                await baseImage.SaveAsync(outputStream, new PngEncoder());
+                outputStream.Position = 0;
+                
+                await FollowupWithFileAsync(
+                    fileStream: outputStream,
+                    fileName: $"{image.Filename.Split('.').First()}-bubble.png"
+                );
+            }
         }
-        catch (Exception ex)
+        catch
         {
-            await FollowupAsync($"An error occurred while processing the image: {ex.Message}", ephemeral: true);
+            await FollowupAsync($"An error occurred while processing the image.", ephemeral: true);
         }
     }
 }
