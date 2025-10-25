@@ -212,13 +212,13 @@ public static class BubbleImage
             string bubblePath = Path.Combine("Assets", "speech-bubble.png");
             var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
             
-            // make width 100% and height 15% of the image being overlaid onto.
+            // make width 100% and height 17.5% of the image being overlaid onto.
             int bubbleWidth = baseImage.Width;
-            int bubbleHeight = (int)(baseImage.Height * 0.15);
+            int bubbleHeight = (int)(baseImage.Height * 0.175);
             
             // don't let the height be too little or too much.
             if (bubbleHeight < bubbleWidth / 10) bubbleHeight = bubbleWidth / 10;
-            if (bubbleHeight > baseImage.Height / 5) bubbleHeight = baseImage.Height / 5;
+            if (bubbleHeight > baseImage.Height / 4) bubbleHeight = baseImage.Height / 4;
             bubbleOverlay.Mutate(x => x.Resize(bubbleWidth, bubbleHeight));
 
             // vertical pos, depends on if 'down' is set.
