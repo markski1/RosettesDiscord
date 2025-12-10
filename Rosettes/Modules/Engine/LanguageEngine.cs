@@ -17,7 +17,7 @@ public static class LanguageEngine
         List<ChatMessage> messages;
         bool isNewChat = false;
         
-        if (message == "clear")
+        if (message.Trim() is "clear")
         {
             if (ConversationContexts.TryGetValue((userId, channelId), out var existingContext))
             {
@@ -32,11 +32,11 @@ public static class LanguageEngine
         {
             messages = context;
             
-            // We hold onto no more than 20 exchanges worth of context.
-            if (messages.Count > 21)
+            // We hold onto no more than 10 exchanges worth of context.
+            if (messages.Count > 11)
             {
                 // Skip the 1st 'cause that's the system prompt.
-                messages.RemoveRange(1, 3);
+                messages.RemoveRange(1, 2);
             }
         }
         else

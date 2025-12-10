@@ -50,10 +50,25 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                 embed.AddField("Answer", response);
                 await FollowupAsync(embed: embed.Build());
             }
+            else if (response.Length < 3000)
+            {
+                List<string> parts = SplitResponse(response);
+                bool first = true;
+                foreach (var part in parts)
+                {
+                    if (first)
+                    {
+                        embed.AddField("Answer", part);
+                        first = false;
+                    }
+                    else embed.AddField("...", part);
+                }
+                await FollowupAsync(embed: embed.Build());
+            }
             else
             {
                 embed.AddField("Answer", "Response attached as file due to character count constraints.");
-                
+
                 int randomNumber = Global.Randomize(99999) + 1;
                 string filePath = $"./temp/media/{randomNumber}.txt";
                 await File.WriteAllTextAsync(filePath, response);
@@ -255,5 +270,38 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             var msg = await FollowupAsync(embed: embed.Build());
             _ = new MessageDeleter(msg, 30);
         }
+    }
+    
+    private static List<string> SplitResponse(string text)
+    {
+        List<string> parts = [];
+        while (text.Length > 0)
+        {
+            if (text.Length <= 1024)
+            {
+                parts.Add(text);
+                break;
+            }
+            int splitAt = FindSplitPoint(text, 1024);
+            string part = text[..splitAt];
+            parts.Add(part);
+            text = text[splitAt..].TrimStart();
+        }
+        return parts;
+    }
+
+    private static int FindSplitPoint(string text, int maxLen)
+    {
+        int pos = maxLen;
+        while (pos > 0)
+        {
+            char c = text[pos - 1];
+            if (c is '.' or '\n')
+            {
+                return pos;
+            }
+            pos--;
+        }
+        return maxLen;
     }
 }
