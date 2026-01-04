@@ -15,8 +15,9 @@ namespace Rosettes.Modules.Commands.Utility;
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    private static readonly Dictionary<string, string> MediaCache = [];
-  
+    private sealed record CachedMedia(string MediaUri, string FileName);
+    private static readonly Dictionary<string, CachedMedia> MediaCache = [];
+
     [SlashCommand("chat", "Chat with Rosettes [GPT 5.2]")]
     public async Task Chat(string question)
     {
@@ -69,10 +70,16 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             {
                 embed.AddField("Answer", "Response attached as file due to character count constraints.");
 
-                int randomNumber = Global.Randomize(99999) + 1;
-                string filePath = $"./temp/media/{randomNumber}.txt";
-                await File.WriteAllTextAsync(filePath, response);
-                await FollowupWithFileAsync(filePath: filePath, embed: embed.Build());
+                var bytes = Encoding.UTF8.GetBytes(response);
+                await using var ms = new MemoryStream(bytes);
+
+                var fileName = $"response_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.txt";
+
+                await FollowupWithFileAsync(
+                    fileStream: ms,
+                    fileName: fileName,
+                    embed: embed.Build()
+                );
             }
         }
         else
@@ -105,12 +112,6 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
     private async Task FetchMedia(string uri)
     {
-        // store the file locally
-        if (!Directory.Exists("./temp/media/"))
-        {
-            Directory.CreateDirectory("./temp/media/");
-        }
-
         if (uri.Contains("youtu.be") || uri.Contains("youtube.com"))
         {
             await DeclareDownloadFailure("Sorry, YouTube videos are currently not downloadable through Rosettes.");
@@ -119,25 +120,19 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         uri = uri.Trim();
 
+        string? mediaUri;
         string fileName;
-        string? mediaUri = null;
 
-        if (MediaCache.TryGetValue(uri, out var value))
+        if (MediaCache.TryGetValue(uri, out var cached))
         {
-            fileName = value;
+            mediaUri = cached.MediaUri;
+            fileName = cached.FileName;
         }
         else
         {
-
-            string requestData = JsonConvert.SerializeObject(
-                new
-                {
-                    url = uri
-                }
-            );
+            string requestData = JsonConvert.SerializeObject(new { url = uri });
 
             HttpRequestMessage request = new(HttpMethod.Post, "http://127.0.0.1:9000");
-
             request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             request.Content = new StringContent(requestData, Encoding.UTF8);
             request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
@@ -204,51 +199,71 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
 
-            bool cacheMedia = true;
-
-            if (baseName is null)
-            {
-                cacheMedia = false;
-                baseName ??= $"rosettes_{Global.Randomize(10000) + 1}.mp4";
-            }
-
-            fileName = $"./temp/media/rosettes_{Global.Randomize(99) + 1}_{baseName}";
-
-            ulong sizeLimit = 0;
-
-            if (Context.Guild is not null) sizeLimit = Context.Guild.MaxUploadLimit;
+            baseName ??= $"rosettes_{Global.Randomize(10000) + 1}.mp4";
+            fileName = baseName;
             
             mediaUri = mediaUri.Replace("https://cobalt.markski.ar", "http://127.0.0.1:9000");
 
-            var (success, failureReason) = await Global.DownloadFile(fileName, mediaUri, sizeLimit);
-
-            if (!success)
-            {
-                await DeclareDownloadFailure($"Error. `{failureReason}`", mediaUri);
-                return;
-            }
-
-            if (cacheMedia) MediaCache[uri] = fileName;
+            // Cache resolved target so the next call skips the metadata request
+            MediaCache[uri] = new CachedMedia(mediaUri, fileName);
         }
-        
-        ulong size = (ulong)new FileInfo(fileName).Length;
 
-        // check if the guild supports a file this large, otherwise fail.
-        if (Context.Guild == null || Context.Guild.MaxUploadLimit > size)
+        ulong sizeLimit = Context.Guild?.MaxUploadLimit ?? 0;
+
+        try
         {
-            try
-            {
-                await FollowupWithFileAsync(fileName);
-            }
-            catch
-            {
-                await DeclareDownloadFailure("Error uploading the file. Might be too large.", mediaUri);
-            }
+            await using var ms = await DownloadToMemoryAsync(mediaUri, sizeLimit);
+            ms.Position = 0;
+
+            await FollowupWithFileAsync(
+                fileStream: ms,
+                fileName: fileName
+            );
         }
-        else
+        catch (InvalidOperationException ex)
         {
-            await DeclareDownloadFailure("Cannot upload file, too large.", mediaUri);
+            await DeclareDownloadFailure(ex.Message, mediaUri);
         }
+        catch
+        {
+            await DeclareDownloadFailure("Cannot upload file, likely too large.", mediaUri);
+        }
+    }
+
+    private static async Task<MemoryStream> DownloadToMemoryAsync(string url, ulong sizeLimit)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        using var response = await Global.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Download failed. [{response.StatusCode}]");
+
+        var contentLength = response.Content.Headers.ContentLength;
+        if (contentLength is not null && sizeLimit > 0 && (ulong)contentLength.Value > sizeLimit)
+            throw new InvalidOperationException("Cannot upload file, too large.");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+
+        var ms = new MemoryStream(
+            capacity: contentLength is > 0 and <= int.MaxValue ? (int)contentLength.Value : 0
+        );
+
+        var buffer = new byte[81920];
+        long total = 0;
+
+        while (true)
+        {
+            int read = await stream.ReadAsync(buffer);
+            if (read <= 0) break;
+
+            total += read;
+            if (sizeLimit > 0 && (ulong)total > sizeLimit)
+                throw new InvalidOperationException("Cannot upload file, too large.");
+
+            await ms.WriteAsync(buffer.AsMemory(0, read));
+        }
+
+        return ms;
     }
 
     private async Task DeclareDownloadFailure(string message, string? mediaUri = null)
