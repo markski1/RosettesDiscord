@@ -6,9 +6,11 @@ namespace Rosettes.Modules.Engine;
 public static class LanguageEngine
 {
     private static readonly ChatClient GptClient = new(
-        model: "gpt-5-mini", 
+        model: "gpt-5.2", 
         apiKey: Settings.OpenAi
     );
+
+    private static readonly string[] FactNeedles = ["why", "how", "explain", "source", "what is", "when"];
     
     private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = [];
     
@@ -19,10 +21,9 @@ public static class LanguageEngine
         
         if (message.Trim() is "clear")
         {
-            if (ConversationContexts.TryGetValue((userId, channelId), out var existingContext))
+            if (ConversationContexts.TryGetValue((userId, channelId), out _))
             {
-                existingContext.Clear();
-                ConversationContexts[(userId, channelId)] = existingContext;
+                ConversationContexts.Remove((userId, channelId));
                 return (isNewChat, false, "Context cleared: I have forgotten our conversation.");
             }
         }
@@ -32,8 +33,8 @@ public static class LanguageEngine
         {
             messages = context;
             
-            // We hold onto no more than 10 exchanges worth of context.
-            if (messages.Count > 11)
+            // We hold onto no more than 20 exchanges worth of context.
+            if (messages.Count > 21)
             {
                 // Skip the 1st 'cause that's the system prompt.
                 messages.RemoveRange(1, 2);
@@ -50,14 +51,23 @@ public static class LanguageEngine
             isNewChat = true;
         }
 
-        // Add the user's query to the message list and request a completion.
         messages.Add(ChatMessage.CreateUserMessage(message));
-        ChatCompletion completion = await GptClient.CompleteChatAsync(messages);
+        
+        // Check if the message contains any of our fact-finding keywords.
+        // For queries that require more accuracy we use a lower temp.
+        bool containsAny = FactNeedles.Any(n => message.Contains(n, StringComparison.OrdinalIgnoreCase));
+        
+        float temperature = containsAny ? 0.2f : 0.4f;
+        
+        ChatCompletionOptions options = new()
+        {
+            Temperature = temperature,
+        };
 
         try
         {
+            ChatCompletion completion = await GptClient.CompleteChatAsync(messages, options);
             string response = completion.Content[0].Text;
-            // Add the response to the stored context.
             messages.Add(ChatMessage.CreateAssistantMessage(response));
             ConversationContexts[(userId, channelId)] = messages;
             return (isNewChat, true, response);
