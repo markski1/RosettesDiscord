@@ -82,6 +82,16 @@ public static class Global
             return (false, "Exception found");
         }
     }
+    
+    public static void FireAndForget(Task task)
+    {
+        _ = task.ContinueWith(
+            t =>
+            {
+                GenerateErrorMessage("FireAndForget", t.Exception?.ToString() ?? "FireAndForget failed but no exception could be captured.");
+            },
+            TaskContinuationOptions.OnlyOnFaulted);
+    }
 
     public static async Task<EmbedBuilder> MakeRosettesEmbed(User? dbUser = null)
     {
@@ -143,7 +153,7 @@ public static class Global
     public static string GrabUriFromText(string text)
     {
         // try to grab the first URL from the received text.
-        // Start by finding the first instance of http, and end as soon as we find a space or a control character.
+        // Start by finding the first instance of http and end as soon as we find a space or a control character.
         // return "0" if we can't find a url.
         var begin = text.IndexOf("https:/", StringComparison.Ordinal);
         if (begin == -1)

@@ -19,7 +19,7 @@ public static class FarmEngine
         { "rarefish",       ( "🐠 Rare fish",       true,    true   ) },
         { "shrimp",         ( "🦐 Shrimp",          true,    true   ) },
         { "dabloons",       ( "🐾 Dabloons",        true,    false  ) },
-        { "garbage",        ( "🗑 Garbage",         true,    false  ) },
+        { "garbage",        ( "🗑 Garbage",          true,    false  ) },
         { "tomato",         ( "🍅 Tomato",          true,    false  ) },
         { "carrot",         ( "🥕 Carrot",          true,    true   ) },
         { "potato",         ( "🥔 Potato",          true,    false  ) },
@@ -50,7 +50,6 @@ public static class FarmEngine
         { "farmtools",    15 },
         { "plots",        200 }
     };
-    
 
     public static string GetItemName(string choice)
     {
@@ -67,22 +66,18 @@ public static class FarmEngine
 
         return item.can_give;
     }
-
+    
     public static bool IsValidItem(string choice)
     {
         return InventoryItems.ContainsKey(choice);
     }
 
-    public static async void ModifyItem(User dbUser, string choice, int amount)
-    {
-        await FarmRepository.ModifyInventoryItem(dbUser, choice, amount);
-    }
+    public static Task ModifyItem(User dbUser, string choice, int amount) =>
+        FarmRepository.ModifyInventoryItem(dbUser, choice, amount);
 
-    private static async void SetItem(User dbUser, string choice, int newValue)
-    {
-        await FarmRepository.SetInventoryItem(dbUser, choice, newValue);
-    }
-    
+    private static Task SetItem(User dbUser, string choice, int newValue) =>
+        FarmRepository.SetInventoryItem(dbUser, choice, newValue);
+
     public static async Task<int> GetItem(User dbUser, string name)
     {
         return await FarmRepository.FetchInventoryItem(dbUser, name);
@@ -113,18 +108,27 @@ public static class FarmEngine
     public static async Task ShopAction(SocketMessageComponent component)
     {
         var dbUser = await UserEngine.GetDbUser(component.User);
-        
-        var parts = component.Data.Values.Last().Split(':');
+
+        var raw = component.Data.Values.LastOrDefault();
+        var parts = string.IsNullOrWhiteSpace(raw)
+            ? []
+            : raw.Split(':', StringSplitOptions.TrimEntries);
+
         string text = "";
-        
+
         switch (component.Data.CustomId)
         {
             // A purchase is composed by the name of the item purchased, and its amount (i.e., seedbag:5, fishpole:1)
             case "buy" when parts.Length == 2:
             {
                 string item = parts[0];
-                int amount = int.Parse(parts[1]);
-                
+
+                if (!int.TryParse(parts[1], out var amount) || amount <= 0)
+                {
+                    text = "There was an error parsing your shop request.";
+                    break;
+                }
+
                 if (!ItemBuyChart.TryGetValue(item, out var price))
                 {
                     text = "There was an error parsing your shop request.";
@@ -136,9 +140,9 @@ public static class FarmEngine
                     text = $"You don't have {price} {GetItemName("dabloons")}";
                     break;
                 }
-                
+
                 text = $"You have purchased {GetItemName(item)} for {price} {GetItemName("dabloons")}";
-                
+
                 switch (item)
                 {
                     case "fishpole":
@@ -147,8 +151,8 @@ public static class FarmEngine
                             text = $"Your current {GetItemName("fishpole")} is still in good shape.";
                             break;
                         }
-                        ModifyItem(dbUser, "dabloons", -10);
-                        SetItem(dbUser, "fishpole", 100);
+                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -10));
+                        Global.FireAndForget(SetItem(dbUser, "fishpole", 100));
                         break;
                     case "farmtools":
                         if (await GetItem(dbUser, "farmtools") >= 30)
@@ -156,8 +160,8 @@ public static class FarmEngine
                             text = $"Your current {GetItemName("farmtools")} are still in good shape.";
                             break;
                         }
-                        ModifyItem(dbUser, "dabloons", -15);
-                        SetItem(dbUser, "farmtools", 100);
+                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -15));
+                        Global.FireAndForget(SetItem(dbUser, "farmtools", 100));
                         break;
                     case "plots":
                         if (await GetItem(dbUser, "plots") >= 3)
@@ -165,8 +169,8 @@ public static class FarmEngine
                             text = "For the time being, you may not own more than 3 plots of land.";
                             break;
                         }
-                        ModifyItem(dbUser, "dabloons", -200);
-                        ModifyItem(dbUser, "plots", +1);
+                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -200));
+                        Global.FireAndForget(ModifyItem(dbUser, "plots", +1));
                         break;
                     default:
                         text = ItemBuy(dbUser, boughtItem: item, amount: amount, cost: price * amount);
@@ -174,20 +178,20 @@ public static class FarmEngine
                 }
                 break;
             }
-            
+
             // A sale is a preset 'operation' with an ID (i.e., sell1, sell2).
             case "sell_e" when parts.Length == 1:
             case "sell" when parts.Length == 1:
             {
                 string item = parts[0];
-                
+
                 bool sellEverything = component.Data.CustomId.Contains("_e");
 
                 if (ItemSaleChart.TryGetValue(item, out var values))
                 {
                     text = await ItemSell(dbUser, selling: item, amount: values.amount, cost: values.cost, everything: sellEverything);
                 }
-                
+
                 break;
             }
         }
@@ -212,14 +216,14 @@ public static class FarmEngine
 
     private static string ItemBuy(User dbUser, string boughtItem, int amount, int cost, bool setType = false)
     {
-        ModifyItem(dbUser, "dabloons", -cost);
+        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -cost));
         if (setType)
         {
-            SetItem(dbUser, boughtItem, amount);
+            Global.FireAndForget(SetItem(dbUser, boughtItem, amount));
         }
         else
         {
-            ModifyItem(dbUser, boughtItem, +amount);
+            Global.FireAndForget(ModifyItem(dbUser, boughtItem, +amount));
         }
         return $"You have purchased {amount} {GetItemName(boughtItem)} for {cost} {GetItemName("dabloons")}";
     }
@@ -228,7 +232,7 @@ public static class FarmEngine
     {
         int availableAmount = await GetItem(dbUser, selling);
         if (availableAmount < amount) return $"You don't have enough {GetItemName(selling)} to sell.";
-            
+
         if (everything)
         {
             int timesToSell = availableAmount / amount;
@@ -242,14 +246,14 @@ public static class FarmEngine
                 totalSold -= amount;
             }
 
-            ModifyItem(dbUser, selling, -totalSold);
-            ModifyItem(dbUser, "dabloons", +totalEarned);
+            Global.FireAndForget(ModifyItem(dbUser, selling, -totalSold));
+            Global.FireAndForget(ModifyItem(dbUser, "dabloons", +totalEarned));
 
             return $"You have sold {totalSold} {GetItemName(selling)} for {totalEarned} {GetItemName("dabloons")}";
         }
 
-        ModifyItem(dbUser, selling, -amount);
-        ModifyItem(dbUser, "dabloons", +cost);
+        Global.FireAndForget(ModifyItem(dbUser, selling, -amount));
+        Global.FireAndForget(ModifyItem(dbUser, "dabloons", +cost));
         return $"You have sold {amount} {GetItemName(selling)} for {cost} {GetItemName("dabloons")}";
 
     }
@@ -361,8 +365,7 @@ public static class FarmEngine
         };
         embed.AddField(fishField);
 
-
-        ModifyItem(dbUser, fishingCatch, +1);
+        Global.FireAndForget(ModifyItem(dbUser, fishingCatch, +1));
 
         int foundPet = await PetEngine.RollForPet(dbUser);
 
@@ -378,7 +381,7 @@ public static class FarmEngine
 
         poleStatus -= damage;
 
-        ModifyItem(dbUser, "fishpole", -damage);
+        Global.FireAndForget(ModifyItem(dbUser, "fishpole", -damage));
 
         if (poleStatus <= 0)
         {
