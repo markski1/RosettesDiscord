@@ -26,6 +26,47 @@ public static class Farm
 
     private static int Now() => Global.CurrentUnix();
 
+    // Quality tiers (affect yield)
+    private enum CropQuality
+    {
+        Bad,
+        Good,
+        Great
+    }
+
+    private static Task<CropQuality> RollCropQuality(User dbUser)
+    {
+        // Target odds:
+        // Great: 15%
+        // Bad:   20%
+        // Good:  65%
+        int roll = Global.Randomize(100); // 0..99
+
+        if (roll < 15) return Task.FromResult(CropQuality.Great);
+        if (roll < 35) return Task.FromResult(CropQuality.Bad);
+
+        return Task.FromResult(CropQuality.Good);
+    }
+
+    private static int ApplyQualityMultiplier(int baseAmount, CropQuality quality)
+    {
+        // Good = 1x, Bad = 0.75x, Great = 1.25x
+        return quality switch
+        {
+            CropQuality.Bad => (baseAmount * 3) / 4,
+            CropQuality.Great => (baseAmount * 5) / 4,
+            _ => baseAmount
+        };
+    }
+
+    private static string QualityLabel(CropQuality quality) =>
+        quality switch
+        {
+            CropQuality.Great => "Great",
+            CropQuality.Bad => "Bad",
+            _ => "Good"
+        };
+
     private static async Task<Crop?> InsertCropsInPlot(User dbUser, int cropType, int plotId)
     {
         // 3-second buffers on each to print a rounded-up time.
@@ -389,12 +430,23 @@ public static class Farm
             }
 
             string harvest = GetHarvest(crop.CropType);
-            int earnings = 9 + Global.Randomize(4) * 3 + Global.Randomize(4) * 3;
+
+            int baseEarnings = 9 + Global.Randomize(4) * 3 + Global.Randomize(4) * 3;
+
+            var quality = await RollCropQuality(dbUser);
+            int earnings = ApplyQualityMultiplier(baseEarnings, quality);
 
             FarmEngine.ModifyItem(dbUser, harvest, +earnings);
             expIncrease += earnings;
 
-            embed.AddField($"🌿 Plot {crop.PlotId} harvested.", $"You have obtained {earnings} {FarmEngine.GetItemName(harvest)}.");
+            string qualityText = earnings == baseEarnings
+                ? $"Quality: **{QualityLabel(quality)}**."
+                : $"Quality: **{QualityLabel(quality)}** (yield changed from {baseEarnings} → {earnings}).";
+
+            embed.AddField(
+                $"🌿 Plot {crop.PlotId} harvested.",
+                $"You have obtained {earnings} {FarmEngine.GetItemName(harvest)}.\n{qualityText}"
+            );
 
             count++;
             plotsWereHarvested = true;

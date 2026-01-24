@@ -344,7 +344,7 @@ public static class PetEngine
             return;
         }
 
-        FarmEngine.ModifyItem(dbUser, foodItem, -1);
+        Global.FireAndForget(FarmEngine.ModifyItem(dbUser, foodItem, -1));
 
         embed.Title = $"{pet.GetName()} has been fed.";
         embed.Description = $"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!";
@@ -458,7 +458,7 @@ public static class PetEngine
             return;
         }
 
-        FarmEngine.ModifyItem(dbUser, "dabloons", -25);
+        Global.FireAndForget(FarmEngine.ModifyItem(dbUser, "dabloons", -25));
 
         pet.SetName(newName);
 

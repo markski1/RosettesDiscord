@@ -95,9 +95,9 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
             }
 
-            FarmEngine.ModifyItem(receiver, choice, +amount);
+            Global.FireAndForget(FarmEngine.ModifyItem(receiver, choice, +amount));
 
-            FarmEngine.ModifyItem(dbUser, choice, -amount);
+            Global.FireAndForget(FarmEngine.ModifyItem(dbUser, choice, -amount));
 
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
             embed.Title = "Item given.";
