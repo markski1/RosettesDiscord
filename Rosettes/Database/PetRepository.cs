@@ -75,13 +75,21 @@ public abstract class PetRepository
 
         const string sql = """
                            UPDATE pets
-                           SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness
+                           SET pet_name=@Name, times_pet=@TimesPet, found_date=@FoundDate, happiness=@Happiness, exp=@Exp
                            WHERE pet_id = @Id
                            """;
 
         try
         {
-            return await db.ExecuteAsync(sql, new { Name = pet.GetBareName(), TimesPet = pet.GetTimesPet(), FoundDate = pet.GetFoundDate(), Happiness = pet.GetHappiness(), pet.Id }) > 0;
+            return await db.ExecuteAsync(sql, new
+            {
+                Name = pet.GetBareName(),
+                TimesPet = pet.GetTimesPet(),
+                FoundDate = pet.GetFoundDate(),
+                Happiness = pet.GetHappiness(),
+                Exp = pet.GetExp(),
+                pet.Id
+            }) > 0;
         }
         catch (Exception ex)
         {

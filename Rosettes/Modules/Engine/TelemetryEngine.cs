@@ -10,7 +10,6 @@
  * 
  * - Remove things that have 0 use.
  * - Improve things which get lots of use.
- * - Find out: Is Rosettes even worth keeping online?
  */
 
 using Dapper;

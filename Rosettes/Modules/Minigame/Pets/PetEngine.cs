@@ -500,7 +500,7 @@ public static class PetEngine
 
     public static bool AcceptablePetMeal(string foodItem)
     {
-        return FarmEngine.InventoryItems.TryGetValue(foodItem, out var item) && item.can_give;
+        return FarmEngine.InventoryItems.TryGetValue(foodItem, out var item) && item.can_pet_eat;
     }
 
     public static void TimedThings()
