@@ -17,7 +17,17 @@ public static class UserEngine
         {
             foreach (User user in _userCache)
             {
-                await UserRepository.UpdateUser(user);
+                if (!user.Dirty) continue;
+
+                // Sync name and username before updating if possible, but don't block on it.
+                // This ensures that the database stays relatively up to date with Discord names.
+                _ = user.GetName();
+                _ = user.GetUsername();
+
+                if (await UserRepository.UpdateUser(user))
+                {
+                    user.Dirty = false;
+                }
                 await Task.Delay(125);
             }
         }
@@ -37,7 +47,7 @@ public static class UserEngine
         else
         {
             getUser = new User(user);
-            _ = UserRepository.InsertUser(getUser);
+            await UserRepository.InsertUser(getUser);
         }
         if (getUser.IsValid()) _userCache.Add(getUser);
         return getUser;
@@ -124,6 +134,8 @@ public class User
     public int Exp { get; set; }
     public string NameCache { get; set; }
     public string Username { get; set; }
+
+    public bool Dirty { get; set; }
 
     // timers
     private int LastFished { get; set; }
@@ -228,7 +240,9 @@ public class User
 
     public void SetPet(int id)
     {
+        if (MainPet == id) return;
         MainPet = id;
+        Dirty = true;
         if (MainPet > 0)
         {
             _ = PetEngine.EnsurePetExists(Id, MainPet);
@@ -240,6 +254,7 @@ public class User
     {
         int level = GetLevel();
         Exp += amount;
+        Dirty = true;
         if (GetLevel() > level)
         {
             return $"+{amount} exp, leveled up";
