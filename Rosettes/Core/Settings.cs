@@ -22,8 +22,8 @@ public static class Settings
     public static readonly string RapidApiKey = LoadSetting("rapidapi");
     public static readonly string SauceNao = LoadSetting("saucenao");
     public static readonly string SecretKey = LoadSetting("secretkey");
-    public static readonly string OpenAi = LoadSetting("openai");
-    public static readonly string OpenAiPrompt = LoadSetting("openai_prompt");
+    public static readonly string ApiKey = LoadSetting("llm_key");
+    public static readonly string SystemPrompt = LoadSetting("system_prompt");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
 

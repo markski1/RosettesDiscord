@@ -18,7 +18,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     private sealed record CachedMedia(string MediaUri, string FileName);
     private static readonly Dictionary<string, CachedMedia> MediaCache = [];
 
-    [SlashCommand("chat", "Chat with Rosettes [GPT 5.2]")]
+    [SlashCommand("chat", "Chat with Rosettes")]
     public async Task Chat(string question)
     {
         await DeferAsync();

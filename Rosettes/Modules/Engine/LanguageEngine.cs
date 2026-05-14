@@ -1,24 +1,23 @@
-﻿using OpenAI.Chat;
+﻿using System.Text;
+using Newtonsoft.Json;
 using Rosettes.Core;
 
 namespace Rosettes.Modules.Engine;
 
 public static class LanguageEngine
 {
-    private static readonly ChatClient GptClient = new(
-        model: "gpt-5.2", 
-        apiKey: Settings.OpenAi
-    );
+    private const string ApiUrl = "https://mmip-be.markski.ar/v1/chat";
+    private const string Model = "openai/gpt-5.4-mini";
 
-    private static readonly string[] FactNeedles = ["why", "how", "explain", "source", "what is", "when"];
-    
+    private sealed record ChatMessage(string Role, string Content);
+
     private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = [];
-    
+
     public static async Task<(bool, bool, string)> GetResponseAsync(ulong userId, ulong channelId, string message)
     {
         List<ChatMessage> messages;
         bool isNewChat = false;
-        
+
         if (message.Trim() is "clear")
         {
             if (ConversationContexts.TryGetValue((userId, channelId), out _))
@@ -28,53 +27,70 @@ public static class LanguageEngine
             }
         }
 
-        // If the given user already had spoken in this channel, fetch their context.
         if (ConversationContexts.TryGetValue((userId, channelId), out var context))
         {
             messages = context;
-            
-            // We hold onto no more than 20 exchanges worth of context.
-            if (messages.Count > 21)
+
+            const int MaxChars = 120_000;
+            while (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 3)
             {
-                // Skip the 1st 'cause that's the system prompt.
-                messages.RemoveRange(1, 2);
+                messages.RemoveAt(1);
+                messages.RemoveAt(1);
             }
         }
         else
         {
-            // Create new with system prompt
             messages = [
-                ChatMessage.CreateSystemMessage(
-                    $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/mm/yyyy format.;\n{Settings.OpenAiPrompt}"
-                    )
+                new ChatMessage("system", $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/mm/yyyy format.;\n{Settings.SystemPrompt}")
             ];
             isNewChat = true;
         }
-
-        messages.Add(ChatMessage.CreateUserMessage(message));
         
-        // Check if the message contains any of our fact-finding keywords.
-        // For queries that require more accuracy we use a lower temp.
-        bool containsAny = FactNeedles.Any(n => message.Contains(n, StringComparison.OrdinalIgnoreCase));
-        
-        float temperature = containsAny ? 0.2f : 0.4f;
-        
-        ChatCompletionOptions options = new()
+        var requestBody = new
         {
-            Temperature = temperature,
+            message,
+            history = messages.Where(m => m.Role != "system").Select(m => new { role = m.Role, content = m.Content }),
+            model = Model,
+            web_search = true,
+            system_prompt = messages.Find(m => m.Role == "system")?.Content ?? ""
         };
 
+        var json = JsonConvert.SerializeObject(requestBody);
+        
         try
         {
-            ChatCompletion completion = await GptClient.CompleteChatAsync(messages, options);
-            string response = completion.Content[0].Text;
-            messages.Add(ChatMessage.CreateAssistantMessage(response));
+            var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.ApiKey);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await Global.HttpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Global.GenerateErrorMessage("mmip-response", $"Error: {response.StatusCode} - {responseBody}");
+                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+            }
+
+            dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseBody);
+
+            if (responseData is null)
+            {
+                Global.GenerateErrorMessage("mmip-response", "Null response from API");
+                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+            }
+
+            string responseText = responseData.message;
+
+            messages.Add(new ChatMessage("user", message));
+            messages.Add(new ChatMessage("assistant", responseText));
             ConversationContexts[(userId, channelId)] = messages;
-            return (isNewChat, true, response);
+
+            return (isNewChat, true, responseText);
         }
         catch (Exception ex)
         {
-            Global.GenerateErrorMessage("gpt-response", $"Error returning response: {ex.Message}");
+            Global.GenerateErrorMessage("mmip-response", $"Error returning response: {ex.Message}");
             return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
         }
     }
