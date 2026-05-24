@@ -10,6 +10,7 @@ namespace Rosettes.Modules.Minigame.Pets;
 public static class PetEngine
 {
     private static List<Pet> _petCache = [];
+    private static readonly Lock PetCacheLock = new();
 
     private static readonly Dictionary<int, (string fullName, string emoji)> PetChart = new()
     {
@@ -65,20 +66,31 @@ public static class PetEngine
     public static async Task LoadAllPetsFromDatabase()
     {
         IEnumerable<Pet> petCacheTemp = await PetRepository.GetAllPetsAsync();
-        _petCache = petCacheTemp.ToList();
+        var loaded = petCacheTemp.ToList();
+        lock (PetCacheLock)
+        {
+            _petCache = loaded;
+        }
     }
 
     public static async Task<Pet?> EnsurePetExists(ulong ownerId, int index)
     {
         try
         {
-            var pet = _petCache.Find(x => x.OwnerId == ownerId && x.Index == index);
-                
+            Pet? pet;
+            lock (PetCacheLock)
+            {
+                pet = _petCache.Find(x => x.OwnerId == ownerId && x.Index == index);
+            }
+
             if (pet is not null) return pet;
-                
+
             pet = new(index, ownerId, "[not named]");
             pet.Id = await PetRepository.InsertPet(pet);
-            _petCache.Add(pet);
+            lock (PetCacheLock)
+            {
+                _petCache.Add(pet);
+            }
             return pet;
         }
         catch
@@ -91,19 +103,18 @@ public static class PetEngine
     {
         if (user.MainPet <= 0) return null;
         await EnsurePetExists(user.Id, user.MainPet);
-        try
+        lock (PetCacheLock)
         {
             return _petCache.Find(x => x.OwnerId == user.Id && x.Index == user.MainPet);
-        }
-        catch
-        {
-            return null;
         }
     }
 
     private static List<Pet> GetAllUserPets(User user)
     {
-        return _petCache.FindAll(x => x.OwnerId == user.Id);
+        lock (PetCacheLock)
+        {
+            return _petCache.FindAll(x => x.OwnerId == user.Id);
+        }
     }
 
     public static async Task ShowPets(SocketInteraction interaction, IUser user)
@@ -306,14 +317,14 @@ public static class PetEngine
 
         int petId = int.Parse(component.Data.CustomId[8..]);
 
-        Pet pet;
+        Pet? pet;
 
-        try
+        lock (PetCacheLock)
         {
-            pet = _petCache.First(x => x.Id == petId); // first() may throw an exception in some failure cases.
-            if (pet == null) { throw new Exception("pet not found"); } // if first() don't throw an exception, but we failed all the same, force it.
+            pet = _petCache.Find(x => x.Id == petId);
         }
-        catch
+
+        if (pet is null)
         {
             await component.RespondAsync("Sorry, there was an error finding that pet.", ephemeral: true);
             return;
@@ -485,9 +496,15 @@ public static class PetEngine
 
     public static async void SyncWithDatabase()
     {
+        List<Pet> snapshot;
+        lock (PetCacheLock)
+        {
+            snapshot = [.._petCache];
+        }
+
         try
         {
-            foreach (var pet in _petCache)
+            foreach (var pet in snapshot)
             {
                 await pet.UpdateSelf();
             }
@@ -505,7 +522,13 @@ public static class PetEngine
 
     public static void TimedThings()
     {
-        foreach (Pet pet in _petCache)
+        List<Pet> snapshot;
+        lock (PetCacheLock)
+        {
+            snapshot = [.._petCache];
+        }
+
+        foreach (Pet pet in snapshot)
         {
             var happiness = pet.GetHappiness();
 

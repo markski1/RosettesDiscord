@@ -10,17 +10,22 @@ namespace Rosettes.Modules.Engine;
 public static class UserEngine
 {
     private static List<User> _userCache = [];
+    private static readonly Lock CacheLock = new();
 
     public static async void SyncWithDatabase()
     {
+        List<User> snapshot;
+        lock (CacheLock)
+        {
+            snapshot = [.._userCache];
+        }
+
         try
         {
-            foreach (User user in _userCache)
+            foreach (User user in snapshot)
             {
                 if (!user.Dirty) continue;
 
-                // Sync name and username before updating if possible, but don't block on it.
-                // This ensures that the database stays relatively up to date with Discord names.
                 _ = user.GetName();
                 _ = user.GetUsername();
 
@@ -49,53 +54,57 @@ public static class UserEngine
             getUser = new User(user);
             await UserRepository.InsertUser(getUser);
         }
-        if (getUser.IsValid()) _userCache.Add(getUser);
+        if (getUser.IsValid())
+        {
+            lock (CacheLock)
+            {
+                _userCache.Add(getUser);
+            }
+        }
         return getUser;
     }
 
-    // Return true just for the sake of returning anything to be able to use 'await'.
-    // We need to await for all users to be loaded.
     public static async Task LoadAllUsersFromDatabase()
     {
-        _userCache = (await UserRepository.GetAllUsersAsync()).ToList();
+        var loaded = (await UserRepository.GetAllUsersAsync()).ToList();
+        lock (CacheLock)
+        {
+            _userCache = loaded;
+        }
     }
 
     public static async Task<User> GetDbUser(IUser user)
     {
-        try
+        User? found;
+        lock (CacheLock)
         {
-            return _userCache.First(item => item.Id == user.Id);
+            found = _userCache.FirstOrDefault(item => item.Id == user.Id);
         }
-        catch
-        {
-            return await LoadUserFromDatabase(user);
-        }
+
+        if (found is not null) return found;
+        return await LoadUserFromDatabase(user);
     }
     
     public static async Task<User> GetDbUserById(ulong userId)
     {
-        try
+        User? found;
+        lock (CacheLock)
         {
-            return _userCache.First(item => item.Id == userId);
+            found = _userCache.FirstOrDefault(item => item.Id == userId);
         }
-        catch
-        {
-            var user = await GetUserReferenceById(userId);
-            if (user is null) return new User(null);
-            return await LoadUserFromDatabase(user);
-        }
+
+        if (found is not null) return found;
+
+        var userRef = await GetUserReferenceById(userId);
+        if (userRef is null) return new User(null);
+        return await LoadUserFromDatabase(userRef);
     }
 
-    // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
     public static User GetCachedDbUserById(ulong user)
     {
-        try
+        lock (CacheLock)
         {
-            return _userCache.First(item => item.Id == user);
-        }
-        catch
-        {
-            return new User(null);
+            return _userCache.FirstOrDefault(item => item.Id == user) ?? new User(null);
         }
     }
 

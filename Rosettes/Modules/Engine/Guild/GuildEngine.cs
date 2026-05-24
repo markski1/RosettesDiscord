@@ -10,12 +10,19 @@ namespace Rosettes.Modules.Engine.Guild;
 public static class GuildEngine
 {
     private static List<Guild> _guildCache = [];
+    private static readonly Lock CacheLock = new();
 
     public static async void SyncWithDatabase()
     {
+        List<Guild> snapshot;
+        lock (CacheLock)
+        {
+            snapshot = [.._guildCache];
+        }
+
         try
         {
-            foreach (Guild guild in _guildCache.ToList())
+            foreach (Guild guild in snapshot)
             {
                 await UpdateGuild(guild);
             }
@@ -64,8 +71,11 @@ public static class GuildEngine
 
     public static void RemoveGuildFromCache(ulong guildid)
     {
-        var guildObj = _guildCache.Find(item => item.Id == guildid);
-        if (guildObj is not null) _guildCache.Remove(guildObj);
+        lock (CacheLock)
+        {
+            var guildObj = _guildCache.Find(item => item.Id == guildid);
+            if (guildObj is not null) _guildCache.Remove(guildObj);
+        }
     }
 
     private static async Task<Guild> LoadGuildFromDatabase(SocketGuild guild)
@@ -81,49 +91,57 @@ public static class GuildEngine
             await GuildRepository.InsertGuild(getGuild);
             getGuild.UpdateRoles();
         }
-        if (getGuild.IsValid()) _guildCache.Add(getGuild);
+        if (getGuild.IsValid())
+        {
+            lock (CacheLock)
+            {
+                _guildCache.Add(getGuild);
+            }
+        }
         return getGuild;
     }
 
     public static async Task LoadAllGuildsFromDatabase()
     {
         IEnumerable<Guild> guildCacheTemp = await GuildRepository.GetAllGuildsAsync();
-        _guildCache = guildCacheTemp.ToList();
-        foreach (Guild guild in _guildCache)
+        var loaded = guildCacheTemp.ToList();
+        foreach (Guild guild in loaded)
         {
             guild.UpdateRoles();
+        }
+        lock (CacheLock)
+        {
+            _guildCache = loaded;
         }
     }
 
     public static async Task<Guild> GetDbGuild(SocketGuild guild)
     {
-        try
+        Guild? found;
+        lock (CacheLock)
         {
-            return _guildCache.First(item => item.Id == guild.Id);
+            found = _guildCache.FirstOrDefault(item => item.Id == guild.Id);
         }
-        catch
-        {
-            return await LoadGuildFromDatabase(guild);
-        }
+
+        if (found is not null) return found;
+        return await LoadGuildFromDatabase(guild);
     }
 
-    // assumes guild is cached! to be used in constructors, where async tasks cannot be awaited.
     public static Guild GetDbGuildById(ulong guild)
     {
-        try
+        lock (CacheLock)
         {
-            return _guildCache.First(item => item.Id == guild);
-        }
-        catch
-        {
-            return new Guild(null);
+            return _guildCache.FirstOrDefault(item => item.Id == guild) ?? new Guild(null);
         }
     }
 
     public static IEnumerable<Guild> GetActiveGuilds()
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();
-        return _guildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id));
+        lock (CacheLock)
+        {
+            return _guildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id)).ToList();
+        }
     }
 }
 
