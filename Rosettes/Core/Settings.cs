@@ -35,6 +35,10 @@ public static class Settings
         Database.UserID = mySqlData.UserID;
         Database.Password = mySqlData.Password;
         Database.Database = mySqlData.Database;
+        Database.Pooling = true;
+        Database.MinimumPoolSize = 2;
+        Database.MaximumPoolSize = 15;
+        Database.ConnectionIdleTimeout = 300;
         return true;
     }
 
