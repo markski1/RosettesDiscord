@@ -12,6 +12,7 @@
  * - Improve things which get lots of use.
  */
 
+using System.Collections.Concurrent;
 using Dapper;
 using Newtonsoft.Json;
 using Rosettes.Core;
@@ -32,7 +33,7 @@ public static class TelemetryEngine
     private static int _messageCount;
     private static readonly System.Timers.Timer Timer = new(60 * 60 * 1000);
 
-    private static readonly Dictionary<string, int> UseByCommand = [];
+    private static ConcurrentDictionary<string, int> UseByCommand = new();
 
     public static void Setup()
     {
@@ -51,19 +52,19 @@ public static class TelemetryEngine
                            VALUES(@CommandCount, @InteractionCount, @MessageCount, @UseByCommand)
                            """;
 
+        var snapshotCmd = Interlocked.Exchange(ref _commandCount, 0);
+        var snapshotInt = Interlocked.Exchange(ref _interactionCount, 0);
+        var snapshotMsg = Interlocked.Exchange(ref _messageCount, 0);
+        var snapshotDict = Interlocked.Exchange(ref UseByCommand, new ConcurrentDictionary<string, int>());
+
         try
         {
-            await db.ExecuteAsync(sql, new { CommandCount = _commandCount, InteractionCount = _interactionCount, MessageCount = _messageCount, UseByCommand = JsonConvert.SerializeObject(UseByCommand) });
+            await db.ExecuteAsync(sql, new { CommandCount = snapshotCmd, InteractionCount = snapshotInt, MessageCount = snapshotMsg, UseByCommand = JsonConvert.SerializeObject(snapshotDict) });
         }
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("TelemetryEngine", $"Failed to sync telemetry. \n ```{ex}```");
         }
-
-        UseByCommand.Clear();
-        _commandCount = 0;
-        _interactionCount = 0;
-        _messageCount = 0;
     }
 
     public static void Count(TelemetryType telemetryType)
@@ -71,13 +72,13 @@ public static class TelemetryEngine
         switch (telemetryType)
         {
             case TelemetryType.Command:
-                _commandCount++;
+                Interlocked.Increment(ref _commandCount);
                 return;
             case TelemetryType.Interaction:
-                _interactionCount++;
+                Interlocked.Increment(ref _interactionCount);
                 return;
             case TelemetryType.Message:
-                _messageCount++;
+                Interlocked.Increment(ref _messageCount);
                 return;
             default:
                 return;
@@ -86,9 +87,6 @@ public static class TelemetryEngine
 
     public static void CountCommand(string commandName)
     {
-        if (!UseByCommand.TryAdd(commandName, 1))
-        {
-            UseByCommand[commandName]++;
-        }
+        UseByCommand.AddOrUpdate(commandName, 1, (_, count) => count + 1);
     }
 }

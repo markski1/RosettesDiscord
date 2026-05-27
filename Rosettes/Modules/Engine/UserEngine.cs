@@ -10,9 +10,16 @@ namespace Rosettes.Modules.Engine;
 public static class UserEngine
 {
     private static List<User> _userCache = [];
+    private static readonly Lock CacheLock = new();
 
     public static async Task SyncWithDatabase()
     {
+        List<User> snapshot;
+        lock (CacheLock)
+        {
+            snapshot = [.._userCache];
+        }
+
         try
         {
             // Snapshot dirty users before iterating so concurrent cache additions don't cause
@@ -46,15 +53,23 @@ public static class UserEngine
             getUser = new User(user);
             await UserRepository.InsertUser(getUser);
         }
-        if (getUser.IsValid()) _userCache.Add(getUser);
+        if (getUser.IsValid())
+        {
+            lock (CacheLock)
+            {
+                _userCache.Add(getUser);
+            }
+        }
         return getUser;
     }
 
-    // Return true just for the sake of returning anything to be able to use 'await'.
-    // We need to await for all users to be loaded.
     public static async Task LoadAllUsersFromDatabase()
     {
-        _userCache = (await UserRepository.GetAllUsersAsync()).ToList();
+        var loaded = (await UserRepository.GetAllUsersAsync()).ToList();
+        lock (CacheLock)
+        {
+            _userCache = loaded;
+        }
     }
 
     public static async Task<User> GetDbUser(IUser user)
