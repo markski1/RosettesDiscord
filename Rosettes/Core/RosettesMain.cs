@@ -71,7 +71,9 @@ public class RosettesMain
 
     private static void TimedActions()
     {
-        UserEngine.SyncWithDatabase();
+        // GetAwaiter().GetResult() is safe here: this runs on a dedicated Thread with
+        // no SynchronizationContext, so there is no risk of deadlock.
+        UserEngine.SyncWithDatabase().GetAwaiter().GetResult();
         GuildEngine.SyncWithDatabase();
         PetEngine.TimedThings();
         PetEngine.SyncWithDatabase();

@@ -11,24 +11,21 @@ public static class UserEngine
 {
     private static List<User> _userCache = [];
 
-    public static async void SyncWithDatabase()
+    public static async Task SyncWithDatabase()
     {
         try
         {
-            foreach (User user in _userCache)
+            // Snapshot dirty users before iterating so concurrent cache additions don't cause
+            // a 'collection modified during enumeration' exception.
+            var dirtyUsers = _userCache.Where(u => u.Dirty).ToList();
+
+            foreach (User user in dirtyUsers)
             {
-                if (!user.Dirty) continue;
-
-                // Sync name and username before updating if possible, but don't block on it.
-                // This ensures that the database stays relatively up to date with Discord names.
-                _ = user.GetName();
-                _ = user.GetUsername();
-
+                // Names are kept fresh in GetDbUser (no Discord API calls needed here).
                 if (await UserRepository.UpdateUser(user))
                 {
                     user.Dirty = false;
                 }
-                await Task.Delay(125);
             }
         }
         catch (Exception e)
@@ -62,41 +59,41 @@ public static class UserEngine
 
     public static async Task<User> GetDbUser(IUser user)
     {
-        try
+        var cached = _userCache.FirstOrDefault(item => item.Id == user.Id);
+        if (cached is not null)
         {
-            return _userCache.First(item => item.Id == user.Id);
+            // We already have the live Discord reference — refresh the name cache for free,
+            // with no extra API call. Any change will be written on the next sync cycle.
+            var newName = user.GlobalName ?? user.Username;
+            if (cached.NameCache != newName)
+            {
+                cached.NameCache = newName;
+                cached.Dirty = true;
+            }
+            if (user.Username is not null && cached.Username != user.Username)
+            {
+                cached.Username = user.Username;
+                cached.Dirty = true;
+            }
+            return cached;
         }
-        catch
-        {
-            return await LoadUserFromDatabase(user);
-        }
+        return await LoadUserFromDatabase(user);
     }
-    
+
     public static async Task<User> GetDbUserById(ulong userId)
     {
-        try
-        {
-            return _userCache.First(item => item.Id == userId);
-        }
-        catch
-        {
-            var user = await GetUserReferenceById(userId);
-            if (user is null) return new User(null);
-            return await LoadUserFromDatabase(user);
-        }
+        var cached = _userCache.FirstOrDefault(item => item.Id == userId);
+        if (cached is not null) return cached;
+
+        var user = await GetUserReferenceById(userId);
+        if (user is null) return new User(null);
+        return await LoadUserFromDatabase(user);
     }
 
     // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
-    public static User GetCachedDbUserById(ulong user)
+    public static User GetCachedDbUserById(ulong userId)
     {
-        try
-        {
-            return _userCache.First(item => item.Id == user);
-        }
-        catch
-        {
-            return new User(null);
-        }
+        return _userCache.FirstOrDefault(item => item.Id == userId) ?? new User(null);
     }
 
     public static async Task<IUser?> GetUserReferenceById(ulong id)
