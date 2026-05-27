@@ -37,21 +37,15 @@ public static class GuildEngine
         }
 
         // Guild may not be in DB if insert failed on join.
-        if (await GuildRepository.CheckGuildExists(guild.Id))
+        guild.SelfTest();
+        if (await GuildRepository.UpdateGuild(guild))
         {
-            guild.SelfTest();
-            await GuildRepository.UpdateGuild(guild);
-            guild.Settings = await GuildRepository.GetGuildSettings(guild);
-            guild.DefaultRole = await GuildRepository.GetGuildDefaultRole(guild);
+            (guild.Settings, guild.DefaultRole) = await GuildRepository.GetGuildSyncFields(guild);
         }
         else
         {
             // handle deletion or memory resets
-            SocketGuild? foundGuild = null;
-            foreach (SocketGuild aSocketGuild in client.Guilds)
-            {
-                if (aSocketGuild.Id == guild.Id) foundGuild = aSocketGuild;
-            }
+            SocketGuild? foundGuild = client.Guilds.FirstOrDefault(x => x.Id == guild.Id);
             if (foundGuild is null)
             {
                 return false;

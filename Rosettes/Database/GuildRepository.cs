@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Text;
+using Dapper;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Engine.Guild;
@@ -119,6 +120,26 @@ public class GuildRepository
         }
     }
 
+    public static async Task<(string settings, ulong defaultRole)> GetGuildSyncFields(Guild guild)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        const string sql = "SELECT settings, defaultrole FROM guilds WHERE id=@id";
+
+        try
+        {
+            var row = await db.QueryFirstOrDefaultAsync(sql, new { id = guild.Id });
+            if (row is null) return ("1111111111", 0ul);
+            return ((string)row.settings, (ulong)row.defaultrole);
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-getguildsyncfields", $"sqlException code {ex.Message}");
+            return ("1111111111", 0ul);
+        }
+    }
+
     public static async Task<bool> InsertGuild(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();
@@ -171,37 +192,29 @@ public class GuildRepository
 
         await db.ExecuteAsync("DELETE FROM roles WHERE guildid = @Id", new { guild.Id });
 
-        const string sql = """
-                           INSERT INTO roles (id, rolename, guildid, color)
-                           VALUES (@Id, @Name, @GuildId, @Color)
-                           """;
+        var roles = discordGuild.Roles.Where(r => !r.IsEveryone && !r.IsManaged).ToList();
+        if (roles.Count == 0) return true;
 
-        const string sql2 = """
-                            UPDATE roles
-                            SET rolename=@Name, guildid=@GuildId, color=@Color
-                            WHERE id = @Id
-                            """;
+        var sql = new StringBuilder("INSERT INTO roles (id, rolename, guildid, color) VALUES ");
+        var parameters = new DynamicParameters();
+        parameters.Add("GuildId", guild.Id);
 
-        foreach (var role in discordGuild.Roles)
+        for (int i = 0; i < roles.Count; i++)
         {
-            if (role.IsEveryone) continue;
-            if (role.IsManaged) continue;
-            try
-            {
-                await db.ExecuteAsync(sql, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
-            }
-            catch
-            {
-                // if can't insert, attempt to update
-                try
-                {
-                    await db.ExecuteAsync(sql2, new { role.Id, role.Name, GuildId = guild.Id, Color = role.Color.ToString() });
-                }
-                catch
-                {
-                    // if we also failed to update, just fail.
-                }
-            }
+            if (i > 0) sql.Append(", ");
+            sql.Append($"(@Id{i}, @Name{i}, @GuildId, @Color{i})");
+            parameters.Add($"Id{i}", roles[i].Id);
+            parameters.Add($"Name{i}", roles[i].Name);
+            parameters.Add($"Color{i}", roles[i].Color.ToString());
+        }
+
+        try
+        {
+            await db.ExecuteAsync(sql.ToString(), parameters);
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-updateguildroles", $"sqlException code {ex.Message}");
         }
 
         return true;

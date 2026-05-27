@@ -84,7 +84,6 @@ public class Pet
         int happinessMod = Global.Randomize(10) + 5;
         ModifyHappiness(+happinessMod); // add anywhere from 5 to 14% happiness
         AddExp(1);
-        _timesPet++;
         SyncUpToDate = false;
         return happinessMod;
     }
@@ -103,10 +102,6 @@ public class Pet
         {
             return $"{PetEngine.PetEmojis(Index)} {_name}";
         }
-        
-        // Getting the name usually means the owner is doing something.
-        // If the owner is doing something, the pet is going along, so, a small chance to gain exp. Seems fine.
-        if (Global.Chance(10)) AddExp(1);
 
         return PetEngine.PetNames(Index);
     }

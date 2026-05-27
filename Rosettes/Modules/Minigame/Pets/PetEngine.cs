@@ -255,7 +255,7 @@ public static class PetEngine
         while (true)
         {
             pet = Global.Randomize(PetChart.Count) + 1;
-            if (await HasPet(dbUser, pet) == false) break;
+            if (!HasPet(dbUser, pet)) break;
 
             // if after 4 attempts there are only repeated pets, don't get a pet.
             attempts++;
@@ -281,7 +281,7 @@ public static class PetEngine
             embed.Title = "Pet unequipped.";
             embed.Description = "You no longer have a pet equipped.";
         }
-        else if (await HasPet(dbUser, petRequested))
+        else if (HasPet(dbUser, petRequested))
         {
             dbUser.SetPet(petRequested);
             embed.Title = "Pet equipped.";
@@ -366,9 +366,9 @@ public static class PetEngine
         await component.RespondAsync(embed: embed.Build(), components: comps.Build());
     }
 
-    private static async Task<bool> HasPet(User dbUser, int id)
+    private static bool HasPet(User dbUser, int id)
     {
-        return await PetRepository.CheckHasPet(dbUser.Id, id);
+        return _petCache.Any(x => x.OwnerId == dbUser.Id && x.Index == id);
     }
 
     public static async Task ViewPet(SocketInteraction interaction, IUser user)
