@@ -77,7 +77,7 @@ public static class UserEngine
         var cached = _userCache.FirstOrDefault(item => item.Id == user.Id);
         if (cached is not null)
         {
-            // We already have the live Discord reference — refresh the name cache for free,
+            // We already have the live Discord reference. Refresh the name cache for free,
             // with no extra API call. Any change will be written on the next sync cycle.
             var newName = user.GlobalName ?? user.Username;
             if (cached.NameCache != newName)

@@ -11,6 +11,23 @@ namespace Rosettes.Modules.Minigame.Farming;
 
 public static class FarmEngine
 {
+    // Embed color palette.
+    public static readonly Color FarmColor    = new(86, 184, 94);   // soft green
+    public static readonly Color WaterColor   = new(64, 156, 220);  // soft blue
+    public static readonly Color HarvestColor = Color.Gold;
+    public static readonly Color FishColor    = new(64, 156, 220);
+    public static readonly Color ShopColor    = Color.Gold;
+    public static readonly Color ErrorColor   = new(220, 80, 80);   // muted red
+
+    // 5-slot durability bar, e.g. ▰▰▰▱▱ for 60.
+    public static string DurabilityBar(int percent)
+    {
+        if (percent < 0) percent = 0;
+        if (percent > 100) percent = 100;
+        int filled = (int)Math.Round(percent / 20.0);
+        return new string('▰', filled) + new string('▱', 5 - filled);
+    }
+
     public static readonly Dictionary<string, (string fullName, bool can_give, bool can_pet_eat)> InventoryItems = new()
     {
         // db_name / (name / can_give / can_pet_eat)
@@ -41,7 +58,7 @@ public static class FarmEngine
         { "potato",       (10,    4) },
         { "garbage",      (5,     3) }
     };
-    
+
     private static readonly Dictionary<string, int> ItemBuyChart = new()
     {
         // name / price
@@ -66,7 +83,7 @@ public static class FarmEngine
 
         return item.can_give;
     }
-    
+
     public static bool IsValidItem(string choice)
     {
         return InventoryItems.ContainsKey(choice);
@@ -198,6 +215,11 @@ public static class FarmEngine
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
+        // A response that starts with "You have purchased" / "You have sold" is a successful
+        // transaction; anything else (error/insufficient funds/etc) gets the error color.
+        bool success = text.StartsWith("You have purchased") || text.StartsWith("You have sold");
+        embed.Title = success ? "🛒 Transaction complete" : "🛒 Shop";
+        embed.Color = success ? ShopColor : ErrorColor;
         embed.Description = text;
 
         await component.RespondAsync(embed: embed.Build(), ephemeral: true);
@@ -270,22 +292,22 @@ public static class FarmEngine
             {
                 if (amount <= 0)
                 {
-                    list += $"{GetItemName(item)}: `broken`\n";
+                    list += $"{GetItemName(item)}\n`▱▱▱▱▱` *broken*\n";
                 }
                 else
                 {
-                    list += $"{GetItemName(item)}: `{amount}% status`\n";
+                    list += $"{GetItemName(item)}\n`{DurabilityBar(amount)}` {amount}%\n";
                 }
             }
             else if (amount != 0)
             {
-                list += $"{GetItemName(item)}: {amount}\n";
+                list += $"{GetItemName(item)} × **{amount}**\n";
             }
         }
 
         if (list == "")
         {
-            list = "Nothing.";
+            list = "*Nothing.*";
         }
 
         return list;
@@ -303,7 +325,7 @@ public static class FarmEngine
 
         ActionRowBuilder buttonRow = new();
 
-        AddStandardButtons(ref buttonRow);
+        AddStandardButtons(ref buttonRow, except: "fish");
 
         comps.AddRow(buttonRow);
 
@@ -311,8 +333,9 @@ public static class FarmEngine
 
         if (poleStatus <= 0)
         {
-            embed.Title = $"{GetItemName("fishpole")} broken.";
-            embed.Description = $"Your {GetItemName("fishpole")} broke, you need a new one.";
+            embed.Title = $"🎣 {GetItemName("fishpole")} broken";
+            embed.Description = $"Your {GetItemName("fishpole")} is broken. Pick up a new one at the shop.";
+            embed.Color = ErrorColor;
 
             await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
             return;
@@ -320,14 +343,16 @@ public static class FarmEngine
 
         if (!dbUser.CanFish())
         {
-            embed.Title = "Can't fish yet.";
-            embed.Description = $"You may fish again <t:{dbUser.GetFishTime()}:R>";
+            embed.Title = "🎣 Can't fish yet";
+            embed.Description = $"You may fish again <t:{dbUser.GetFishTime()}:R>.";
+            embed.Color = ErrorColor;
 
             await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
             return;
         }
 
-        embed.Title = "Fishing! 🎣";
+        embed.Title = "🎣 Fishing!";
+        embed.Color = FishColor;
 
         int caught = Global.Randomize(100);
         string fishingCatch;
@@ -358,12 +383,8 @@ public static class FarmEngine
                 break;
         }
 
-        EmbedFieldBuilder fishField = new()
-        {
-            Name = "You caught:",
-            Value = GetItemName(fishingCatch)
-        };
-        embed.AddField(fishField);
+        embed.AddField("You caught", $"**+1** {GetItemName(fishingCatch)}", inline: true);
+        embed.AddField("Rod durability", $"{DurabilityBar(poleStatus)} {poleStatus}%", inline: true);
 
         Global.FireAndForget(ModifyItem(dbUser, fishingCatch, +1));
 
@@ -371,8 +392,11 @@ public static class FarmEngine
 
         if (foundPet > 0)
         {
-            embed.AddField("You found a pet.", $"While fishing, you found a friendly {PetEngine.PetNames(foundPet)}, who chased you about. It has been added to your pets.");
-            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+            embed.AddField(
+                "✨ You found a pet!",
+                $"A friendly {PetEngine.PetNames(foundPet)} chased you about while you fished. It's been added to your pets."
+            );
+            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
             expIncrease *= 5;
             expIncrease /= 2;
         }
@@ -385,12 +409,15 @@ public static class FarmEngine
 
         if (poleStatus <= 0)
         {
-            embed.AddField($"{GetItemName("fishpole")} destroyed.", $"Your {GetItemName("fishpole")} broke during this activity, you must get a new one.");
+            embed.AddField(
+                $"🎣 {GetItemName("fishpole")} destroyed",
+                "Your rod snapped. Pick up a new one at the shop."
+            );
         }
 
         embed.Footer = new EmbedFooterBuilder
         {
-            Text = $"{dbUser.AddExp(expIncrease)} | added to inventory."
+            Text = $"{dbUser.AddExp(expIncrease)}  •  added to inventory"
         };
 
         await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
@@ -403,23 +430,29 @@ public static class FarmEngine
 
         await interaction.DeferAsync();
 
-        EmbedFooterBuilder footer = new() { Text = $"{await GetItem(dbUser, "dabloons")} {GetItemName("dabloons")} | {await GetItem(dbUser, "seedbag")} {GetItemName("seedbag")}\n{dbUser.Exp} experience" };
+        embed.Title = "🎒 Inventory";
 
-        embed.Footer = footer;
+        int dabloons = await GetItem(dbUser, "dabloons");
+        int seeds = await GetItem(dbUser, "seedbag");
+
+        embed.Footer = new EmbedFooterBuilder
+        {
+            Text = $"🐾 {dabloons} dabloons  •  🌱 {seeds} seeds  •  ✨ {dbUser.Exp} exp"
+        };
 
         embed.AddField(
-            "Items",
+            "🧰 Tools & misc",
             await ListItems(dbUser, ["garbage", "fishpole", "farmtools"])
         );
 
         embed.AddField(
-            "Catch",
+            "🐟 Catch",
             await ListItems(dbUser, ["fish", "uncommonfish", "rarefish", "shrimp"]),
             true
         );
 
         embed.AddField(
-            "Harvest",
+            "🌾 Harvest",
             await ListItems(dbUser, ["tomato", "carrot", "potato"]),
             true
         );
@@ -430,7 +463,7 @@ public static class FarmEngine
 
         ActionRowBuilder buttonRow = new();
         AddStandardButtons(ref buttonRow, except: "inventory");
-        buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary);
+        buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
 
         comps.AddRow(buttonRow);
 
@@ -453,9 +486,12 @@ public static class FarmEngine
         if (!dbUser.IsValid()) return;
 
         EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-        embed.Description = "The shop allows for buying and selling items for dabloons.";
+        embed.Title = "🛒 Shop";
+        embed.Color = ShopColor;
+        embed.Description = "Use the menus below to buy or sell items.";
 
-        embed.Footer = new EmbedFooterBuilder { Text = $"You have: {await GetItem(dbUser, "dabloons")} {GetItemName("dabloons")}" };
+        int dabloons = await GetItem(dbUser, "dabloons");
+        embed.Footer = new EmbedFooterBuilder { Text = $"🐾 {dabloons} dabloons available" };
 
         var comps = GetShopComponents();
 
@@ -559,10 +595,14 @@ public static class FarmEngine
 
     public static void AddStandardButtons(ref ActionRowBuilder buttonRow, string except = "none")
     {
-        if (except != "fish") buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary);
-        if (except != "farm") buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Primary);
-        if (except != "shop") buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary);
-        if (except != "inventory") buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary);
+        if (except != "fish")
+            buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary, emote: new Emoji("🎣"));
+        if (except != "farm")
+            buttonRow.WithButton(label: "Farm", customId: "farm", style: ButtonStyle.Primary, emote: new Emoji("🌾"));
+        if (except != "shop")
+            buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary, emote: new Emoji("🛒"));
+        if (except != "inventory")
+            buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary, emote: new Emoji("🎒"));
     }
 
 }
