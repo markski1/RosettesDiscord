@@ -213,22 +213,51 @@ public static class FarmEngine
             }
         }
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        // A response that starts with "You have purchased" / "You have sold" is a successful
-        // transaction; anything else (error/insufficient funds/etc) gets the error color.
         bool success = text.StartsWith("You have purchased") || text.StartsWith("You have sold");
-        embed.Title = success ? "🛒 Transaction complete" : "🛒 Shop";
-        embed.Color = success ? ShopColor : ErrorColor;
-        embed.Description = text;
 
-        await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, success ? ShopColor : ErrorColor);
+        Global.AddTitle(container, success ? "### 🛒 Transaction complete" : "### 🛒 Shop");
+        container.WithTextDisplay(text);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await component.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
 
         // reset the shop component options
         try
         {
-            await component.Message.ModifyAsync(x => x.Components = GetShopComponents(empty: true).Build());
-            await component.Message.ModifyAsync(x => x.Components = GetShopComponents().Build());
+            int dabloons = await GetItem(dbUser, "dabloons");
+
+            ContainerBuilder resetContainer = await Global.MakeRosettesContainer(dbUser, ShopColor);
+            Global.AddTitle(resetContainer, "### 🛒 Shop");
+            resetContainer.WithTextDisplay("Use the menus below to buy or sell items.");
+            Global.AddFooter(resetContainer, $"🐾 {dabloons} dabloons");
+            GetShopComponentsV2(resetContainer);
+            await Global.AddAuthorFooter(resetContainer, dbUser);
+
+            ComponentBuilderV2 resetComps = new();
+            resetComps.WithContainer(resetContainer);
+            await component.Message.ModifyAsync(x =>
+            {
+                x.Components = resetComps.Build();
+                x.Flags = MessageFlags.ComponentsV2;
+            });
+
+            ContainerBuilder resetContainer2 = await Global.MakeRosettesContainer(dbUser, ShopColor);
+            Global.AddTitle(resetContainer2, "### 🛒 Shop");
+            resetContainer2.WithTextDisplay("Use the menus below to buy or sell items.");
+            Global.AddFooter(resetContainer2, $"🐾 {dabloons} dabloons");
+            GetShopComponentsV2(resetContainer2);
+            await Global.AddAuthorFooter(resetContainer2, dbUser);
+
+            ComponentBuilderV2 resetComps2 = new();
+            resetComps2.WithContainer(resetContainer2);
+            await component.Message.ModifyAsync(x =>
+            {
+                x.Components = resetComps2.Build();
+                x.Flags = MessageFlags.ComponentsV2;
+            });
         }
         catch
         {
@@ -319,40 +348,41 @@ public static class FarmEngine
     {
         var dbUser = await UserEngine.GetDbUser(user);
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        ComponentBuilder comps = new();
-
-        ActionRowBuilder buttonRow = new();
-
-        AddStandardButtons(ref buttonRow, except: "fish");
-
-        comps.AddRow(buttonRow);
-
         var poleStatus = await GetItem(dbUser, "fishpole");
 
         if (poleStatus <= 0)
         {
-            embed.Title = $"🎣 {GetItemName("fishpole")} broken";
-            embed.Description = $"Your {GetItemName("fishpole")} is broken. Pick up a new one at the shop.";
-            embed.Color = ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, ErrorColor);
+            errorContainer.WithTextDisplay($"🎣 {GetItemName("fishpole")} broken");
+            errorContainer.WithTextDisplay($"Your {GetItemName("fishpole")} is broken. Pick up a new one at the shop.");
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+            ActionRowBuilder errorRow = new();
+            AddStandardButtons(ref errorRow);
+            errorContainer.WithActionRow(errorRow);
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
         if (!dbUser.CanFish())
         {
-            embed.Title = "🎣 Can't fish yet";
-            embed.Description = $"You may fish again <t:{dbUser.GetFishTime()}:R>.";
-            embed.Color = ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, ErrorColor);
+            errorContainer.WithTextDisplay("🎣 Can't fish yet");
+            errorContainer.WithTextDisplay($"You may fish again <t:{dbUser.GetFishTime()}:R>.");
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+            ActionRowBuilder errorRow = new();
+            AddStandardButtons(ref errorRow);
+            errorContainer.WithActionRow(errorRow);
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
-
-        embed.Title = "🎣 Fishing!";
-        embed.Color = FishColor;
 
         int caught = Global.Randomize(100);
         string fishingCatch;
@@ -383,89 +413,81 @@ public static class FarmEngine
                 break;
         }
 
-        embed.AddField("You caught", $"**+1** {GetItemName(fishingCatch)}", inline: true);
-        embed.AddField("Rod durability", $"{DurabilityBar(poleStatus)} {poleStatus}%", inline: true);
-
         Global.FireAndForget(ModifyItem(dbUser, fishingCatch, +1));
 
         int foundPet = await PetEngine.RollForPet(dbUser);
 
         if (foundPet > 0)
-        {
-            embed.AddField(
-                "✨ You found a pet!",
-                $"A friendly {PetEngine.PetNames(foundPet)} chased you about while you fished. It's been added to your pets."
-            );
-            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
-            expIncrease *= 5;
-            expIncrease /= 2;
-        }
+            expIncrease = (expIncrease * 5) / 2;
 
         int damage = 3 + Global.Randomize(4);
-
         poleStatus -= damage;
-
         Global.FireAndForget(ModifyItem(dbUser, "fishpole", -damage));
 
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FishColor);
+        Global.AddTitle(container, "### 🎣 Fishing!");
+        container.WithTextDisplay($"**You caught**\n**+1** {GetItemName(fishingCatch)}");
+        container.WithTextDisplay($"**Rod durability**\n{DurabilityBar(poleStatus)} {poleStatus}%");
+
+        if (foundPet > 0)
+            container.WithTextDisplay($"**✨ You found a pet!**\nA friendly {PetEngine.PetNames(foundPet)} chased you about while you fished. It's been added to your pets.");
+
         if (poleStatus <= 0)
-        {
-            embed.AddField(
-                $"🎣 {GetItemName("fishpole")} destroyed",
-                "Your rod snapped. Pick up a new one at the shop."
-            );
-        }
+            container.WithTextDisplay($"**🎣 {GetItemName("fishpole")} destroyed**\nYour rod snapped. Pick up a new one at the shop.");
 
-        embed.Footer = new EmbedFooterBuilder
-        {
-            Text = $"{dbUser.AddExp(expIncrease)}  •  added to inventory"
-        };
+        Global.AddFooter(container, $"{dbUser.AddExp(expIncrease)}  •  added to inventory");
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        ActionRowBuilder buttonRow = new();
+        AddStandardButtons(ref buttonRow, except: "fish");
+        if (foundPet > 0)
+            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
+        container.WithActionRow(buttonRow);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
         await interaction.DeferAsync();
-
-        embed.Title = "🎒 Inventory";
 
         int dabloons = await GetItem(dbUser, "dabloons");
         int seeds = await GetItem(dbUser, "seedbag");
 
-        embed.Footer = new EmbedFooterBuilder
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, "### 🎒 Inventory");
+
+        string tools = await ListItems(dbUser, ["fishpole", "farmtools"]);
+        if (!string.IsNullOrWhiteSpace(tools))
+            container.WithTextDisplay(tools.TrimEnd());
+
+        string harvest = await ListItems(dbUser, ["tomato", "carrot", "potato"]);
+        string catchItems = await ListItems(dbUser, ["fish", "uncommonfish", "rarefish", "shrimp"]);
+
+        if (!string.IsNullOrWhiteSpace(harvest) || !string.IsNullOrWhiteSpace(catchItems))
         {
-            Text = $"🐾 {dabloons} dabloons  •  🌱 {seeds} seeds  •  ✨ {dbUser.Exp} exp"
-        };
+            string items = "";
+            if (!string.IsNullOrWhiteSpace(harvest)) items += harvest;
+            if (!string.IsNullOrWhiteSpace(catchItems)) items += catchItems;
+            container.WithTextDisplay(items.TrimEnd());
+        }
 
-        embed.AddField(
-            "🧰 Tools & misc",
-            await ListItems(dbUser, ["garbage", "fishpole", "farmtools"])
-        );
+        string misc = await ListItems(dbUser, ["garbage"]);
+        if (!string.IsNullOrWhiteSpace(misc))
+            container.WithTextDisplay(misc.TrimEnd());
 
-        embed.AddField(
-            "🐟 Catch",
-            await ListItems(dbUser, ["fish", "uncommonfish", "rarefish", "shrimp"]),
-            true
-        );
-
-        embed.AddField(
-            "🌾 Harvest",
-            await ListItems(dbUser, ["tomato", "carrot", "potato"]),
-            true
-        );
-
-        embed.Description = null;
-
-        ComponentBuilder comps = new();
+        Global.AddFooter(container, $"🐾 {dabloons} dabloons  •  🌱 {seeds} seeds  •  ✨ {dbUser.Exp} exp");
 
         ActionRowBuilder buttonRow = new();
         AddStandardButtons(ref buttonRow, except: "inventory");
         buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
-
-        comps.AddRow(buttonRow);
+        container.WithActionRow(buttonRow);
 
         Pet? pet = await PetEngine.GetUserPet(dbUser);
 
@@ -474,10 +496,15 @@ public static class FarmEngine
             ActionRowBuilder petRow = new();
             petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
             petRow.WithButton(label: $"{pet.GetEmoji()} information", customId: "pet_view", style: ButtonStyle.Secondary);
-            comps.AddRow(petRow);
+            container.WithActionRow(petRow);
         }
 
-        await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.FollowupAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task ShowShopFunc(SocketInteraction interaction, SocketUser user)
@@ -485,17 +512,22 @@ public static class FarmEngine
         var dbUser = await UserEngine.GetDbUser(user);
         if (!dbUser.IsValid()) return;
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-        embed.Title = "🛒 Shop";
-        embed.Color = ShopColor;
-        embed.Description = "Use the menus below to buy or sell items.";
-
         int dabloons = await GetItem(dbUser, "dabloons");
-        embed.Footer = new EmbedFooterBuilder { Text = $"🐾 {dabloons} dabloons available" };
 
-        var comps = GetShopComponents();
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, ShopColor);
+        Global.AddTitle(container, "### 🛒 Shop");
+        container.WithTextDisplay("Use the menus below to buy or sell items.");
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        Global.AddFooter(container, $"🐾 {dabloons} dabloons");
+
+        GetShopComponentsV2(container);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     private static ComponentBuilder GetShopComponents(bool empty = false)
@@ -591,6 +623,107 @@ public static class FarmEngine
                 .WithSelectMenu(sellMenu)
                 .WithSelectMenu(sellAllMenu)
                 .AddRow(buttonRow);
+    }
+
+    private static void GetShopComponentsV2(ContainerBuilder container, bool empty = false)
+    {
+        SelectMenuBuilder buyMenu = new()
+        {
+            Placeholder = "Buy...",
+            CustomId = "buy",
+            MinValues = 1,
+            MaxValues = 1
+        };
+        if (!empty)
+        {
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("seedbag")}", value: "seedbag:1",
+                description: $"{ItemBuyChart["seedbag"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"5 {GetItemName("seedbag")}", value: "seedbag:5",
+                description: $"{ItemBuyChart["seedbag"] * 5} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"10 {GetItemName("seedbag")}", value: "seedbag:10",
+                description: $"{ItemBuyChart["seedbag"] * 10} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("fishpole")}", value: "fishpole:1",
+                description: $"{ItemBuyChart["fishpole"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("farmtools")}", value: "farmtools:1",
+                description: $"{ItemBuyChart["farmtools"]} {GetItemName("dabloons")}");
+            buyMenu.AddOption(
+                label: $"1 {GetItemName("plots")}", value: "plots:1",
+                description: $"{ItemBuyChart["plots"]} {GetItemName("dabloons")}");
+        }
+        else
+        {
+            buyMenu.AddOption(label: "Please wait...", value: "NULL");
+        }
+        buyMenu.MaxValues = 1;
+
+        SelectMenuBuilder sellMenu = new()
+        {
+            Placeholder = "Sell...",
+            CustomId = "sell",
+            MinValues = 1,
+            MaxValues = 1
+        };
+        if (!empty)
+        {
+            foreach (var item in ItemSaleChart.Keys)
+            {
+                sellMenu.AddOption(
+                    label: $"{ItemSaleChart[item].amount} {GetItemName(item)}",
+                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")}",
+                    value: item
+                );
+            }
+        }
+        else
+        {
+            sellMenu.AddOption(label: "Please wait...", value: "NULL");
+        }
+        sellMenu.MaxValues = 1;
+
+        SelectMenuBuilder sellAllMenu = new()
+        {
+            Placeholder = "Sell everything of...",
+            CustomId = "sell_e",
+            MinValues = 1,
+            MaxValues = 1
+        };
+        if (!empty)
+        {
+            foreach (var item in ItemSaleChart.Keys)
+            {
+                sellAllMenu.AddOption(
+                    label: GetItemName(item),
+                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")} per every {ItemSaleChart[item].amount}",
+                    value: item
+                );
+            }
+        }
+        else
+        {
+            sellAllMenu.AddOption(label: "Please wait...", value: "NULL");
+        }
+        sellAllMenu.MaxValues = 1;
+
+        ActionRowBuilder buyRow = new();
+        buyRow.WithSelectMenu(buyMenu);
+        container.WithActionRow(buyRow);
+
+        ActionRowBuilder sellRow = new();
+        sellRow.WithSelectMenu(sellMenu);
+        container.WithActionRow(sellRow);
+
+        ActionRowBuilder sellAllRow = new();
+        sellAllRow.WithSelectMenu(sellAllMenu);
+        container.WithActionRow(sellAllRow);
+
+        ActionRowBuilder buttonRow = new();
+        AddStandardButtons(ref buttonRow, except: "shop");
+        container.WithActionRow(buttonRow);
     }
 
     public static void AddStandardButtons(ref ActionRowBuilder buttonRow, string except = "none")

@@ -123,6 +123,37 @@ public static class Global
         return embed;
     }
 
+    public static async Task<ContainerBuilder> MakeRosettesContainer(User? dbUser = null, Color? accentColor = null)
+    {
+        ContainerBuilder container = new();
+        container.WithAccentColor(accentColor ?? Color.DarkPurple);
+        return container;
+    }
+
+    public static void AddTitle(ContainerBuilder container, string title)
+    {
+        container.WithTextDisplay(title);
+        container.WithSeparator(SeparatorSpacingSize.Small, isDivider: true);
+    }
+
+    public static void AddFooter(ContainerBuilder container, string text)
+    {
+        container.WithSeparator(SeparatorSpacingSize.Small, isDivider: true);
+        container.WithTextDisplay(text);
+    }
+
+    public static async Task AddAuthorFooter(ContainerBuilder container, User dbUser)
+    {
+        string authorText = $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
+
+        var pet = await PetEngine.GetUserPet(dbUser);
+        if (pet is not null)
+            authorText += $" [{pet.GetName()}]";
+
+        container.WithSeparator(SeparatorSpacingSize.Small, isDivider: true);
+        container.WithTextDisplay(authorText);
+    }
+
     public static void GenerateErrorMessage(string source, string error)
     {
         // generate the error string

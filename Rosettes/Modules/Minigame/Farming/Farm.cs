@@ -100,10 +100,9 @@ public static class Farm
     public static async Task ShowFarm(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
 
-        embed.Title = "🌾 Your Farm";
-        embed.Color = FarmEngine.FarmColor;
+        Global.AddTitle(container, "### 🌾 Your Farm");
 
         List<Crop> crops = (await FarmRepository.GetUserCrops(dbUser)).ToList();
         var cropsByPlot = crops.ToDictionary(c => c.PlotId);
@@ -116,77 +115,70 @@ public static class Farm
 
         int now = Now();
 
-        // Render plots as a 3-column grid (max plots = 3) for a clean layout.
+        string plotLines = "";
+
         for (int i = 1; i <= plots; i++)
         {
-            string title;
-            string plotText;
-
             if (!cropsByPlot.TryGetValue(i, out var currentCrop))
             {
-                title = $"🟫 Plot {i}";
-                plotText = "*Empty, ready for seeds.*";
+                plotLines += $"🟫 **Plot {i}** - *Empty, ready for seeds.*\n";
                 anyCanBePlanted = true;
             }
             else if (currentCrop.UnixGrowth < now)
             {
-                title = $"{CropEmoji(currentCrop.CropType)} Plot {i}";
-                plotText = $"**Ready to harvest.**\n{FarmEngine.GetItemName(GetHarvest(currentCrop.CropType))}";
+                plotLines += $"{CropEmoji(currentCrop.CropType)} **Plot {i}** - **Ready to harvest.**\n";
                 anyCanBeHarvested = true;
             }
             else if (currentCrop.UnixNextWater < now)
             {
-                title = $"💧 Plot {i}";
-                plotText = $"*Needs water.*\nHarvest <t:{currentCrop.UnixGrowth}:R>";
+                plotLines += $"💧 **Plot {i}** - *Needs water.* - Harvest <t:{currentCrop.UnixGrowth}:R>\n";
                 anyCanBeWatered = true;
             }
             else
             {
-                title = $"🌱 Plot {i}";
-                plotText = $"Harvest <t:{currentCrop.UnixGrowth}:R>";
-                if (currentCrop.UnixGrowth > currentCrop.UnixNextWater)
-                    plotText += $"\nWater <t:{currentCrop.UnixNextWater}:R>";
+                string extra = currentCrop.UnixGrowth > currentCrop.UnixNextWater
+                    ? $" - Water <t:{currentCrop.UnixNextWater}:R>"
+                    : "";
+                plotLines += $"🌱 **Plot {i}** - Harvest <t:{currentCrop.UnixGrowth}:R>{extra}\n";
             }
-
-            embed.AddField(title, plotText, inline: true);
         }
 
-        // Fishing pond in its own row beneath the plots.
-        embed.AddField(
-            "🎣 Fishing Pond",
-            dbUser.GetFishTime() < now
-                ? "*You can fish right now.*"
-                : $"Available again <t:{dbUser.GetFishTime()}:R>."
-        );
+        container.WithTextDisplay(plotLines.TrimEnd());
+
+        string fishText = dbUser.GetFishTime() < now
+            ? "*You can fish right now.*"
+            : $"Available again <t:{dbUser.GetFishTime()}:R>.";
+
+        container.WithTextDisplay($"🎣 **Fishing Pond** - {fishText}");
 
         int seeds = await FarmRepository.FetchInventoryItem(dbUser, "seedbag");
         int dabloons = await FarmEngine.GetItem(dbUser, "dabloons");
         int occupied = cropsByPlot.Count;
-        embed.Footer = new()
-        {
-            Text = $"🌱 {seeds} seeds  •  🐾 {dabloons} dabloons  •  🌿 {occupied}/{plots} plots in use"
-        };
 
-        ComponentBuilder comps = new();
+        Global.AddFooter(container, $"🌱 {seeds} seeds  •  🐾 {dabloons} dabloons  •  🌿 {occupied}/{plots} plots");
 
         if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered)
         {
-            ActionRowBuilder actionRow = new();
+            ActionRowBuilder farmActionRow = new();
             if (anyCanBeHarvested)
-                actionRow.WithButton(label: "Harvest", customId: "crops_harvest", style: ButtonStyle.Success, emote: new Emoji("🌾"));
+                farmActionRow.WithButton(label: "Harvest", customId: "crops_harvest", style: ButtonStyle.Success, emote: new Emoji("🌾"));
             if (anyCanBeWatered)
-                actionRow.WithButton(label: "Water", customId: "crops_water", style: ButtonStyle.Success, emote: new Emoji("💧"));
+                farmActionRow.WithButton(label: "Water", customId: "crops_water", style: ButtonStyle.Success, emote: new Emoji("💧"));
             if (anyCanBePlanted)
-                actionRow.WithButton(label: "Plant", customId: "crops_plant", style: ButtonStyle.Success, emote: new Emoji("🌱"));
-
-            comps.AddRow(actionRow);
+                farmActionRow.WithButton(label: "Plant", customId: "crops_plant", style: ButtonStyle.Success, emote: new Emoji("🌱"));
+            container.WithActionRow(farmActionRow);
         }
 
         ActionRowBuilder buttonRow = new();
         FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
-        comps.AddRow(buttonRow);
+        container.WithActionRow(buttonRow);
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     private static string CropEmoji(int cropType) =>
@@ -201,27 +193,23 @@ public static class Farm
     public static async Task PlantSeed(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        embed.Title = "🌱 Planting seeds";
-        embed.Color = FarmEngine.FarmColor;
-
-        ComponentBuilder comps = new();
-
-        ActionRowBuilder buttonRow = new();
 
         var toolStatus = await FarmEngine.GetItem(dbUser, "farmtools");
 
         if (toolStatus <= 0)
         {
-            embed.Title = $"🧰 {FarmEngine.GetItemName("farmtools")} broken";
-            embed.Description = $"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.";
-            embed.Color = FarmEngine.ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay($"🧰 {FarmEngine.GetItemName("farmtools")} broken");
+            errorContainer.WithTextDisplay($"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.");
 
-            FarmEngine.AddStandardButtons(ref buttonRow);
-            comps.AddRow(buttonRow);
+            ActionRowBuilder errorButtons = new();
+            FarmEngine.AddStandardButtons(ref errorButtons);
+            errorContainer.WithActionRow(errorButtons);
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -233,18 +221,19 @@ public static class Farm
 
         if (seeds <= 0)
         {
-            embed.Title = "🌱 Out of seeds";
-            embed.Description = "You have no seed bags. Pick some up at the shop.";
-            embed.Color = FarmEngine.ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("🌱 Out of seeds");
+            errorContainer.WithTextDisplay("You have no seed bags. Pick some up at the shop.");
 
-            ComponentBuilder failComps = new();
-            ActionRowBuilder failButtons = new();
+            ActionRowBuilder failRow = new();
+            failRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Primary, emote: new Emoji("🛒"));
+            failRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary, emote: new Emoji("🎒"));
+            errorContainer.WithActionRow(failRow);
 
-            failButtons.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Primary, emote: new Emoji("🛒"));
-            failButtons.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary, emote: new Emoji("🎒"));
+            ComponentBuilderV2 failComps = new();
+            failComps.WithContainer(errorContainer);
 
-            failComps.AddRow(failButtons);
-            await interaction.RespondAsync(embed: embed.Build(), components: failComps.Build(), ephemeral: true);
+            await interaction.RespondAsync(components: failComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -253,11 +242,14 @@ public static class Farm
 
         if (occupiedPlots.Count >= plots)
         {
-            embed.Title = "🌿 No space to plant";
-            embed.Description = "All your plots are currently occupied.";
-            embed.Color = FarmEngine.ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("🌿 No space to plant");
+            errorContainer.WithTextDisplay("All your plots are currently occupied.");
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -296,8 +288,13 @@ public static class Farm
 
             if (plantedCrop is null)
             {
-                embed.Description = "Sorry, there was an error in this operation. Not planted.";
-                await interaction.RespondAsync(embed: embed.Build(), ephemeral: true);
+                ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+                errorContainer.WithTextDisplay("Sorry, there was an error in this operation. Not planted.");
+
+                ComponentBuilderV2 errorComps = new();
+                errorComps.WithContainer(errorContainer);
+
+                await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
                 return;
             }
 
@@ -316,49 +313,41 @@ public static class Farm
             break;
         }
 
-        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
-        comps.AddRow(buttonRow);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
+        Global.AddTitle(container, "### 🌱 Planting seeds");
 
         foreach (var plot in plantedCrops)
         {
-            embed.AddField(
-                $"🌱 Plot {plot.PlotId}",
-                $"Harvest <t:{plot.UnixGrowth}:R>\nWater <t:{plot.UnixNextWater}:R>",
-                inline: true
-            );
+            container.WithTextDisplay($"**🌱 Plot {plot.PlotId}**\nHarvest <t:{plot.UnixGrowth}:R>\nWater <t:{plot.UnixNextWater}:R>");
         }
-
-        embed.Footer = new EmbedFooterBuilder
-        {
-            Text = $"{dbUser.AddExp(plantedCrops.Count * 5)}  •  🌱 {plantedCrops.Count} seed{(plantedCrops.Count == 1 ? "" : "s")} planted"
-        };
 
         if (toolsBroken)
         {
-            embed.AddField(
-                $"🧰 {FarmEngine.GetItemName("farmtools")} destroyed",
-                "Your tools broke while planting. Pick up a new set at the shop."
-            );
+            container.WithTextDisplay($"**🧰 {FarmEngine.GetItemName("farmtools")} destroyed**\nYour tools broke while planting. Pick up a new set at the shop.");
         }
 
         if (ranOutSeeds)
         {
-            embed.AddField(
-                $"🌱 Out of {FarmEngine.GetItemName("seedbag")}",
-                "Some plots were left unplanted. Restock at the shop."
-            );
+            container.WithTextDisplay($"**🌱 Out of {FarmEngine.GetItemName("seedbag")}**\nSome plots were left unplanted. Restock at the shop.");
         }
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        Global.AddFooter(container, $"{dbUser.AddExp(plantedCrops.Count * 5)}  •  🌱 {plantedCrops.Count} seed{(plantedCrops.Count == 1 ? "" : "s")} planted");
+
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
+        container.WithActionRow(buttonRow);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task WaterCrops(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        embed.Title = "💧 Watering crops";
-        embed.Color = FarmEngine.WaterColor;
 
         int count = 0;
         bool cropsToHarvest = false;
@@ -367,6 +356,8 @@ public static class Farm
 
         List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
 
+        List<string> plotTexts = [];
+
         foreach (var crop in cropsToList.Where(crop => crop.UnixNextWater < now))
         {
             crop.UnixNextWater = now + WaterBaseSeconds + (WaterRandomChunkSeconds * Global.Randomize(WaterRandomChunks));
@@ -374,90 +365,93 @@ public static class Farm
 
             await FarmRepository.UpdateCrop(crop);
 
-            string title = $"💧 Plot {crop.PlotId}";
             string text;
             if (crop.UnixGrowth < now)
             {
-                text = "**Ready to harvest.**";
+                text = $"**💧 Plot {crop.PlotId}**\n**Ready to harvest.**";
                 cropsToHarvest = true;
             }
             else
             {
-                text = $"Harvest <t:{crop.UnixGrowth}:R>";
+                text = $"**💧 Plot {crop.PlotId}**\nHarvest <t:{crop.UnixGrowth}:R>";
                 if (crop.UnixGrowth > crop.UnixNextWater)
                     text += $"\nWater <t:{crop.UnixNextWater}:R>";
             }
-            embed.AddField(title, text, inline: true);
+            plotTexts.Add(text);
 
             count++;
         }
 
         if (count == 0)
         {
-            EmbedBuilder noneEmbed = await Global.MakeRosettesEmbed(dbUser);
-            noneEmbed.Title = "💧 Nothing to water";
-            noneEmbed.Description = "None of your plots are thirsty right now.";
-            noneEmbed.Color = FarmEngine.ErrorColor;
-            await interaction.RespondAsync(embed: noneEmbed.Build(), ephemeral: true);
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("💧 Nothing to water");
+            errorContainer.WithTextDisplay("None of your plots are thirsty right now.");
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
-        }
-
-        ComponentBuilder comps = new();
-
-        if (cropsToHarvest)
-        {
-            ActionRowBuilder actionRow = new();
-            actionRow.WithButton(label: "Harvest", customId: "crops_harvest", style: ButtonStyle.Success, emote: new Emoji("🌾"));
-            comps.AddRow(actionRow);
         }
 
         int expIncrease = 5 * count;
 
-        ActionRowBuilder buttonRow = new();
-        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
-
         int foundPet = await PetEngine.RollForPet(dbUser);
         if (foundPet > 0)
-        {
-            embed.AddField(
-                "✨ You found a pet.",
-                $"A friendly {PetEngine.PetNames(foundPet)} chased you about while you watered. It's been added to your pets."
-            );
-            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
             expIncrease = (expIncrease * 5) / 2;
+
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.WaterColor);
+        Global.AddTitle(container, "### 💧 Watering crops");
+
+        foreach (var text in plotTexts)
+            container.WithTextDisplay(text);
+
+        if (foundPet > 0)
+            container.WithTextDisplay($"**✨ You found a pet.**\nA friendly {PetEngine.PetNames(foundPet)} chased you about while you watered. It's been added to your pets.");
+
+        Global.AddFooter(container, $"{dbUser.AddExp(expIncrease)}  •  💧 {count} {Pluralize(count, "plot", "plots")} watered");
+
+        if (cropsToHarvest)
+        {
+            ActionRowBuilder harvestRow = new();
+            harvestRow.WithButton(label: "Harvest", customId: "crops_harvest", style: ButtonStyle.Success, emote: new Emoji("🌾"));
+            container.WithActionRow(harvestRow);
         }
 
-        embed.Footer = new EmbedFooterBuilder
-        {
-            Text = $"{dbUser.AddExp(expIncrease)}  •  💧 {count} {Pluralize(count, "plot", "plots")} watered"
-        };
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
+        if (foundPet > 0)
+            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
+        container.WithActionRow(buttonRow);
 
-        comps.AddRow(buttonRow);
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task HarvestCrops(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        embed.Title = "🌾 Harvesting crops";
-        embed.Color = FarmEngine.HarvestColor;
-
-        ComponentBuilder comps = new();
 
         var toolStatus = await FarmEngine.GetItem(dbUser, "farmtools");
         if (toolStatus <= 0)
         {
-            embed.Title = $"🧰 {FarmEngine.GetItemName("farmtools")} broken";
-            embed.Description = $"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.";
-            embed.Color = FarmEngine.ErrorColor;
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay($"🧰 {FarmEngine.GetItemName("farmtools")} broken");
+            errorContainer.WithTextDisplay($"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.");
 
             ActionRowBuilder brokenRow = new();
             FarmEngine.AddStandardButtons(ref brokenRow);
-            comps.AddRow(brokenRow);
+            errorContainer.WithActionRow(brokenRow);
 
-            await interaction.RespondAsync(embed: embed.Build(), components: comps.Build(), ephemeral: true);
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -467,13 +461,14 @@ public static class Farm
         int expIncrease = 0;
         bool plotsWereHarvested = false;
 
+        List<string> harvestTexts = [];
+
         List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
         foreach (var crop in cropsToList.Where(crop => crop.UnixGrowth < now))
         {
             var success = await FarmRepository.DeleteCrop(crop);
             if (!success)
             {
-                // quiet fail, but it will be reported above
                 continue;
             }
 
@@ -491,11 +486,7 @@ public static class Farm
                 ? $"{QualityStars(quality)} *{QualityLabel(quality)}*"
                 : $"{QualityStars(quality)} *{QualityLabel(quality)}* ({baseEarnings} → {earnings})";
 
-            embed.AddField(
-                $"{CropEmoji(crop.CropType)} Plot {crop.PlotId}",
-                $"**+{earnings}** {FarmEngine.GetItemName(harvest)}\n{qualityLine}",
-                inline: true
-            );
+            harvestTexts.Add($"**{CropEmoji(crop.CropType)} Plot {crop.PlotId}**\n**+{earnings}** {FarmEngine.GetItemName(harvest)}\n{qualityLine}");
 
             count++;
             plotsWereHarvested = true;
@@ -503,55 +494,58 @@ public static class Farm
 
         if (count == 0)
         {
-            EmbedBuilder noneEmbed = await Global.MakeRosettesEmbed(dbUser);
-            noneEmbed.Title = "🌾 Nothing to harvest";
-            noneEmbed.Description = "None of your crops are ready yet.";
-            noneEmbed.Color = FarmEngine.ErrorColor;
-            await interaction.RespondAsync(embed: noneEmbed.Build(), ephemeral: true);
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("🌾 Nothing to harvest");
+            errorContainer.WithTextDisplay("None of your crops are ready yet.");
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
-        ActionRowBuilder buttonRow = new();
-        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
-
         int foundPet = await PetEngine.RollForPet(dbUser);
         if (foundPet > 0)
-        {
-            embed.AddField(
-                "✨ You found a pet.",
-                $"A friendly {PetEngine.PetNames(foundPet)} chased you about while you harvested. It's been added to your pets."
-            );
-            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
             expIncrease = (expIncrease * 5) / 2;
-        }
 
-        if (plotsWereHarvested)
-        {
-            ActionRowBuilder actionRow = new();
-            actionRow.WithButton(label: "Plant", customId: "crops_plant", style: ButtonStyle.Success, emote: new Emoji("🌱"));
-            comps.AddRow(actionRow);
-        }
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.HarvestColor);
+        Global.AddTitle(container, "### 🌾 Harvesting crops");
 
-        comps.AddRow(buttonRow);
+        foreach (var text in harvestTexts)
+            container.WithTextDisplay(text);
 
-        embed.Footer = new EmbedFooterBuilder
-        {
-            Text = $"{dbUser.AddExp(expIncrease)}  •  🌾 {count} {Pluralize(count, "plot", "plots")} harvested"
-        };
+        if (foundPet > 0)
+            container.WithTextDisplay($"**✨ You found a pet.**\nA friendly {PetEngine.PetNames(foundPet)} chased you about while you harvested. It's been added to your pets.");
 
         int damage = 3 + Global.Randomize(2);
         toolStatus -= damage;
         FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
 
         if (toolStatus <= 0)
+            container.WithTextDisplay($"**🧰 {FarmEngine.GetItemName("farmtools")} destroyed**\nYour tools broke while harvesting. Pick up a new set at the shop.");
+
+        Global.AddFooter(container, $"{dbUser.AddExp(expIncrease)}  •  🌾 {count} {Pluralize(count, "plot", "plots")} harvested");
+
+        if (plotsWereHarvested)
         {
-            embed.AddField(
-                $"🧰 {FarmEngine.GetItemName("farmtools")} destroyed",
-                "Your tools broke while harvesting. Pick up a new set at the shop."
-            );
+            ActionRowBuilder plantRow = new();
+            plantRow.WithButton(label: "Plant", customId: "crops_plant", style: ButtonStyle.Success, emote: new Emoji("🌱"));
+            container.WithActionRow(plantRow);
         }
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
+        if (foundPet > 0)
+            buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
+        container.WithActionRow(buttonRow);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 }
 

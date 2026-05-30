@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
-    <PackageReference Include="Discord.Net" Version="3.18.0" />
+    <PackageReference Include="Discord.Net" Version="3.19.1" />
     <PackageReference Include="Genbox.Wikipedia" Version="4.0.0" />
     <PackageReference Include="JikanDotNet" Version="2.10.1" />
     <PackageReference Include="MetadataExtractor" Version="2.9.0" />

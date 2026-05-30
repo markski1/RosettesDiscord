@@ -120,11 +120,8 @@ public static class PetEngine
     public static async Task ShowPets(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
         await interaction.DeferAsync();
-
-        embed.Title = "Pets";
 
         string petString = "", petString2 = "";
 
@@ -146,18 +143,12 @@ public static class PetEngine
             petString = "None. You can randomly find pets during activities such as fishing.";
         }
 
-        embed.AddField("Pets in ownership:", petString, inline: true);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, "### Pets");
+        container.WithTextDisplay($"**Pets in ownership:**\n{petString}");
 
         if (petString2 != "")
-        {
-            embed.AddField("=====", petString2, inline: true);
-        }
-
-        embed.Description = null;
-
-        ComponentBuilder comps = new();
-
-        ActionRowBuilder buttonRow = new();
+            container.WithTextDisplay($"**=====\n{petString2}");
 
         SelectMenuBuilder petMenu = new()
         {
@@ -172,10 +163,13 @@ public static class PetEngine
 
         petMenu.MaxValues = 1;
 
-        comps.WithSelectMenu(petMenu);
-        FarmEngine.AddStandardButtons(ref buttonRow, "fish");
+        ActionRowBuilder menuRow = new();
+        menuRow.WithSelectMenu(petMenu);
+        container.WithActionRow(menuRow);
 
-        comps.AddRow(buttonRow);
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow, "fish");
+        container.WithActionRow(buttonRow);
 
         Pet? pet = await GetUserPet(dbUser);
 
@@ -184,18 +178,20 @@ public static class PetEngine
             ActionRowBuilder petRow = new();
             petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
             petRow.WithButton(label: $"{pet.GetEmoji()} information", customId: "pet_view", style: ButtonStyle.Secondary);
-            comps.AddRow(petRow);
+            container.WithActionRow(petRow);
         }
 
-        await interaction.FollowupAsync(embed: embed.Build(), components: comps.Build());
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.FollowupAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task PetAPet(SocketMessageComponent component)
     {
         User dbUser = await UserEngine.GetDbUser(component.User);
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
-        embed.Title = "*pets!*";
 
         string action = component.Data.CustomId;
         ulong id = ulong.Parse(action[6..]);
@@ -226,34 +222,37 @@ public static class PetEngine
 
         var receiverGuildUser = userGuildRef.Guild.GetUser(id);
 
+        string description;
         if (receiverUser != dbUser)
-        {
-            embed.Description = $"{userGuildRef.Mention} has pet {receiverGuildUser.Mention}'s pet {receivingPet.GetName()}.";
-        }
+            description = $"{userGuildRef.Mention} has pet {receiverGuildUser.Mention}'s pet {receivingPet.GetName()}.";
         else
-        {
-            embed.Description = $"{userGuildRef.Mention} has pet their own {receivingPet.GetName()}.";
-        }
+            description = $"{userGuildRef.Mention} has pet their own {receivingPet.GetName()}.";
 
-        ComponentBuilder comps = new();
-        ActionRowBuilder petRow = new();
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, "### *pets!\\*");
+        container.WithTextDisplay(description);
+        Global.AddFooter(container, $"Pet has gained {happinessGained} happiness.");
+
         ActionRowBuilder buttonRow = new();
         FarmEngine.AddStandardButtons(ref buttonRow, "shop");
-        comps.AddRow(buttonRow);
 
         Pet? ownPet = await GetUserPet(dbUser);
 
+        ActionRowBuilder petRow = new();
         if (ownPet is not null)
-        {
             petRow.WithButton(label: $"Pet {userGuildRef.DisplayName}'s {ownPet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Secondary);
-        }
+        if (dbUser != receiverUser)
+            petRow.WithButton(label: $"Pet {receiverGuildUser.DisplayName}'s {receivingPet.GetName()}", customId: $"doPet_{receiverUser.Id}", style: ButtonStyle.Secondary);
 
-        if (dbUser != receiverUser) petRow.WithButton(label: $"Pet {receiverGuildUser.DisplayName}'s {receivingPet.GetName()}", customId: $"doPet_{receiverUser.Id}", style: ButtonStyle.Secondary);
-        comps.AddRow(petRow);
+        container.WithActionRow(buttonRow);
+        container.WithActionRow(petRow);
 
-        embed.Footer = new EmbedFooterBuilder { Text = $"Pet has gained {happinessGained} happiness." };
+        await Global.AddAuthorFooter(container, dbUser);
 
-        await component.RespondAsync(embed: embed.Build(), components: comps.Build());
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await component.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task<int> RollForPet(User dbUser)
@@ -282,36 +281,40 @@ public static class PetEngine
     {
         var dbUser = await UserEngine.GetDbUser(component.User);
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-
         int petRequested = int.Parse(component.Data.Values.Last());
+
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, "### Pet settings");
 
         if (petRequested < 1 || petRequested > PetChart.Count)
         {
             dbUser.SetPet(0);
-            embed.Title = "Pet unequipped.";
-            embed.Description = "You no longer have a pet equipped.";
+            container.WithTextDisplay("Pet unequipped.");
+            container.WithTextDisplay("You no longer have a pet equipped.");
         }
         else if (HasPet(dbUser, petRequested))
         {
             dbUser.SetPet(petRequested);
-            embed.Title = "Pet equipped.";
-            embed.Description = $"Your equipped pet is now your {PetNames(petRequested)}";
+            container.WithTextDisplay("Pet equipped.");
+            container.WithTextDisplay($"Your equipped pet is now your {PetNames(petRequested)}");
         }
         else
         {
-            embed.Title = "Pet not equipped.";
-            embed.Description = $"You do not have a {PetNames(petRequested)}";
+            container.WithTextDisplay("Pet not equipped.");
+            container.WithTextDisplay($"You do not have a {PetNames(petRequested)}");
         }
 
-        await component.RespondAsync(embed: embed.Build(), ephemeral: true);
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await component.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
     }
 
     public static async Task FeedAPet(SocketMessageComponent component)
     {
         var dbUser = await UserEngine.GetDbUser(component.User);
-
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
         string foodItem = component.Data.Values.Last();
 
@@ -357,24 +360,26 @@ public static class PetEngine
 
         Global.FireAndForget(FarmEngine.ModifyItem(dbUser, foodItem, -1));
 
-        embed.Title = $"{pet.GetName()} has been fed.";
-        embed.Description = $"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!";
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, $"### {pet.GetName()} has been fed.");
+        container.WithTextDisplay($"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!");
+        Global.AddFooter(container, $"Pet has gained {happinessGained} happiness.");
 
-        embed.Footer = new EmbedFooterBuilder { Text = $"Pet has gained {happinessGained} happiness." };
-
-        ComponentBuilder comps = new();
         ActionRowBuilder buttonRow = new();
-
         FarmEngine.AddStandardButtons(ref buttonRow, "shop");
-        comps.AddRow(buttonRow);
+        container.WithActionRow(buttonRow);
 
         ActionRowBuilder petRow = new();
         petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
         petRow.WithButton(label: "All pets", customId: "pets", style: ButtonStyle.Secondary);
+        container.WithActionRow(petRow);
 
-        comps.AddRow(petRow);
+        await Global.AddAuthorFooter(container, dbUser);
 
-        await component.RespondAsync(embed: embed.Build(), components: comps.Build());
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await component.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     private static bool HasPet(User dbUser, int id)
