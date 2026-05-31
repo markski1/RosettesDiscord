@@ -21,7 +21,7 @@ public static class Settings
     public static readonly string SauceNao = GetEnv("SAUCENAO_KEY");
     public static readonly string SecretKey = GetEnv("SECRET_KEY");
     public static readonly string ApiKey = GetEnv("LLM_KEY");
-    public static readonly string SystemPrompt = GetEnv("SYSTEM_PROMPT");
+    public static readonly string SystemPrompt = LoadTextFile("system_prompt.txt");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
     public static bool LoadDatabaseObj()
@@ -44,6 +44,20 @@ public static class Settings
 
         Global.GenerateErrorMessage("settings", $"Key not found in .env: {key}");
         return "";
+    }
+
+    private static string LoadTextFile(string fileName)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, fileName);
+        try
+        {
+            return File.ReadAllText(path).Replace("\n", string.Empty);
+        }
+        catch
+        {
+            Global.GenerateErrorMessage("settings", $"File not loaded: {fileName}");
+            return "";
+        }
     }
 
     private static Dictionary<string, string> LoadEnvFile()
