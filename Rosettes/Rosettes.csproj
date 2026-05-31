@@ -34,5 +34,9 @@
   <ItemGroup>
     <Folder Include="Assets\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include=".env.example" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
  
 </Project>

@@ -1,40 +1,35 @@
 ﻿using Discord;
 using MySqlConnector;
-using Newtonsoft.Json;
 
 namespace Rosettes.Core;
 
 public static class Settings
 {
+    public static readonly LogSeverity LogSeverity =
 #if DEBUG
-    // DEBUG is my local machine
-    public static readonly LogSeverity LogSeverity = LogSeverity.Debug;
-    private const string KeyLoc = "/home/markski/rosetteskeys";
+        LogSeverity.Debug;
 #else
-    // otherwise, it's production.
-    public static readonly LogSeverity LogSeverity = LogSeverity.Info;
-    private const string KeyLoc = "./keys";
+        LogSeverity.Info;
 #endif
-    
-    public static readonly string Token = LoadSetting("token");
-    public static readonly string SteamDevKey = LoadSetting("steam");
-    public static readonly string FfxivApiKey = LoadSetting("ffxiv");
-    public static readonly string RapidApiKey = LoadSetting("rapidapi");
-    public static readonly string SauceNao = LoadSetting("saucenao");
-    public static readonly string SecretKey = LoadSetting("secretkey");
-    public static readonly string ApiKey = LoadSetting("llm_key");
-    public static readonly string SystemPrompt = LoadSetting("system_prompt");
-    public static readonly MySqlConnectionStringBuilder Database = new();
 
+    private static readonly Dictionary<string, string> EnvVars = LoadEnvFile();
+
+    public static readonly string Token = GetEnv("TOKEN");
+    public static readonly string SteamDevKey = GetEnv("STEAM_DEV_KEY");
+    public static readonly string FfxivApiKey = GetEnv("FFXIV_API_KEY");
+    public static readonly string RapidApiKey = GetEnv("RAPIDAPI_KEY");
+    public static readonly string SauceNao = GetEnv("SAUCENAO_KEY");
+    public static readonly string SecretKey = GetEnv("SECRET_KEY");
+    public static readonly string ApiKey = GetEnv("LLM_KEY");
+    public static readonly string SystemPrompt = GetEnv("SYSTEM_PROMPT");
+    public static readonly MySqlConnectionStringBuilder Database = new();
 
     public static bool LoadDatabaseObj()
     {
-        dynamic mySqlData = LoadJsonSetting("mysql");
-
-        Database.Server = mySqlData.Server;
-        Database.UserID = mySqlData.UserID;
-        Database.Password = mySqlData.Password;
-        Database.Database = mySqlData.Database;
+        Database.Server = GetEnv("MYSQL_SERVER");
+        Database.UserID = GetEnv("MYSQL_USERID");
+        Database.Password = GetEnv("MYSQL_PASSWORD");
+        Database.Database = GetEnv("MYSQL_DATABASE");
         Database.Pooling = true;
         Database.MinimumPoolSize = 2;
         Database.MaximumPoolSize = 15;
@@ -42,22 +37,50 @@ public static class Settings
         return true;
     }
 
-    private static string LoadSetting(string name)
+    private static string GetEnv(string key)
     {
-        try
-        {
-            return File.ReadAllText($"{KeyLoc}/{name}.txt").Replace("\n", string.Empty);
-        }
-        catch
-        {
-            Global.GenerateErrorMessage("settings", $"Key not loaded: {name}");
-            return "";
-        }
+        if (EnvVars.TryGetValue(key, out var value))
+            return value;
+
+        Global.GenerateErrorMessage("settings", $"Key not found in .env: {key}");
+        return "";
     }
 
-    // Supressing this warning, because if this were to be null, crashing on launch IS the desired effect.
-    // Rosettes cannot and should not work with misconfused keys.
-#pragma warning disable CS8603
-    private static dynamic LoadJsonSetting(string name) => JsonConvert.DeserializeObject(File.ReadAllText($"{KeyLoc}/{name}.txt"));
-#pragma warning restore CS8603
+    private static Dictionary<string, string> LoadEnvFile()
+    {
+        var vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var envPath = Path.Combine(AppContext.BaseDirectory, ".env");
+
+        if (!File.Exists(envPath))
+        {
+            Global.GenerateErrorMessage("settings", ".env file not found next to the binary.");
+            return vars;
+        }
+
+        foreach (var rawLine in File.ReadLines(envPath))
+        {
+            var line = rawLine.Trim();
+
+            if (line.Length == 0 || line.StartsWith('#'))
+                continue;
+
+            var eqIndex = line.IndexOf('=');
+            if (eqIndex <= 0)
+                continue;
+
+            var key = line[..eqIndex].Trim();
+            var value = line[(eqIndex + 1)..].Trim();
+
+            if (value.Length >= 2 &&
+                ((value[0] == '"' && value[^1] == '"') ||
+                 (value[0] == '\'' && value[^1] == '\'')))
+            {
+                value = value[1..^1];
+            }
+
+            vars[key] = value;
+        }
+
+        return vars;
+    }
 }
