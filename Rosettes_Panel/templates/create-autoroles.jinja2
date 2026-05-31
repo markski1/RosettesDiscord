@@ -3,136 +3,277 @@
 
 {% block main %}
 
-    <p><a href="/panel/">Go back</a></p>
+    <p><a class="menu-button" href="/panel/">Go back</a></p>
 
     <h3>Creating an Autoroles profile for {{ server['namecache'] }}</h3>
+    <p class="muted">Pick an emoji and a role, then click <b>Add</b>. Members who react with the emoji
+        on the posted message will be granted the matching role.</p>
 
-    <div style="text-align: center;">
-        <p>Select an emoji and role combination, then click 'add'.</p>
-        <div>
-            <button style="height: 2rem; width: 8rem" type="button" id="select-emoji">Select emoji</button>
-            <select onchange="selectRole()" id="role_selector">
-                <option value=0>Choose a role</option>
-                {% for role in roles %}
-                    <option value="{{ role.id }}" style="background-color: {{ role.color }}">{{ role.rolename }}</option>
-                {% endfor %}
-            </select>
-            <div class="block">
-                <p>When user clicks <span id="emoji_preview">__</span> they get "<b><span id="role_preview">______</span>"</b>
+    <form id="autoForm" method="POST" action="/action/{{ server.id }}/create-autoroles">
+
+        <div class="block">
+            <label>Profile name<br>
+                <input type="text" name="name" id="profileName" placeholder="e.g. Game roles" maxlength="64" autocomplete="off">
+            </label>
+        </div>
+
+        <div class="block">
+            <div class="builder-row">
+                <div class="emoji-field">
+                    <button type="button" id="emojiTrigger" class="menu-button">Pick emoji</button>
+                    <span id="emojiChosen" class="emoji-chosen" aria-label="selected emoji">—</span>
+
+                    <div id="emojiPanel" class="emoji-panel" hidden>
+                        <input type="text" id="emojiSearch" placeholder="Search emoji…" autocomplete="off">
+                        <div id="emojiTabs" class="emoji-tabs"></div>
+                        <div id="emojiGrid" class="emoji-grid"></div>
+                    </div>
+                </div>
+
+                <select id="roleSelect">
+                    <option value="0">Choose a role…</option>
+                    {% for role in roles %}
+                        <option value="{{ role.id }}">{{ role.rolename }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="button" id="addBtn" class="menu-button" onclick="addSelection()">Add</button>
             </div>
-            <button style="height: 2rem; width: 5rem" type="button" id="add" onclick="addSelection()">Add</button>
+            <p class="muted" style="margin:.5rem 0 0;"><small><span id="slotsLeft">20</span> slots left.</small></p>
         </div>
-        <hr>
-        <div id="rolegroups">
-            <p><big>AutoRole entries:</big><p>
-            <span id="RoleEmojiList">
 
-            </span>
-            <p><small>You have <span id="SlotLeftCount">20</span> slots left.</small></p>
+        <div class="block">
+            <p class="block-title">Entries</p>
+            <ul id="entryList" class="entry-list">
+                <li class="muted" id="emptyHint">No roles added yet.</li>
+            </ul>
         </div>
-        <div id="ConfirmAutoRoles" style="display: none">
-            <form method="POST" action="/action/{{ server.id }}/create-autoroles" onsubmit="return CheckRoleForm()">
-                <hr>
-                <p>Enter a name for this profile.</p>
-                <input type="text" name="name" placeholder="Choose your roles." />
-                <p>When you are done, proceed.</p>
-                <textarea hidden name="RoleListJson" id="RoleListJson">
 
-                </textarea>
-                <input type="submit" value="Create Autoroles">
-            </form>
-        </div>
-    </div>
+        <textarea hidden name="RoleListJson" id="RoleListJson"></textarea>
+        <p id="formMsg" class="form-msg" hidden></p>
+        <input type="submit" id="submitBtn" value="Create Autoroles">
+        <a id="doneLink" class="menu-button" href="/panel/" hidden>Back to panel</a>
+    </form>
 
-    <script type="text/javascript" src="{{ url_for('static', filename='vanillaEmojiPicker.json') }}"></script>
     <script type="text/javascript">
-        new FgEmojiPicker({
-            trigger: ['#select-emoji'],
-            postion: ['bottom'],
-            emit(obj, triggerElement) {
-                const emoji = obj.emoji;
-                selectEmoji(emoji);
+        const maxEntries = 20;
+        const entries = [];
+        let selectedEmoji = null;
+        let emojiData = null;
+        let activeCategory = null;
+
+        const categoryIcons = {
+            "Smileys & People": "😀",
+            "Animals & Nature": "🐵",
+            "Travel & Places": "🌍",
+            "Activities": "⚽",
+            "Objects": "💡",
+            "Symbols": "❤️",
+            "Flags": "🏁"
+        };
+
+        const $ = (id) => document.getElementById(id);
+
+        // --- Emoji picker -------------------------------------------------
+
+        async function loadEmojis() {
+            if (emojiData) return;
+            const res = await fetch("{{ url_for('static', filename='full-emoji-list.json') }}");
+            emojiData = await res.json();
+            activeCategory = Object.keys(emojiData)[0];
+            buildTabs();
+            renderGrid();
+        }
+
+        function buildTabs() {
+            const tabs = $("emojiTabs");
+            tabs.innerHTML = "";
+            for (const cat of Object.keys(emojiData)) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "emoji-tab" + (cat === activeCategory ? " active" : "");
+                b.title = cat;
+                b.textContent = categoryIcons[cat] || "•";
+                b.onclick = () => {
+                    activeCategory = cat;
+                    $("emojiSearch").value = "";
+                    buildTabs();
+                    renderGrid();
+                };
+                tabs.appendChild(b);
+            }
+        }
+
+        function matches(item, query) {
+            if (item.description && item.description.toLowerCase().includes(query)) return true;
+            return (item.keywords || []).some(k => k.toLowerCase().includes(query));
+        }
+
+        function renderGrid() {
+            const grid = $("emojiGrid");
+            const query = $("emojiSearch").value.trim().toLowerCase();
+            grid.innerHTML = "";
+
+            let items;
+            if (query) {
+                items = [];
+                for (const cat of Object.keys(emojiData)) {
+                    for (const item of emojiData[cat]) {
+                        if (matches(item, query)) items.push(item);
+                        if (items.length >= 240) break;
+                    }
+                }
+            } else {
+                items = emojiData[activeCategory];
+            }
+
+            if (items.length === 0) {
+                grid.innerHTML = '<p class="muted" style="grid-column:1/-1;margin:.5rem;">No emoji found.</p>';
+                return;
+            }
+
+            const frag = document.createDocumentFragment();
+            for (const item of items) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.textContent = item.emoji;
+                b.title = (item.description || "").split("≊")[0].trim();
+                b.onclick = () => chooseEmoji(item.emoji);
+                frag.appendChild(b);
+            }
+            grid.appendChild(frag);
+        }
+
+        function chooseEmoji(emoji) {
+            selectedEmoji = emoji;
+            $("emojiChosen").textContent = emoji;
+            togglePanel(false);
+        }
+
+        function togglePanel(show) {
+            const panel = $("emojiPanel");
+            const willShow = show === undefined ? panel.hidden : show;
+            panel.hidden = !willShow;
+            if (willShow) loadEmojis();
+        }
+
+        $("emojiTrigger").addEventListener("click", () => togglePanel());
+        $("emojiSearch").addEventListener("input", renderGrid);
+
+        document.addEventListener("click", (e) => {
+            if (!$("emojiPanel").contains(e.target) && e.target !== $("emojiTrigger")) {
+                $("emojiPanel").hidden = true;
             }
         });
 
-        const maxEntries = 20;
-        let currentEntries = 0;
-
-        let ListAddedRoles = [];
-        let selectedEmoji = "__";
-        let selectedRoleId = 0;
-        let selectedRoleName = "______";
-
-        const ListRoles = [
-            {% for role in roles %}
-                {roleName: "{{ role.rolename }}", roleId: "{{ role.id }}"},
-            {% endfor %}
-        ];
-
-        function selectEmoji(emoji) {
-            document.getElementById("emoji_preview").innerHTML = emoji;
-            selectedEmoji = emoji;
-        }
-
-        function selectRole() {
-            let checkRole = document.getElementById("role_selector").value;
-            if (checkRole == 0) return;
-
-            ListRoles.forEach(setSelectedRole)
-        }
-
-        function setSelectedRole(item, index) {
-            let checkRole = document.getElementById("role_selector").value;
-            if (checkRole == item.roleId) {
-                selectedRoleId = item.roleId;
-                selectedRoleName = item.roleName;
-                document.getElementById("role_preview").innerHTML = item.roleName;
-            }
-        }
+        // --- Entry management ---------------------------------------------
 
         function addSelection() {
-            if (selectedEmoji == "__") {
-                alert("You must select a valid emoji.");
-                return 0;
-            }
-            if (selectedRoleId == 0) {
-                alert("You must select a valid role.");
-                return 0;
-            }
-            if (currentEntries == maxEntries) {
-                alert("Sorry, you cannot add more than " + maxEntries + " role selections to AutoRoles.");
-                return 0;
-            }
-            ListAddedRoles.push({roleName: selectedRoleName, roleId: selectedRoleId, roleEmoji: selectedEmoji});
-            document.getElementById("RoleEmojiList").innerHTML += "<p>When user clicks " + selectedEmoji + " they get \"<b>" + selectedRoleName + "</b>\".</p>";
+            const roleSelect = $("roleSelect");
+            const roleId = roleSelect.value;
+            const roleName = roleSelect.options[roleSelect.selectedIndex].text;
 
-            selectedEmoji = "__";
-            selectedRoleId = 0;
-            selectedRoleName = "______";
-            document.getElementById("role_preview").innerHTML = selectedRoleName;
-            document.getElementById("emoji_preview").innerHTML = selectedEmoji;
-            document.getElementById("role_selector").value = 0;
-            document.getElementById("ConfirmAutoRoles").style.display = "block";
+            if (!selectedEmoji) { alert("Pick an emoji first."); return; }
+            if (roleId === "0") { alert("Choose a role first."); return; }
+            if (entries.length >= maxEntries) { alert("You can add at most " + maxEntries + " roles."); return; }
+            if (entries.some(e => e.roleEmoji === selectedEmoji)) { alert("That emoji is already used. Pick a different one."); return; }
+            if (entries.some(e => e.roleId === roleId)) { alert("That role is already in the list."); return; }
 
-            currentEntries++;
-            document.getElementById("SlotLeftCount").innerHTML = maxEntries - currentEntries;
+            entries.push({ roleId: roleId, roleName: roleName, roleEmoji: selectedEmoji });
 
-            document.getElementById("RoleListJson").innerHTML = JSON.stringify(ListAddedRoles);
+            selectedEmoji = null;
+            $("emojiChosen").textContent = "—";
+            roleSelect.value = "0";
+            render();
         }
 
-        function CheckRoleForm() {
-            if (currentEntries == 0) {
-                alert("You've not added any roles!");
-                return false;
-            }
-
-            if (currentEntries > maxEntries) {
-                alert("You may no submit more than 20 roles.");
-                return false;
-            }
-            return true;
+        function removeEntry(index) {
+            entries.splice(index, 1);
+            render();
         }
 
+        function render() {
+            const list = $("entryList");
+            list.innerHTML = "";
+
+            if (entries.length === 0) {
+                const li = document.createElement("li");
+                li.className = "muted";
+                li.textContent = "No roles added yet.";
+                list.appendChild(li);
+            } else {
+                entries.forEach((entry, i) => {
+                    const li = document.createElement("li");
+
+                    const emoji = document.createElement("span");
+                    emoji.className = "e-emoji";
+                    emoji.textContent = entry.roleEmoji;
+
+                    const role = document.createElement("span");
+                    role.className = "e-role";
+                    role.textContent = entry.roleName;
+
+                    const remove = document.createElement("button");
+                    remove.type = "button";
+                    remove.className = "entry-remove";
+                    remove.textContent = "Remove";
+                    remove.onclick = () => removeEntry(i);
+
+                    li.append(emoji, role, remove);
+                    list.appendChild(li);
+                });
+            }
+
+            $("slotsLeft").textContent = maxEntries - entries.length;
+            $("RoleListJson").value = JSON.stringify(entries);
+        }
+
+        function setMsg(text, kind) {
+            const el = $("formMsg");
+            el.textContent = text;
+            el.className = "form-msg" + (kind ? " " + kind : "");
+            el.hidden = !text;
+        }
+
+        $("autoForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            if (entries.length === 0) { setMsg("Add at least one role before creating.", "err"); return; }
+            if ($("profileName").value.trim().length === 0) { setMsg("Give the profile a name.", "err"); return; }
+
+            const form = e.target;
+            const btn = $("submitBtn");
+            btn.disabled = true;
+            setMsg("Creating…", "");
+
+            try {
+                const res = await fetch(form.action, {
+                    method: "POST",
+                    headers: { "Accept": "application/json" },
+                    body: new FormData(form)
+                });
+                let data = {};
+                try { data = await res.json(); } catch (_) {}
+
+                if (res.ok && data.ok) {
+                    // Success: lock the form so it can't be double-submitted, but the
+                    // page stays put with a confirmation rather than navigating away.
+                    setMsg(data.message || "Autorole group created successfully.", "ok");
+                    btn.hidden = true;
+                    form.querySelectorAll("input, select, button").forEach(el => el.disabled = true);
+                    $("doneLink").hidden = false;
+                } else {
+                    // Failure: keep every entry the user built, just surface the reason.
+                    setMsg(data.message || "Something went wrong. Your entries are still here — try again.", "err");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                setMsg("Network error. Your entries are still here — try again.", "err");
+                btn.disabled = false;
+            }
+        });
+
+        render();
     </script>
 
 {% endblock %}

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Admin Panel.iml" filepath="$PROJECT_DIR$/.idea/Admin Panel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/rosettes-panel.iml" filepath="$PROJECT_DIR$/.idea/rosettes-panel.iml" />
     </modules>
   </component>
 </project>

@@ -1,17 +1,21 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
     <title>Rosettes - {% block title %}{% endblock %}</title>
 </head>
 <body>
     <main>
+        <header class="brand">
+            <a href="/panel/">Rosettes</a>
+        </header>
         {{ self.main() }}
     </main>
     <footer style="user-select: none" onclick="ChangeFooter()">
-        <p alt="click me" style="color: #c1bdb3">MMXXIV | <span id="footerText"></span></p>
+        <p alt="click me">MMXXIV | <span id="footerText"></span></p>
     </footer>
-</body>
 <script>
     const randNames = [
         "Rosettes Automation, Inc",
@@ -35,4 +39,5 @@
         document.getElementById("footerText").innerHTML = randNames[Math.floor(Math.random() * randNames.length)]
     }
 </script>
+</body>
 </html>

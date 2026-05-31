@@ -38,6 +38,12 @@ def insert_role_for_autorole(guild_id: int, autorole_id: int, role: dict) -> int
                       guild_id, role['roleEmoji'], role['roleId'], autorole_id)
 
 
+def delete_autorole_group(server_id: int, group_id: int) -> None:
+    # Scoped by guildid so a group belonging to another server can't be removed.
+    db_execute("DELETE FROM autorole_entries WHERE guildid = %s AND rolegroupid = %s", server_id, group_id)
+    db_execute("DELETE FROM autorole_groups WHERE guildid = %s AND id = %s", server_id, group_id)
+
+
 def get_app_by_name(name: str) -> Optional[dict]:
     return db_fetch_one("SELECT * FROM app_auth WHERE name = %s", name)
 

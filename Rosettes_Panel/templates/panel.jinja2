@@ -3,32 +3,36 @@
 
 {% block main %}
 
-    <small>Welcome, {{ user['namecache'] }} | <a href="/session/logout">Logout</a></small>
+    <div class="topbar">
+        <span>Welcome, <b>{{ user['namecache'] }}</b></span>
+        <a href="/session/logout">Logout</a>
+    </div>
 
     <h2>Servers</h2>
     <hr>
     {% for server in servers %}
         <div class="block">
-            <p style="font-size: 1.3rem; font-weight: bold; margin: .75rem 0;">{{ server['namecache'] }}</p>
-            <p>{{ server['members'] }} members.</p>
-            <p>
-                <a href="/panel/{{ server['id'] }}/settings">Settings</a> |
-                <a href="/panel/{{ server['id'] }}/roles">Roles</a>
+            <p class="block-title">{{ server['namecache'] }}</p>
+            <p class="muted">{{ server['members'] }} members.</p>
+            <p class="actions">
+                <a class="menu-button" href="/panel/{{ server['id'] }}/settings">Settings</a>
+                <a class="menu-button" href="/panel/{{ server['id'] }}/roles">Roles</a>
             </p>
         </div>
     {% else %}
-        <p>You do not have any servers in which Rosettes have been added.</p>
+        <p class="muted">You do not have any servers in which Rosettes have been added.</p>
     {% endfor %}
 
     <h2>Applications</h2>
     <hr>
     {% for app in apps %}
         <div class="block">
-            <p style="font-size: 1.3rem; font-weight: bold; margin: .75rem 0;">{{ app['name'] }}</p>
-            <p><a href="/panel/apps/{{ app['id'] }}">Manage</a></p>
+            <p class="block-title">{{ app['name'] }}</p>
+            <p class="actions"><a class="menu-button" href="/panel/apps/{{ app['id'] }}">Manage</a></p>
         </div>
     {% else %}
-        <p>You have no applications registered. <a href="/panel/apps/new">Create an app</a>.</p>
+        <p class="muted">You have no applications registered.</p>
     {% endfor %}
+    <p><a href="/panel/apps/new">Create a new application</a></p>
 
 {% endblock %}

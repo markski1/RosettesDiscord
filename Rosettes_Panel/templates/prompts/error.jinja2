@@ -1,0 +1,13 @@
+{% extends "layout.jinja2" %}
+{% block title %}Error{% endblock %}
+
+{% block main %}
+
+    <h1>Something went wrong</h1>
+
+    <div class="block">
+        <p>{{ message }}</p>
+    </div>
+    <p><a role="button" class="menu-button" href="/panel/">Back to panel</a></p>
+
+{% endblock %}

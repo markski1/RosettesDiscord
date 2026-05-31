@@ -70,6 +70,8 @@ def app_manage(app_id):
     app = get_app_by_id(app_id)
     if not app:
         return render_error("App not found.")
+    if int(app["owner_id"]) != int(current_user.id):
+        return render_error("You don't own this application.")
     users = get_users_for_app(app_id)
 
     return render_template("manage-app.jinja2", app=app, users=users)

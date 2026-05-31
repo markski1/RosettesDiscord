@@ -13,12 +13,16 @@
             <h4>{{ arg.name }}</h4>
             <p>Group ID: {{ arg.id }}</p>
             <p>Applied to message: {% if arg.messageid > 0 %} {{ arg.messageid }} {% else %} No {% endif %}</p>
+            <form method="POST" action="/action/{{ server.id }}/delete-autoroles/{{ arg.id }}"
+                  onsubmit="return confirm('Delete this autorole group? This cannot be undone.');">
+                <button type="submit" class="entry-remove">Delete group</button>
+            </form>
         </div>
     {% else %}
         <div class="block">
             <p>No autorole groups exist yet.</p>
         </div>
     {% endfor %}
-    <p><a href=/panel/{{ server.id }}/autoroles-maker>Create new Autoroles group</a></p>
+    <p><a class="menu-button" href="/panel/{{ server.id }}/autoroles-maker">Create new Autoroles group</a></p>
 
 {% endblock %}

@@ -1,10 +1,10 @@
 import json
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required
 
 from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
-    insert_application
+    insert_application, get_server_data, delete_autorole_group
 from utils.miscfuncs import ownership_required, generate_random_string
 from utils.page_helpers import render_success, render_error
 
@@ -24,13 +24,18 @@ def post_settings(server_id):
     try:
         msgparse = abs(int(request.form["msgparse"]))
         minigame = abs(int(request.form["minigame"]))
-        gambling = abs(int(request.form["gambling"]))
         announce = abs(int(request.form["announce"]))
     except:
         return render_error("Invalid parameters.")
 
-    if int(msgparse) > 1 or int(minigame) > 1 or int(gambling) > 1 or int(announce) > 2:
+    if msgparse > 1 or minigame > 1 or announce > 1:
         return render_error("Invalid parameters.")
+
+    # Gambling has no toggle in the panel, so preserve whatever the server already has.
+    server = get_server_data(server_id)
+    if not server:
+        return render_error("Server not found.")
+    gambling = server["settings"][2]
 
     new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
     set_server_settings(server_id, new_settings)
@@ -42,11 +47,20 @@ def post_settings(server_id):
 @ownership_required
 def post_new_autoroles(server_id):
     role_name = request.form.get("name")
-    role_list = json.loads(request.form.get('RoleListJson'))
+    if not role_name or not role_name.strip():
+        return jsonify(ok=False, message="Please provide a profile name."), 400
+
+    try:
+        role_list = json.loads(request.form.get('RoleListJson') or "[]")
+    except (TypeError, ValueError):
+        return jsonify(ok=False, message="Invalid role data."), 400
+
+    if not role_list:
+        return jsonify(ok=False, message="Add at least one role before creating."), 400
 
     for role in role_list:
-        if not role['roleId'].isnumeric():
-            return render_error("Invalid parameters. [Role ID must be an integer.]")
+        if not str(role.get('roleId', '')).isnumeric():
+            return jsonify(ok=False, message="Invalid parameters. [Role ID must be an integer.]"), 400
 
     autorole_id = insert_new_autorole(server_id, role_name)
 
@@ -54,8 +68,17 @@ def post_new_autoroles(server_id):
     for role in role_list:
         insert_role_for_autorole(server_id, autorole_id, role)
 
-    return render_success("Autorole group created successfully. "
-                          "Use `/setautorole {autorole_id}` in the desired channel.")
+    return jsonify(ok=True,
+                   message=f"Autorole group created successfully. "
+                           f"Use `/setautorole {autorole_id}` in the desired channel.")
+
+
+@action_bp.post("/<int:server_id>/delete-autoroles/<int:group_id>")
+@login_required
+@ownership_required
+def post_delete_autoroles(server_id, group_id):
+    delete_autorole_group(server_id, group_id)
+    return redirect(url_for("panel.roles", server_id=server_id))
 
 
 @action_bp.post("/create-app")

@@ -5,11 +5,13 @@
 
     <h1>Login</h1>
 
-    <form action="/session/login" method="POST">
-        <p>Enter your Rosettes key</p>
-        <label>Key: <input type="text" name="key" /></label>
-        <input type="submit" value="Log in">
-    </form>
-    <p><small>To get a key, DM Rosettes with the command '/keygen'.</small></p>
+    <div class="block">
+        <form action="/session/login" method="POST">
+            <p>Enter your Rosettes key</p>
+            <label>Key: <input type="text" name="key" autofocus /></label>
+            <input type="submit" value="Log in">
+        </form>
+    </div>
+    <p class="muted"><small>To get a key, DM Rosettes with the command '/keygen'.</small></p>
 
 {% endblock %}
