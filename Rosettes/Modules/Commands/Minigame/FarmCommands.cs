@@ -60,57 +60,6 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
         await FarmEngine.ShowShopFunc(Context.Interaction, Context.User);
     }
 
-    [SlashCommand("give", "Give an item to another user.")]
-    public async Task GiveItem(IUser user, string option = "none", int amount = 1)
-    {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
-
-        if (user == Context.User)
-        {
-            await RespondAsync("That's you! Give stuff to someone else.", ephemeral: true);
-            return;
-        }
-
-        if (amount < 1)
-        {
-            await RespondAsync("You must give at least 1 of any item.", ephemeral: true);
-            return;
-        }
-
-        string choice = option.ToLower();
-
-        if (FarmEngine.IsValidGiveChoice(choice))
-        {
-            var dbUser = await UserEngine.GetDbUser(Context.User);
-            var receiver = await UserEngine.GetDbUser(user);
-
-            if (await FarmEngine.GetItem(dbUser, choice) < amount)
-            {
-                await RespondAsync($"You don't have {amount} {FarmEngine.GetItemName(choice)} to give.");
-                return;
-            }
-
-            Global.FireAndForget(FarmEngine.ModifyItem(receiver, choice, +amount));
-
-            Global.FireAndForget(FarmEngine.ModifyItem(dbUser, choice, -amount));
-
-            EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
-            embed.Title = "Item given.";
-            embed.Description = $"Gave {amount} {FarmEngine.GetItemName(choice)} to {user.Mention}.";
-
-            await RespondAsync(embed: embed.Build());
-        }
-        else
-        {
-            await RespondAsync("Valid things to give:\n >>> \"fish\",\r\n\"uncommonfish\",\r\n\"rarefish\",\r\n\"shrimp\",\r\n\"dabloons\",\r\n\"garbage\",\r\n\"tomato\",\r\n\"carrot\",\r\n\"potato\",\r\n\"seedbag\"", ephemeral: true);
-        }
-    }
-
     [SlashCommand("top", "Leaderbord by experience.")]
     public async Task FoodLeaderboard()
     {

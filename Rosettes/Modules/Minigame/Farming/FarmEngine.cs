@@ -426,7 +426,7 @@ public static class FarmEngine
 
         ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FishColor);
         Global.AddTitle(container, "### 🎣 Fishing!");
-        container.WithTextDisplay($"**You caught**\n**+1** {GetItemName(fishingCatch)}");
+        container.WithTextDisplay($"**You caught**\n{GetItemName(fishingCatch)}");
         container.WithTextDisplay($"**Rod durability**\n{DurabilityBar(poleStatus)} {poleStatus}%");
 
         if (foundPet > 0)
@@ -435,7 +435,7 @@ public static class FarmEngine
         if (poleStatus <= 0)
             container.WithTextDisplay($"**🎣 {GetItemName("fishpole")} destroyed**\nYour rod snapped. Pick up a new one at the shop.");
 
-        Global.AddFooter(container, $"{dbUser.AddExp(expIncrease)}  •  added to inventory");
+        Global.AddFooter(container, $"{dbUser.AddExp(expIncrease)}");
 
         ActionRowBuilder buttonRow = new();
         AddStandardButtons(ref buttonRow, except: "fish");
@@ -527,7 +527,7 @@ public static class FarmEngine
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
     }
 
     private static ComponentBuilder GetShopComponents(bool empty = false)
