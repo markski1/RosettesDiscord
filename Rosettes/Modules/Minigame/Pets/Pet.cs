@@ -61,8 +61,8 @@ public class Pet
         if (Global.CurrentUnix() <= LastPet) return -1;
             
         LastPet = Global.CurrentUnix() + 30;
-        int happiness = Global.Randomize(10) + 5;
-        ModifyHappiness(+happiness); // add anywhere from 5 to 14% happiness
+        int happiness = Global.Randomize(10) + 8;
+        ModifyHappiness(+happiness); // add anywhere from 8 to 17% happiness
         AddExp(1);
         _timesPet++;
         SyncUpToDate = false;
@@ -96,8 +96,10 @@ public class Pet
     }
 
     // Returns the pet's custom name, or the generic animal name if the pet has not been named.
-    public string GetName()
+    public string GetName(bool onlyEmoji = false)
     {
+        if (onlyEmoji) return PetEngine.PetEmojis(Index);
+
         if (_name != "[not named]")
         {
             return $"{PetEngine.PetEmojis(Index)} {_name}";

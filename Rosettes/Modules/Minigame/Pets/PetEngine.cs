@@ -148,7 +148,7 @@ public static class PetEngine
         container.WithTextDisplay($"**Pets in ownership:**\n{petString}");
 
         if (petString2 != "")
-            container.WithTextDisplay($"**=====\n{petString2}");
+            container.WithTextDisplay($"**=====**\n{petString2}");
 
         SelectMenuBuilder petMenu = new()
         {
@@ -397,25 +397,14 @@ public static class PetEngine
             return;
         }
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, $"**{pet.GetEmoji()} {pet.GetBareName()}**");
 
-        embed.Title = "Pet information";
-        embed.Description = $"**Name:** {pet.GetBareName()} \n **Type:** {PetNames(pet.Index)}";
-
-        embed.AddField("Times been pet", $"{pet.GetTimesPet()}", inline: true);
-        embed.AddField("Happiness", $"{pet.GetHappiness()}%", inline: true);
-        embed.AddField("Found", $"<t:{pet.GetFoundDate()}:R>");
-        embed.AddField("Experience", $"{pet.GetExp()}xp");
-
-        ComponentBuilder comps = new();
-        ActionRowBuilder petRow = new();
-        ActionRowBuilder buttonRow = new();
-        FarmEngine.AddStandardButtons(ref buttonRow);
-        comps.AddRow(buttonRow);
-
-        petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
-        petRow.WithButton(label: "Change name", customId: "pet_namechange", style: ButtonStyle.Secondary);
-        petRow.WithButton(label: "All pets", customId: "pets", style: ButtonStyle.Secondary);
+        container.WithTextDisplay(
+            $"**Type:** {PetNames(pet.Index)}\n" +
+            $"**Times pet:** {pet.GetTimesPet()}  |  **Happiness:** {pet.GetHappiness()}%\n" +
+            $"**Found:** <t:{pet.GetFoundDate()}:R>  |  **Experience:** {pet.GetExp()}xp"
+        );
 
         SelectMenuBuilder feedMenu = new()
         {
@@ -429,12 +418,28 @@ public static class PetEngine
         feedMenu.AddOption(label: FarmEngine.GetItemName("uncommonfish"), value: "uncommonfish");
         feedMenu.AddOption(label: FarmEngine.GetItemName("shrimp"), value: "shrimp");
         feedMenu.AddOption(label: FarmEngine.GetItemName("carrot"), value: "carrot");
-
         feedMenu.MaxValues = 1;
 
-        comps.AddRow(petRow).WithSelectMenu(feedMenu);
+        ActionRowBuilder menuRow = new();
+        menuRow.WithSelectMenu(feedMenu);
+        container.WithActionRow(menuRow);
 
-        await interaction.RespondAsync(embed: embed.Build(), components: comps.Build());
+        ActionRowBuilder petRow = new();
+        petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+        petRow.WithButton(label: "Change name", customId: "pet_namechange", style: ButtonStyle.Secondary);
+        petRow.WithButton(label: "All pets", customId: "pets", style: ButtonStyle.Secondary);
+        container.WithActionRow(petRow);
+
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow);
+        container.WithActionRow(buttonRow);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task BeginNameChange(SocketMessageComponent component)
@@ -447,13 +452,25 @@ public static class PetEngine
             return;
         }
 
-        ModalBuilder modal = new()
-        {
-            Title = $"Change the name of \"{pet.GetName()}\"",
-            CustomId = "petNamechange"
-        };
+        string currentName = pet.GetBareName();
 
-        modal.AddTextInput("Enter the new name.", "newName", placeholder: $"It will have a cost of 25 {FarmEngine.GetItemName("dabloons")}", minLength: 5, maxLength: 25);
+        TextInputBuilder nameInput = new();
+        nameInput.WithCustomId("newName");
+        nameInput.WithStyle(TextInputStyle.Short);
+        nameInput.WithPlaceholder(currentName == "[not named]" ? "Give your pet a name" : currentName);
+        nameInput.WithMinLength(3);
+        nameInput.WithMaxLength(20);
+        nameInput.WithRequired(true);
+
+        LabelBuilder nameLabel = new();
+        nameLabel.WithLabel("Rename your pet");
+        nameLabel.WithDescription($"Costs 25 {FarmEngine.GetItemName("dabloons")}. 3-20 characters.");
+        nameLabel.WithComponent(nameInput);
+
+        ModalBuilder modal = new();
+        modal.WithTitle($"{pet.GetEmoji()} {pet.GetName()}");
+        modal.WithCustomId("petNamechange");
+        modal.AddLabel(nameLabel);
 
         await component.RespondWithModalAsync(modal.Build());
     }
@@ -478,25 +495,22 @@ public static class PetEngine
 
         pet.SetName(newName);
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        Global.AddTitle(container, "**Name changed!**");
+        container.WithTextDisplay($"You have changed your pet's name to {pet.GetName()}");
+        Global.AddFooter(container, $"Cost: 25 {FarmEngine.GetItemName("dabloons")}");
 
-        embed.Title = "Name changed!";
-        embed.Description = $"You have changed your pet's name to {pet.GetName()}";
-
-        ComponentBuilder comps = new();
-        ActionRowBuilder petRow = new();
         ActionRowBuilder buttonRow = new();
-        FarmEngine.AddStandardButtons(ref buttonRow);
-        comps.AddRow(buttonRow);
+        buttonRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
+        buttonRow.WithButton(label: "View pet", customId: "pet_view", style: ButtonStyle.Secondary);
+        container.WithActionRow(buttonRow);
 
-        petRow.WithButton(label: $"Pet {pet.GetName()}", customId: $"doPet_{dbUser.Id}", style: ButtonStyle.Primary);
-        petRow.WithButton(label: "View pet", customId: "pet_view", style: ButtonStyle.Secondary);
+        await Global.AddAuthorFooter(container, dbUser);
 
-        comps.AddRow(petRow);
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
 
-        embed.Footer = new EmbedFooterBuilder { Text = $"Cost: 25 {FarmEngine.GetItemName("dabloons")}" };
-
-        await modal.RespondAsync(embed: embed.Build(), components: comps.Build());
+        await modal.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async void SyncWithDatabase()
