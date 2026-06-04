@@ -33,77 +33,47 @@ public partial class EmojiDownloader
         statusField.Value = $"Progress: `0/{emoteAmount}`";
         await serverContext.Interaction.RespondAsync(embed: embed.Build());
 
-        // clean up servername
         string serverName = serverContext.Guild.Name.Replace(" ", "");
         Regex rgx = MyRegex();
         serverName = rgx.Replace(serverName, "");
 
-        // ensure the folders to store the emoji exist.
-        if (!Directory.Exists("./temp/"))
+        await using var zipStream = new MemoryStream();
+        using (var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            Directory.CreateDirectory("./temp/");
-        }
-        if (!Directory.Exists($"./temp/{serverName}/"))
-        {
-            Directory.CreateDirectory($"./temp/{serverName}/");
-        }
-        // download every emoji into this folder.
-        foreach (GuildEmote emote in _emoteCollection)
-        {
-            await using (var stream = await Global.HttpClient.GetStreamAsync(emote.Url))
+            foreach (GuildEmote emote in _emoteCollection)
             {
-                string fileName;
-                if (emote.Animated)
-                {
-                    fileName = $"./temp/{serverName}/{emote.Name}.gif";
-                }
-                else
-                {
-                    fileName = $"./temp/{serverName}/{emote.Name}.png";
-                }
+                string entryName = emote.Animated ? $"{emote.Name}.gif" : $"{emote.Name}.png";
+                var entry = zipArchive.CreateEntry(entryName, CompressionLevel.Fastest);
 
-                await using var fileStream = new FileStream(fileName, FileMode.Create);
-                await stream.CopyToAsync(fileStream);
-            }
-            progress++;
-            
-            // update the message with the current progress, every 3rd emoji.
-            if (progress % 3 != 0) continue;
-            
-            statusField.Value = $"Progress: `{progress}/{emoteAmount}`";
-            try
-            {
-                await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
-            }
-            catch
-            {
-                _ = Task.Run(async () => { await serverContext.User.SendMessageAsync("I don't have permission to send or edit messasges in that channel, can't complete emoji export."); });
-                return;
+                await using var entryStream = entry.Open();
+                await using var httpStream = await Global.HttpClient.GetStreamAsync(emote.Url);
+                await httpStream.CopyToAsync(entryStream);
+
+                progress++;
+
+                if (progress % 3 != 0) continue;
+
+                statusField.Value = $"Progress: `{progress}/{emoteAmount}`";
+                try
+                {
+                    await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+                }
+                catch
+                {
+                    _ = Task.Run(async () => { await serverContext.User.SendMessageAsync("I don't have permission to send or edit messasges in that channel, can't complete emoji export."); });
+                    return;
+                }
             }
         }
-        // done, update message.
-        statusField.Value = "Progress: `Done exporting. Compressing and uploading, please wait...`";
+
+        statusField.Value = "Progress: `Done exporting. Uploading, please wait...`";
         await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+
         try
         {
-            // zip up the file.
-            string zipPath = $"./temp/{serverName}.zip";
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-            ZipFile.CreateFromDirectory($"./temp/{serverName}", zipPath);
-
-            // move the zip file to the webserver.
-            if (File.Exists($"/var/www/html/downloads/{serverName}.zip"))
-            {
-                File.Delete($"/var/www/html/downloads/{serverName}.zip");
-            }
-            File.Move(zipPath, $"/var/www/html/downloads/{serverName}.zip");
-
-            statusField.Value = "Progress: `Done exporting. Done uploading.`";
-            embed.AddField("Download link", $"<https://rosettes.markski.ar/downloads/{serverName}.zip>");
-            await serverContext.Interaction.ModifyOriginalResponseAsync(x => x.Embed = embed.Build());
+            zipStream.Position = 0;
+            string zipName = $"{serverName}.zip";
+            await serverContext.Interaction.FollowupWithFileAsync(zipStream, zipName, text: "Here is your emoji export.");
         }
         catch (Exception ex)
         {

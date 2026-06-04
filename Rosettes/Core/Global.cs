@@ -33,56 +33,6 @@ public static class Global
         return percentage > Randomizer.Next(100);
     }
 
-    public static async Task<(bool, string)> DownloadFile(string path, string uri, ulong maxSize = 0)
-    {
-        try
-        {
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            using var client = new HttpClient();
-        
-            HttpResponseMessage response;
-            try
-            {
-                response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-            }
-            catch
-            {
-                return (false, "Connection error");
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return (false, "Unsuccesful response");
-            }
-
-            var fileSize = response.Content.Headers.ContentLength;
-            
-            if (maxSize > 0 && fileSize > (long?)maxSize)
-            {
-                return (false, "File is too large");
-            }
-
-            await using Stream stream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
-
-            try
-            {
-                // Copy data in chunks, enforcing timeout
-                await stream.CopyToAsync(fileStream, 81920, cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                return (false, "Opeartion took too long");
-            }
-
-            return (true, "");
-        }
-        catch
-        {
-            return (false, "Exception found");
-        }
-    }
-    
     public static void FireAndForget(Task task)
     {
         _ = task.ContinueWith(
@@ -107,13 +57,13 @@ public static class Global
             EmbedAuthorBuilder authorEmbed = new();
             embed.Author = authorEmbed;
 
-            authorEmbed.Name += $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
+            authorEmbed.Name += $"{await dbUser.GetName()} [{dbUser.GetLevel()}]";
             authorEmbed.IconUrl = author?.GetDisplayAvatarUrl();
 
             var pet = await PetEngine.GetUserPet(dbUser);
             if (pet is not null)
             {
-                authorEmbed.Name += $" [{pet.GetName()}]";
+                authorEmbed.Name += $" [{pet.GetName(onlyEmoji: true)}]";
             }
         }
 
@@ -144,11 +94,11 @@ public static class Global
 
     public static async Task AddAuthorFooter(ContainerBuilder container, User dbUser)
     {
-        string authorText = $"{await dbUser.GetName()} [lv {dbUser.GetLevel()}]";
+        string authorText = $"{await dbUser.GetName()} [{dbUser.GetLevel()}]";
 
         var pet = await PetEngine.GetUserPet(dbUser);
         if (pet is not null)
-            authorText += $" [{pet.GetName()}]";
+            authorText += $" [{pet.GetName(onlyEmoji: true)}]";
 
         container.WithSeparator(SeparatorSpacingSize.Small, isDivider: true);
         container.WithTextDisplay(authorText);

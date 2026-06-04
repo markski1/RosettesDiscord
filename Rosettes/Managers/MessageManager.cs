@@ -106,25 +106,18 @@ public static class MessageManager
 
         try
         {
-            var data = await Global.HttpClient.GetStreamAsync(uri);
+            using var response = await Global.HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode) return;
 
-            if (!Directory.Exists("./temp/")) Directory.CreateDirectory("./temp/");
-            string fileName = $"./temp/{Global.Randomize(20) + 1}{format}";
+            var fileSize = response.Content.Headers.ContentLength;
+            if (fileSize > 0 && (ulong)fileSize > context.Guild.MaxUploadLimit) return;
 
-            if (File.Exists(fileName)) File.Delete(fileName);
+            await using var memoryStream = new MemoryStream();
+            await response.Content.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
 
-            await using var fileStream = new FileStream(fileName, FileMode.Create);
-            await data.CopyToAsync(fileStream);
-            fileStream.Close();
-
-            ulong size = (ulong)new FileInfo(fileName).Length;
-
-            if (context.Guild.MaxUploadLimit > size)
-            {
-                await context.Channel.SendFileAsync(fileName, text: "Mirroring this media, because i.4cdn links will expire.");
-            }
-
-            File.Delete(fileName);
+            string fileName = $"{Global.Randomize(20) + 1}{format}";
+            await context.Channel.SendFileAsync(memoryStream, fileName, text: "Mirroring this media, because i.4cdn links will expire.");
         }
         catch (Exception ex)
         {
