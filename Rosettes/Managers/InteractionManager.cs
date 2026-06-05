@@ -94,6 +94,10 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     await Farm.HarvestCrops(component, component.User);
                     break;
 
+                case "plots_repair":
+                    await Farm.RestorePlots(component, component.User);
+                    break;
+
                 case "pet_view":
                     await PetEngine.ViewPet(component, component.User);
                     break;

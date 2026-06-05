@@ -108,6 +108,7 @@ public static class Farm
         var cropsByPlot = crops.ToDictionary(c => c.PlotId);
 
         int plots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
+        var degradedPlots = await FarmEngine.GetDegradedPlots(dbUser);
 
         bool anyCanBePlanted = false;
         bool anyCanBeWatered = false;
@@ -119,6 +120,12 @@ public static class Farm
 
         for (int i = 1; i <= plots; i++)
         {
+            if (degradedPlots.Contains(i))
+            {
+                plotLines += $"🥀 **Plot {i}** - *Withered. Needs restoration (100 🐾).*\n";
+                continue;
+            }
+
             if (!cropsByPlot.TryGetValue(i, out var currentCrop))
             {
                 plotLines += $"🟫 **Plot {i}** - *Empty, ready for seeds.*\n";
@@ -157,7 +164,7 @@ public static class Farm
 
         Global.AddFooter(container, $"🌱 {seeds} seeds  •  🐾 {dabloons} dabloons  •  🌿 {occupied}/{plots} plots");
 
-        if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered)
+        if (anyCanBeHarvested || anyCanBePlanted || anyCanBeWatered || degradedPlots.Count > 0)
         {
             ActionRowBuilder farmActionRow = new();
             if (anyCanBeHarvested)
@@ -166,6 +173,8 @@ public static class Farm
                 farmActionRow.WithButton(label: "Water", customId: "crops_water", style: ButtonStyle.Success, emote: new Emoji("💧"));
             if (anyCanBePlanted)
                 farmActionRow.WithButton(label: "Plant", customId: "crops_plant", style: ButtonStyle.Success, emote: new Emoji("🌱"));
+            if (degradedPlots.Count > 0)
+                farmActionRow.WithButton(label: $"Restore ({degradedPlots.Count})", customId: "plots_repair", style: ButtonStyle.Danger, emote: new Emoji("🔧"));
             container.WithActionRow(farmActionRow);
         }
 
@@ -239,6 +248,9 @@ public static class Farm
 
         List<int> occupiedPlots = [];
         occupiedPlots.AddRange(fieldsToList.Select(field => field.PlotId));
+
+        var degradedPlots = await FarmEngine.GetDegradedPlots(dbUser);
+        occupiedPlots.AddRange(degradedPlots);
 
         if (occupiedPlots.Count >= plots)
         {
@@ -490,6 +502,13 @@ public static class Farm
 
             count++;
             plotsWereHarvested = true;
+
+            int totalPlots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
+            if (totalPlots > 1 && Global.Chance(15))
+            {
+                await FarmEngine.DegradePlot(dbUser, crop.PlotId);
+                harvestTexts.Add($"🥀 **Plot {crop.PlotId}** has withered and needs restoration.");
+            }
         }
 
         if (count == 0)
@@ -538,6 +557,41 @@ public static class Farm
         FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
         if (foundPet > 0)
             buttonRow.WithButton(label: "Pets", customId: "pets", style: ButtonStyle.Secondary, emote: new Emoji("🐾"));
+        container.WithActionRow(buttonRow);
+
+        await Global.AddAuthorFooter(container, dbUser);
+
+        ComponentBuilderV2 comps = new();
+        comps.WithContainer(container);
+
+        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+    }
+
+    public static async Task RestorePlots(SocketInteraction interaction, IUser user)
+    {
+        User dbUser = await UserEngine.GetDbUser(user);
+
+        var degradedPlots = await FarmEngine.GetDegradedPlots(dbUser);
+        if (degradedPlots.Count == 0)
+        {
+            await interaction.RespondAsync("None of your plots need repair.", ephemeral: true);
+            return;
+        }
+
+        bool success = await FarmEngine.RestoreAllPlots(dbUser);
+        if (!success)
+        {
+            await interaction.RespondAsync($"You don't have 100 {FarmEngine.GetItemName("dabloons")} to repair your plots.", ephemeral: true);
+            return;
+        }
+
+        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
+        Global.AddTitle(container, "### 🔧 Plots restored");
+        container.WithTextDisplay($"Restored **{degradedPlots.Count}** withered {Pluralize(degradedPlots.Count, "plot", "plots")}.");
+        Global.AddFooter(container, $"Cost: 100 {FarmEngine.GetItemName("dabloons")}");
+
+        ActionRowBuilder buttonRow = new();
+        FarmEngine.AddStandardButtons(ref buttonRow, except: "farm");
         container.WithActionRow(buttonRow);
 
         await Global.AddAuthorFooter(container, dbUser);

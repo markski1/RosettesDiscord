@@ -44,6 +44,7 @@ public static class FarmEngine
         { "fishpole",       ( "🎣 Fishing pole",    false,   false  ) },
         { "farmtools",      ( "🧰 Farming tools",   false,   false  ) },
         { "plots",          ( "🌿 Plot of land",    false,   false  ) },
+        { "plots_degraded", ( "🥀 Withered plots",   false,   false  ) },
     };
 
     private static readonly Dictionary<string, (int amount, int cost)> ItemSaleChart = new()
@@ -736,6 +737,42 @@ public static class FarmEngine
             buttonRow.WithButton(label: "Shop", customId: "shop", style: ButtonStyle.Secondary, emote: new Emoji("🛒"));
         if (except != "inventory")
             buttonRow.WithButton(label: "Inventory", customId: "inventory", style: ButtonStyle.Secondary, emote: new Emoji("🎒"));
+    }
+
+    public static async Task<List<int>> GetDegradedPlots(User dbUser)
+    {
+        int mask = await GetItem(dbUser, "plots_degraded");
+        if (mask <= 0) return [];
+
+        List<int> plots = [];
+        for (int i = 0; i < 3; i++)
+        {
+            if ((mask & (1 << i)) != 0)
+                plots.Add(i + 1);
+        }
+        return plots;
+    }
+
+    public static async Task<bool> IsPlotDegraded(User dbUser, int plotId)
+    {
+        int mask = await GetItem(dbUser, "plots_degraded");
+        return (mask & (1 << (plotId - 1))) != 0;
+    }
+
+    public static async Task DegradePlot(User dbUser, int plotId)
+    {
+        int mask = await GetItem(dbUser, "plots_degraded");
+        int newMask = mask | (1 << (plotId - 1));
+        if (newMask == mask) return;
+        await SetItem(dbUser, "plots_degraded", newMask);
+    }
+
+    public static async Task<bool> RestoreAllPlots(User dbUser)
+    {
+        if (await GetItem(dbUser, "dabloons") < 100) return false;
+        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -100));
+        Global.FireAndForget(SetItem(dbUser, "plots_degraded", 0));
+        return true;
     }
 
 }
