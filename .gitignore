@@ -399,3 +399,5 @@ FodyWeavers.xsd
 
 # Environment secrets
 .env
+/.idea
+.DS_Store
