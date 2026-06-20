@@ -7,45 +7,57 @@ namespace Rosettes.Modules.Engine;
 public static class LanguageEngine
 {
     private const string ApiUrl = "https://mmip-be.markski.ar/v1/chat";
-    private const string Model = "openai/gpt-5.4-mini";
+    private const string CompactUrl = "https://mmip-be.markski.ar/v1/compact";
+    private const string Model = "z-ai/glm-4.7";
+    private const string CompactModel = "google/gemini-3.1-flash-lite";
+
+    private const int MaxChars = 400_000;
+    private const int MaxSummaryTokens = 800;
 
     private sealed record ChatMessage(string Role, string Content);
 
-    private static readonly Dictionary<(ulong userId, ulong channelId), List<ChatMessage>> ConversationContexts = [];
+    private static readonly Dictionary<ulong, List<ChatMessage>> ConversationContexts = [];
 
-    public static async Task<(bool, bool, string)> GetResponseAsync(ulong userId, ulong channelId, string message)
+    public static async Task<(bool, bool, string)> GetResponseAsync(ulong channelId, string message)
     {
         List<ChatMessage> messages;
         bool isNewChat = false;
 
         if (message.Trim() is "clear")
         {
-            if (ConversationContexts.TryGetValue((userId, channelId), out _))
+            if (ConversationContexts.TryGetValue(channelId, out _))
             {
-                ConversationContexts.Remove((userId, channelId));
-                return (isNewChat, false, "Context cleared: I have forgotten our conversation.");
+                ConversationContexts.Remove(channelId);
+                return (isNewChat, false, "Context cleared: I have forgotten this channel's conversation.");
             }
         }
 
-        if (ConversationContexts.TryGetValue((userId, channelId), out var context))
+        if (ConversationContexts.TryGetValue(channelId, out var context))
         {
             messages = context;
 
-            const int MaxChars = 120_000;
-            while (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 3)
+            if (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 1)
             {
-                messages.RemoveAt(1);
-                messages.RemoveAt(1);
+                bool compacted = await TryCompactAsync(messages);
+                if (!compacted)
+                {
+                    // Fallback: drop oldest user/assistant pairs (system prompt is at index 0 and survives).
+                    while (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 3)
+                    {
+                        messages.RemoveAt(1);
+                        messages.RemoveAt(1);
+                    }
+                }
             }
         }
         else
         {
             messages = [
-                new ChatMessage("system", $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/mm/yyyy format.;\n{Settings.SystemPrompt}")
+                new ChatMessage("system", $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/MM/yyyy format.;\n{Settings.SystemPrompt}")
             ];
             isNewChat = true;
         }
-        
+
         var requestBody = new
         {
             message,
@@ -56,7 +68,7 @@ public static class LanguageEngine
         };
 
         var json = JsonConvert.SerializeObject(requestBody);
-        
+
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
@@ -84,7 +96,7 @@ public static class LanguageEngine
 
             messages.Add(new ChatMessage("user", message));
             messages.Add(new ChatMessage("assistant", responseText));
-            ConversationContexts[(userId, channelId)] = messages;
+            ConversationContexts[channelId] = messages;
 
             return (isNewChat, true, responseText);
         }
@@ -92,6 +104,73 @@ public static class LanguageEngine
         {
             Global.GenerateErrorMessage("mmip-response", $"Error returning response: {ex.Message}");
             return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+        }
+    }
+
+    // Use MMIP's /v1/compact and keep the last 6 messages.
+    private static async Task<bool> TryCompactAsync(List<ChatMessage> messages)
+    {
+        try
+        {
+            var requestBody = new
+            {
+                messages = messages.Select(m => new { role = m.Role, content = m.Content }),
+                model = CompactModel,
+                max_summary_tokens = MaxSummaryTokens,
+                @params = new { temperature = 0.2 }
+            };
+
+            var json = JsonConvert.SerializeObject(requestBody);
+
+            var request = new HttpRequestMessage(HttpMethod.Post, CompactUrl);
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.ApiKey);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await Global.HttpClient.SendAsync(request);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Global.GenerateErrorMessage("mmip-compact", $"Error: {response.StatusCode} - {responseBody}");
+                return false;
+            }
+
+            dynamic? data = JsonConvert.DeserializeObject<dynamic>(responseBody);
+            if (data is null)
+            {
+                Global.GenerateErrorMessage("mmip-compact", "Null response from /v1/compact");
+                return false;
+            }
+
+            bool success = data.success ?? false;
+            if (!success) return false;
+
+            string summary = data.summary;
+            if (string.IsNullOrWhiteSpace(summary) || summary.StartsWith("[MMIP]"))
+            {
+                // Probably out of funds, so fallback to deleting message pairs.
+                return false;
+            }
+
+            var originalSystem = messages.Find(m => m.Role == "system")?.Content
+                                 ?? $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/MM/yyyy format.;";
+
+            var recent = messages
+                .Where(m => m.Role is "user" or "assistant")
+                .TakeLast(6)
+                .ToList();
+
+            messages.Clear();
+            messages.Add(new ChatMessage("system", originalSystem));
+            messages.Add(new ChatMessage("system", $"Summary of prior conversation with the user:\n{summary}"));
+            foreach (var turn in recent) messages.Add(turn);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("mmip-compact", $"Error compacting: {ex.Message}");
+            return false;
         }
     }
 }

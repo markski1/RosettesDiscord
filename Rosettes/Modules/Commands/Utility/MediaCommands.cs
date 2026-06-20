@@ -35,7 +35,6 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         else channelId = Context.Channel.Id;
 
         var (isNewChat, success, response) = await LanguageEngine.GetResponseAsync(
-                userId: Context.User.Id,
                 channelId: channelId,
                 message: question
             );
