@@ -148,20 +148,16 @@ public static class EventManager
         return Task.CompletedTask;
     }
 
-    private static async Task<Task> OnRoleChange(SocketRole role)
+    private static async Task OnRoleChange(SocketRole role)
     {
         Guild guild = await GuildEngine.GetDbGuild(role.Guild);
-        guild.UpdateRoles();
-
-        return Task.CompletedTask;
+        await guild.UpdateRoles();
     }
 
-    private static async Task<Task> OnRoleChange(SocketRole role, SocketRole role1)
+    private static async Task OnRoleChange(SocketRole role, SocketRole role1)
     {
         Guild guild = await GuildEngine.GetDbGuild(role.Guild);
-        guild.UpdateRoles();
-
-        return Task.CompletedTask;
+        await guild.UpdateRoles();
     }
 
     private static async Task<Task> OnUserJoin(SocketGuildUser user)

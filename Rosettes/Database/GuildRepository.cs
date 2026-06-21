@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Concurrent;
+using System.Text;
 using Dapper;
 using Discord.WebSocket;
 using Rosettes.Core;
@@ -8,6 +9,7 @@ namespace Rosettes.Database;
 
 public class GuildRepository
 {
+    private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> RoleSyncLocks = []; 
     public static async Task<IEnumerable<Guild>> GetAllGuildsAsync()
     {
         using var getConn = DatabasePool.GetConnection();
@@ -184,39 +186,58 @@ public class GuildRepository
 
     public static async Task<bool> UpdateGuildRoles(Guild guild)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
         var discordGuild = guild.GetDiscordSocketReference();
         if (discordGuild is null) return false;
 
-        await db.ExecuteAsync("DELETE FROM roles WHERE guildid = @Id", new { guild.Id });
-
-        var roles = discordGuild.Roles.Where(r => !r.IsEveryone && !r.IsManaged).ToList();
-        if (roles.Count == 0) return true;
-
-        var sql = new StringBuilder("INSERT INTO roles (id, rolename, guildid, color) VALUES ");
-        var parameters = new DynamicParameters();
-        parameters.Add("GuildId", guild.Id);
-
-        for (int i = 0; i < roles.Count; i++)
-        {
-            if (i > 0) sql.Append(", ");
-            sql.Append($"(@Id{i}, @Name{i}, @GuildId, @Color{i})");
-            parameters.Add($"Id{i}", roles[i].Id);
-            parameters.Add($"Name{i}", roles[i].Name);
-            parameters.Add($"Color{i}", roles[i].Colors.PrimaryColor.ToString());
-        }
-
+        var roleSyncLock = RoleSyncLocks.GetOrAdd(guild.Id, _ => new SemaphoreSlim(1, 1));
+        await roleSyncLock.WaitAsync();
         try
         {
-            await db.ExecuteAsync(sql.ToString(), parameters);
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-updateguildroles", $"sqlException code {ex.Message}");
-        }
+            using var getConn = DatabasePool.GetConnection();
+            var db = getConn.Db;
+            var roles = discordGuild.Roles.Where(r => !r.IsEveryone && !r.IsManaged).ToList();
 
-        return true;
+            if (db.State == System.Data.ConnectionState.Closed)
+            {
+                db.Open();
+            }
+
+            await using var transaction = await db.BeginTransactionAsync();
+            try
+            {
+                await db.ExecuteAsync("DELETE FROM roles WHERE guildid = @Id", new { guild.Id }, transaction);
+
+                if (roles.Count > 0)
+                {
+                    var sql = new StringBuilder("INSERT INTO roles (id, rolename, guildid, color) VALUES ");
+                    var parameters = new DynamicParameters();
+                    parameters.Add("GuildId", guild.Id);
+
+                    for (int i = 0; i < roles.Count; i++)
+                    {
+                        if (i > 0) sql.Append(", ");
+                        sql.Append($"(@Id{i}, @Name{i}, @GuildId, @Color{i})");
+                        parameters.Add($"Id{i}", roles[i].Id);
+                        parameters.Add($"Name{i}", roles[i].Name);
+                        parameters.Add($"Color{i}", roles[i].Colors.PrimaryColor.ToString());
+                    }
+
+                    await db.ExecuteAsync(sql.ToString(), parameters, transaction);
+                }
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Global.GenerateErrorMessage("sql-updateguildroles", $"Transaction failed: {ex.Message}");
+                return false;
+            }
+        }
+        finally
+        {
+            roleSyncLock.Release();
+        }
     }
 }

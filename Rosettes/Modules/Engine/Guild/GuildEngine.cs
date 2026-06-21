@@ -83,7 +83,7 @@ public static class GuildEngine
         {
             getGuild = new Guild(guild);
             await GuildRepository.InsertGuild(getGuild);
-            getGuild.UpdateRoles();
+            await getGuild.UpdateRoles();
         }
         if (getGuild.IsValid())
         {
@@ -101,7 +101,7 @@ public static class GuildEngine
         var loaded = guildCacheTemp.ToList();
         foreach (Guild guild in loaded)
         {
-            guild.UpdateRoles();
+            await guild.UpdateRoles();
         }
         lock (CacheLock)
         {
@@ -338,9 +338,9 @@ public class Guild
         }
     }
 
-    public async void UpdateRoles()
+    public Task<bool> UpdateRoles()
     {
-        await GuildRepository.UpdateGuildRoles(this);
+        return GuildRepository.UpdateGuildRoles(this);
     }
 
     public async Task SendLogMessage(EmbedBuilder embed)
