@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
 using System.Text;
+using System.Text.RegularExpressions;
 using Rosettes.Modules.Engine;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -17,6 +18,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private sealed record CachedMedia(string MediaUri, string FileName);
     private static readonly Dictionary<string, CachedMedia> MediaCache = [];
+    private static readonly Regex UserMentionRegex = new(@"<@!?(?<id>\d+)>", RegexOptions.Compiled);
 
     [SlashCommand("chat", "Chat with Rosettes")]
     public async Task Chat(string question)
@@ -36,7 +38,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         var (isNewChat, success, response) = await LanguageEngine.GetResponseAsync(
                 channelId: channelId,
-                message: question
+                message: await ResolveUserMentionsAsync(question),
+                userName: Context.User.GlobalName ?? Context.User.Username
             );
 
         if (success)
@@ -286,6 +289,39 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         }
     }
     
+    private async Task<string> ResolveUserMentionsAsync(string text)
+    {
+        var matches = UserMentionRegex.Matches(text);
+        if (matches.Count == 0) return text;
+
+        var idToName = new Dictionary<ulong, string>();
+        foreach (Match match in matches)
+        {
+            if (!ulong.TryParse(match.Groups["id"].Value, out var uid)) continue;
+            if (idToName.ContainsKey(uid)) continue;
+
+            IUser user = null;
+            if (Context.Guild is not null)
+            {
+                var guildUser = Context.Guild.GetUser(uid);
+                user = guildUser ?? (IUser)await Context.Client.Rest.GetUserAsync(uid);
+            }
+            else
+            {
+                user = await Context.Client.Rest.GetUserAsync(uid);
+            }
+            string name = user?.GlobalName ?? user?.Username;
+
+            idToName[uid] = name ?? $"unknown:{uid}";
+        }
+
+        return UserMentionRegex.Replace(text, m =>
+        {
+            var uid = ulong.Parse(m.Groups["id"].Value);
+            return idToName.TryGetValue(uid, out var name) ? $"@{name}" : m.Value;
+        });
+    }
+
     private static List<string> SplitResponse(string text)
     {
         List<string> parts = [];

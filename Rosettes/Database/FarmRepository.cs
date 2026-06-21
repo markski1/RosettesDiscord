@@ -29,8 +29,14 @@ public static class FarmRepository
 
         try
         {
-            return await db.ExecuteAsync(sql, new { plotId = crop.PlotId, userId = crop.UserId, unixGrowth = crop.UnixGrowth, unixNextWater = crop.UnixNextWater,
-                cropType = crop.CropType }) > 0;
+            return await db.ExecuteAsync(sql, new
+            {
+                plotId = crop.PlotId,
+                userId = crop.UserId,
+                unixGrowth = crop.UnixGrowth,
+                unixNextWater = crop.UnixNextWater,
+                cropType = crop.CropType
+            }) > 0;
         }
         catch (Exception ex)
         {
@@ -52,8 +58,14 @@ public static class FarmRepository
 
         try
         {
-            return await db.ExecuteAsync(sql, new { plotId = crop.PlotId, userId = crop.UserId, unixGrowth = crop.UnixGrowth, unixNextWater = crop.UnixNextWater,
-                cropType = crop.CropType }) > 0;
+            return await db.ExecuteAsync(sql, new
+            {
+                plotId = crop.PlotId,
+                userId = crop.UserId,
+                unixGrowth = crop.UnixGrowth,
+                unixNextWater = crop.UnixNextWater,
+                cropType = crop.CropType
+            }) > 0;
         }
         catch (Exception ex)
         {
@@ -78,6 +90,112 @@ public static class FarmRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-deletecrop", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> ApplyPlantingResults(User user, IReadOnlyCollection<Crop> plantedCrops, int seedsUsed, int toolDamage)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            db.Open();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+
+        const string insertCropSql = """
+                                     INSERT INTO users_crops (plot_id, user_id, unix_growth, unix_next_water, crop_type)
+                                     VALUES(@plotId, @userId, @unixGrowth, @unixNextWater, @cropType)
+                                     """;
+
+        const string updateSeedSql = "UPDATE users_inventory SET seedbag = seedbag - @seedsUsed WHERE id = @id";
+        const string updateToolsSql = "UPDATE users_inventory SET farmtools = farmtools - @toolDamage WHERE id = @id";
+
+        try
+        {
+            foreach (var crop in plantedCrops)
+            {
+                await db.ExecuteAsync(insertCropSql, new
+                {
+                    plotId = crop.PlotId,
+                    userId = crop.UserId,
+                    unixGrowth = crop.UnixGrowth,
+                    unixNextWater = crop.UnixNextWater,
+                    cropType = crop.CropType
+                }, transaction);
+            }
+
+            if (seedsUsed > 0)
+                await db.ExecuteAsync(updateSeedSql, new { seedsUsed, id = user.Id }, transaction);
+
+            if (toolDamage > 0)
+                await db.ExecuteAsync(updateToolsSql, new { toolDamage, id = user.Id }, transaction);
+
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            Global.GenerateErrorMessage("sql-applyplanting", $"Transaction failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> ApplyHarvestResults(User user, IReadOnlyCollection<Crop> harvestedCrops, IReadOnlyDictionary<string, int> rewards, int toolDamage,
+        int degradedPlotMask)
+    {
+        foreach (var reward in rewards)
+        {
+            if (!FarmEngine.IsValidItem(reward.Key)) return false;
+        }
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            db.Open();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+
+        const string deleteCropSql = """
+                                     DELETE FROM users_crops
+                                     WHERE user_id = @userId AND plot_id = @plotId
+                                     """;
+        const string updateToolsSql = "UPDATE users_inventory SET farmtools = farmtools - @toolDamage WHERE id = @id";
+        const string updateDegradedPlotsSql = "UPDATE users_inventory SET plots_degraded = plots_degraded | @degradedPlotMask WHERE id = @id";
+
+        try
+        {
+            foreach (var crop in harvestedCrops)
+            {
+                await db.ExecuteAsync(deleteCropSql, new { userId = crop.UserId, plotId = crop.PlotId }, transaction);
+            }
+
+            foreach (var reward in rewards.Where(r => r.Value != 0))
+            {
+                var updateRewardSql = $"UPDATE users_inventory SET `{reward.Key}` = `{reward.Key}` + @amount WHERE id = @id";
+                await db.ExecuteAsync(updateRewardSql, new { amount = reward.Value, id = user.Id }, transaction);
+            }
+
+            if (toolDamage > 0)
+                await db.ExecuteAsync(updateToolsSql, new { toolDamage, id = user.Id }, transaction);
+
+            if (degradedPlotMask != 0)
+                await db.ExecuteAsync(updateDegradedPlotsSql, new { degradedPlotMask, id = user.Id }, transaction);
+
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            Global.GenerateErrorMessage("sql-applyharvest", $"Transaction failed: {ex.Message}");
             return false;
         }
     }
@@ -109,7 +227,6 @@ public static class FarmRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        // 
         var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
 
         try

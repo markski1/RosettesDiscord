@@ -205,7 +205,7 @@ public class GuildRepository
             sql.Append($"(@Id{i}, @Name{i}, @GuildId, @Color{i})");
             parameters.Add($"Id{i}", roles[i].Id);
             parameters.Add($"Name{i}", roles[i].Name);
-            parameters.Add($"Color{i}", roles[i].Color.ToString());
+            parameters.Add($"Color{i}", roles[i].Colors.PrimaryColor.ToString());
         }
 
         try

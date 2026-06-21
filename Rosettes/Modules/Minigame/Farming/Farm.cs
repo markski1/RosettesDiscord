@@ -75,17 +75,14 @@ public static class Farm
             _ => "⭐⭐"
         };
 
-    private static async Task<Crop?> InsertCropsInPlot(User dbUser, int cropType, int plotId)
+    private static Crop BuildCropForPlot(User dbUser, int cropType, int plotId)
     {
         // 3-second buffers on each to print a rounded-up time.
         var now = Now();
         int growTime = now + (3600 * GrowthHoursBase) + (3600 * Global.Randomize(GrowthHoursRandomMaxExclusive)) + SecondsBuffer;
         int waterTime = now + WaterBaseSeconds + SecondsBuffer;
 
-        Crop newCrop = new(plotId, dbUser.Id, growTime, waterTime, cropType);
-
-        bool success = await FarmRepository.InsertCrop(newCrop);
-        return success ? newCrop : null;
+        return new Crop(plotId, dbUser.Id, growTime, waterTime, cropType);
     }
 
     private static string GetHarvest(int id) =>
@@ -271,6 +268,7 @@ public static class Farm
 
         bool ranOutSeeds = false;
         bool toolsBroken = false;
+        int totalToolDamage = 0;
 
         for (int i = 0; i < freePlots; i++)
         {
@@ -296,9 +294,25 @@ public static class Farm
                 _ => 3
             };
 
-            var plantedCrop = await InsertCropsInPlot(dbUser, type, plotId);
+            var plantedCrop = BuildCropForPlot(dbUser, type, plotId);
+            plantedCrops.Add(plantedCrop);
 
-            if (plantedCrop is null)
+            seeds--;
+
+            int damage = 3 + Global.Randomize(3);
+            toolStatus -= damage;
+            totalToolDamage += damage;
+
+            if (toolStatus > 0) continue;
+
+            toolsBroken = true;
+            break;
+        }
+
+        if (plantedCrops.Count > 0)
+        {
+            bool success = await FarmRepository.ApplyPlantingResults(dbUser, plantedCrops, plantedCrops.Count, totalToolDamage);
+            if (!success)
             {
                 ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
                 errorContainer.WithTextDisplay("Sorry, there was an error in this operation. Not planted.");
@@ -309,20 +323,6 @@ public static class Farm
                 await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
                 return;
             }
-
-            plantedCrops.Add(plantedCrop);
-
-            FarmEngine.ModifyItem(dbUser, "seedbag", -1);
-            seeds--;
-
-            int damage = 3 + Global.Randomize(3);
-            toolStatus -= damage;
-            FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
-
-            if (toolStatus > 0) continue;
-
-            toolsBroken = true;
-            break;
         }
 
         ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
@@ -472,18 +472,18 @@ public static class Farm
         int count = 0;
         int expIncrease = 0;
         bool plotsWereHarvested = false;
+        int degradedPlotMask = 0;
 
         List<string> harvestTexts = [];
+        Dictionary<string, int> rewards = [];
 
-        List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
-        foreach (var crop in cropsToList.Where(crop => crop.UnixGrowth < now))
+        int totalPlots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
+        List<Crop> cropsToHarvest = (await FarmRepository.GetUserCrops(dbUser))
+            .Where(crop => crop.UnixGrowth < now)
+            .ToList();
+
+        foreach (var crop in cropsToHarvest)
         {
-            var success = await FarmRepository.DeleteCrop(crop);
-            if (!success)
-            {
-                continue;
-            }
-
             string harvest = GetHarvest(crop.CropType);
 
             int baseEarnings = 9 + Global.Randomize(4) * 3 + Global.Randomize(4) * 3;
@@ -491,7 +491,7 @@ public static class Farm
             var quality = await RollCropQuality(dbUser);
             int earnings = ApplyQualityMultiplier(baseEarnings, quality);
 
-            FarmEngine.ModifyItem(dbUser, harvest, +earnings);
+            rewards[harvest] = rewards.GetValueOrDefault(harvest) + earnings;
             expIncrease += earnings;
 
             string qualityLine = earnings == baseEarnings
@@ -503,10 +503,9 @@ public static class Farm
             count++;
             plotsWereHarvested = true;
 
-            int totalPlots = await FarmRepository.FetchInventoryItem(dbUser, "plots");
             if (totalPlots > 1 && Global.Chance(15))
             {
-                await FarmEngine.DegradePlot(dbUser, crop.PlotId);
+                degradedPlotMask |= 1 << (crop.PlotId - 1);
                 harvestTexts.Add($"🥀 **Plot {crop.PlotId}** has withered and needs restoration.");
             }
         }
@@ -516,6 +515,22 @@ public static class Farm
             ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("🌾 Nothing to harvest");
             errorContainer.WithTextDisplay("None of your crops are ready yet.");
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            return;
+        }
+
+        int damage = 3 + Global.Randomize(2);
+        toolStatus -= damage;
+
+        bool harvestApplied = await FarmRepository.ApplyHarvestResults(dbUser, cropsToHarvest, rewards, damage, degradedPlotMask);
+        if (!harvestApplied)
+        {
+            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("Sorry, there was an error in this operation. Not harvested.");
 
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
@@ -536,10 +551,6 @@ public static class Farm
 
         if (foundPet > 0)
             container.WithTextDisplay($"**✨ You found a pet.**\nA friendly {PetEngine.PetNames(foundPet)} chased you about while you harvested. It's been added to your pets.");
-
-        int damage = 3 + Global.Randomize(2);
-        toolStatus -= damage;
-        FarmEngine.ModifyItem(dbUser, "farmtools", -damage);
 
         if (toolStatus <= 0)
             container.WithTextDisplay($"**🧰 {FarmEngine.GetItemName("farmtools")} destroyed**\nYour tools broke while harvesting. Pick up a new set at the shop.");

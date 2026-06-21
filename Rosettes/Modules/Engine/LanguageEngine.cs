@@ -18,7 +18,7 @@ public static class LanguageEngine
 
     private static readonly Dictionary<ulong, List<ChatMessage>> ConversationContexts = [];
 
-    public static async Task<(bool, bool, string)> GetResponseAsync(ulong channelId, string message)
+    public static async Task<(bool, bool, string)> GetResponseAsync(ulong channelId, string message, string userName)
     {
         List<ChatMessage> messages;
         bool isNewChat = false;
@@ -31,6 +31,9 @@ public static class LanguageEngine
                 return (isNewChat, false, "Context cleared: I have forgotten this channel's conversation.");
             }
         }
+
+        string safeName = string.IsNullOrWhiteSpace(userName) ? "unknown" : userName.Trim();
+        string attributedMessage = $"[{safeName}]: {message}";
 
         if (ConversationContexts.TryGetValue(channelId, out var context))
         {
@@ -60,7 +63,7 @@ public static class LanguageEngine
 
         var requestBody = new
         {
-            message,
+            message = attributedMessage,
             history = messages.Where(m => m.Role != "system").Select(m => new { role = m.Role, content = m.Content }),
             model = Model,
             web_search = true,
@@ -94,7 +97,7 @@ public static class LanguageEngine
 
             string responseText = responseData.message;
 
-            messages.Add(new ChatMessage("user", message));
+            messages.Add(new ChatMessage("user", attributedMessage));
             messages.Add(new ChatMessage("assistant", responseText));
             ConversationContexts[channelId] = messages;
 
