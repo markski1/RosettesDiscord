@@ -3,6 +3,7 @@ from flask_login import (
     UserMixin
 )
 
+from core.bot_api import validate_panel_login_key, BotApiError
 from core.database import get_db_conn
 import os
 from dotenv import load_dotenv
@@ -33,17 +34,17 @@ def init_app(app):
 
 
 def attempt_login(auth_key):
-    db = get_db_conn()
-    db.execute("SELECT id FROM login_keys WHERE login_key = %s", auth_key)
-    result = db.fetch_one()
-    db.pool()
+    try:
+        user_id = validate_panel_login_key(auth_key)
+    except BotApiError as exc:
+        return None, str(exc)
 
-    if result:
+    if user_id:
         user_model = Session()
-        user_model.id = result['id']
-        return user_model
+        user_model.id = user_id
+        return user_model, None
 
-    return None
+    return None, "Key does not exist."
 
 
 class Session(UserMixin):

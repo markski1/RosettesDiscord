@@ -122,23 +122,23 @@ public class GuildRepository
         }
     }
 
-    public static async Task<(string settings, ulong defaultRole)> GetGuildSyncFields(Guild guild)
+    public static async Task<(string settings, ulong defaultRole, ulong logChannel, ulong farmChannel)?> GetGuildRuntimeFields(ulong guildId)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = "SELECT settings, defaultrole FROM guilds WHERE id=@id";
+        const string sql = "SELECT settings, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
         try
         {
-            var row = await db.QueryFirstOrDefaultAsync(sql, new { id = guild.Id });
-            if (row is null) return ("1111111111", 0ul);
-            return ((string)row.settings, (ulong)row.defaultrole);
+            var row = await db.QueryFirstOrDefaultAsync(sql, new { id = guildId });
+            if (row is null) return null;
+            return ((string)row.settings, (ulong)row.defaultrole, (ulong)row.logchan, (ulong)row.rpgchan);
         }
         catch (Exception ex)
         {
-            Global.GenerateErrorMessage("sql-getguildsyncfields", $"sqlException code {ex.Message}");
-            return ("1111111111", 0ul);
+            Global.GenerateErrorMessage("sql-getguildruntimefields", $"sqlException code {ex.Message}");
+            return null;
         }
     }
 

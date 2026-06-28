@@ -47,7 +47,14 @@ public static class GuildEngine
         guild.SelfTest();
         if (await GuildRepository.UpdateGuild(guild))
         {
-            (guild.Settings, guild.DefaultRole) = await GuildRepository.GetGuildSyncFields(guild);
+            var runtimeFields = await GuildRepository.GetGuildRuntimeFields(guild.Id);
+            if (runtimeFields is { } fields)
+            {
+                guild.Settings = fields.settings;
+                guild.DefaultRole = fields.defaultRole;
+                guild.LogChannel = fields.logChannel;
+                guild.FarmChannel = fields.farmChannel;
+            }
         }
         else
         {
@@ -127,6 +134,43 @@ public static class GuildEngine
         {
             return _guildCache.FirstOrDefault(item => item.Id == guild) ?? new Guild(null);
         }
+    }
+
+    public static async Task<bool> ReloadRuntimeFields(ulong guildId)
+    {
+        var runtimeFields = await GuildRepository.GetGuildRuntimeFields(guildId);
+        if (runtimeFields is null)
+        {
+            return false;
+        }
+
+        Guild? cachedGuild;
+        lock (CacheLock)
+        {
+            cachedGuild = _guildCache.FirstOrDefault(item => item.Id == guildId);
+        }
+
+        if (cachedGuild is null)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            var socketGuild = client.GetGuild(guildId);
+            if (socketGuild is null)
+            {
+                return false;
+            }
+
+            cachedGuild = await LoadGuildFromDatabase(socketGuild);
+            if (!cachedGuild.IsValid())
+            {
+                return false;
+            }
+        }
+
+        cachedGuild.Settings = runtimeFields.Value.settings;
+        cachedGuild.DefaultRole = runtimeFields.Value.defaultRole;
+        cachedGuild.LogChannel = runtimeFields.Value.logChannel;
+        cachedGuild.FarmChannel = runtimeFields.Value.farmChannel;
+        return true;
     }
 
     public static IEnumerable<Guild> GetActiveGuilds()

@@ -73,6 +73,29 @@ public static class AutoRolesEngine
         return true;
     }
 
+    public static async Task<bool> ReloadGuildFromDatabase(ulong guildId)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        const string entriesSql = "SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries WHERE guildid=@GuildId";
+        const string groupsSql = "SELECT id, guildid, messageid, name FROM autorole_groups WHERE guildid=@GuildId";
+
+        var newEntries = (await db.QueryAsync<AutoRoleEntry>(entriesSql, new { GuildId = guildId })).ToList();
+        var newGroups = (await db.QueryAsync<AutoRoleGroup>(groupsSql, new { GuildId = guildId })).ToList();
+
+        lock (ArCacheLock)
+        {
+            _autoRolesEntries.RemoveAll(x => x.GuildId == guildId);
+            _autoRolesEntries.AddRange(newEntries);
+
+            _autoRolesGroups.RemoveAll(x => x.GuildId == guildId);
+            _autoRolesGroups.AddRange(newGroups);
+        }
+
+        return true;
+    }
+
     public static async Task<bool> UpdateGroupMessageId(uint code, ulong messageId)
     {
         lock (ArCacheLock)

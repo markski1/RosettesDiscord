@@ -18,12 +18,12 @@ def login():
     if not key:
         return "Invalid key"
 
-    user_sesh = attempt_login(key)
+    user_sesh, error_message = attempt_login(key)
     if user_sesh:
         login_user(user_sesh)
         return redirect("/panel/")
     else:
-        return "Key does not exist."
+        return error_message or "Key does not exist."
 
 
 @session_bp.route("/logout")

@@ -20,6 +20,7 @@ public static class Settings
     public static readonly string RapidApiKey = GetEnv("RAPIDAPI_KEY");
     public static readonly string SauceNao = GetEnv("SAUCENAO_KEY");
     public static readonly string SecretKey = GetEnv("SECRET_KEY");
+    public static readonly string PanelApiSecret = GetEnv("PANEL_API_SECRET");
     public static readonly string ApiKey = GetEnv("LLM_KEY");
     public static readonly string SystemPrompt = LoadTextFile("system_prompt.txt");
     public static readonly MySqlConnectionStringBuilder Database = new();

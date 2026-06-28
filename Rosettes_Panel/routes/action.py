@@ -3,6 +3,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required
 
+from core.bot_api import reload_autoroles, reload_guild, BotApiError
 from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
     insert_application, get_server_data, delete_autorole_group
 from utils.miscfuncs import ownership_required, generate_random_string
@@ -39,6 +40,15 @@ def post_settings(server_id):
 
     new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
     set_server_settings(server_id, new_settings)
+
+    try:
+        reload_ok, reload_message = reload_guild(server_id)
+    except BotApiError as exc:
+        return render_success(f"Settings were saved, but the bot reload failed: {exc}")
+
+    if not reload_ok:
+        return render_success(f"Settings were saved, but the bot reload failed: {reload_message}")
+
     return render_success("Settings updated successfully.")
 
 
@@ -68,6 +78,16 @@ def post_new_autoroles(server_id):
     for role in role_list:
         insert_role_for_autorole(server_id, autorole_id, role)
 
+    try:
+        reload_ok, reload_message = reload_autoroles(server_id)
+    except BotApiError as exc:
+        return jsonify(ok=True,
+                       message=f"Autorole group was created, but the bot reload failed: {exc}"), 200
+
+    if not reload_ok:
+        return jsonify(ok=True,
+                       message=f"Autorole group was created, but the bot reload failed: {reload_message}"), 200
+
     return jsonify(ok=True,
                    message=f"Autorole group created successfully. "
                            f"Use `/setautorole {autorole_id}` in the desired channel.")
@@ -78,6 +98,15 @@ def post_new_autoroles(server_id):
 @ownership_required
 def post_delete_autoroles(server_id, group_id):
     delete_autorole_group(server_id, group_id)
+
+    try:
+        reload_ok, reload_message = reload_autoroles(server_id)
+    except BotApiError as exc:
+        return render_success(f"Autorole group was deleted, but the bot reload failed: {exc}")
+
+    if not reload_ok:
+        return render_success(f"Autorole group was deleted, but the bot reload failed: {reload_message}")
+
     return redirect(url_for("panel.roles", server_id=server_id))
 
 
