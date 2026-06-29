@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect
+from flask import Blueprint, request, redirect, render_template
 from flask_login import login_required, login_user, logout_user
 
 from core.session import attempt_login
@@ -16,14 +16,14 @@ def login():
     key = request.form["key"]
 
     if not key:
-        return "Invalid key"
+        return render_template("index.jinja2", error_message="Please enter your Rosettes key.")
 
     user_sesh, error_message = attempt_login(key)
     if user_sesh:
         login_user(user_sesh)
         return redirect("/panel/")
     else:
-        return error_message or "Key does not exist."
+        return render_template("index.jinja2", error_message=error_message or "Key does not exist.")
 
 
 @session_bp.route("/logout")

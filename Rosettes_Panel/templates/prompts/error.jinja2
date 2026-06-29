@@ -3,11 +3,18 @@
 
 {% block main %}
 
-    <h1>Something went wrong</h1>
+    <section class="page-head compact">
+        <div class="page-copy">
+            <h1>Something went wrong</h1>
+            <p class="lead">Rosettes could not complete that request.</p>
+        </div>
+    </section>
 
-    <div class="block">
+    <div class="block notice-card error">
         <p>{{ message }}</p>
+        <div class="form-actions" style="justify-content:center;">
+            <a role="button" class="menu-button secondary" href="/panel/">Back to panel</a>
+        </div>
     </div>
-    <p><a role="button" class="menu-button" href="/panel/">Back to panel</a></p>
 
 {% endblock %}

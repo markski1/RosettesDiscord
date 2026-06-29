@@ -3,14 +3,25 @@
 
 {% block main %}
 
-    <p><a href="/panel/">Go back</a></p>
+    <a class="back-link" href="/panel/">Back to panel</a>
 
-    <h3>Creating an application.</h3>
+    <section class="page-head compact">
+        <div class="page-copy">
+            <h1>Create application</h1>
+            <p class="lead">Applications let you authorize and verify Discord users through Rosettes’ API.</p>
+        </div>
+    </section>
 
-    <p>Applications allow you to authorize and verify Discord users through Rosettes' API.</p>
-    <form method="POST" action="/action/create-app">
-        <p><label>Name: <input type="text" name="name" /></label></p>
-        <input type="submit" value="Create application">
-    </form>
+    <div class="block stack">
+        <form method="POST" action="/action/create-app">
+            <label>
+                Application name
+                <input type="text" name="name" placeholder="e.g. My Rosettes Integration" />
+            </label>
+            <div class="form-actions">
+                <input type="submit" value="Create application">
+            </div>
+        </form>
+    </div>
 
 {% endblock %}

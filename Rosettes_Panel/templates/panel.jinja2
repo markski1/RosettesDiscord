@@ -4,35 +4,61 @@
 {% block main %}
 
     <div class="topbar">
-        <span>Welcome, <b>{{ user['namecache'] }}</b></span>
-        <a href="/session/logout">Logout</a>
+        <span>Welcome, <strong>{{ user['namecache'] }}</strong></span>
+        <a class="menu-button secondary" href="/session/logout">Logout</a>
     </div>
 
-    <h2>Servers</h2>
-    <hr>
-    {% for server in servers %}
-        <div class="block">
-            <p class="block-title">{{ server['namecache'] }}</p>
-            <p class="muted">{{ server['members'] }} members.</p>
-            <p class="actions">
-                <a class="menu-button" href="/panel/{{ server['id'] }}/settings">Settings</a>
-                <a class="menu-button" href="/panel/{{ server['id'] }}/roles">Roles</a>
-            </p>
+    <section class="section-head">
+        <div class="page-copy">
+            <h2>Servers</h2>
+            <p class="muted">Server settings and autorole configuration for guilds you own.</p>
         </div>
-    {% else %}
-        <p class="muted">You do not have any servers in which Rosettes have been added.</p>
-    {% endfor %}
+    </section>
 
-    <h2>Applications</h2>
-    <hr>
-    {% for app in apps %}
-        <div class="block">
-            <p class="block-title">{{ app['name'] }}</p>
-            <p class="actions"><a class="menu-button" href="/panel/apps/{{ app['id'] }}">Manage</a></p>
+    <div class="card-grid">
+        {% for server in servers %}
+            <div class="block">
+                <p class="block-title">{{ server['namecache'] }}</p>
+                <div class="meta-row">
+                    <span class="meta-pill">{{ server['members'] }} members</span>
+                    <span class="meta-pill">Server ID {{ server['id'] }}</span>
+                </div>
+                <div class="actions">
+                    <a class="menu-button" href="/panel/{{ server['id'] }}/settings">Settings</a>
+                    <a class="menu-button secondary" href="/panel/{{ server['id'] }}/roles">Roles</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="block soft">
+                <p class="muted">You do not have any servers in which Rosettes has been added.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <section class="section-head">
+        <div class="page-copy">
+            <h2>Applications</h2>
+            <p class="muted">Manage app tokens and see users who have approved your integrations.</p>
         </div>
-    {% else %}
-        <p class="muted">You have no applications registered.</p>
-    {% endfor %}
-    <p><a href="/panel/apps/new">Create a new application</a></p>
+        <a class="menu-button" href="/panel/apps/new">Create application</a>
+    </section>
+
+    <div class="card-grid">
+        {% for app in apps %}
+            <div class="block">
+                <p class="block-title">{{ app['name'] }}</p>
+                <div class="meta-row">
+                    <span class="meta-pill">App ID {{ app['id'] }}</span>
+                </div>
+                <div class="actions">
+                    <a class="menu-button" href="/panel/apps/{{ app['id'] }}">Manage</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="block soft">
+                <p class="muted">You have no applications registered.</p>
+            </div>
+        {% endfor %}
+    </div>
 
 {% endblock %}

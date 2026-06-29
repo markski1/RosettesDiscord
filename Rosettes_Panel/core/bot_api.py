@@ -53,20 +53,31 @@ def _request_json(method: str, path: str, payload: JsonDict | None = None) -> Js
         raise BotApiError(f"Unable to reach bot API: {exc.reason}") from exc
 
 
-def validate_panel_login_key(key: str) -> int | None:
+def validate_panel_login_key(key: str) -> tuple[int | None, str | None]:
     response = _request_json("POST", "/rosapi/internal/panel/login", {"key": key})
     if not response.get("success"):
-        return None
+        message = str(response.get("message") or "login_failed")
+        if message == "key_not_found":
+            return None, "Key does not exist."
+        if message == "login_db_unavailable":
+            return None, "Rosettes could not verify your key because the bot database is unavailable right now. Please try again later."
+        if message == "unauthorized":
+            return None, "The panel could not authenticate against the bot API. Please try again later."
+        if message == "http_404":
+            return None, "The panel could not authenticate against the bot API. Please try again later. [E1]"
+        if message.startswith("http_"):
+            return None, f"The bot API returned {message.replace('http_', 'HTTP ')} during login validation."
+        return None, f"Login validation failed: {message}"
 
     data = response.get("data")
     if not isinstance(data, dict):
-        return None
+        return None, "Login validation returned an invalid response."
 
     user_id = data.get("user_id")
     if user_id is None:
-        return None
+        return None, "Login validation returned no user ID."
 
-    return int(cast(int | str, user_id))
+    return int(cast(int | str, user_id)), None
 
 
 def reload_guild(server_id: int) -> tuple[bool, str]:

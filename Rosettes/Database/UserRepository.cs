@@ -121,11 +121,12 @@ public class UserRepository
 
         try
         {
-            return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { rosettes_key = rosettesKey });
+            return await db.QueryFirstOrDefaultAsync<ulong?>(sql, new { rosettes_key = rosettesKey });
         }
-        catch
+        catch (Exception ex)
         {
-            return null;
+            Global.GenerateErrorMessage("sql-getuserbyrosetteskey", $"sqlException code {ex.Message}");
+            throw;
         }
     }
 }

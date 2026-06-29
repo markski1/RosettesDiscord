@@ -1,11 +1,11 @@
 import json
 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from core.bot_api import reload_autoroles, reload_guild, BotApiError
 from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
-    insert_application, get_server_data, delete_autorole_group
+    insert_application, get_server_data, delete_autorole_group, get_app_by_id, delete_application
 from utils.miscfuncs import ownership_required, generate_random_string
 from utils.page_helpers import render_success, render_error
 
@@ -108,6 +108,20 @@ def post_delete_autoroles(server_id, group_id):
         return render_success(f"Autorole group was deleted, but the bot reload failed: {reload_message}")
 
     return redirect(url_for("panel.roles", server_id=server_id))
+
+
+@action_bp.post("/delete-app/<int:app_id>")
+@login_required
+def post_delete_app(app_id):
+    app = get_app_by_id(app_id)
+    if not app:
+        return render_error("App not found.")
+
+    if int(app["owner_id"]) != int(current_user.id):
+        return render_error("You don't own this application.")
+
+    delete_application(app_id, int(current_user.id))
+    return render_success("Application deleted successfully.")
 
 
 @action_bp.post("/create-app")

@@ -26,7 +26,16 @@ public class InternalController : ControllerBase
             return BadRequest(GenericResponse.Error("invalid_key"));
         }
 
-        ulong? userId = await UserRepository.GetUserByRosettesKey(request.Key.Trim());
+        ulong? userId;
+        try
+        {
+            userId = await UserRepository.GetUserByRosettesKey(request.Key.Trim());
+        }
+        catch
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, GenericResponse.Error("login_db_unavailable"));
+        }
+
         if (userId is null || userId == 0)
         {
             return NotFound(GenericResponse.Error("key_not_found"));
@@ -35,7 +44,7 @@ public class InternalController : ControllerBase
         return Ok(GenericResponse.Success("login_valid", new { user_id = userId.Value }));
     }
 
-    [HttpPost("guild/{guildId:ulong}/reload")]
+    [HttpPost("guild/{guildId}/reload")]
     public async Task<IActionResult> ReloadGuild(ulong guildId)
     {
         if (!InternalApi.IsAuthorized(Request))
@@ -52,7 +61,7 @@ public class InternalController : ControllerBase
         return Ok(GenericResponse.Success("guild_reloaded"));
     }
 
-    [HttpPost("autoroles/{guildId:ulong}/reload")]
+    [HttpPost("autoroles/{guildId}/reload")]
     public async Task<IActionResult> ReloadAutoroles(ulong guildId)
     {
         if (!InternalApi.IsAuthorized(Request))

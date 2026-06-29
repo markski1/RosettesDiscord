@@ -3,28 +3,57 @@
 
 {% block main %}
 
-    <p><a href="/panel/">Go back</a></p>
+    <a class="back-link" href="/panel/">Back to panel</a>
 
-    <h2>App information.</h2>
+    <section class="page-head compact">
+        <div class="page-copy">
+            <h1>{{ app['name'] }}</h1>
+            <p class="lead">Application details, authorized users, and API information.</p>
+        </div>
+        <form method="POST" action="/action/delete-app/{{ app['id'] }}"
+              onsubmit="return confirm('Delete this application? This will also remove its user authorizations.');">
+            <button type="submit" class="entry-remove">Delete application</button>
+        </form>
+    </section>
 
-    <p>Your app is called "{{ app['name'] }}". Its ID is #{{ app['id'] }}</p>
-    <h3>Users</h3>
-    <hr>
-    {% for user in users %}
-        <p>{{ user['namecache'] }} | username: {{ user['username'] }} | id: {{ user['id'] }}</p>
-    {% else %}
-        <p>No user has yet approved your application for auth.</p>
-    {% endfor %}
-    <h3>API Information.</h3>
-    <hr>
-    <p>Your application's token is: <code class="token">{{ app['token_key'] }}</code></p>
-    <hr>
-    <h3>Endpoints</h3>
-    <p>Largely WIP, probably unstable.<br>All under https://rosettes.markski.ar/api/</p>
-    <ul>
-        <li><b>[POST] request</b> - Request authorization from an user. - params: [str]applicationKey, [ulong]userId</li>
-        <li><b>[POST] notify</b> - Send message to an user. - params: [str]applicationKey, [ulong]userId, [str]message</li>
-        <li><b>[GET] user</b> - Get user data, if authorized. - params: [str]applicationKey, [ulong]userId</li>
-    </ul>
-    <p>Currently the only way to check if a user accepted auth is by polling 'user'. Eventually this should probably call a webhook on your side, if desired.</p>
+    <div class="stack">
+        <div class="block">
+            <div class="info-grid">
+                <div>
+                    <p class="muted">Application ID</p>
+                    <p><strong>#{{ app['id'] }}</strong></p>
+                </div>
+                <div>
+                    <p class="muted">Token</p>
+                    <p><code class="token">{{ app['token_key'] }}</code></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="block">
+            <h3>Authorized users</h3>
+            <div class="inline-list spaced-list">
+                {% for user in users %}
+                    <div class="block soft">
+                        <p><strong>{{ user['namecache'] }}</strong></p>
+                        <p class="muted">Username: {{ user['username'] }}</p>
+                        <p class="muted">User ID: {{ user['id'] }}</p>
+                    </div>
+                {% else %}
+                    <p class="muted">No user has yet approved your application for auth.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="block stack-tight">
+            <h3>Endpoints</h3>
+            <p class="helper-text">Largely WIP, probably unstable. All under <code>https://rosettes.markski.ar/api/</code></p>
+            <ul class="endpoint-list">
+                <li><strong>[POST] request</strong> — Request authorization from a user. Params: <code>applicationKey</code>, <code>userId</code></li>
+                <li><strong>[POST] notify</strong> — Send a message to a user. Params: <code>applicationKey</code>, <code>userId</code>, <code>message</code></li>
+                <li><strong>[GET] user</strong> — Get user data, if authorized. Params: <code>applicationKey</code>, <code>userId</code></li>
+            </ul>
+            <p class="helper-text">Currently the only way to check if a user accepted auth is by polling <code>user</code>.</p>
+        </div>
+    </div>
 {% endblock %}

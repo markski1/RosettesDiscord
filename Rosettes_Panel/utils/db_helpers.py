@@ -65,3 +65,8 @@ def get_users_for_app(app_id: int) -> List[dict]:
     return db_fetch_all("SELECT u.* FROM users AS u "
                         "INNER JOIN app_auth_rel AS r ON r.user_id = u.id "
                         "WHERE r.app_id = %s", app_id)
+
+
+def delete_application(app_id: int, owner_id: int) -> None:
+    db_execute("DELETE FROM app_auth_rel WHERE app_id = %s", app_id)
+    db_execute("DELETE FROM app_auth WHERE id = %s AND owner_id = %s", app_id, owner_id)

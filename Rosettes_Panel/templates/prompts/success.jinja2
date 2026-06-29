@@ -3,11 +3,18 @@
 
 {% block main %}
 
-    <h1>Success</h1>
+    <section class="page-head compact">
+        <div class="page-copy">
+            <h1>Success</h1>
+            <p class="lead">Your request has been processed.</p>
+        </div>
+    </section>
 
-    <div class="block">
+    <div class="block notice-card success">
         <p>{{ message }}</p>
+        <div class="form-actions" style="justify-content:center;">
+            <a role="button" class="menu-button" href="/panel/">Continue</a>
+        </div>
     </div>
-    <p><a role="button" class="menu-button" href="/panel/">Continue</a></p>
 
 {% endblock %}

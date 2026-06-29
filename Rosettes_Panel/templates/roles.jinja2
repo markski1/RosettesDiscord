@@ -3,26 +3,36 @@
 
 {% block main %}
 
-    <p><a href="/panel/">Go back</a></p>
+    <a class="back-link" href="/panel/">Back to panel</a>
 
-    <h3>Autoroles for {{ server['namecache'] }}</h3>
+    <section class="page-head compact">
+        <div class="page-copy">
+            <h1>Autoroles</h1>
+            <p class="lead">Review and manage autorole groups for <strong>{{ server['namecache'] }}</strong>.</p>
+        </div>
+        <a class="menu-button" href="/panel/{{ server.id }}/autoroles-maker">Create autorole group</a>
+    </section>
 
-    <p>Autorole groups:</p>
-    {% for arg in autorole_groups %}
-        <div class="block">
-            <h4>{{ arg.name }}</h4>
-            <p>Group ID: {{ arg.id }}</p>
-            <p>Applied to message: {% if arg.messageid > 0 %} {{ arg.messageid }} {% else %} No {% endif %}</p>
-            <form method="POST" action="/action/{{ server.id }}/delete-autoroles/{{ arg.id }}"
-                  onsubmit="return confirm('Delete this autorole group? This cannot be undone.');">
-                <button type="submit" class="entry-remove">Delete group</button>
-            </form>
-        </div>
-    {% else %}
-        <div class="block">
-            <p>No autorole groups exist yet.</p>
-        </div>
-    {% endfor %}
-    <p><a class="menu-button" href="/panel/{{ server.id }}/autoroles-maker">Create new Autoroles group</a></p>
+    <div class="card-grid">
+        {% for arg in autorole_groups %}
+            <div class="block">
+                <p class="block-title">{{ arg.name }}</p>
+                <div class="meta-row">
+                    <span class="meta-pill">Group ID {{ arg.id }}</span>
+                    <span class="meta-pill">{% if arg.messageid > 0 %}Posted to message {{ arg.messageid }}{% else %}Not posted yet{% endif %}</span>
+                </div>
+                <div class="actions">
+                    <form method="POST" action="/action/{{ server.id }}/delete-autoroles/{{ arg.id }}"
+                          onsubmit="return confirm('Delete this autorole group? This cannot be undone.');">
+                        <button type="submit" class="entry-remove">Delete autorole group</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="block soft">
+                <p class="muted">No autorole groups exist yet.</p>
+            </div>
+        {% endfor %}
+    </div>
 
 {% endblock %}

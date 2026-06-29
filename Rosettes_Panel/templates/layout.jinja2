@@ -8,13 +8,10 @@
 </head>
 <body>
     <main>
-        <header class="brand">
-            <a href="/panel/">Rosettes</a>
-        </header>
         {{ self.main() }}
     </main>
-    <footer style="user-select: none" onclick="ChangeFooter()">
-        <p alt="click me">MMXXIV | <span id="footerText"></span></p>
+    <footer onclick="ChangeFooter()">
+        <p class="footer-text">MMXXIV | <span id="footerText"></span></p>
     </footer>
 <script>
     const randNames = [

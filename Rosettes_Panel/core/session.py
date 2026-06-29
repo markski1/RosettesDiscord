@@ -35,7 +35,7 @@ def init_app(app):
 
 def attempt_login(auth_key):
     try:
-        user_id = validate_panel_login_key(auth_key)
+        user_id, error_message = validate_panel_login_key(auth_key)
     except BotApiError as exc:
         return None, str(exc)
 
@@ -44,7 +44,7 @@ def attempt_login(auth_key):
         user_model.id = user_id
         return user_model, None
 
-    return None, "Key does not exist."
+    return None, error_message or "Key does not exist."
 
 
 class Session(UserMixin):

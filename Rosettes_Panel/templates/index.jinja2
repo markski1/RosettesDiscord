@@ -3,15 +3,29 @@
 
 {% block main %}
 
-    <h1>Login</h1>
+    <section class="page-head">
+        <div class="page-copy">
+            <h1>Welcome back</h1>
+            <p class="lead">Sign in with your Rosettes key to manage your servers and applications.</p>
+        </div>
+    </section>
 
-    <div class="block">
+    {% if error_message %}
+        <p class="form-msg err">{{ error_message }}</p>
+    {% endif %}
+
+    <div class="block stack">
         <form action="/session/login" method="POST">
-            <p>Enter your Rosettes key</p>
-            <label>Key: <input type="text" name="key" autofocus /></label>
-            <input type="submit" value="Log in">
+            <label>
+                Rosettes key
+                <input type="text" name="key" autofocus placeholder="Paste your key here" />
+            </label>
+            <div class="form-actions">
+                <input type="submit" value="Log in">
+            </div>
         </form>
     </div>
-    <p class="muted"><small>To get a key, DM Rosettes with the command '/keygen'.</small></p>
+
+    <p class="helper-text" style="margin-top:.45rem;">To get a key, DM Rosettes with the command <code>/keygen</code>.</p>
 
 {% endblock %}
