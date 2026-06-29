@@ -13,6 +13,7 @@
     </section>
 
     <form method="POST" action="/action/{{ server['id'] }}/update-settings">
+        {{ csrf_input()|safe }}
         <div class="stack">
             <div class="block bottom-pad">
                 <h4>Message parsing</h4>

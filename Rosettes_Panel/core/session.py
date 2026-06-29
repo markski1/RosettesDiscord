@@ -13,6 +13,13 @@ load_dotenv()
 
 def init_app(app):
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    if not app.config['SECRET_KEY']:
+        raise RuntimeError("SECRET_KEY is not configured. The panel cannot start without it.")
+
+    app.config.setdefault('SESSION_COOKIE_HTTPONLY', True)
+    app.config.setdefault('SESSION_COOKIE_SAMESITE', 'Lax')
+    if os.getenv('FLASK_ENV') == 'production' or os.getenv('SESSION_COOKIE_SECURE') == '1':
+        app.config['SESSION_COOKIE_SECURE'] = True
 
     login_manager = LoginManager()
     login_manager.init_app(app)

@@ -12,6 +12,7 @@
         </div>
         <form method="POST" action="/action/delete-app/{{ app['id'] }}"
               onsubmit="return confirm('Delete this application? This will also remove its user authorizations.');">
+            {{ csrf_input()|safe }}
             <button type="submit" class="entry-remove">Delete application</button>
         </form>
     </section>

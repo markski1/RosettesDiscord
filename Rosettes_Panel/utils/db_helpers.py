@@ -21,27 +21,8 @@ def get_server_roles(server_id: int) -> List[dict]:
     return db_fetch_all("SELECT * FROM roles WHERE guildid = %s", server_id)
 
 
-def set_server_settings(server_id, settings) -> None:
-    db_execute("UPDATE guilds SET settings = %s WHERE id = %s", settings, server_id)
-
-
 def get_server_autoroles(server_id: int) -> List[dict]:
     return db_fetch_all("SELECT * FROM autorole_groups WHERE guildid = %s", server_id)
-
-
-def insert_new_autorole(server_id: int, role_name: str) -> int:
-    return db_execute("INSERT INTO autorole_groups (guildid, messageid, name) VALUES(%s, 0, %s)", server_id, role_name)
-
-
-def insert_role_for_autorole(guild_id: int, autorole_id: int, role: dict) -> int:
-    return db_execute("INSERT INTO autorole_entries (guildid, emote, roleid, rolegroupid) VALUES(%s, %s, %s, %s)",
-                      guild_id, role['roleEmoji'], role['roleId'], autorole_id)
-
-
-def delete_autorole_group(server_id: int, group_id: int) -> None:
-    # Scoped by guildid so a group belonging to another server can't be removed.
-    db_execute("DELETE FROM autorole_entries WHERE guildid = %s AND rolegroupid = %s", server_id, group_id)
-    db_execute("DELETE FROM autorole_groups WHERE guildid = %s AND id = %s", server_id, group_id)
 
 
 def get_app_by_name(name: str) -> Optional[dict]:

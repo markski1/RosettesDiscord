@@ -16,6 +16,7 @@
 
     <div class="block stack">
         <form action="/session/login" method="POST">
+            {{ csrf_input()|safe }}
             <label>
                 Rosettes key
                 <input type="text" name="key" autofocus placeholder="Paste your key here" />

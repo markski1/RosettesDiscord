@@ -88,3 +88,57 @@ def reload_guild(server_id: int) -> tuple[bool, str]:
 def reload_autoroles(server_id: int) -> tuple[bool, str]:
     response = _request_json("POST", f"/rosapi/internal/autoroles/{int(server_id)}/reload")
     return bool(response.get("success")), str(response.get("message") or "autoroles_reload_failed")
+
+
+def update_guild_settings(
+    server_id: int,
+    message_parsing: bool,
+    random_commands: bool,
+    dumb_commands: bool,
+    farm: bool,
+    voice_announce: bool,
+) -> tuple[bool, str]:
+    response = _request_json(
+        "POST",
+        f"/rosapi/internal/guild/{int(server_id)}/settings",
+        {
+            "messageParsing": bool(message_parsing),
+            "randomCommands": bool(random_commands),
+            "dumbCommands": bool(dumb_commands),
+            "farm": bool(farm),
+            "voiceAnnounce": bool(voice_announce),
+        },
+    )
+    return bool(response.get("success")), str(response.get("message") or "settings_failed")
+
+
+def create_autorole_group(
+    server_id: int,
+    name: str,
+    entries: list[dict[str, object]],
+) -> tuple[int | None, str]:
+    response = _request_json(
+        "POST",
+        f"/rosapi/internal/guild/{int(server_id)}/autoroles",
+        {"name": name, "entries": entries},
+    )
+    if not response.get("success"):
+        return None, str(response.get("message") or "autorole_create_failed")
+
+    data = response.get("data")
+    if not isinstance(data, dict):
+        return None, "autorole_create_failed"
+
+    group_id = data.get("group_id")
+    if group_id is None:
+        return None, "autorole_create_failed"
+
+    return int(cast(int | str, group_id)), ""
+
+
+def delete_autorole_group(server_id: int, group_id: int) -> tuple[bool, str]:
+    response = _request_json(
+        "DELETE",
+        f"/rosapi/internal/guild/{int(server_id)}/autoroles/{int(group_id)}",
+    )
+    return bool(response.get("success")), str(response.get("message") or "autorole_delete_failed")

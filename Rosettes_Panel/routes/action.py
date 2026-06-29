@@ -1,11 +1,11 @@
 import json
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 
-from core.bot_api import reload_autoroles, reload_guild, BotApiError
-from utils.db_helpers import set_server_settings, insert_new_autorole, insert_role_for_autorole, get_app_by_name, \
-    insert_application, get_server_data, delete_autorole_group, get_app_by_id, delete_application
+from core.bot_api import BotApiError, update_guild_settings, create_autorole_group, delete_autorole_group
+from utils.db_helpers import get_app_by_name, insert_application, get_server_data, \
+    get_app_by_id, delete_application
 from utils.miscfuncs import ownership_required, generate_random_string
 from utils.page_helpers import render_success, render_error
 
@@ -32,22 +32,32 @@ def post_settings(server_id):
     if msgparse > 1 or minigame > 1 or announce > 1:
         return render_error("Invalid parameters.")
 
-    # Gambling has no toggle in the panel, so preserve whatever the server already has.
     server = get_server_data(server_id)
     if not server:
         return render_error("Server not found.")
-    gambling = server["settings"][2]
 
-    new_settings = f"{msgparse}1{gambling}1{minigame}{announce}1111"
-    set_server_settings(server_id, new_settings)
+    # Random and "dumb" commands are exposed to the panel in a later step; for now we
+    # pass through whatever the server currently has. Indexes 2 and 3 in the raw string.
+    raw = server["settings"]
+    if len(raw) < 10:
+        raw = (raw + "1111111111")[:10]
+    random_enabled = raw[2] == '1'
+    dumb_enabled = raw[3] == '1'
 
     try:
-        reload_ok, reload_message = reload_guild(server_id)
+        ok, message = update_guild_settings(
+            server_id,
+            message_parsing=bool(msgparse),
+            random_commands=random_enabled,
+            dumb_commands=dumb_enabled,
+            farm=bool(minigame),
+            voice_announce=bool(announce),
+        )
     except BotApiError as exc:
-        return render_success(f"Settings were saved, but the bot reload failed: {exc}")
+        return render_error(f"Settings could not be saved: {exc}")
 
-    if not reload_ok:
-        return render_success(f"Settings were saved, but the bot reload failed: {reload_message}")
+    if not ok:
+        return render_error(f"Settings could not be saved: {message}")
 
     return render_success("Settings updated successfully.")
 
@@ -56,9 +66,12 @@ def post_settings(server_id):
 @login_required
 @ownership_required
 def post_new_autoroles(server_id):
-    role_name = request.form.get("name")
-    if not role_name or not role_name.strip():
+    role_name = (request.form.get("name") or "").strip()
+    if not role_name:
         return jsonify(ok=False, message="Please provide a profile name."), 400
+
+    if len(role_name) > 32:
+        return jsonify(ok=False, message="Profile name is too long (max 32 characters)."), 400
 
     try:
         role_list = json.loads(request.form.get('RoleListJson') or "[]")
@@ -68,44 +81,40 @@ def post_new_autoroles(server_id):
     if not role_list:
         return jsonify(ok=False, message="Add at least one role before creating."), 400
 
+    entries = []
     for role in role_list:
-        if not str(role.get('roleId', '')).isnumeric():
+        role_id_raw = role.get('roleId', '')
+        if not str(role_id_raw).isnumeric():
             return jsonify(ok=False, message="Invalid parameters. [Role ID must be an integer.]"), 400
-
-    autorole_id = insert_new_autorole(server_id, role_name)
-
-    # Separate loop, to avoid partial autorole group inserts.
-    for role in role_list:
-        insert_role_for_autorole(server_id, autorole_id, role)
+        emote = role.get('roleEmoji', '')
+        if not isinstance(emote, str) or not emote:
+            return jsonify(ok=False, message="Invalid parameters. [Emoji is required.]"), 400
+        entries.append({"emote": emote, "roleId": int(role_id_raw)})
 
     try:
-        reload_ok, reload_message = reload_autoroles(server_id)
+        group_id, message = create_autorole_group(server_id, role_name, entries)
     except BotApiError as exc:
-        return jsonify(ok=True,
-                       message=f"Autorole group was created, but the bot reload failed: {exc}"), 200
+        return jsonify(ok=False, message=f"Autorole group could not be created: {exc}"), 502
 
-    if not reload_ok:
-        return jsonify(ok=True,
-                       message=f"Autorole group was created, but the bot reload failed: {reload_message}"), 200
+    if group_id is None:
+        return jsonify(ok=False, message=f"Autorole group could not be created: {message}"), 502
 
     return jsonify(ok=True,
                    message=f"Autorole group created successfully. "
-                           f"Use `/setautorole {autorole_id}` in the desired channel.")
+                           f"Use `/setautorole {group_id}` in the desired channel.")
 
 
 @action_bp.post("/<int:server_id>/delete-autoroles/<int:group_id>")
 @login_required
 @ownership_required
 def post_delete_autoroles(server_id, group_id):
-    delete_autorole_group(server_id, group_id)
-
     try:
-        reload_ok, reload_message = reload_autoroles(server_id)
+        ok, message = delete_autorole_group(server_id, group_id)
     except BotApiError as exc:
-        return render_success(f"Autorole group was deleted, but the bot reload failed: {exc}")
+        return render_error(f"Autorole group could not be deleted: {exc}")
 
-    if not reload_ok:
-        return render_success(f"Autorole group was deleted, but the bot reload failed: {reload_message}")
+    if not ok:
+        return render_error(f"Autorole group could not be deleted: {message}")
 
     return redirect(url_for("panel.roles", server_id=server_id))
 

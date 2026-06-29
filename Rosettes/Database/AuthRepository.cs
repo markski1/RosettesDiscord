@@ -10,7 +10,7 @@ public static class AuthRepository
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        const string sql = "SELECT id, name, owner_id FROM app_auth WHERE key=@AppKey";
+        const string sql = "SELECT id, name, owner_id FROM app_auth WHERE token_key=@AppKey";
 
         try
         {

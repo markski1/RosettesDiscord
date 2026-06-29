@@ -96,6 +96,98 @@ public static class AutoRolesEngine
         return true;
     }
 
+    public static async Task<uint?> CreateGroupTransactional(ulong guildId, string name, IReadOnlyList<(string emote, ulong roleId)> entries)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            db.Open();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+        try
+        {
+            const string insertGroupSql = """
+                INSERT INTO autorole_groups (guildid, messageid, name)
+                VALUES(@GuildId, 0, @Name)
+            """;
+
+            uint groupId = (uint)await db.ExecuteScalarAsync<ulong>(
+                insertGroupSql,
+                new { GuildId = guildId, Name = name },
+                transaction);
+
+            if (entries.Count > 0)
+            {
+                var sql = new System.Text.StringBuilder(
+                    "INSERT INTO autorole_entries (guildid, emote, roleid, rolegroupid) VALUES ");
+
+                var parameters = new DynamicParameters();
+                parameters.Add("GuildId", guildId);
+                parameters.Add("GroupId", groupId);
+
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (i > 0) sql.Append(", ");
+                    sql.Append($"(@Emote{i}, @RoleId{i}, @GuildId, @GroupId)");
+                    parameters.Add($"Emote{i}", entries[i].emote);
+                    parameters.Add($"RoleId{i}", entries[i].roleId);
+                }
+
+                await db.ExecuteAsync(sql.ToString(), parameters, transaction);
+            }
+
+            await transaction.CommitAsync();
+
+            await ReloadGuildFromDatabase(guildId);
+            return groupId;
+        }
+        catch (Exception ex)
+        {
+            try { await transaction.RollbackAsync(); } catch { }
+            Rosettes.Core.Global.GenerateErrorMessage("autoroles-create", $"Failed to create autorole group: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static async Task<bool> DeleteGroupTransactional(ulong guildId, uint groupId)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            db.Open();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+        try
+        {
+            await db.ExecuteAsync(
+                "DELETE FROM autorole_entries WHERE guildid = @GuildId AND rolegroupid = @GroupId",
+                new { GuildId = guildId, GroupId = groupId },
+                transaction);
+
+            int affected = await db.ExecuteAsync(
+                "DELETE FROM autorole_groups WHERE guildid = @GuildId AND id = @GroupId",
+                new { GuildId = guildId, GroupId = groupId },
+                transaction);
+
+            await transaction.CommitAsync();
+
+            await ReloadGuildFromDatabase(guildId);
+            return affected > 0;
+        }
+        catch (Exception ex)
+        {
+            try { await transaction.RollbackAsync(); } catch { }
+            Rosettes.Core.Global.GenerateErrorMessage("autoroles-delete", $"Failed to delete autorole group: {ex.Message}");
+            return false;
+        }
+    }
+
     public static async Task<bool> UpdateGroupMessageId(uint code, ulong messageId)
     {
         lock (ArCacheLock)

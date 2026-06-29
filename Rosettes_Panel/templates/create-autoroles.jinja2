@@ -10,6 +10,7 @@
         on the posted message will be granted the matching role.</p>
 
     <form id="autoForm" method="POST" action="/action/{{ server.id }}/create-autoroles">
+        {{ csrf_input()|safe }}
 
         <div class="block">
             <label>Profile name<br>

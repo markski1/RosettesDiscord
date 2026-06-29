@@ -24,6 +24,7 @@
                 <div class="actions">
                     <form method="POST" action="/action/{{ server.id }}/delete-autoroles/{{ arg.id }}"
                           onsubmit="return confirm('Delete this autorole group? This cannot be undone.');">
+                        {{ csrf_input()|safe }}
                         <button type="submit" class="entry-remove">Delete autorole group</button>
                     </form>
                 </div>

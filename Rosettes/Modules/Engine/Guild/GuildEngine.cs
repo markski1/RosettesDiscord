@@ -173,6 +173,50 @@ public static class GuildEngine
         return true;
     }
 
+    // Settings indexes (kept here so the panel never has to know the internal format):
+    // 0: message parsing, 2: random commands, 3: dumb commands, 4: farm, 5: voice announce.
+    // 1 is unused and preserved as '1'. 6..9 are reserved (preserved as '1').
+    public static async Task<bool> UpdateSettingsFromPanel(
+        ulong guildId,
+        bool messageParsing,
+        bool randomCommands,
+        bool dumbCommands,
+        bool farm,
+        bool voiceAnnounce)
+    {
+        Guild? cachedGuild;
+        lock (CacheLock)
+        {
+            cachedGuild = _guildCache.FirstOrDefault(item => item.Id == guildId);
+        }
+
+        if (cachedGuild is null)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            var socketGuild = client.GetGuild(guildId);
+            if (socketGuild is null)
+            {
+                return false;
+            }
+
+            cachedGuild = await LoadGuildFromDatabase(socketGuild);
+            if (!cachedGuild.IsValid())
+            {
+                return false;
+            }
+        }
+
+        var arr = cachedGuild.Settings.ToCharArray();
+        arr[0] = messageParsing ? '1' : '0';
+        arr[2] = randomCommands ? '1' : '0';
+        arr[3] = dumbCommands ? '1' : '0';
+        arr[4] = farm ? '1' : '0';
+        arr[5] = voiceAnnounce ? '1' : '0';
+        cachedGuild.Settings = new string(arr);
+
+        return await GuildRepository.SetGuildSettings(cachedGuild);
+    }
+
     public static IEnumerable<Guild> GetActiveGuilds()
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();
