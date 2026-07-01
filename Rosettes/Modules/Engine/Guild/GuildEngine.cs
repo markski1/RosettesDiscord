@@ -217,6 +217,41 @@ public static class GuildEngine
         return await GuildRepository.SetGuildSettings(cachedGuild);
     }
 
+    public static async Task<bool> UpdateRuntimeFieldsFromPanel(
+        ulong guildId,
+        ulong defaultRole,
+        ulong logChannel,
+        ulong farmChannel)
+    {
+        Guild? cachedGuild;
+        lock (CacheLock)
+        {
+            cachedGuild = _guildCache.FirstOrDefault(item => item.Id == guildId);
+        }
+
+        if (cachedGuild is null)
+        {
+            var client = ServiceManager.GetService<DiscordSocketClient>();
+            var socketGuild = client.GetGuild(guildId);
+            if (socketGuild is null)
+            {
+                return false;
+            }
+
+            cachedGuild = await LoadGuildFromDatabase(socketGuild);
+            if (!cachedGuild.IsValid())
+            {
+                return false;
+            }
+        }
+
+        cachedGuild.DefaultRole = defaultRole;
+        cachedGuild.LogChannel = logChannel;
+        cachedGuild.FarmChannel = farmChannel;
+
+        return await GuildRepository.SetGuildRuntimeFields(guildId, defaultRole, logChannel, farmChannel);
+    }
+
     public static IEnumerable<Guild> GetActiveGuilds()
     {
         var client = ServiceManager.GetService<DiscordSocketClient>();

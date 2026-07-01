@@ -104,6 +104,28 @@ public class GuildRepository
         }
     }
 
+    public static async Task<bool> SetGuildRuntimeFields(ulong guildId, ulong defaultRole, ulong logChannel, ulong farmChannel)
+    {
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        const string sql = """
+                           UPDATE guilds
+                           SET defaultrole = @defaultRole, logchan = @logChannel, rpgchan = @farmChannel
+                           WHERE id = @id
+                           """;
+
+        try
+        {
+            return await db.ExecuteAsync(sql, new { id = guildId, defaultRole, logChannel, farmChannel }) > 0;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-setguildruntimefields", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
     public static async Task<ulong> GetGuildDefaultRole(Guild guild)
     {
         using var getConn = DatabasePool.GetConnection();

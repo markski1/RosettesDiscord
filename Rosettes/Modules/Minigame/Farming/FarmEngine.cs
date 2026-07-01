@@ -116,7 +116,7 @@ public static class FarmEngine
         {
             return "This guild does not allow Farming/Fishing commands.";
         }
-        if (dbGuild.LogChannel != 0 && dbGuild.LogChannel != context.Channel.Id)
+        if (dbGuild.FarmChannel != 0 && dbGuild.FarmChannel != context.Channel.Id)
         {
             return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
         }

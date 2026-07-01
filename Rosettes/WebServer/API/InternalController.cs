@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Rosettes.Database;
 using Rosettes.Modules.Engine.Guild;
+using Rosettes.Managers;
+using Discord;
+using Discord.WebSocket;
 using System.Collections.Generic;
 
 namespace Rosettes.WebServer.API;
@@ -79,6 +82,74 @@ public class InternalController : ControllerBase
         return Ok(GenericResponse.Success("autoroles_reloaded"));
     }
 
+    [HttpGet("guild/{guildId}/channels")]
+    public IActionResult GetGuildChannels(ulong guildId)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        var client = ServiceManager.GetService<DiscordSocketClient>();
+        var socketGuild = client.GetGuild(guildId);
+        if (socketGuild is null)
+        {
+            return NotFound(GenericResponse.Error("guild_not_found"));
+        }
+
+        var channels = new List<object>();
+
+        foreach (var c in socketGuild.TextChannels)
+        {
+            channels.Add(new { id = c.Id, name = c.Name, type = "text" });
+        }
+        foreach (var c in socketGuild.VoiceChannels)
+        {
+            channels.Add(new { id = c.Id, name = c.Name, type = "voice" });
+        }
+        foreach (var c in socketGuild.StageChannels)
+        {
+            channels.Add(new { id = c.Id, name = c.Name, type = "stage" });
+        }
+        foreach (var c in socketGuild.ForumChannels)
+        {
+            channels.Add(new { id = c.Id, name = c.Name, type = "forum" });
+        }
+
+        return Ok(GenericResponse.Success("guild_channels", new { channels }));
+    }
+
+    [HttpGet("guild/{guildId}/roles/live")]
+    public IActionResult GetGuildRolesLive(ulong guildId)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        var client = ServiceManager.GetService<DiscordSocketClient>();
+        var socketGuild = client.GetGuild(guildId);
+        if (socketGuild is null)
+        {
+            return NotFound(GenericResponse.Error("guild_not_found"));
+        }
+
+        var roles = socketGuild.Roles
+            .OrderByDescending(r => r.Position)
+            .Select(r => new
+            {
+                id = r.Id,
+                name = r.Name,
+                color = r.Colors.PrimaryColor.ToString(),
+                position = r.Position,
+                managed = r.IsManaged,
+                isEveryone = r.IsEveryone
+            })
+            .ToList();
+
+        return Ok(GenericResponse.Success("guild_roles_live", new { roles }));
+    }
+
     public sealed class GuildSettingsRequest
     {
         public bool MessageParsing { get; init; }
@@ -86,6 +157,9 @@ public class InternalController : ControllerBase
         public bool DumbCommands { get; init; }
         public bool Farm { get; init; }
         public bool VoiceAnnounce { get; init; }
+        public ulong DefaultRole { get; init; }
+        public ulong LogChannel { get; init; }
+        public ulong FarmChannel { get; init; }
     }
 
     [HttpPost("guild/{guildId}/settings")]
@@ -112,6 +186,17 @@ public class InternalController : ControllerBase
         if (!ok)
         {
             return NotFound(GenericResponse.Error("guild_settings_failed"));
+        }
+
+        bool runtimeOk = await GuildEngine.UpdateRuntimeFieldsFromPanel(
+            guildId,
+            request.DefaultRole,
+            request.LogChannel,
+            request.FarmChannel);
+
+        if (!runtimeOk)
+        {
+            return NotFound(GenericResponse.Error("guild_runtime_fields_failed"));
         }
 
         return Ok(GenericResponse.Success("guild_settings_updated"));
