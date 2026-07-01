@@ -26,32 +26,40 @@ def post_settings(server_id):
         msgparse = abs(int(request.form["msgparse"]))
         minigame = abs(int(request.form["minigame"]))
         announce = abs(int(request.form["announce"]))
+        random_cmds = abs(int(request.form["random"]))
+        dumb_cmds = abs(int(request.form["dumb"]))
     except:
         return render_error("Invalid parameters.")
 
-    if msgparse > 1 or minigame > 1 or announce > 1:
+    if msgparse > 1 or minigame > 1 or announce > 1 or random_cmds > 1 or dumb_cmds > 1:
         return render_error("Invalid parameters.")
 
     server = get_server_data(server_id)
     if not server:
         return render_error("Server not found.")
 
-    # Random and "dumb" commands are exposed to the panel in a later step; for now we
-    # pass through whatever the server currently has. Indexes 2 and 3 in the raw string.
     raw = server["settings"]
     if len(raw) < 10:
         raw = (raw + "1111111111")[:10]
-    random_enabled = raw[2] == '1'
-    dumb_enabled = raw[3] == '1'
+
+    try:
+        default_role = int(request.form.get("defaultrole", 0))
+        log_channel = int(request.form.get("logchannel", 0))
+        farm_channel = int(request.form.get("farmchannel", 0))
+    except (TypeError, ValueError):
+        return render_error("Invalid channel or role ID.")
 
     try:
         ok, message = update_guild_settings(
             server_id,
             message_parsing=bool(msgparse),
-            random_commands=random_enabled,
-            dumb_commands=dumb_enabled,
+            random_commands=bool(random_cmds),
+            dumb_commands=bool(dumb_cmds),
             farm=bool(minigame),
             voice_announce=bool(announce),
+            default_role=default_role,
+            log_channel=log_channel,
+            farm_channel=farm_channel,
         )
     except BotApiError as exc:
         return render_error(f"Settings could not be saved: {exc}")

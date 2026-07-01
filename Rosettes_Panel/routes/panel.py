@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
+from core.bot_api import get_guild_channels, get_guild_roles_live
 from utils.db_helpers import get_owned_servers, get_user_data, get_server_data, get_server_roles, \
     get_server_autoroles, get_apps_for_user, get_app_by_id, get_users_for_app
 from utils.miscfuncs import ownership_required
@@ -27,13 +28,34 @@ def settings(server_id):
     if not server:
         return "Server not found."
 
-    msgparse = server["settings"][0] == '1'
-    minigame = server["settings"][4] == '1'
-    gambling = server["settings"][2] == '1'
-    announce = server["settings"][5] == '1'
+    raw = server["settings"] or ""
+    if len(raw) < 10:
+        raw = (raw + "1111111111")[:10]
+    msgparse = raw[0] == '1'
+    random_cmds = raw[2] == '1'
+    dumb_cmds = raw[3] == '1'
+    minigame = raw[4] == '1'
+    announce = raw[5] == '1'
 
-    return render_template("settings.jinja2", server=server,
-                           msgparse=msgparse, minigame=minigame, gambling=gambling, announce=announce)
+    channels = get_guild_channels(server_id)
+    roles = get_guild_roles_live(server_id)
+    bot_reachable = bool(channels) or bool(roles)
+
+    return render_template(
+        "settings.jinja2",
+        server=server,
+        msgparse=msgparse,
+        random_cmds=random_cmds,
+        dumb_cmds=dumb_cmds,
+        minigame=minigame,
+        announce=announce,
+        channels=channels,
+        roles=roles,
+        bot_reachable=bot_reachable,
+        defaultrole=int(server["defaultrole"] or 0),
+        logchannel=int(server["logchan"] or 0),
+        farmchannel=int(server["rpgchan"] or 0),
+    )
 
 
 @panel_bp.route("/<int:server_id>/roles")

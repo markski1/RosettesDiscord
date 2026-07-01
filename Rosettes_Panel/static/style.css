@@ -601,6 +601,19 @@ button:disabled,
     padding-bottom: 1rem;
 }
 
+.block-spaced {
+    margin-top: .75rem;
+}
+
+.inline-note {
+    margin: 0;
+    padding: .5rem .7rem;
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    font-size: .9rem;
+}
+
 /* Responsive */
 @media (max-width: 720px) {
     body {

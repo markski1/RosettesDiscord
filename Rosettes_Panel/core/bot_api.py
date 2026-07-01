@@ -97,6 +97,9 @@ def update_guild_settings(
     dumb_commands: bool,
     farm: bool,
     voice_announce: bool,
+    default_role: int = 0,
+    log_channel: int = 0,
+    farm_channel: int = 0,
 ) -> tuple[bool, str]:
     response = _request_json(
         "POST",
@@ -107,9 +110,51 @@ def update_guild_settings(
             "dumbCommands": bool(dumb_commands),
             "farm": bool(farm),
             "voiceAnnounce": bool(voice_announce),
+            "defaultRole": int(default_role),
+            "logChannel": int(log_channel),
+            "farmChannel": int(farm_channel),
         },
     )
     return bool(response.get("success")), str(response.get("message") or "settings_failed")
+
+
+def get_guild_channels(server_id: int) -> list[dict[str, object]]:
+    """
+    Returns live channels from the bot for the given guild, or [] if the bot
+    is unreachable / not in the guild. Never raises on connectivity errors so
+    the panel can fall back to a raw-ID input.
+    """
+    try:
+        response = _request_json("GET", f"/rosapi/internal/guild/{int(server_id)}/channels")
+    except BotApiError:
+        return []
+
+    data = response.get("data")
+    if not isinstance(data, dict):
+        return []
+    channels = data.get("channels")
+    if not isinstance(channels, list):
+        return []
+    return [c for c in channels if isinstance(c, dict)]
+
+
+def get_guild_roles_live(server_id: int) -> list[dict[str, object]]:
+    """
+    Returns live roles from the bot for the given guild, or [] if the bot is
+    unreachable / not in the guild. Never raises on connectivity errors.
+    """
+    try:
+        response = _request_json("GET", f"/rosapi/internal/guild/{int(server_id)}/roles/live")
+    except BotApiError:
+        return []
+
+    data = response.get("data")
+    if not isinstance(data, dict):
+        return []
+    roles = data.get("roles")
+    if not isinstance(roles, list):
+        return []
+    return [r for r in roles if isinstance(r, dict)]
 
 
 def create_autorole_group(
