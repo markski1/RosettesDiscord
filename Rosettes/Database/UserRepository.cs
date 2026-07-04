@@ -1,4 +1,6 @@
-﻿using Dapper;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Dapper;
 using Discord;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
@@ -107,6 +109,12 @@ public class UserRepository
         }
     }
 
+    public static string HashRosettesKey(string rosettesKey)
+    {
+        byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rosettesKey));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
     public static async Task<ulong?> GetUserByRosettesKey(string rosettesKey)
     {
         using var getConn = DatabasePool.GetConnection();
@@ -115,13 +123,24 @@ public class UserRepository
         const string sql = """
                            SELECT id
                            FROM login_keys
-                           WHERE login_key = @rosettes_key
+                           WHERE login_key_hash = @KeyHash OR login_key = @PlainKey
                            LIMIT 1
                            """;
 
         try
         {
-            return await db.QueryFirstOrDefaultAsync<ulong?>(sql, new { rosettes_key = rosettesKey });
+            ulong? userId = await db.QueryFirstOrDefaultAsync<ulong?>(sql, new
+            {
+                KeyHash = HashRosettesKey(rosettesKey),
+                PlainKey = rosettesKey
+            });
+
+            if (userId is not null && userId != 0)
+            {
+                await db.ExecuteAsync("UPDATE login_keys SET last_used_at=UTC_TIMESTAMP() WHERE id=@Id", new { Id = userId.Value });
+            }
+
+            return userId;
         }
         catch (Exception ex)
         {

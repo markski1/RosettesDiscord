@@ -102,9 +102,15 @@ CREATE TABLE IF NOT EXISTS `guilds` (
 -- Volcando estructura para tabla bot_db.login_keys
 CREATE TABLE IF NOT EXISTS `login_keys` (
   `id` bigint(20) unsigned NOT NULL DEFAULT 0,
-  `login_key` varchar(64) NOT NULL DEFAULT 'NO',
+  `login_key` varchar(64) DEFAULT NULL,
+  `login_key_hash` char(64) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_used_at` datetime DEFAULT NULL,
+  `last_rotated_at` datetime DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `key` (`login_key`) USING BTREE
+  UNIQUE KEY `key` (`login_key`) USING BTREE,
+  KEY `login_key_hash` (`login_key_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- La exportación de datos fue deseleccionada.

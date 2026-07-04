@@ -57,14 +57,14 @@ def validate_panel_login_key(key: str) -> tuple[int | None, str | None]:
     response = _request_json("POST", "/rosapi/internal/panel/login", {"key": key})
     if not response.get("success"):
         message = str(response.get("message") or "login_failed")
-        if message == "key_not_found":
-            return None, "Key does not exist."
+        if message in ("key_not_found", "invalid_key"):
+            return None, "Invalid Rosettes key."
         if message == "login_db_unavailable":
             return None, "Rosettes could not verify your key because the bot database is unavailable right now. Please try again later."
         if message == "unauthorized":
             return None, "The panel could not authenticate against the bot API. Please try again later."
         if message == "http_404":
-            return None, "The panel could not authenticate against the bot API. Please try again later. [E1]"
+            return None, "Invalid Rosettes key."
         if message.startswith("http_"):
             return None, f"The bot API returned {message.replace('http_', 'HTTP ')} during login validation."
         return None, f"Login validation failed: {message}"

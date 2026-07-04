@@ -6,6 +6,7 @@ using Rosettes.Core;
 using Rosettes.Database;
 using Rosettes.Managers;
 using System.Diagnostics;
+using System.Security.Cryptography;
 
 namespace Rosettes.Modules.Commands;
 
@@ -61,13 +62,13 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = "SELECT count(*) FROM login_keys WHERE id=@Id";
+        const string countSql = "SELECT count(*) FROM login_keys WHERE id=@Id";
 
         int keyCount;
 
         try
         {
-            keyCount = await db.ExecuteScalarAsync<int>(sql, new { Context.User.Id });
+            keyCount = await db.ExecuteScalarAsync<int>(countSql, new { Context.User.Id });
         }
         catch (Exception ex)
         {
@@ -76,28 +77,23 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (keyCount > 0)
-        {
-            sql = "UPDATE login_keys SET login_key=@NewKey WHERE id=@Id";
-        }
-        else
-        {
-            sql = "INSERT INTO login_keys (id, login_key) VALUES(@Id, @NewKey)";
-        }
+        const string sql = """
+                           INSERT INTO login_keys (id, login_key, login_key_hash, created_at, last_rotated_at)
+                           VALUES (@Id, NULL, @KeyHash, UTC_TIMESTAMP(), UTC_TIMESTAMP())
+                           ON DUPLICATE KEY UPDATE
+                               login_key=NULL,
+                               login_key_hash=@KeyHash,
+                               last_rotated_at=UTC_TIMESTAMP()
+                           """;
 
-        string newKey = "";
-        // Generate a random string of 24 characters.
-        for (int i = 0; i < 24; i++)
-        {
-            var offset = Global.Randomize(2) == 0 ? 65 : 97;
-            var randNumber = Global.Randomize(0, 26);
-            var character = Convert.ToChar(randNumber + offset);
-            newKey += character;
-        }
+        string newKey = $"ros_login_{Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_')}";
 
         try
         {
-            await db.ExecuteAsync(sql, new { Context.User.Id, NewKey = newKey });
+            await db.ExecuteAsync(sql, new { Context.User.Id, KeyHash = UserRepository.HashRosettesKey(newKey) });
         }
         catch (Exception ex)
         {
@@ -112,7 +108,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            await RespondAsync("You have been issued a Rosettes key. This is an unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
+            await RespondAsync("You have been issued a Rosettes key. This is a unique, private identifier to be used in Rosettes-related services. You can change it at any time by using `/keygen` again.");
         }
 
         await ReplyAsync($"```{newKey}```");
