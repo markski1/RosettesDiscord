@@ -5,6 +5,7 @@ using Rosettes.Managers;
 using Discord;
 using Discord.WebSocket;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Rosettes.WebServer.API;
 
@@ -27,7 +28,7 @@ public class InternalController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(request.Key))
         {
-            return BadRequest(GenericResponse.Error("invalid_key"));
+            return BadRequest(ApiResponse.Error("invalid_key"));
         }
 
         ulong? userId;
@@ -37,15 +38,126 @@ public class InternalController : ControllerBase
         }
         catch
         {
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, GenericResponse.Error("login_db_unavailable"));
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ApiResponse.Error("login_db_unavailable"));
         }
 
         if (userId is null || userId == 0)
         {
-            return NotFound(GenericResponse.Error("key_not_found"));
+            return NotFound(ApiResponse.Error("key_not_found"));
         }
 
-        return Ok(GenericResponse.Success("login_valid", new { user_id = userId.Value }));
+        return Ok(ApiResponse.Success("login_valid", new { user_id = userId.Value }));
+    }
+
+    private static string GenerateApplicationToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    public sealed class AppCreateRequest
+    {
+        public string Name { get; init; } = string.Empty;
+        public ulong OwnerId { get; init; }
+    }
+
+    public sealed class AppOwnerRequest
+    {
+        public ulong OwnerId { get; init; }
+    }
+
+
+    [HttpPost("apps")]
+    public async Task<IActionResult> CreateApplication([FromBody] AppCreateRequest request)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        string name = request.Name.Trim();
+        if (request.OwnerId == 0 || name.Length < 3 || name.Length > 50)
+        {
+            return BadRequest(ApiResponse.Error("invalid_application"));
+        }
+
+        string token = GenerateApplicationToken();
+        int? appId = await AuthRepository.CreateApplication(name, request.OwnerId, token);
+        if (appId is null)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse.Error("application_create_failed"));
+        }
+
+        return Ok(ApiResponse.Success("application_created", new { app_id = appId.Value, token }));
+    }
+
+    [HttpPost("apps/{appId}/rotate-token")]
+    public async Task<IActionResult> RotateApplicationToken(int appId, [FromBody] AppOwnerRequest request)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        if (appId <= 0 || request.OwnerId == 0)
+        {
+            return BadRequest(ApiResponse.Error("invalid_application"));
+        }
+
+        string token = GenerateApplicationToken();
+        bool ok = await AuthRepository.RotateApplicationToken(appId, request.OwnerId, token);
+        if (!ok)
+        {
+            return NotFound(ApiResponse.Error("application_not_found"));
+        }
+
+        return Ok(ApiResponse.Success("application_token_rotated", new { token }));
+    }
+
+    [HttpDelete("apps/{appId}")]
+    public async Task<IActionResult> DeleteApplication(int appId, [FromBody] AppOwnerRequest request)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        if (appId <= 0 || request.OwnerId == 0)
+        {
+            return BadRequest(ApiResponse.Error("invalid_application"));
+        }
+
+        bool ok = await AuthRepository.DeleteApplication(appId, request.OwnerId);
+        if (!ok)
+        {
+            return NotFound(ApiResponse.Error("application_not_found"));
+        }
+
+        return Ok(ApiResponse.Success("application_deleted"));
+    }
+
+    [HttpDelete("apps/{appId}/users/{userId}")]
+    public async Task<IActionResult> RevokeApplicationUser(int appId, ulong userId, [FromBody] AppOwnerRequest request)
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        if (appId <= 0 || request.OwnerId == 0 || userId == 0)
+        {
+            return BadRequest(ApiResponse.Error("invalid_application_user"));
+        }
+
+        bool ok = await AuthRepository.RevokeApplicationUser(appId, request.OwnerId, userId);
+        if (!ok)
+        {
+            return NotFound(ApiResponse.Error("application_user_not_found"));
+        }
+
+        return Ok(ApiResponse.Success("application_user_revoked"));
     }
 
     [HttpPost("guild/{guildId}/reload")]
@@ -59,10 +171,10 @@ public class InternalController : ControllerBase
         bool success = await GuildEngine.ReloadRuntimeFields(guildId);
         if (!success)
         {
-            return NotFound(GenericResponse.Error("guild_reload_failed"));
+            return NotFound(ApiResponse.Error("guild_reload_failed"));
         }
 
-        return Ok(GenericResponse.Success("guild_reloaded"));
+        return Ok(ApiResponse.Success("guild_reloaded"));
     }
 
     [HttpPost("autoroles/{guildId}/reload")]
@@ -76,10 +188,10 @@ public class InternalController : ControllerBase
         bool success = await AutoRolesEngine.ReloadGuildFromDatabase(guildId);
         if (!success)
         {
-            return NotFound(GenericResponse.Error("autoroles_reload_failed"));
+            return NotFound(ApiResponse.Error("autoroles_reload_failed"));
         }
 
-        return Ok(GenericResponse.Success("autoroles_reloaded"));
+        return Ok(ApiResponse.Success("autoroles_reloaded"));
     }
 
     [HttpGet("guild/{guildId}/channels")]
@@ -94,7 +206,7 @@ public class InternalController : ControllerBase
         var socketGuild = client.GetGuild(guildId);
         if (socketGuild is null)
         {
-            return NotFound(GenericResponse.Error("guild_not_found"));
+            return NotFound(ApiResponse.Error("guild_not_found"));
         }
 
         var channels = new List<object>();
@@ -116,7 +228,7 @@ public class InternalController : ControllerBase
             channels.Add(new { id = c.Id, name = c.Name, type = "forum" });
         }
 
-        return Ok(GenericResponse.Success("guild_channels", new { channels }));
+        return Ok(ApiResponse.Success("guild_channels", new { channels }));
     }
 
     [HttpGet("guild/{guildId}/roles/live")]
@@ -131,7 +243,7 @@ public class InternalController : ControllerBase
         var socketGuild = client.GetGuild(guildId);
         if (socketGuild is null)
         {
-            return NotFound(GenericResponse.Error("guild_not_found"));
+            return NotFound(ApiResponse.Error("guild_not_found"));
         }
 
         var roles = socketGuild.Roles
@@ -147,7 +259,7 @@ public class InternalController : ControllerBase
             })
             .ToList();
 
-        return Ok(GenericResponse.Success("guild_roles_live", new { roles }));
+        return Ok(ApiResponse.Success("guild_roles_live", new { roles }));
     }
 
     public sealed class GuildSettingsRequest
@@ -172,7 +284,7 @@ public class InternalController : ControllerBase
 
         if (request is null)
         {
-            return BadRequest(GenericResponse.Error("invalid_settings"));
+            return BadRequest(ApiResponse.Error("invalid_settings"));
         }
 
         bool ok = await GuildEngine.UpdateSettingsFromPanel(
@@ -185,7 +297,7 @@ public class InternalController : ControllerBase
 
         if (!ok)
         {
-            return NotFound(GenericResponse.Error("guild_settings_failed"));
+            return NotFound(ApiResponse.Error("guild_settings_failed"));
         }
 
         bool runtimeOk = await GuildEngine.UpdateRuntimeFieldsFromPanel(
@@ -196,10 +308,10 @@ public class InternalController : ControllerBase
 
         if (!runtimeOk)
         {
-            return NotFound(GenericResponse.Error("guild_runtime_fields_failed"));
+            return NotFound(ApiResponse.Error("guild_runtime_fields_failed"));
         }
 
-        return Ok(GenericResponse.Success("guild_settings_updated"));
+        return Ok(ApiResponse.Success("guild_settings_updated"));
     }
 
     public sealed class AutoroleEntryRequest
@@ -224,12 +336,12 @@ public class InternalController : ControllerBase
 
         if (request is null || string.IsNullOrWhiteSpace(request.Name))
         {
-            return BadRequest(GenericResponse.Error("invalid_autorole"));
+            return BadRequest(ApiResponse.Error("invalid_autorole"));
         }
 
         if (request.Entries.Count > 20)
         {
-            return BadRequest(GenericResponse.Error("too_many_entries"));
+            return BadRequest(ApiResponse.Error("too_many_entries"));
         }
 
         var entries = request.Entries
@@ -239,16 +351,16 @@ public class InternalController : ControllerBase
 
         if (entries.Count == 0)
         {
-            return BadRequest(GenericResponse.Error("no_entries"));
+            return BadRequest(ApiResponse.Error("no_entries"));
         }
 
         uint? groupId = await AutoRolesEngine.CreateGroupTransactional(guildId, request.Name.Trim(), entries);
         if (groupId is null)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, GenericResponse.Error("autorole_create_failed"));
+            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse.Error("autorole_create_failed"));
         }
 
-        return Ok(GenericResponse.Success("autorole_created", new { group_id = groupId.Value }));
+        return Ok(ApiResponse.Success("autorole_created", new { group_id = groupId.Value }));
     }
 
     [HttpDelete("guild/{guildId}/autoroles/{groupId}")]
@@ -262,9 +374,9 @@ public class InternalController : ControllerBase
         bool ok = await AutoRolesEngine.DeleteGroupTransactional(guildId, groupId);
         if (!ok)
         {
-            return NotFound(GenericResponse.Error("autorole_delete_failed"));
+            return NotFound(ApiResponse.Error("autorole_delete_failed"));
         }
 
-        return Ok(GenericResponse.Success("autorole_deleted"));
+        return Ok(ApiResponse.Success("autorole_deleted"));
     }
 }

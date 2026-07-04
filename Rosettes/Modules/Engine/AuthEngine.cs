@@ -116,15 +116,18 @@ public static class AuthEngine
     }
 }
 
-public class ApplicationAuth(int id, string name, ulong ownerId)
+public class ApplicationAuth
 {
-    public int Id { get; init; } = id;
-    public string Name { get; init; } = name;
-    public ulong OwnerId { get; init; } = ownerId;
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public ulong OwnerId { get; init; }
+    public DateTime? CreatedAt { get; init; }
+    public DateTime? LastUsedAt { get; init; }
+    public DateTime? LastRotatedAt { get; init; }
 }
 
-public class ApplicationRelation(int applicationId, ulong userId)
+public class ApplicationRelation
 {
-    public int ApplicationId { get; init; } = applicationId;
-    public ulong UserId { get; init; } = userId;
+    public int ApplicationId { get; init; }
+    public ulong UserId { get; init; }
 }

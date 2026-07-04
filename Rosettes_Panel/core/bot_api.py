@@ -157,6 +157,65 @@ def get_guild_roles_live(server_id: int) -> list[dict[str, object]]:
     return [r for r in roles if isinstance(r, dict)]
 
 
+def create_application(name: str, owner_id: int) -> tuple[int | None, str | None, str]:
+    response = _request_json(
+        "POST",
+        "/rosapi/internal/apps",
+        {"name": name, "ownerId": int(owner_id)},
+    )
+    if not response.get("success"):
+        return None, None, str(response.get("message") or "application_create_failed")
+
+    data = response.get("data")
+    if not isinstance(data, dict):
+        return None, None, "application_create_failed"
+
+    app_id = data.get("app_id")
+    token = data.get("token")
+    if app_id is None or not isinstance(token, str) or not token:
+        return None, None, "application_create_failed"
+
+    return int(cast(int | str, app_id)), token, ""
+
+
+def rotate_application_token(app_id: int, owner_id: int) -> tuple[str | None, str]:
+    response = _request_json(
+        "POST",
+        f"/rosapi/internal/apps/{int(app_id)}/rotate-token",
+        {"ownerId": int(owner_id)},
+    )
+    if not response.get("success"):
+        return None, str(response.get("message") or "application_token_rotate_failed")
+
+    data = response.get("data")
+    if not isinstance(data, dict):
+        return None, "application_token_rotate_failed"
+
+    token = data.get("token")
+    if not isinstance(token, str) or not token:
+        return None, "application_token_rotate_failed"
+
+    return token, ""
+
+
+def delete_application_remote(app_id: int, owner_id: int) -> tuple[bool, str]:
+    response = _request_json(
+        "DELETE",
+        f"/rosapi/internal/apps/{int(app_id)}",
+        {"ownerId": int(owner_id)},
+    )
+    return bool(response.get("success")), str(response.get("message") or "application_delete_failed")
+
+
+def revoke_application_user(app_id: int, owner_id: int, user_id: int) -> tuple[bool, str]:
+    response = _request_json(
+        "DELETE",
+        f"/rosapi/internal/apps/{int(app_id)}/users/{int(user_id)}",
+        {"ownerId": int(owner_id)},
+    )
+    return bool(response.get("success")), str(response.get("message") or "application_user_revoke_failed")
+
+
 def create_autorole_group(
     server_id: int,
     name: str,

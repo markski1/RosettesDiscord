@@ -614,6 +614,23 @@ button:disabled,
     font-size: .9rem;
 }
 
+.helper-spaced {
+    margin-top: .45rem;
+}
+
+.center-actions {
+    justify-content: center;
+}
+
+.slots-left {
+    margin: .5rem 0 0;
+}
+
+.emoji-empty {
+    grid-column: 1 / -1;
+    margin: .5rem;
+}
+
 /* Responsive */
 @media (max-width: 720px) {
     body {

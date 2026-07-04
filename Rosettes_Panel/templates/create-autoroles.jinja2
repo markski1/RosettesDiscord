@@ -40,7 +40,7 @@
 
                 <button type="button" id="addBtn" class="menu-button" onclick="addSelection()">Add</button>
             </div>
-            <p class="muted" style="margin:.5rem 0 0;"><small><span id="slotsLeft">20</span> slots left.</small></p>
+            <p class="muted slots-left"><small><span id="slotsLeft">20</span> slots left.</small></p>
         </div>
 
         <div class="block">
@@ -129,7 +129,7 @@
             }
 
             if (items.length === 0) {
-                grid.innerHTML = '<p class="muted" style="grid-column:1/-1;margin:.5rem;">No emoji found.</p>';
+                grid.innerHTML = '<p class="muted emoji-empty">No emoji found.</p>';
                 return;
             }
 

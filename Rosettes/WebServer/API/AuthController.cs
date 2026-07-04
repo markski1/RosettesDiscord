@@ -9,86 +9,102 @@ namespace Rosettes.WebServer.API;
 public class AuthController : ControllerBase
 {
     [HttpPost("request")]
-    public async Task<dynamic> RequestAuth(string applicationKey, ulong userId)
+    public async Task<IActionResult> RequestAuth(string applicationKey, ulong userId)
     {
         ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData is null)
         {
-            return GenericResponse.Error("application_not_found");
+            return Unauthorized(ApiResponse.Error("application_not_found"));
         }
 
         var user = await UserEngine.GetDbUserById(userId);
 
         if (!user.IsValid())
         {
-            return GenericResponse.Error("user_not_found");
+            return NotFound(ApiResponse.Error("user_not_found"));
         }
 
-        // Check if this application-user relation already exists.
         ApplicationRelation? rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
-        
         if (rel is not null)
         {
-            return GenericResponse.Success("user_already_authorized");
+            return Ok(ApiResponse.Success("user_already_authorized"));
         }
-        
+
         bool success = await AuthEngine.RequestApplicationAuth(appData, user);
-        
-        if (success) return GenericResponse.Success("request_made");
-        else return GenericResponse.Error("request_failed");
+        if (!success)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, ApiResponse.Error("request_failed"));
+        }
+
+        return Ok(ApiResponse.Success("request_made"));
     }
 
-
     [HttpGet("user")]
-    public async Task<dynamic> GetUser(string applicationKey, ulong userId)
+    public async Task<IActionResult> GetUser(string applicationKey, ulong userId)
     {
         ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData is null)
         {
-            return GenericResponse.Error("application_not_found");
+            return Unauthorized(ApiResponse.Error("application_not_found"));
         }
 
         var user = await UserEngine.GetDbUserById(userId);
 
         if (!user.IsValid())
         {
-            return GenericResponse.Error("user_unknown");
+            return NotFound(ApiResponse.Error("user_unknown"));
         }
 
         ApplicationRelation? rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
+        if (rel is null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Error("user_not_authorized"));
+        }
 
-        if (rel is null) return GenericResponse.Error("user_not_authorized");
-
-        return user;
+        return Ok(ApiResponse.Success("user", user));
     }
 
     [HttpPost("notify")]
-    public async Task<dynamic> NotifyUser(string applicationKey, ulong userId, string message)
+    public async Task<IActionResult> NotifyUser(string applicationKey, ulong userId, string message)
     {
         ApplicationAuth? appData = await AuthRepository.GetApplicationAuth(applicationKey);
 
         if (appData is null)
         {
-            return GenericResponse.Error("application_not_found");
+            return Unauthorized(ApiResponse.Error("application_not_found"));
         }
-        
+
         var user = await UserEngine.GetDbUserById(userId);
 
         if (!user.IsValid())
         {
-            return GenericResponse.Error("user_unknown");
+            return NotFound(ApiResponse.Error("user_unknown"));
+        }
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return BadRequest(ApiResponse.Error("message_required"));
         }
 
         if (message.Length > 2000)
         {
-            return GenericResponse.Error("message_too_long");
+            return BadRequest(ApiResponse.Error("message_too_long"));
         }
-        
+
+        ApplicationRelation? rel = await AuthRepository.GetApplicationRelation(applicationKey, user.Id);
+        if (rel is null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ApiResponse.Error("user_not_authorized"));
+        }
+
         bool success = await AuthEngine.SendApplicationNotification(appData.Name, message, user);
-        
-        if (success) return GenericResponse.Success("notification_sent");
-        else return GenericResponse.Error("notification_not_sent");
+        if (!success)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, ApiResponse.Error("notification_not_sent"));
+        }
+
+        return Ok(ApiResponse.Success("notification_sent"));
     }
 }

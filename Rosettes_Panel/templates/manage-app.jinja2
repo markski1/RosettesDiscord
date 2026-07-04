@@ -26,9 +26,24 @@
                 </div>
                 <div>
                     <p class="muted">Token</p>
-                    <p><code class="token">{{ app['token_key'] }}</code></p>
+                    {% if app['token_key'] %}
+                        <p><code class="token">{{ app['token_key'] }}</code></p>
+                        <p class="helper-text">Legacy plaintext token. Rotate it to store only a hashed token.</p>
+                    {% else %}
+                        <p class="helper-text">Hidden. Tokens are only shown when created or rotated.</p>
+                    {% endif %}
                 </div>
             </div>
+        </div>
+
+        <div class="block stack-tight">
+            <h3>Token management</h3>
+            <p class="helper-text">Rotating immediately invalidates the current token. Copy the new token from the success page; it will not be shown again.</p>
+            <form method="POST" action="/action/rotate-app-token/{{ app['id'] }}"
+                  onsubmit="return confirm('Rotate this application token? Existing integrations will stop working until updated.');">
+                {{ csrf_input()|safe }}
+                <input type="submit" value="Rotate token">
+            </form>
         </div>
 
         <div class="block">
@@ -39,6 +54,11 @@
                         <p><strong>{{ user['namecache'] }}</strong></p>
                         <p class="muted">Username: {{ user['username'] }}</p>
                         <p class="muted">User ID: {{ user['id'] }}</p>
+                        <form method="POST" action="/action/revoke-app-user/{{ app['id'] }}/{{ user['id'] }}"
+                              onsubmit="return confirm('Revoke this user authorization?');">
+                            {{ csrf_input()|safe }}
+                            <button type="submit" class="entry-remove">Revoke</button>
+                        </form>
                     </div>
                 {% else %}
                     <p class="muted">No user has yet approved your application for auth.</p>

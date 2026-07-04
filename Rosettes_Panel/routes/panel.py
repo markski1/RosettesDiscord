@@ -26,7 +26,7 @@ def index():
 def settings(server_id):
     server = get_server_data(server_id)
     if not server:
-        return "Server not found."
+        return render_error("Server not found.")
 
     raw = server["settings"] or ""
     if len(raw) < 10:
@@ -73,7 +73,7 @@ def roles(server_id):
 def autoroles_maker(server_id):
     server = get_server_data(server_id)
     if not server:
-        return "Server not found."
+        return render_error("Server not found.")
 
     rolelist = get_server_roles(server_id)
 

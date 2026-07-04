@@ -24,9 +24,14 @@ CREATE TABLE IF NOT EXISTS `app_auth` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL DEFAULT '0',
   `owner_id` bigint(20) unsigned NOT NULL DEFAULT 0,
-  `token_key` varchar(50) NOT NULL DEFAULT '0',
+  `token_key` varchar(50) DEFAULT NULL,
+  `token_hash` char(64) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `last_used_at` datetime DEFAULT NULL,
+  `last_rotated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `token_key` (`token_key`)
+  KEY `token_key` (`token_key`),
+  KEY `token_hash` (`token_hash`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Authorized applications';
 
 -- La exportación de datos fue deseleccionada.

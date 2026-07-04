@@ -1,8 +1,6 @@
 from typing import List, Optional
 
-from flask_login import current_user
-
-from core.database import db_fetch_one, db_fetch_all, db_execute
+from core.database import db_fetch_one, db_fetch_all
 
 
 def get_user_data(user_id: int) -> Optional[dict]:
@@ -33,10 +31,6 @@ def get_app_by_id(app_id: int) -> Optional[dict]:
     return db_fetch_one("SELECT * FROM app_auth WHERE id = %s", app_id)
 
 
-def insert_application(name: str, app_token: str) -> int:
-    return db_execute("INSERT INTO app_auth (name, owner_id, token_key) VALUES(%s, %s, %s)",
-                      name, current_user.id, app_token)
-
 
 def get_apps_for_user(user_id: int) -> List[dict]:
     return db_fetch_all("SELECT * FROM app_auth WHERE owner_id = %s", user_id)
@@ -47,7 +41,3 @@ def get_users_for_app(app_id: int) -> List[dict]:
                         "INNER JOIN app_auth_rel AS r ON r.user_id = u.id "
                         "WHERE r.app_id = %s", app_id)
 
-
-def delete_application(app_id: int, owner_id: int) -> None:
-    db_execute("DELETE FROM app_auth_rel WHERE app_id = %s", app_id)
-    db_execute("DELETE FROM app_auth WHERE id = %s AND owner_id = %s", app_id, owner_id)

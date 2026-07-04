@@ -24,6 +24,6 @@ public static class InternalApi
 
     public static UnauthorizedObjectResult UnauthorizedResult()
     {
-        return new UnauthorizedObjectResult(GenericResponse.Error("unauthorized"));
+        return new UnauthorizedObjectResult(ApiResponse.Error("unauthorized"));
     }
 }

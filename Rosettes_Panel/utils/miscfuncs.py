@@ -5,6 +5,7 @@ import secrets
 from flask_login import current_user
 
 from utils.db_helpers import get_server_data
+from utils.page_helpers import render_error
 
 
 def generate_random_string(length):
@@ -18,10 +19,10 @@ def ownership_required(func):
     def wrapper(*args, **kwargs):
         server = get_server_data(kwargs.get('server_id'))
         if not server:
-            return "Rosettes has no knoweldge of this server."
+            return render_error("Rosettes has no knowledge of this server.")
 
         if int(current_user.id) != int(server['ownerid']):
-            return "You don't own this server."
+            return render_error("You don't own this server.")
 
         return func(*args, **kwargs)
 
