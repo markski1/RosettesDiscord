@@ -35,11 +35,6 @@ def _get_pool() -> pooling.MySQLConnectionPool:
 
 
 class Database:
-    """
-    Small compatibility wrapper around mysql-connector's built-in pool.
-    Prefer the db_* helpers for new code.
-    """
-
     def __init__(self):
         self.conn = _get_pool().get_connection()
         self.cursor = self.conn.cursor(dictionary=True, buffered=True)
@@ -73,20 +68,10 @@ class Database:
 
 
 def get_db_conn() -> Database:
-    """
-    Fetches a pooled database connection.
-    :return: A Database object.
-    """
     return Database()
 
 
 def db_execute(query: str, *params) -> Optional[int]:
-    """
-    Executes a query.
-    :param query: Query to be executed.
-    :param params: Parameters to be prepared on execution.
-    :return: If an INSERT, returns the inserted row ID, otherwise None.
-    """
     db = get_db_conn()
     try:
         db.get_cursor().execute(query, params)
@@ -96,12 +81,6 @@ def db_execute(query: str, *params) -> Optional[int]:
 
 
 def db_fetch_one(query: str, *params) -> Optional[dict]:
-    """
-    Executes a query and returns the first or only row.
-    :param query: Query to be executed.
-    :param params: Parameters to be prepared on execution.
-    :return: A dictionary keyed after each field name, or None if no results.
-    """
     db = get_db_conn()
     try:
         db.get_cursor().execute(query, params)
@@ -111,12 +90,6 @@ def db_fetch_one(query: str, *params) -> Optional[dict]:
 
 
 def db_fetch_all(query: str, *params) -> List[dict]:
-    """
-    Executes a query and returns every row.
-    :param query: Query to be executed.
-    :param params: Parameters to be prepared on execution.
-    :return: A list of dictionaries keyed after each field name.
-    """
     db = get_db_conn()
     try:
         db.get_cursor().execute(query, params)

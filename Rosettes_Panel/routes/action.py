@@ -15,7 +15,7 @@ action_bp = Blueprint("action", __name__, url_prefix="/action")
 @action_bp.route("/")
 @login_required
 def index():
-    return "No one here but us sneps!"
+    return redirect(url_for("panel.index"))
 
 
 @action_bp.post("/<int:server_id>/update-settings")
@@ -61,11 +61,11 @@ def post_settings(server_id):
             log_channel=log_channel,
             farm_channel=farm_channel,
         )
-    except BotApiError as exc:
-        return render_error(f"Settings could not be saved: {exc}")
+    except BotApiError:
+        return render_error("Settings could not be saved right now. Please try again later.")
 
     if not ok:
-        return render_error(f"Settings could not be saved: {message}")
+        return render_error("Settings could not be saved right now. Please try again later.")
 
     return render_success("Settings updated successfully.")
 
@@ -101,11 +101,11 @@ def post_new_autoroles(server_id):
 
     try:
         group_id, message = create_autorole_group(server_id, role_name, entries)
-    except BotApiError as exc:
-        return jsonify(ok=False, message=f"Autorole group could not be created: {exc}"), 502
+    except BotApiError:
+        return jsonify(ok=False, message="Autorole group could not be created right now. Please try again later."), 502
 
     if group_id is None:
-        return jsonify(ok=False, message=f"Autorole group could not be created: {message}"), 502
+        return jsonify(ok=False, message="Autorole group could not be created right now. Please try again later."), 502
 
     return jsonify(ok=True,
                    message=f"Autorole group created successfully. "
@@ -118,11 +118,11 @@ def post_new_autoroles(server_id):
 def post_delete_autoroles(server_id, group_id):
     try:
         ok, message = delete_autorole_group(server_id, group_id)
-    except BotApiError as exc:
-        return render_error(f"Autorole group could not be deleted: {exc}")
+    except BotApiError:
+        return render_error("Autorole group could not be deleted right now. Please try again later.")
 
     if not ok:
-        return render_error(f"Autorole group could not be deleted: {message}")
+        return render_error("Autorole group could not be deleted right now. Please try again later.")
 
     return redirect(url_for("panel.roles", server_id=server_id))
 
@@ -139,11 +139,11 @@ def post_delete_app(app_id):
 
     try:
         ok, message = delete_application_remote(app_id, int(current_user.id))
-    except BotApiError as exc:
-        return render_error(f"Application could not be deleted: {exc}")
+    except BotApiError:
+        return render_error("Application could not be deleted right now. Please try again later.")
 
     if not ok:
-        return render_error(f"Application could not be deleted: {message}")
+        return render_error("Application could not be deleted right now. Please try again later.")
 
     return render_success("Application deleted successfully.")
 
@@ -161,11 +161,11 @@ def post_revoke_app_user(app_id, user_id):
 
     try:
         ok, message = revoke_application_user(app_id, int(current_user.id), user_id)
-    except BotApiError as exc:
-        return render_error(f"User authorization could not be revoked: {exc}")
+    except BotApiError:
+        return render_error("User authorization could not be revoked right now. Please try again later.")
 
     if not ok:
-        return render_error(f"User authorization could not be revoked: {message}")
+        return render_error("User authorization could not be revoked right now. Please try again later.")
 
     return redirect(url_for("panel.app_manage", app_id=app_id))
 
@@ -188,10 +188,10 @@ def post_new_app():
 
     try:
         app_id, token, message = create_application(name, int(current_user.id))
-    except BotApiError as exc:
-        return render_error(f"An error occurred while creating the app: {exc}")
+    except BotApiError:
+        return render_error("Application could not be created right now. Please try again later.")
 
     if app_id is None or token is None:
-        return render_error(f"An error occurred while creating the app: {message}")
+        return render_error("Application could not be created right now. Please try again later.")
 
     return render_success(f"App created successfully. Copy this token now; it will not be shown again: {token}")

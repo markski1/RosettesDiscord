@@ -65,7 +65,7 @@ class SettingsRouteTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         body = resp.get_data(as_text=True)
         # Banner appears.
-        self.assertIn("The bot API is unreachable", body)
+        self.assertIn("Rosettes could not load channel and role names", body)
         # Falls back to numeric inputs.
         self.assertIn('name="defaultrole"', body)
         self.assertIn('type="number"', body)

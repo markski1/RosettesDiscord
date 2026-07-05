@@ -20,7 +20,27 @@ def get_server_roles(server_id: int) -> List[dict]:
 
 
 def get_server_autoroles(server_id: int) -> List[dict]:
-    return db_fetch_all("SELECT * FROM autorole_groups WHERE guildid = %s", server_id)
+    groups = db_fetch_all("SELECT * FROM autorole_groups WHERE guildid = %s ORDER BY id DESC", server_id)
+    if not groups:
+        return []
+
+    entries = db_fetch_all(
+        "SELECT e.rolegroupid, e.emote, e.roleid, r.rolename "
+        "FROM autorole_entries AS e "
+        "LEFT JOIN roles AS r ON r.id = e.roleid "
+        "WHERE e.guildid = %s "
+        "ORDER BY e.rolegroupid, e.emote",
+        server_id,
+    )
+
+    entries_by_group = {}
+    for entry in entries:
+        entries_by_group.setdefault(entry["rolegroupid"], []).append(entry)
+
+    for group in groups:
+        group["entries"] = entries_by_group.get(group["id"], [])
+
+    return groups
 
 
 def get_app_by_name(name: str) -> Optional[dict]:

@@ -545,6 +545,10 @@ ul.endpoint-list {
     border-bottom: 0;
 }
 
+.compact-list li {
+    padding: .35rem 0;
+}
+
 .entry-list .e-emoji {
     font-size: 1.35rem;
     line-height: 1;

@@ -19,8 +19,26 @@
                 <p class="block-title">{{ arg.name }}</p>
                 <div class="meta-row">
                     <span class="meta-pill">Group ID {{ arg.id }}</span>
-                    <span class="meta-pill">{% if arg.messageid > 0 %}Posted to message {{ arg.messageid }}{% else %}Not posted yet{% endif %}</span>
+                    <span class="meta-pill">{{ arg.entries|length }} entr{{ 'y' if arg.entries|length == 1 else 'ies' }}</span>
+                    <span class="meta-pill">{% if arg.messageid > 0 %}Posted{% else %}Not posted yet{% endif %}</span>
                 </div>
+
+                {% if arg.messageid > 0 %}
+                    <p class="helper-text">Message ID: <code>{{ arg.messageid }}</code></p>
+                {% endif %}
+
+                <ul class="entry-list compact-list">
+                    {% for entry in arg.entries %}
+                        <li>
+                            <span class="e-emoji">{{ entry.emote }}</span>
+                            <span class="e-role">{{ entry.rolename or ('Role ' ~ entry.roleid) }}</span>
+                            <span class="muted"><code>{{ entry.roleid }}</code></span>
+                        </li>
+                    {% else %}
+                        <li class="muted">No entries found for this group.</li>
+                    {% endfor %}
+                </ul>
+
                 <div class="actions">
                     <form method="POST" action="/action/{{ server.id }}/delete-autoroles/{{ arg.id }}"
                           onsubmit="return confirm('Delete this autorole group? This cannot be undone.');">

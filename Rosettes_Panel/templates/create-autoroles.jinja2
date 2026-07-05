@@ -3,7 +3,7 @@
 
 {% block main %}
 
-    <p><a class="menu-button" href="/panel/">Go back</a></p>
+    <a class="back-link" href="/panel/">Back to panel</a>
 
     <h3>Creating an Autoroles profile for {{ server['namecache'] }}</h3>
     <p class="muted">Pick an emoji and a role, then click <b>Add</b>. Members who react with the emoji
@@ -14,7 +14,7 @@
 
         <div class="block">
             <label>Profile name<br>
-                <input type="text" name="name" id="profileName" placeholder="e.g. Game roles" maxlength="64" autocomplete="off">
+                <input type="text" name="name" id="profileName" placeholder="e.g. Game roles" maxlength="32" autocomplete="off">
             </label>
         </div>
 
@@ -53,7 +53,6 @@
         <textarea hidden name="RoleListJson" id="RoleListJson"></textarea>
         <p id="formMsg" class="form-msg" hidden></p>
         <input type="submit" id="submitBtn" value="Create Autoroles">
-        <a id="doneLink" class="menu-button" href="/panel/" hidden>Back to panel</a>
     </form>
 
     <script type="text/javascript">
@@ -74,8 +73,6 @@
         };
 
         const $ = (id) => document.getElementById(id);
-
-        // --- Emoji picker -------------------------------------------------
 
         async function loadEmojis() {
             if (emojiData) return;
@@ -167,20 +164,19 @@
             }
         });
 
-        // --- Entry management ---------------------------------------------
-
         function addSelection() {
             const roleSelect = $("roleSelect");
             const roleId = roleSelect.value;
             const roleName = roleSelect.options[roleSelect.selectedIndex].text;
 
-            if (!selectedEmoji) { alert("Pick an emoji first."); return; }
-            if (roleId === "0") { alert("Choose a role first."); return; }
-            if (entries.length >= maxEntries) { alert("You can add at most " + maxEntries + " roles."); return; }
-            if (entries.some(e => e.roleEmoji === selectedEmoji)) { alert("That emoji is already used. Pick a different one."); return; }
-            if (entries.some(e => e.roleId === roleId)) { alert("That role is already in the list."); return; }
+            if (!selectedEmoji) { setMsg("Pick an emoji first.", "err"); return; }
+            if (roleId === "0") { setMsg("Choose a role first.", "err"); return; }
+            if (entries.length >= maxEntries) { setMsg("You can add at most " + maxEntries + " roles.", "err"); return; }
+            if (entries.some(e => e.roleEmoji === selectedEmoji)) { setMsg("That emoji is already used. Pick a different one.", "err"); return; }
+            if (entries.some(e => e.roleId === roleId)) { setMsg("That role is already in the list.", "err"); return; }
 
             entries.push({ roleId: roleId, roleName: roleName, roleEmoji: selectedEmoji });
+            setMsg("", "");
 
             selectedEmoji = null;
             $("emojiChosen").textContent = "—";
@@ -239,8 +235,10 @@
         $("autoForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
+            const profileName = $("profileName").value.trim();
             if (entries.length === 0) { setMsg("Add at least one role before creating.", "err"); return; }
-            if ($("profileName").value.trim().length === 0) { setMsg("Give the profile a name.", "err"); return; }
+            if (profileName.length === 0) { setMsg("Give the profile a name.", "err"); return; }
+            if (profileName.length > 32) { setMsg("Profile name must be 32 characters or shorter.", "err"); return; }
 
             const form = e.target;
             const btn = $("submitBtn");
@@ -257,14 +255,10 @@
                 try { data = await res.json(); } catch (_) {}
 
                 if (res.ok && data.ok) {
-                    // Success: lock the form so it can't be double-submitted, but the
-                    // page stays put with a confirmation rather than navigating away.
                     setMsg(data.message || "Autorole group created successfully.", "ok");
                     btn.hidden = true;
                     form.querySelectorAll("input, select, button").forEach(el => el.disabled = true);
-                    $("doneLink").hidden = false;
                 } else {
-                    // Failure: keep every entry the user built, just surface the reason.
                     setMsg(data.message || "Something went wrong. Your entries are still here — try again.", "err");
                     btn.disabled = false;
                 }

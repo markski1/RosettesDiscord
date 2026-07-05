@@ -13,7 +13,7 @@
     </section>
 
     {% if not bot_reachable %}
-        <p class="inline-note">The bot API is unreachable, so channel and role names are not available. You can still enter Discord IDs manually below.</p>
+        <p class="inline-note">Rosettes could not load channel and role names right now. You can still enter Discord IDs manually below.</p>
     {% endif %}
 
     <form method="POST" action="/action/{{ server['id'] }}/update-settings">

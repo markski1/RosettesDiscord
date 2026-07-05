@@ -7,6 +7,7 @@ from core.config import bot_api_base_url, panel_api_secret
 
 DEFAULT_TIMEOUT_SECONDS = 10
 JsonDict = dict[str, object]
+_NO_PROXY_OPENER = request.build_opener(request.ProxyHandler({}))
 
 
 class BotApiError(Exception):
@@ -17,6 +18,12 @@ def _build_url(path: str) -> str:
     base = (bot_api_base_url or "").rstrip("/")
     if not base:
         raise BotApiError("BOT_API_BASE_URL is not configured.")
+
+    for suffix in ("/rosapi/internal/status", "/rosapi/internal", "/rosapi/alive", "/rosapi"):
+        if base.endswith(suffix):
+            base = base[:-len(suffix)]
+            break
+
     return f"{base}/{path.lstrip('/')}"
 
 
@@ -36,7 +43,7 @@ def _request_json(method: str, path: str, payload: JsonDict | None = None) -> Js
         req.add_header("Content-Type", "application/json")
 
     try:
-        with request.urlopen(req, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
+        with _NO_PROXY_OPENER.open(req, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
             raw = cast(bytes, response.read()).decode("utf-8")
             if not raw.strip():
                 return {"success": True, "message": "ok", "data": None}
@@ -48,7 +55,15 @@ def _request_json(method: str, path: str, payload: JsonDict | None = None) -> Js
                 return cast(JsonDict, json.loads(raw))
             except json.JSONDecodeError:
                 pass
-        return {"success": False, "message": f"http_{exc.code}", "data": None}
+        return {
+            "success": False,
+            "message": f"http_{exc.code}",
+            "data": {
+                "method": method.upper(),
+                "url": req.full_url,
+                "allow": exc.headers.get("Allow") if exc.headers else None,
+            },
+        }
     except error.URLError as exc:
         raise BotApiError(f"Unable to reach bot API: {exc.reason}") from exc
 
@@ -60,22 +75,22 @@ def validate_panel_login_key(key: str) -> tuple[int | None, str | None]:
         if message in ("key_not_found", "invalid_key"):
             return None, "Invalid Rosettes key."
         if message == "login_db_unavailable":
-            return None, "Rosettes could not verify your key because the bot database is unavailable right now. Please try again later."
+            return None, "Rosettes could not verify your key right now. Please try again later."
         if message == "unauthorized":
-            return None, "The panel could not authenticate against the bot API. Please try again later."
+            return None, "Rosettes could not verify your key right now. Please try again later."
         if message == "http_404":
             return None, "Invalid Rosettes key."
         if message.startswith("http_"):
-            return None, f"The bot API returned {message.replace('http_', 'HTTP ')} during login validation."
-        return None, f"Login validation failed: {message}"
+            return None, "Rosettes could not verify your key right now. Please try again later."
+        return None, "Rosettes could not verify your key right now. Please try again later."
 
     data = response.get("data")
     if not isinstance(data, dict):
-        return None, "Login validation returned an invalid response."
+        return None, "Rosettes could not verify your key right now. Please try again later."
 
     user_id = data.get("user_id")
     if user_id is None:
-        return None, "Login validation returned no user ID."
+        return None, "Rosettes could not verify your key right now. Please try again later."
 
     return int(cast(int | str, user_id)), None
 

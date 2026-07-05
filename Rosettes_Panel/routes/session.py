@@ -42,7 +42,7 @@ def _clear_attempts(*buckets: str) -> None:
 
 @session_bp.route("/")
 def index():
-    return "No one here but us sneps!"
+    return redirect("/")
 
 
 @session_bp.post("/login")
@@ -73,8 +73,6 @@ def login():
 
     generic_failure = "Invalid Rosettes key."
     if error_message and "could not verify" in error_message:
-        generic_failure = error_message
-    elif error_message and "bot API" in error_message:
         generic_failure = error_message
     return render_template("index.jinja2", error_message=generic_failure)
 

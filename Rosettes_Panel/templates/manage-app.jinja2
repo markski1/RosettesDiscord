@@ -8,7 +8,7 @@
     <section class="page-head compact">
         <div class="page-copy">
             <h1>{{ app['name'] }}</h1>
-            <p class="lead">Application details, authorized users, and API information.</p>
+            <p class="lead">Application details and authorized users.</p>
         </div>
         <form method="POST" action="/action/delete-app/{{ app['id'] }}"
               onsubmit="return confirm('Delete this application? This will also remove its user authorizations.');">
@@ -28,9 +28,9 @@
                     <p class="muted">Token</p>
                     {% if app['token_key'] %}
                         <p><code class="token">{{ app['token_key'] }}</code></p>
-                        <p class="helper-text">Legacy plaintext token. New apps store only a hashed token.</p>
+                        <p class="helper-text">This older token is visible here. Keep it private.</p>
                     {% else %}
-                        <p class="helper-text">Hidden. Tokens are only shown when the app is created.</p>
+                        <p class="helper-text">Hidden for your safety. Tokens are only shown when the app is created.</p>
                     {% endif %}
                 </div>
             </div>
@@ -58,14 +58,13 @@
         </div>
 
         <div class="block stack-tight">
-            <h3>Endpoints</h3>
-            <p class="helper-text">Largely WIP, probably unstable. All under <code>https://rosettes.markski.ar/api/</code></p>
+            <h3>Application access</h3>
+            <p class="helper-text">Apps can ask users for permission, check whether a user has approved access, and send Rosettes notifications to approved users.</p>
             <ul class="endpoint-list">
-                <li><strong>[POST] request</strong> — Request authorization from a user. Params: <code>applicationKey</code>, <code>userId</code></li>
-                <li><strong>[POST] notify</strong> — Send a message to a user. Params: <code>applicationKey</code>, <code>userId</code>, <code>message</code></li>
-                <li><strong>[GET] user</strong> — Get user data, if authorized. Params: <code>applicationKey</code>, <code>userId</code></li>
+                <li><strong>Request access</strong> — Ask a user to approve your app.</li>
+                <li><strong>Check approval</strong> — Confirm whether a user has approved your app.</li>
+                <li><strong>Notify user</strong> — Send a Rosettes notification to an approved user.</li>
             </ul>
-            <p class="helper-text">Currently the only way to check if a user accepted auth is by polling <code>user</code>.</p>
         </div>
     </div>
 {% endblock %}

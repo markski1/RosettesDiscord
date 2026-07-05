@@ -39,7 +39,7 @@ def _patched_urlopen(responses):
     iter_responses = iter(responses)
     calls = []
 
-    def fake_urlopen(req, timeout=None):
+    def fake_open(req, timeout=None):
         calls.append(req)
         kind = next(iter_responses)
         if kind == "url_error":
@@ -57,12 +57,36 @@ def _patched_urlopen(responses):
         body, status = kind
         return _make_response(body, status)
 
-    orig = bot_api.request.urlopen
-    bot_api.request.urlopen = fake_urlopen
+    orig = bot_api._NO_PROXY_OPENER.open
+    bot_api._NO_PROXY_OPENER.open = fake_open
     try:
         yield calls
     finally:
-        bot_api.request.urlopen = orig
+        bot_api._NO_PROXY_OPENER.open = orig
+
+
+class TestBuildUrl(unittest.TestCase):
+    def test_build_url_accepts_root_base(self):
+        original = bot_api.bot_api_base_url
+        bot_api.bot_api_base_url = "http://bot.test"
+        try:
+            self.assertEqual(
+                bot_api._build_url("/rosapi/internal/panel/login"),
+                "http://bot.test/rosapi/internal/panel/login",
+            )
+        finally:
+            bot_api.bot_api_base_url = original
+
+    def test_build_url_strips_common_api_suffix(self):
+        original = bot_api.bot_api_base_url
+        bot_api.bot_api_base_url = "http://bot.test/rosapi"
+        try:
+            self.assertEqual(
+                bot_api._build_url("/rosapi/internal/panel/login"),
+                "http://bot.test/rosapi/internal/panel/login",
+            )
+        finally:
+            bot_api.bot_api_base_url = original
 
 
 class TestGetGuildChannels(unittest.TestCase):

@@ -43,8 +43,8 @@ def init_app(app):
 def attempt_login(auth_key):
     try:
         user_id, error_message = validate_panel_login_key(auth_key)
-    except BotApiError as exc:
-        return None, str(exc)
+    except BotApiError:
+        return None, "Rosettes could not verify your key right now. Please try again later."
 
     if user_id:
         user_model = Session()
