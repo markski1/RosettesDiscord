@@ -18,6 +18,17 @@ public class InternalController : ControllerBase
         public string Key { get; init; } = string.Empty;
     }
 
+    [HttpGet("status")]
+    public IActionResult Status()
+    {
+        if (!InternalApi.IsAuthorized(Request))
+        {
+            return InternalApi.UnauthorizedResult();
+        }
+
+        return Ok(ApiResponse.Success("internal_api_ok"));
+    }
+
     [HttpPost("panel/login")]
     public async Task<IActionResult> PanelLogin([FromBody] PanelLoginRequest request)
     {
