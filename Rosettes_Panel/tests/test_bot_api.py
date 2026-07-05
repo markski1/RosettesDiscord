@@ -162,21 +162,6 @@ class TestApplicationApi(unittest.TestCase):
         sent = json.loads(calls[0].data.decode("utf-8"))
         self.assertEqual(sent, {"name": "My App", "ownerId": 99})
 
-    def test_rotate_application_token_returns_token(self):
-        body = json.dumps({
-            "success": True,
-            "message": "application_token_rotated",
-            "data": {"token": "rotated-token"},
-        }).encode("utf-8")
-        with _patched_urlopen([(body, 200)]) as calls:
-            token, message = bot_api.rotate_application_token(12, 99)
-
-        self.assertEqual(token, "rotated-token")
-        self.assertEqual(message, "")
-        self.assertEqual(calls[0].method, "POST")
-        self.assertIn("/rosapi/internal/apps/12/rotate-token", calls[0].full_url)
-        sent = json.loads(calls[0].data.decode("utf-8"))
-        self.assertEqual(sent, {"ownerId": 99})
 
     def test_delete_application_remote_sends_owner(self):
         body = json.dumps({"success": True, "message": "application_deleted"}).encode("utf-8")

@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 
 from core.bot_api import BotApiError, update_guild_settings, create_autorole_group, delete_autorole_group, \
-    create_application, rotate_application_token, delete_application_remote, revoke_application_user
+    create_application, delete_application_remote, revoke_application_user
 from utils.db_helpers import get_app_by_name, get_server_data, get_app_by_id
 from utils.miscfuncs import ownership_required
 from utils.page_helpers import render_success, render_error
@@ -147,26 +147,6 @@ def post_delete_app(app_id):
 
     return render_success("Application deleted successfully.")
 
-
-@action_bp.post("/rotate-app-token/<int:app_id>")
-@login_required
-def post_rotate_app_token(app_id):
-    app = get_app_by_id(app_id)
-    if not app:
-        return render_error("App not found.")
-
-    if int(app["owner_id"]) != int(current_user.id):
-        return render_error("You don't own this application.")
-
-    try:
-        token, message = rotate_application_token(app_id, int(current_user.id))
-    except BotApiError as exc:
-        return render_error(f"Token could not be rotated: {exc}")
-
-    if token is None:
-        return render_error(f"Token could not be rotated: {message}")
-
-    return render_success(f"Token rotated successfully. Copy it now; it will not be shown again: {token}")
 
 
 @action_bp.post("/revoke-app-user/<int:app_id>/<int:user_id>")

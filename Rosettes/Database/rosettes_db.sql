@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS `app_auth` (
   `token_hash` char(64) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `last_used_at` datetime DEFAULT NULL,
-  `last_rotated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `token_key` (`token_key`),
   KEY `token_hash` (`token_hash`)

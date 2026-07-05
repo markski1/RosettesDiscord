@@ -24,8 +24,7 @@ public static class AuthRepository
                 name,
                 owner_id AS OwnerId,
                 created_at AS CreatedAt,
-                last_used_at AS LastUsedAt,
-                last_rotated_at AS LastRotatedAt
+                last_used_at AS LastUsedAt
             FROM app_auth
             WHERE token_hash=@TokenHash OR token_key=@AppKey
             """;
@@ -57,8 +56,8 @@ public static class AuthRepository
         var db = getConn.Db;
 
         const string sql = """
-            INSERT INTO app_auth (name, owner_id, token_key, token_hash, created_at, last_rotated_at)
-            VALUES (@Name, @OwnerId, NULL, @TokenHash, UTC_TIMESTAMP(), UTC_TIMESTAMP());
+            INSERT INTO app_auth (name, owner_id, token_key, token_hash, created_at)
+            VALUES (@Name, @OwnerId, NULL, @TokenHash, UTC_TIMESTAMP());
             SELECT LAST_INSERT_ID();
             """;
 
@@ -77,31 +76,6 @@ public static class AuthRepository
         }
     }
 
-    public static async Task<bool> RotateApplicationToken(int appId, ulong ownerId, string token)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = """
-            UPDATE app_auth
-            SET token_key=NULL, token_hash=@TokenHash, last_rotated_at=UTC_TIMESTAMP()
-            WHERE id=@AppId AND owner_id=@OwnerId
-            """;
-
-        try
-        {
-            return await db.ExecuteAsync(sql, new
-            {
-                AppId = appId,
-                OwnerId = ownerId,
-                TokenHash = HashToken(token)
-            }) > 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
 
     public static async Task<bool> DeleteApplication(int appId, ulong ownerId)
     {

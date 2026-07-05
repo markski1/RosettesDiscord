@@ -178,25 +178,6 @@ def create_application(name: str, owner_id: int) -> tuple[int | None, str | None
     return int(cast(int | str, app_id)), token, ""
 
 
-def rotate_application_token(app_id: int, owner_id: int) -> tuple[str | None, str]:
-    response = _request_json(
-        "POST",
-        f"/rosapi/internal/apps/{int(app_id)}/rotate-token",
-        {"ownerId": int(owner_id)},
-    )
-    if not response.get("success"):
-        return None, str(response.get("message") or "application_token_rotate_failed")
-
-    data = response.get("data")
-    if not isinstance(data, dict):
-        return None, "application_token_rotate_failed"
-
-    token = data.get("token")
-    if not isinstance(token, str) or not token:
-        return None, "application_token_rotate_failed"
-
-    return token, ""
-
 
 def delete_application_remote(app_id: int, owner_id: int) -> tuple[bool, str]:
     response = _request_json(

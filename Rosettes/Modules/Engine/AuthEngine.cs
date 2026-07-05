@@ -123,7 +123,6 @@ public class ApplicationAuth
     public ulong OwnerId { get; init; }
     public DateTime? CreatedAt { get; init; }
     public DateTime? LastUsedAt { get; init; }
-    public DateTime? LastRotatedAt { get; init; }
 }
 
 public class ApplicationRelation

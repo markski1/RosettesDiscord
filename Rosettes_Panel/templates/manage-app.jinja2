@@ -28,23 +28,14 @@
                     <p class="muted">Token</p>
                     {% if app['token_key'] %}
                         <p><code class="token">{{ app['token_key'] }}</code></p>
-                        <p class="helper-text">Legacy plaintext token. Rotate it to store only a hashed token.</p>
+                        <p class="helper-text">Legacy plaintext token. New apps store only a hashed token.</p>
                     {% else %}
-                        <p class="helper-text">Hidden. Tokens are only shown when created or rotated.</p>
+                        <p class="helper-text">Hidden. Tokens are only shown when the app is created.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <div class="block stack-tight">
-            <h3>Token management</h3>
-            <p class="helper-text">Rotating immediately invalidates the current token. Copy the new token from the success page; it will not be shown again.</p>
-            <form method="POST" action="/action/rotate-app-token/{{ app['id'] }}"
-                  onsubmit="return confirm('Rotate this application token? Existing integrations will stop working until updated.');">
-                {{ csrf_input()|safe }}
-                <input type="submit" value="Rotate token">
-            </form>
-        </div>
 
         <div class="block">
             <h3>Authorized users</h3>

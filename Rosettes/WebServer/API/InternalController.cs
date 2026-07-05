@@ -93,28 +93,6 @@ public class InternalController : ControllerBase
         return Ok(ApiResponse.Success("application_created", new { app_id = appId.Value, token }));
     }
 
-    [HttpPost("apps/{appId}/rotate-token")]
-    public async Task<IActionResult> RotateApplicationToken(int appId, [FromBody] AppOwnerRequest request)
-    {
-        if (!InternalApi.IsAuthorized(Request))
-        {
-            return InternalApi.UnauthorizedResult();
-        }
-
-        if (appId <= 0 || request.OwnerId == 0)
-        {
-            return BadRequest(ApiResponse.Error("invalid_application"));
-        }
-
-        string token = GenerateApplicationToken();
-        bool ok = await AuthRepository.RotateApplicationToken(appId, request.OwnerId, token);
-        if (!ok)
-        {
-            return NotFound(ApiResponse.Error("application_not_found"));
-        }
-
-        return Ok(ApiResponse.Success("application_token_rotated", new { token }));
-    }
 
     [HttpDelete("apps/{appId}")]
     public async Task<IActionResult> DeleteApplication(int appId, [FromBody] AppOwnerRequest request)
