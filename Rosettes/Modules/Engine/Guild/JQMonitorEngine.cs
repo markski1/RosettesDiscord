@@ -39,7 +39,7 @@ public static class JqMonitorEngine
                 if (!dbGuild.MonitorsVc()) return;
                 ChannelInform(user, channel, action);
                 if (channel2 is not null && action2 is not null)
-                    ChannelInform(user, channel, action);
+                    ChannelInform(user, channel2, action2);
             }
         });
 
