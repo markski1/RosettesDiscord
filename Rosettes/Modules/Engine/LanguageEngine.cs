@@ -8,11 +8,11 @@ public static class LanguageEngine
 {
     private const string ApiUrl = "https://mmip-be.markski.ar/v1/chat";
     private const string CompactUrl = "https://mmip-be.markski.ar/v1/compact";
-    private const string Model = "z-ai/glm-4.7";
-    private const string CompactModel = "google/gemini-3.1-flash-lite";
+    private const string Model = "z-ai/glm-5.2";
+    private const string CompactModel = "xiaomi/mimo-v2.5";
 
-    private const int MaxChars = 400_000;
-    private const int MaxSummaryTokens = 800;
+    private const int MaxChars = 800_000;
+    private const int MaxSummaryTokens = 2_500;
 
     private sealed record ChatMessage(string Role, string Content);
 
@@ -25,11 +25,12 @@ public static class LanguageEngine
 
         if (message.Trim() is "clear")
         {
-            if (ConversationContexts.TryGetValue(channelId, out _))
-            {
-                ConversationContexts.Remove(channelId);
-                return (isNewChat, false, "Context cleared: I have forgotten this channel's conversation.");
-            }
+            bool contextRemoved = ConversationContexts.Remove(channelId);
+            string response = contextRemoved
+                ? "Context cleared: I have forgotten this channel's conversation."
+                : "There is no conversation context to clear.";
+
+            return (isNewChat, false, response);
         }
 
         string safeName = string.IsNullOrWhiteSpace(userName) ? "unknown" : userName.Trim();
