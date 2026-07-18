@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 using Rosettes.Modules.Engine;
@@ -16,8 +17,10 @@ namespace Rosettes.Modules.Commands.Utility;
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    private const ulong DefaultUploadLimit = 10 * 1024 * 1024;
+
     private sealed record CachedMedia(string MediaUri, string FileName);
-    private static readonly Dictionary<string, CachedMedia> MediaCache = [];
+    private static readonly ConcurrentDictionary<string, CachedMedia> MediaCache = [];
     private static readonly Regex UserMentionRegex = new(@"<@!?(?<id>\d+)>", RegexOptions.Compiled);
 
     [SlashCommand("chat", "Chat with Rosettes")]
@@ -113,6 +116,20 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
 
     private async Task FetchMedia(string uri)
+    {
+        try
+        {
+            await FetchMediaCore(uri);
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("getvideo", ex.ToString());
+            await DeclareDownloadFailure("An unexpected error occurred while obtaining this video.");
+        }
+    }
+
+
+    private async Task FetchMediaCore(string uri)
     {
         if (uri.Contains("youtu.be") || uri.Contains("youtube.com"))
         {
@@ -210,7 +227,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             MediaCache[uri] = new CachedMedia(mediaUri, fileName);
         }
 
-        ulong sizeLimit = Context.Guild?.MaxUploadLimit ?? 0;
+        ulong sizeLimit = Context.Guild?.MaxUploadLimit ?? DefaultUploadLimit;
+        if (sizeLimit == 0) sizeLimit = DefaultUploadLimit;
 
         try
         {
@@ -226,8 +244,9 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         {
             await DeclareDownloadFailure(ex.Message, mediaUri);
         }
-        catch
+        catch (Exception ex)
         {
+            Global.GenerateErrorMessage("getvideo upload", ex.ToString());
             await DeclareDownloadFailure("Cannot upload file, likely too large.", mediaUri);
         }
     }
@@ -270,22 +289,38 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
     private async Task DeclareDownloadFailure(string message, string? mediaUri = null)
     {
-        EmbedBuilder embed = await Global.MakeRosettesEmbed();
-
-        embed.Title = "Video download failure.";
-
-        EmbedFieldBuilder result = new() { Name = "Result", Value = message, IsInline = true };
-        embed.AddField(result);
-
-        if (mediaUri is not null && !mediaUri.Contains("127.0.0.1"))
+        try
         {
-            embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
-            await FollowupAsync(embed: embed.Build());
+            EmbedBuilder embed = await Global.MakeRosettesEmbed();
+
+            embed.Title = "Video download failure.";
+
+            EmbedFieldBuilder result = new() { Name = "Result", Value = message, IsInline = true };
+            embed.AddField(result);
+
+            if (mediaUri is not null && !mediaUri.Contains("127.0.0.1"))
+            {
+                embed.AddField("Instead...", $"Have a [Direct link]({mediaUri}).");
+                await FollowupAsync(embed: embed.Build());
+            }
+            else
+            {
+                var msg = await FollowupAsync(embed: embed.Build());
+                _ = new MessageDeleter(msg, 30);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var msg = await FollowupAsync(embed: embed.Build());
-            _ = new MessageDeleter(msg, 30);
+            Global.GenerateErrorMessage("getvideo response", ex.ToString());
+
+            try
+            {
+                await FollowupAsync($"Video download failure: {message}");
+            }
+            catch (Exception fallbackEx)
+            {
+                Global.GenerateErrorMessage("getvideo fallback response", fallbackEx.ToString());
+            }
         }
     }
     
