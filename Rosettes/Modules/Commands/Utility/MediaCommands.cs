@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
-using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 using Rosettes.Modules.Engine;
@@ -18,9 +17,13 @@ namespace Rosettes.Modules.Commands.Utility;
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private const ulong DefaultUploadLimit = 10 * 1024 * 1024;
+    private const int MaxMediaCacheEntries = 1000;
+    private static readonly TimeSpan MediaCacheLifetime = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan MediaReadTimeout = TimeSpan.FromSeconds(30);
 
-    private sealed record CachedMedia(string MediaUri, string FileName);
-    private static readonly ConcurrentDictionary<string, CachedMedia> MediaCache = [];
+    private sealed record CachedMedia(string MediaUri, string FileName, DateTimeOffset ExpiresAt);
+    private static readonly Dictionary<string, CachedMedia> MediaCache = [];
+    private static readonly object MediaCacheLock = new();
     private static readonly Regex UserMentionRegex = new(@"<@!?(?<id>\d+)>", RegexOptions.Compiled);
 
     [SlashCommand("chat", "Chat with Rosettes")]
@@ -142,7 +145,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         string? mediaUri;
         string fileName;
 
-        if (MediaCache.TryGetValue(uri, out var cached))
+        if (TryGetCachedMedia(uri, out var cached))
         {
             mediaUri = cached.MediaUri;
             fileName = cached.FileName;
@@ -223,11 +226,10 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             
             mediaUri = mediaUri.Replace("https://cobalt.markski.ar", "http://127.0.0.1:9000");
 
-            // Cache resolved target so the next call skips the metadata request
-            MediaCache[uri] = new CachedMedia(mediaUri, fileName);
+            CacheMedia(uri, mediaUri, fileName);
         }
 
-        ulong sizeLimit = Context.Guild?.MaxUploadLimit ?? DefaultUploadLimit;
+        ulong sizeLimit = (ulong)Context.Interaction.AttachmentSizeLimit;
         if (sizeLimit == 0) sizeLimit = DefaultUploadLimit;
 
         try
@@ -240,12 +242,19 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                 fileName: fileName
             );
         }
+        catch (OperationCanceledException)
+        {
+            RemoveCachedMedia(uri);
+            await DeclareDownloadFailure("The video download timed out.", mediaUri);
+        }
         catch (InvalidOperationException ex)
         {
+            RemoveCachedMedia(uri);
             await DeclareDownloadFailure(ex.Message, mediaUri);
         }
         catch (Exception ex)
         {
+            RemoveCachedMedia(uri);
             Global.GenerateErrorMessage("getvideo upload", ex.ToString());
             await DeclareDownloadFailure("Cannot upload file, likely too large.", mediaUri);
         }
@@ -269,22 +278,75 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             capacity: contentLength is > 0 and <= int.MaxValue ? (int)contentLength.Value : 0
         );
 
-        var buffer = new byte[81920];
-        long total = 0;
-
-        while (true)
+        try
         {
-            int read = await stream.ReadAsync(buffer);
-            if (read <= 0) break;
+            var buffer = new byte[81920];
+            long total = 0;
 
-            total += read;
-            if (sizeLimit > 0 && (ulong)total > sizeLimit)
-                throw new InvalidOperationException("Cannot upload file, too large.");
+            while (true)
+            {
+                using var readTimeout = new CancellationTokenSource(MediaReadTimeout);
+                int read = await stream.ReadAsync(buffer, readTimeout.Token);
+                if (read <= 0) break;
 
-            await ms.WriteAsync(buffer.AsMemory(0, read));
+                total += read;
+                if (sizeLimit > 0 && (ulong)total > sizeLimit)
+                    throw new InvalidOperationException("Cannot upload file, too large.");
+
+                await ms.WriteAsync(buffer.AsMemory(0, read));
+            }
+
+            return ms;
         }
+        catch
+        {
+            await ms.DisposeAsync();
+            throw;
+        }
+    }
 
-        return ms;
+    private static bool TryGetCachedMedia(string uri, out CachedMedia cached)
+    {
+        lock (MediaCacheLock)
+        {
+            if (MediaCache.TryGetValue(uri, out cached!) && cached.ExpiresAt > DateTimeOffset.UtcNow)
+                return true;
+
+            MediaCache.Remove(uri);
+            cached = null!;
+            return false;
+        }
+    }
+
+    private static void CacheMedia(string uri, string mediaUri, string fileName)
+    {
+        lock (MediaCacheLock)
+        {
+            var now = DateTimeOffset.UtcNow;
+            foreach (var expiredUri in MediaCache
+                         .Where(entry => entry.Value.ExpiresAt <= now)
+                         .Select(entry => entry.Key)
+                         .ToList())
+            {
+                MediaCache.Remove(expiredUri);
+            }
+
+            if (MediaCache.Count >= MaxMediaCacheEntries)
+            {
+                var oldestUri = MediaCache.MinBy(entry => entry.Value.ExpiresAt).Key;
+                MediaCache.Remove(oldestUri);
+            }
+
+            MediaCache[uri] = new CachedMedia(mediaUri, fileName, now + MediaCacheLifetime);
+        }
+    }
+
+    private static void RemoveCachedMedia(string uri)
+    {
+        lock (MediaCacheLock)
+        {
+            MediaCache.Remove(uri);
+        }
     }
 
     private async Task DeclareDownloadFailure(string message, string? mediaUri = null)

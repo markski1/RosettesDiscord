@@ -22,17 +22,37 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             {
                 // get interaction context
                 var context = new SocketInteractionContext(client, inter);
-                await commands.ExecuteCommandAsync(context, services);
+                var result = await commands.ExecuteCommandAsync(context, services);
+                if (!result.IsSuccess)
+                {
+                    Global.GenerateErrorMessage("InteractionManager", result.ErrorReason);
+                    await SendInteractionFailure(inter);
+                }
             }
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("InteractionManager", $"{ex}");
-
-                // acknoweldge we crashed.
-                await inter.RespondAsync("Sorry, there was an unknown error executing the command.", ephemeral: true);
+                await SendInteractionFailure(inter);
             }
         });
         return Task.CompletedTask;
+    }
+
+    private static async Task SendInteractionFailure(SocketInteraction interaction)
+    {
+        const string message = "Sorry, there was an unknown error executing the command.";
+
+        try
+        {
+            if (interaction.HasResponded)
+                await interaction.FollowupAsync(message, ephemeral: true);
+            else
+                await interaction.RespondAsync(message, ephemeral: true);
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("InteractionManager response", $"{ex}");
+        }
     }
 
     private Task OnButtonClicked(SocketMessageComponent component)
