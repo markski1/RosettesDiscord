@@ -16,6 +16,7 @@ namespace Rosettes.Modules.Commands.Utility;
 [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
 public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    private const int MaxChatQuestionLength = 1024;
     private const ulong DefaultUploadLimit = 10 * 1024 * 1024;
     private const int MaxMediaCacheEntries = 1000;
     private static readonly TimeSpan MediaCacheLifetime = TimeSpan.FromMinutes(10);
@@ -27,16 +28,16 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     private static readonly Regex UserMentionRegex = new(@"<@!?(?<id>\d+)>", RegexOptions.Compiled);
 
     [SlashCommand("chat", "Chat with Rosettes")]
-    public async Task Chat(string question)
+    public async Task Chat([MaxLength(MaxChatQuestionLength)] string question)
     {
         await DeferAsync();
 
-        if (question.Length > 1024)
+        if (question.Length > MaxChatQuestionLength)
         {
-            await RespondAsync($"Sorry, please keep your question below 1024 characters. \n" +
-                               $"For your convenience, here it is: ```{question}```");
+            await FollowupAsync($"Sorry, please keep your question to {MaxChatQuestionLength:N0} characters or fewer.", ephemeral: true);
+            return;
         }
-        
+
         ulong channelId;
 
         if (Context.Channel is null) channelId = 0;
@@ -70,7 +71,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
                         embed.AddField("Answer", part);
                         first = false;
                     }
-                    else embed.AddField("...", part);
+                    else embed.AddField("-", part);
                 }
                 await FollowupAsync(embed: embed.Build());
             }
@@ -96,7 +97,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
         }
     }
 
-    
+
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
     {
@@ -223,7 +224,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
             baseName ??= $"rosettes_{Global.Randomize(10000) + 1}.mp4";
             fileName = baseName;
-            
+
             mediaUri = mediaUri.Replace("https://cobalt.markski.ar", "http://127.0.0.1:9000");
 
             CacheMedia(uri, mediaUri, fileName);
@@ -385,7 +386,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
     }
-    
+
     private async Task<string> ResolveUserMentionsAsync(string text)
     {
         var matches = UserMentionRegex.Matches(text);
