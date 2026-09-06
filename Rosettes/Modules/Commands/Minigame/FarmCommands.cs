@@ -31,7 +31,9 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync(isAllowed, ephemeral: true);
             return;
         }
-        await FarmEngine.CatchFishFunc(Context.Interaction, Context.User);
+        await FarmEngine.RunUserActionAsync(
+            Context.Interaction,
+            () => FarmEngine.CatchFishFunc(Context.Interaction, Context.User));
     }
 
     [SlashCommand("inventory", "Check your inventory")]

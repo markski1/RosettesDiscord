@@ -24,7 +24,7 @@ public static class UserEngine
         {
             // Snapshot dirty users before iterating so concurrent cache additions don't cause
             // a 'collection modified during enumeration' exception.
-            var dirtyUsers = _userCache.Where(u => u.Dirty).ToList();
+            var dirtyUsers = snapshot.Where(u => u.Dirty).ToList();
 
             foreach (User user in dirtyUsers)
             {

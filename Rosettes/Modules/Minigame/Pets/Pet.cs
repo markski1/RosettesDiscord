@@ -7,6 +7,7 @@ namespace Rosettes.Modules.Minigame.Pets;
 
 public class Pet
 {
+    private readonly object _interactionLock = new();
     public int Id;
     public int Index;
     private int _timesPet;
@@ -58,34 +59,39 @@ public class Pet
     // Otherwise, return a negative.
     public int DoPet()
     {
-        if (Global.CurrentUnix() <= LastPet) return -1;
-            
-        LastPet = Global.CurrentUnix() + 30;
-        int happiness = Global.Randomize(10) + 8;
-        ModifyHappiness(+happiness); // add anywhere from 8 to 17% happiness
-        AddExp(1);
-        _timesPet++;
-        SyncUpToDate = false;
-        return happiness;
+        lock (_interactionLock)
+        {
+            if (Global.CurrentUnix() <= LastPet) return -1;
+
+            LastPet = Global.CurrentUnix() + 30;
+            int happiness = Global.Randomize(10) + 8;
+            ModifyHappiness(+happiness); // add anywhere from 8 to 17% happiness
+            AddExp(1);
+            _timesPet++;
+            SyncUpToDate = false;
+            return happiness;
+        }
     }
 
     public int DoFeed(string foodItem)
     {
-        if (!PetEngine.AcceptablePetMeal(foodItem))
+        lock (_interactionLock)
         {
-            return -1; // Error: Pets may only be fed fish of any type, shrimps or carrots
-        }
+            if (!PetEngine.AcceptablePetMeal(foodItem))
+            {
+                return -1; // Error: Pets may only be fed fish of any type, shrimps or carrots
+            }
 
-        if (Global.CurrentUnix() <= LastFed) {
-            return -2; // Error: Pets may only be fed once in a 5-minute window.
+            if (Global.CurrentUnix() <= LastFed)
+                return -2; // Error: Pets may only be fed once in a 5-minute window.
+
+            LastFed = Global.CurrentUnix() + 300;
+            int happinessMod = Global.Randomize(10) + 5;
+            ModifyHappiness(+happinessMod); // add anywhere from 5 to 14% happiness
+            AddExp(1);
+            SyncUpToDate = false;
+            return happinessMod;
         }
-        
-        LastFed = Global.CurrentUnix() + 300;
-        int happinessMod = Global.Randomize(10) + 5;
-        ModifyHappiness(+happinessMod); // add anywhere from 5 to 14% happiness
-        AddExp(1);
-        SyncUpToDate = false;
-        return happinessMod;
     }
 
     public void ModifyHappiness(int modify)
@@ -147,7 +153,7 @@ public class Pet
     public async Task<bool> UpdateSelf()
     {
         if (SyncUpToDate) return false;
-        await PetRepository.UpdatePet(this);
+        if (!await PetRepository.UpdatePet(this)) return false;
         SyncUpToDate = true;
         return true;
     }

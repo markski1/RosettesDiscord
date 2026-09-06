@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using System.Collections.Concurrent;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
@@ -18,6 +19,26 @@ public static class FarmEngine
     public static readonly Color FishColor    = new(64, 156, 220);
     public static readonly Color ShopColor    = Color.Gold;
     public static readonly Color ErrorColor   = new(220, 80, 80);   // muted red
+    private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> UserActionLocks = new();
+
+    public static async Task RunUserActionAsync(SocketInteraction interaction, Func<Task> action)
+    {
+        var actionLock = UserActionLocks.GetOrAdd(interaction.User.Id, static _ => new SemaphoreSlim(1, 1));
+        if (!await actionLock.WaitAsync(0))
+        {
+            await interaction.RespondAsync("You already have a minigame action in progress.", ephemeral: true);
+            return;
+        }
+
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            actionLock.Release();
+        }
+    }
 
     // 5-slot durability bar, e.g. ▰▰▰▱▱ for 60.
     public static string DurabilityBar(int percent)
@@ -120,6 +141,22 @@ public static class FarmEngine
         {
             return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
         }
+        return "yes";
+    }
+
+    public static async Task<string> CanUseFarmComponent(SocketMessageComponent component)
+    {
+        if (component.User is not SocketGuildUser guildUser || component.Channel is not IGuildChannel guildChannel)
+            return "Farming/Fishing Commands do not work in direct messages.";
+
+        var dbGuild = await GuildEngine.GetDbGuild(guildUser.Guild);
+        if (!guildUser.Guild.CurrentUser.GetPermissions(guildChannel).SendMessages)
+            return "I don't have access to this channel. Please let an admin know, or try using me in other channel.";
+        if (!dbGuild.AllowsFarm())
+            return "This guild does not allow Farming/Fishing commands.";
+        if (dbGuild.FarmChannel != 0 && dbGuild.FarmChannel != component.Channel.Id)
+            return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
+
         return "yes";
     }
 
@@ -266,20 +303,6 @@ public static class FarmEngine
                 x.Flags = MessageFlags.ComponentsV2;
             });
 
-            ContainerBuilder resetContainer2 = await Global.MakeRosettesContainer(dbUser, ShopColor);
-            Global.AddTitle(resetContainer2, "### 🛒 Shop");
-            resetContainer2.WithTextDisplay("Use the menus below to buy or sell items.");
-            Global.AddFooter(resetContainer2, $"🐾 {dabloons} dabloons");
-            GetShopComponentsV2(resetContainer2);
-            await Global.AddAuthorFooter(resetContainer2, dbUser);
-
-            ComponentBuilderV2 resetComps2 = new();
-            resetComps2.WithContainer(resetContainer2);
-            await component.Message.ModifyAsync(x =>
-            {
-                x.Components = resetComps2.Build();
-                x.Flags = MessageFlags.ComponentsV2;
-            });
         }
         catch
         {
@@ -447,7 +470,7 @@ public static class FarmEngine
                 break;
         }
 
-        Global.FireAndForget(ModifyItem(dbUser, fishingCatch, +1));
+        await ModifyItem(dbUser, fishingCatch, +1);
 
         int foundPet = await PetEngine.RollForPet(dbUser);
 
@@ -456,7 +479,7 @@ public static class FarmEngine
 
         int damage = 3 + Global.Randomize(4);
         poleStatus -= damage;
-        Global.FireAndForget(ModifyItem(dbUser, "fishpole", -damage));
+        await ModifyItem(dbUser, "fishpole", -damage);
 
         ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FishColor);
         Global.AddTitle(container, "### 🎣 Fishing!");
@@ -802,10 +825,7 @@ public static class FarmEngine
 
     public static async Task<bool> RestoreAllPlots(User dbUser)
     {
-        if (await GetItem(dbUser, "dabloons") < 100) return false;
-        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -100));
-        Global.FireAndForget(SetItem(dbUser, "plots_degraded", 0));
-        return true;
+        return await FarmRepository.TryRestorePlots(dbUser, 100);
     }
 
 }

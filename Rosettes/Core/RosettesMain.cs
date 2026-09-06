@@ -76,6 +76,6 @@ public class RosettesMain
         UserEngine.SyncWithDatabase().GetAwaiter().GetResult();
         GuildEngine.SyncWithDatabase();
         PetEngine.TimedThings();
-        PetEngine.SyncWithDatabase();
+        PetEngine.SyncWithDatabase().GetAwaiter().GetResult();
     }
 }

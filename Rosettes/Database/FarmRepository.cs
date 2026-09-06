@@ -317,6 +317,30 @@ public static class FarmRepository
         }
     }
 
+    public static async Task<bool> TryRestorePlots(User user, int cost)
+    {
+        if (cost <= 0) return false;
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        const string sql = """
+                           UPDATE users_inventory
+                           SET dabloons = dabloons - @cost, plots_degraded = 0
+                           WHERE id = @id AND dabloons >= @cost AND plots_degraded != 0
+                           """;
+
+        try
+        {
+            return await db.ExecuteAsync(sql, new { cost, id = user.Id }) == 1;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-restoreplots", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
     public static async Task<bool> SetInventoryItem(User user, string item, int newValue)
     {
         if (!FarmEngine.IsValidItem(item)) return false;

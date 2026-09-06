@@ -62,10 +62,31 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
         }
     }
 
+    private static Task RunInteractionHandler(SocketInteraction interaction, Func<Task> handler)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await handler();
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("InteractionManager", $"{ex}");
+                await SendInteractionFailure(interaction);
+            }
+        });
+        return Task.CompletedTask;
+    }
+
+    private static bool IsFarmComponent(string action) =>
+        action is "fish" or "inventory" or "shop" or "farm" or
+            "crops_plant" or "crops_water" or "crops_harvest" or "plots_repair";
+
     private Task OnButtonClicked(SocketMessageComponent component)
     {
         TelemetryEngine.Count(TelemetryType.Interaction);
-        _ = Task.Run(async () =>
+        return RunInteractionHandler(component, async () =>
         {
             string action = component.Data.CustomId;
 
@@ -81,7 +102,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             // pet stuff
             if (action.Contains("doPet_"))
             {
-                await PetEngine.PetAPet(component);
+                await FarmEngine.RunUserActionAsync(component, () => PetEngine.PetAPet(component));
                 return;
             }
             
@@ -92,11 +113,23 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 return;
             }
 
+            if (IsFarmComponent(action))
+            {
+                string isAllowed = await FarmEngine.CanUseFarmComponent(component);
+                if (isAllowed != "yes")
+                {
+                    await component.RespondAsync(isAllowed, ephemeral: true);
+                    return;
+                }
+            }
+
             switch (action)
             {
                 // farm stuff
                 case "fish":
-                    await FarmEngine.CatchFishFunc(component, component.User);
+                    await FarmEngine.RunUserActionAsync(
+                        component,
+                        () => FarmEngine.CatchFishFunc(component, component.User));
                     break;
                 case "inventory":
                     await FarmEngine.ShowInventoryFunc(component, component.User);
@@ -112,17 +145,25 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     break;
 
                 case "crops_plant":
-                    await Farm.PlantSeed(component, component.User);
+                    await FarmEngine.RunUserActionAsync(
+                        component,
+                        () => Farm.PlantSeed(component, component.User));
                     break;
                 case "crops_water":
-                    await Farm.WaterCrops(component, component.User);
+                    await FarmEngine.RunUserActionAsync(
+                        component,
+                        () => Farm.WaterCrops(component, component.User));
                     break;
                 case "crops_harvest":
-                    await Farm.HarvestCrops(component, component.User);
+                    await FarmEngine.RunUserActionAsync(
+                        component,
+                        () => Farm.HarvestCrops(component, component.User));
                     break;
 
                 case "plots_repair":
-                    await Farm.RestorePlots(component, component.User);
+                    await FarmEngine.RunUserActionAsync(
+                        component,
+                        () => Farm.RestorePlots(component, component.User));
                     break;
 
                 case "pet_view":
@@ -138,12 +179,11 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     break;
             }
         });
-        return Task.CompletedTask;
     }
 
     private Task OnModalSubmitted(SocketModal modal)
     {
-        _ = Task.Run(async () =>
+        return RunInteractionHandler(modal, async () =>
         {
             List<SocketMessageComponentData> components = modal.Data.Components.ToList();
             switch (modal.Data.CustomId)
@@ -162,7 +202,9 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 }
                 case "petNamechange":
                 {
-                    await PetEngine.SetPetName(modal, components.First(x => x.CustomId == "newName").Value);
+                    await FarmEngine.RunUserActionAsync(
+                        modal,
+                        () => PetEngine.SetPetName(modal, components.First(x => x.CustomId == "newName").Value));
                     return;
                 }
                 case "reminderMaker":
@@ -183,29 +225,33 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 }
             }
         });
-        return Task.CompletedTask;
     }
 
     private Task OnMenuSelectionMade(SocketMessageComponent component)
     {
-        _ = Task.Run(async () =>
+        return RunInteractionHandler(component, async () =>
         {
             switch (component.Data.CustomId)
             {
                 case "buy" or "sell" or "sell_e":
-                    await FarmEngine.ShopAction(component);
+                    string isAllowed = await FarmEngine.CanUseFarmComponent(component);
+                    if (isAllowed != "yes")
+                    {
+                        await component.RespondAsync(isAllowed, ephemeral: true);
+                        return;
+                    }
+                    await FarmEngine.RunUserActionAsync(component, () => FarmEngine.ShopAction(component));
                     break;
                 case "defaultPet":
-                    await PetEngine.SetDefaultPet(component);
+                    await FarmEngine.RunUserActionAsync(component, () => PetEngine.SetDefaultPet(component));
                     break;
             }
 
             if (component.Data.CustomId.Contains("petFeed_"))
             {
-                await PetEngine.FeedAPet(component);
+                await FarmEngine.RunUserActionAsync(component, () => PetEngine.FeedAPet(component));
             }
         });
-        return Task.CompletedTask;
     }
 
     private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)

@@ -11,6 +11,7 @@ public static class PetEngine
 {
     private static List<Pet> _petCache = [];
     private static readonly Lock PetCacheLock = new();
+    private static readonly SemaphoreSlim PetCreationLock = new(1, 1);
 
     private static readonly Dictionary<int, (string fullName, string emoji)> PetChart = new()
     {
@@ -75,6 +76,7 @@ public static class PetEngine
 
     public static async Task<Pet?> EnsurePetExists(ulong ownerId, int index)
     {
+        await PetCreationLock.WaitAsync();
         try
         {
             Pet? pet;
@@ -87,15 +89,17 @@ public static class PetEngine
 
             pet = new(index, ownerId, "[not named]");
             pet.Id = await PetRepository.InsertPet(pet);
+            if (pet.Id <= 0) return null;
+
             lock (PetCacheLock)
             {
                 _petCache.Add(pet);
             }
             return pet;
         }
-        catch
+        finally
         {
-            return null;
+            PetCreationLock.Release();
         }
     }
 
@@ -221,6 +225,11 @@ public static class PetEngine
         }
 
         var receiverGuildUser = userGuildRef.Guild.GetUser(id);
+        if (receiverGuildUser is null)
+        {
+            await component.RespondAsync("Sorry, that pet's owner is no longer available in this guild.", ephemeral: true);
+            return;
+        }
 
         string description;
         if (receiverUser != dbUser)
@@ -358,7 +367,7 @@ public static class PetEngine
             return;
         }
 
-        Global.FireAndForget(FarmEngine.ModifyItem(dbUser, foodItem, -1));
+        await FarmEngine.ModifyItem(dbUser, foodItem, -1);
 
         ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
         Global.AddTitle(container, $"### {pet.GetName()} has been fed.");
@@ -384,7 +393,10 @@ public static class PetEngine
 
     private static bool HasPet(User dbUser, int id)
     {
-        return _petCache.Any(x => x.OwnerId == dbUser.Id && x.Index == id);
+        lock (PetCacheLock)
+        {
+            return _petCache.Any(x => x.OwnerId == dbUser.Id && x.Index == id);
+        }
     }
 
     public static async Task ViewPet(SocketInteraction interaction, IUser user)
@@ -491,7 +503,7 @@ public static class PetEngine
             return;
         }
 
-        Global.FireAndForget(FarmEngine.ModifyItem(dbUser, "dabloons", -25));
+        await FarmEngine.ModifyItem(dbUser, "dabloons", -25);
 
         pet.SetName(newName);
 
@@ -513,7 +525,7 @@ public static class PetEngine
         await modal.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
-    public static async void SyncWithDatabase()
+    public static async Task SyncWithDatabase()
     {
         List<Pet> snapshot;
         lock (PetCacheLock)
