@@ -52,11 +52,11 @@ public static class Settings
         var path = Path.Combine(AppContext.BaseDirectory, fileName);
         try
         {
-            return File.ReadAllText(path).Replace("\n", string.Empty);
+            return File.ReadAllText(path);
         }
-        catch
+        catch (Exception ex)
         {
-            Global.GenerateErrorMessage("settings", $"File not loaded: {fileName}");
+            Global.GenerateErrorMessage("settings", $"File not loaded: {fileName} - {ex.Message}");
             return "";
         }
     }

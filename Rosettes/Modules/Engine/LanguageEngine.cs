@@ -1,4 +1,7 @@
-﻿using System.Text;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 using Newtonsoft.Json;
 using Rosettes.Core;
 
@@ -6,175 +9,218 @@ namespace Rosettes.Modules.Engine;
 
 public static class LanguageEngine
 {
-    private const string ApiUrl = "https://mmip-be.markski.ar/v1/chat";
-    private const string CompactUrl = "https://mmip-be.markski.ar/v1/compact";
+    private const string ApiBaseUrl = "https://mmip-be.markski.ar/v1";
     private const string Model = "z-ai/glm-5.2";
-    private const string CompactModel = "xiaomi/mimo-v2.5";
+    private const int MaxCompletionTokens = 4_096;
+    private const int MaxBusyRetries = 2;
+    private static readonly TimeSpan BusyRetryDelay = TimeSpan.FromSeconds(1);
 
-    private const int MaxChars = 800_000;
-    private const int MaxSummaryTokens = 2_500;
+    private sealed class ConversationState
+    {
+        public SemaphoreSlim TurnLock { get; } = new(1, 1);
+        public string? ConversationId { get; set; }
+        public DateTimeOffset? StartedAt { get; set; }
+    }
 
-    private sealed record ChatMessage(string Role, string Content);
+    private sealed class MmipResponse
+    {
+        public bool Success { get; init; }
+        public string? Uuid { get; init; }
+        public string? Message { get; init; }
+        public string? Content { get; init; }
+        public string? Status { get; init; }
+        public List<MmipImage>? Images { get; init; }
+    }
 
-    private static readonly Dictionary<ulong, List<ChatMessage>> ConversationContexts = [];
+    private sealed class MmipImage
+    {
+        public string? Alt { get; init; }
+        public string? Url { get; init; }
+    }
+
+    private static readonly ConcurrentDictionary<ulong, ConversationState> Conversations = new();
 
     public static async Task<(bool, bool, string)> GetResponseAsync(ulong channelId, string message, string userName)
     {
-        List<ChatMessage> messages;
-        bool isNewChat = false;
-
-        if (message.Trim() is "clear")
-        {
-            bool contextRemoved = ConversationContexts.Remove(channelId);
-            string response = contextRemoved
-                ? "Context cleared: I have forgotten this channel's conversation."
-                : "There is no conversation context to clear.";
-
-            return (isNewChat, false, response);
-        }
-
-        string safeName = string.IsNullOrWhiteSpace(userName) ? "unknown" : userName.Trim();
-        string attributedMessage = $"[{safeName}]: {message}";
-
-        if (ConversationContexts.TryGetValue(channelId, out var context))
-        {
-            messages = context;
-
-            if (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 1)
-            {
-                bool compacted = await TryCompactAsync(messages);
-                if (!compacted)
-                {
-                    // Fallback: drop oldest user/assistant pairs (system prompt is at index 0 and survives).
-                    while (messages.Sum(m => m.Content.Length) > MaxChars && messages.Count > 3)
-                    {
-                        messages.RemoveAt(1);
-                        messages.RemoveAt(1);
-                    }
-                }
-            }
-        }
-        else
-        {
-            messages = [
-                new ChatMessage("system", $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/MM/yyyy format.;\n{Settings.SystemPrompt}")
-            ];
-            isNewChat = true;
-        }
-
-        var requestBody = new
-        {
-            message = attributedMessage,
-            history = messages.Where(m => m.Role != "system").Select(m => new { role = m.Role, content = m.Content }),
-            model = Model,
-            web_search = true,
-            system_prompt = messages.Find(m => m.Role == "system")?.Content ?? ""
-        };
-
-        var json = JsonConvert.SerializeObject(requestBody);
+        var state = Conversations.GetOrAdd(channelId, static _ => new ConversationState());
+        await state.TurnLock.WaitAsync();
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.ApiKey);
-            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await Global.HttpClient.SendAsync(request);
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            if (string.Equals(message.Trim(), "clear", StringComparison.OrdinalIgnoreCase))
             {
-                Global.GenerateErrorMessage("mmip-response", $"Error: {response.StatusCode} - {responseBody}");
-                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+                bool hadConversation = state.ConversationId is not null;
+                state.ConversationId = null;
+                state.StartedAt = null;
+                string clearResponse = hadConversation
+                    ? "Context cleared: I have forgotten this channel's conversation."
+                    : "There is no conversation context to clear.";
+
+                return (false, false, clearResponse);
             }
 
-            dynamic? responseData = JsonConvert.DeserializeObject<dynamic>(responseBody);
+            if (string.IsNullOrWhiteSpace(Settings.SystemPrompt))
+                return (false, false, "Sorry, chat is unavailable because its system prompt could not be loaded.");
 
-            if (responseData is null)
+            DateTimeOffset messageSentAt = DateTimeOffset.Now;
+            string? conversationId = state.ConversationId;
+            bool isNewChat = conversationId is null;
+            if (conversationId is null)
             {
-                Global.GenerateErrorMessage("mmip-response", "Null response from API");
-                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+                conversationId = await CreateConversationAsync();
+                if (conversationId is null)
+                    return (true, false, "Sorry, I am unable to respond at this moment.");
+
+                state.ConversationId = conversationId;
+                state.StartedAt = messageSentAt;
             }
 
-            string responseText = responseData.message;
+            string safeName = string.IsNullOrWhiteSpace(userName) ? "unknown" : userName.Trim();
+            string attributedMessage = $"[{safeName} at {messageSentAt:dd/MM/yyyy HH:mm:ss zzz}]: {message}";
+            string requestId = Guid.NewGuid().ToString("N");
+            string requestBody = JsonConvert.SerializeObject(new
+            {
+                message = attributedMessage,
+                model = Model,
+                web_search = true,
+                system_prompt = BuildSystemPrompt(state.StartedAt ?? messageSentAt),
+                @params = new { max_tokens = MaxCompletionTokens }
+            });
 
-            messages.Add(new ChatMessage("user", attributedMessage));
-            messages.Add(new ChatMessage("assistant", responseText));
-            ConversationContexts[channelId] = messages;
-
-            return (isNewChat, true, responseText);
+            return await SendChatAsync(conversationId, requestId, requestBody, isNewChat);
         }
-        catch (Exception ex)
+        finally
         {
-            Global.GenerateErrorMessage("mmip-response", $"Error returning response: {ex.Message}");
-            return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+            state.TurnLock.Release();
         }
     }
 
-    // Use MMIP's /v1/compact and keep the last 6 messages.
-    private static async Task<bool> TryCompactAsync(List<ChatMessage> messages)
+    private static string BuildSystemPrompt(DateTimeOffset conversationStartedAt)
+    {
+        string temporalContext = $"Conversation started at: {conversationStartedAt:dd/MM/yyyy HH:mm:ss zzz}.\n" +
+                                 $"Current date: {DateTimeOffset.Now:dd/MM/yyyy}. Dates use dd/MM/yyyy format.";
+        return $"{temporalContext}\n\n{Settings.SystemPrompt}";
+    }
+
+    private static async Task<string?> CreateConversationAsync()
     {
         try
         {
-            var requestBody = new
-            {
-                messages = messages.Select(m => new { role = m.Role, content = m.Content }),
-                model = CompactModel,
-                max_summary_tokens = MaxSummaryTokens,
-                @params = new { temperature = 0.2 }
-            };
+            using var request = CreateRequest(HttpMethod.Post, $"{ApiBaseUrl}/conversations", "{}", null);
+            using var response = await Global.HttpClient.SendAsync(request);
+            string responseBody = await response.Content.ReadAsStringAsync();
+            var data = DeserializeResponse(responseBody, "mmip-conversation");
 
-            var json = JsonConvert.SerializeObject(requestBody);
+            if (response.IsSuccessStatusCode && data?.Success == true && !string.IsNullOrWhiteSpace(data.Uuid))
+                return data.Uuid;
 
-            var request = new HttpRequestMessage(HttpMethod.Post, CompactUrl);
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Settings.ApiKey);
-            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await Global.HttpClient.SendAsync(request);
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Global.GenerateErrorMessage("mmip-compact", $"Error: {response.StatusCode} - {responseBody}");
-                return false;
-            }
-
-            dynamic? data = JsonConvert.DeserializeObject<dynamic>(responseBody);
-            if (data is null)
-            {
-                Global.GenerateErrorMessage("mmip-compact", "Null response from /v1/compact");
-                return false;
-            }
-
-            bool success = data.success ?? false;
-            if (!success) return false;
-
-            string summary = data.summary;
-            if (string.IsNullOrWhiteSpace(summary) || summary.StartsWith("[MMIP]"))
-            {
-                // Probably out of funds, so fallback to deleting message pairs.
-                return false;
-            }
-
-            var originalSystem = messages.Find(m => m.Role == "system")?.Content
-                                 ?? $"Today's date is: {DateTime.Now:dd/MM/yyyy} in dd/MM/yyyy format.;";
-
-            var recent = messages
-                .Where(m => m.Role is "user" or "assistant")
-                .TakeLast(6)
-                .ToList();
-
-            messages.Clear();
-            messages.Add(new ChatMessage("system", originalSystem));
-            messages.Add(new ChatMessage("system", $"Summary of prior conversation with the user:\n{summary}"));
-            foreach (var turn in recent) messages.Add(turn);
-
-            return true;
+            Global.GenerateErrorMessage("mmip-conversation", $"Error: {response.StatusCode} - {responseBody}");
         }
         catch (Exception ex)
         {
-            Global.GenerateErrorMessage("mmip-compact", $"Error compacting: {ex.Message}");
-            return false;
+            Global.GenerateErrorMessage("mmip-conversation", $"Error creating conversation: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    private static async Task<(bool, bool, string)> SendChatAsync(
+        string conversationId,
+        string requestId,
+        string requestBody,
+        bool isNewChat)
+    {
+        string url = $"{ApiBaseUrl}/conversations/{Uri.EscapeDataString(conversationId)}/chat";
+
+        for (int attempt = 0; attempt <= MaxBusyRetries; attempt++)
+        {
+            try
+            {
+                using var request = CreateRequest(HttpMethod.Post, url, requestBody, requestId);
+                using var response = await Global.HttpClient.SendAsync(request);
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var data = DeserializeResponse(responseBody, "mmip-response");
+
+                if (response.IsSuccessStatusCode && data?.Success == true)
+                {
+                    string? responseText = FormatResponse(data);
+                    if (!string.IsNullOrWhiteSpace(responseText))
+                        return (isNewChat, true, responseText);
+                }
+
+                if (response.StatusCode == HttpStatusCode.Conflict &&
+                    responseBody.Contains("request_busy", StringComparison.OrdinalIgnoreCase) &&
+                    attempt < MaxBusyRetries)
+                {
+                    await Task.Delay(BusyRetryDelay);
+                    continue;
+                }
+
+                if (data?.Status == "incomplete")
+                {
+                    string? partialResponse = FormatResponse(data, includeMessage: false);
+                    if (!string.IsNullOrWhiteSpace(partialResponse))
+                        return (isNewChat, true, partialResponse);
+                }
+
+                Global.GenerateErrorMessage("mmip-response", $"Error: {response.StatusCode} - {responseBody}");
+                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+            }
+            catch (HttpRequestException ex) when (attempt < MaxBusyRetries)
+            {
+                Global.GenerateErrorMessage("mmip-response", $"Connection failed; retrying request {requestId}: {ex.Message}");
+            }
+            catch (TaskCanceledException ex) when (attempt < MaxBusyRetries)
+            {
+                Global.GenerateErrorMessage("mmip-response", $"Request timed out; retrying request {requestId}: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("mmip-response", $"Error returning response: {ex.Message}");
+                return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+            }
+        }
+
+        return (isNewChat, false, "Sorry, I am unable to respond at this moment.");
+    }
+
+    private static string? FormatResponse(MmipResponse response, bool includeMessage = true)
+    {
+        string? text = response.Content ?? (includeMessage ? response.Message : null);
+        var images = response.Images?
+            .Where(image => !string.IsNullOrWhiteSpace(image.Url))
+            .Select(image => string.IsNullOrWhiteSpace(image.Alt)
+                ? $"Image: {image.Url}"
+                : $"{image.Alt}: {image.Url}")
+            .ToList();
+
+        if (images is null || images.Count == 0)
+            return text;
+
+        string imageText = string.Join('\n', images);
+        return string.IsNullOrWhiteSpace(text) ? imageText : $"{text}\n\n{imageText}";
+    }
+
+    private static HttpRequestMessage CreateRequest(HttpMethod method, string url, string body, string? requestId)
+    {
+        var request = new HttpRequestMessage(method, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", Settings.ApiKey);
+        if (requestId is not null)
+            request.Headers.Add("Idempotency-Key", requestId);
+        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+        return request;
+    }
+
+    private static MmipResponse? DeserializeResponse(string responseBody, string source)
+    {
+        try
+        {
+            return JsonConvert.DeserializeObject<MmipResponse>(responseBody);
+        }
+        catch (JsonException ex)
+        {
+            Global.GenerateErrorMessage(source, $"Invalid JSON response: {ex.Message}");
+            return null;
         }
     }
 }
