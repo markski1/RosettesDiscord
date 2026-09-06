@@ -174,7 +174,16 @@ public static class FarmRepository
         {
             foreach (var crop in harvestedCrops)
             {
-                await db.ExecuteAsync(deleteCropSql, new { userId = crop.UserId, plotId = crop.PlotId }, transaction);
+                int deleted = await db.ExecuteAsync(
+                    deleteCropSql,
+                    new { userId = crop.UserId, plotId = crop.PlotId },
+                    transaction);
+
+                if (deleted != 1)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
             }
 
             foreach (var reward in rewards.Where(r => r.Value != 0))
@@ -236,6 +245,74 @@ public static class FarmRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> TryPurchaseInventoryItem(
+        User user,
+        string item,
+        int amount,
+        int cost,
+        bool replaceItem = false,
+        int? maximumCurrentValue = null)
+    {
+        if (!FarmEngine.IsValidItem(item) || item == "dabloons" || amount <= 0 || cost <= 0)
+            return false;
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        string itemUpdate = replaceItem
+            ? $"`{item}` = @amount"
+            : $"`{item}` = `{item}` + @amount";
+        string maximumCondition = maximumCurrentValue.HasValue
+            ? $" AND `{item}` < @maximumCurrentValue"
+            : "";
+        string sql = $"""
+                     UPDATE users_inventory
+                     SET dabloons = dabloons - @cost, {itemUpdate}
+                     WHERE id = @id AND dabloons >= @cost{maximumCondition}
+                     """;
+
+        try
+        {
+            return await db.ExecuteAsync(sql, new
+            {
+                amount,
+                cost,
+                id = user.Id,
+                maximumCurrentValue
+            }) == 1;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-purchaseitem", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> TrySellInventoryItem(User user, string item, int amount, int proceeds)
+    {
+        if (!FarmEngine.IsValidItem(item) || item == "dabloons" || amount <= 0 || proceeds <= 0)
+            return false;
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        string sql = $"""
+                     UPDATE users_inventory
+                     SET `{item}` = `{item}` - @amount, dabloons = dabloons + @proceeds
+                     WHERE id = @id AND `{item}` >= @amount
+                     """;
+
+        try
+        {
+            return await db.ExecuteAsync(sql, new { amount, proceeds, id = user.Id }) == 1;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-sellitem", $"sqlException code {ex.Message}");
             return false;
         }
     }

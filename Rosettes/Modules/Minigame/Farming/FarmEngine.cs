@@ -153,45 +153,66 @@ public static class FarmEngine
                     break;
                 }
 
-                if (await GetItem(dbUser, "dabloons") < price)
+                int totalCost;
+                try
                 {
-                    text = $"You don't have {price} {GetItemName("dabloons")}";
+                    totalCost = checked(price * amount);
+                }
+                catch (OverflowException)
+                {
+                    text = "There was an error parsing your shop request.";
                     break;
                 }
 
-                text = $"You have purchased {GetItemName(item)} for {price} {GetItemName("dabloons")}";
+                if (await GetItem(dbUser, "dabloons") < totalCost)
+                {
+                    text = $"You don't have {totalCost} {GetItemName("dabloons")}";
+                    break;
+                }
 
                 switch (item)
                 {
                     case "fishpole":
+                        if (amount != 1)
+                        {
+                            text = "There was an error parsing your shop request.";
+                            break;
+                        }
                         if (await GetItem(dbUser, "fishpole") >= 30)
                         {
                             text = $"Your current {GetItemName("fishpole")} is still in good shape.";
                             break;
                         }
-                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -10));
-                        Global.FireAndForget(SetItem(dbUser, "fishpole", 100));
+                        text = await ItemBuy(dbUser, item, 1, totalCost, replaceItem: true, maximumCurrentValue: 30, inventoryAmount: 100);
                         break;
                     case "farmtools":
+                        if (amount != 1)
+                        {
+                            text = "There was an error parsing your shop request.";
+                            break;
+                        }
                         if (await GetItem(dbUser, "farmtools") >= 30)
                         {
                             text = $"Your current {GetItemName("farmtools")} are still in good shape.";
                             break;
                         }
-                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -15));
-                        Global.FireAndForget(SetItem(dbUser, "farmtools", 100));
+                        text = await ItemBuy(dbUser, item, 1, totalCost, replaceItem: true, maximumCurrentValue: 30, inventoryAmount: 100);
                         break;
                     case "plots":
+                        if (amount != 1)
+                        {
+                            text = "There was an error parsing your shop request.";
+                            break;
+                        }
                         if (await GetItem(dbUser, "plots") >= 3)
                         {
                             text = "For the time being, you may not own more than 3 plots of land.";
                             break;
                         }
-                        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -200));
-                        Global.FireAndForget(ModifyItem(dbUser, "plots", +1));
+                        text = await ItemBuy(dbUser, item, amount, totalCost, maximumCurrentValue: 3);
                         break;
                     default:
-                        text = ItemBuy(dbUser, boughtItem: item, amount: amount, cost: price * amount);
+                        text = await ItemBuy(dbUser, item, amount, totalCost);
                         break;
                 }
                 break;
@@ -266,17 +287,26 @@ public static class FarmEngine
         }
     }
 
-    private static string ItemBuy(User dbUser, string boughtItem, int amount, int cost, bool setType = false)
+    private static async Task<string> ItemBuy(
+        User dbUser,
+        string boughtItem,
+        int amount,
+        int cost,
+        bool replaceItem = false,
+        int? maximumCurrentValue = null,
+        int? inventoryAmount = null)
     {
-        Global.FireAndForget(ModifyItem(dbUser, "dabloons", -cost));
-        if (setType)
-        {
-            Global.FireAndForget(SetItem(dbUser, boughtItem, amount));
-        }
-        else
-        {
-            Global.FireAndForget(ModifyItem(dbUser, boughtItem, +amount));
-        }
+        bool purchased = await FarmRepository.TryPurchaseInventoryItem(
+            dbUser,
+            boughtItem,
+            inventoryAmount ?? amount,
+            cost,
+            replaceItem,
+            maximumCurrentValue);
+
+        if (!purchased)
+            return "The purchase could not be completed because your inventory changed. Please try again.";
+
         return $"You have purchased {amount} {GetItemName(boughtItem)} for {cost} {GetItemName("dabloons")}";
     }
 
@@ -298,14 +328,17 @@ public static class FarmEngine
                 totalSold -= amount;
             }
 
-            Global.FireAndForget(ModifyItem(dbUser, selling, -totalSold));
-            Global.FireAndForget(ModifyItem(dbUser, "dabloons", +totalEarned));
+            bool sold = await FarmRepository.TrySellInventoryItem(dbUser, selling, totalSold, totalEarned);
+            if (!sold)
+                return "The sale could not be completed because your inventory changed. Please try again.";
 
             return $"You have sold {totalSold} {GetItemName(selling)} for {totalEarned} {GetItemName("dabloons")}";
         }
 
-        Global.FireAndForget(ModifyItem(dbUser, selling, -amount));
-        Global.FireAndForget(ModifyItem(dbUser, "dabloons", +cost));
+        bool completed = await FarmRepository.TrySellInventoryItem(dbUser, selling, amount, cost);
+        if (!completed)
+            return "The sale could not be completed because your inventory changed. Please try again.";
+
         return $"You have sold {amount} {GetItemName(selling)} for {cost} {GetItemName("dabloons")}";
 
     }

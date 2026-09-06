@@ -15,6 +15,13 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
 {
     private Task OnInteraction(SocketInteraction inter)
     {
+        if (inter is not SocketSlashCommand and
+            not SocketMessageCommand and
+            not SocketUserCommand)
+        {
+            return Task.CompletedTask;
+        }
+
         TelemetryEngine.Count(TelemetryType.Interaction);
         _ = Task.Run(async () =>
         {
