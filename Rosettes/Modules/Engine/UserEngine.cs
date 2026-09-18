@@ -51,7 +51,10 @@ public static class UserEngine
         else
         {
             getUser = new User(user);
-            await UserRepository.InsertUser(getUser);
+            if (!await UserRepository.InsertUser(getUser))
+            {
+                throw new InvalidOperationException($"Failed to persist user {user.Id}.");
+            }
         }
         if (getUser.IsValid())
         {
@@ -240,9 +243,12 @@ public class User
 
     public bool CanFish()
     {
-        if (Global.CurrentUnix() <= LastFished) return false;
+        return Global.CurrentUnix() > LastFished;
+    }
+
+    public void StartFishingCooldown()
+    {
         LastFished = Global.CurrentUnix() + 3600;
-        return true;
     }
 
     public int GetFishTime()

@@ -41,7 +41,7 @@ public class UserRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-checkuserexists", $"sqlException code {ex.Message}");
-            return false;
+            throw;
         }
     }
 
@@ -75,13 +75,33 @@ public class UserRepository
 
         const string sql2 = "INSERT INTO users_inventory (id) VALUES(@Id)";
 
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            await db.OpenAsync();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+
         try
         {
-            await db.ExecuteAsync(sql2, new { user.Id });
-            return await db.ExecuteAsync(sql, new { user.Id, user.Username, user.NameCache, user.MainPet }) > 0;
+            int userInserted = await db.ExecuteAsync(
+                sql,
+                new { user.Id, user.Username, user.NameCache, user.MainPet },
+                transaction);
+            int inventoryInserted = await db.ExecuteAsync(sql2, new { user.Id }, transaction);
+
+            if (userInserted != 1 || inventoryInserted != 1)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            await transaction.CommitAsync();
+            return true;
         }
         catch (Exception ex)
         {
+            try { await transaction.RollbackAsync(); } catch { }
             Global.GenerateErrorMessage("sql-insertuser", $"sqlException code {ex.Message}");
             return false;
         }

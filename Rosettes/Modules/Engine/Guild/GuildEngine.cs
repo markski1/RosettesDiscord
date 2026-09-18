@@ -65,7 +65,7 @@ public static class GuildEngine
                 return false;
             }
 
-            await GuildRepository.InsertGuild(guild);
+            return await GuildRepository.InsertGuild(guild);
         }
         return true;
     }
@@ -89,7 +89,11 @@ public static class GuildEngine
         else
         {
             getGuild = new Guild(guild);
-            await GuildRepository.InsertGuild(getGuild);
+            if (!await GuildRepository.InsertGuild(getGuild))
+            {
+                throw new InvalidOperationException($"Failed to persist guild {guild.Id}.");
+            }
+
             await getGuild.UpdateRoles();
         }
         if (getGuild.IsValid())
@@ -212,9 +216,13 @@ public static class GuildEngine
         arr[3] = dumbCommands ? '1' : '0';
         arr[4] = farm ? '1' : '0';
         arr[5] = voiceAnnounce ? '1' : '0';
+        string oldSettings = cachedGuild.Settings;
         cachedGuild.Settings = new string(arr);
 
-        return await GuildRepository.SetGuildSettings(cachedGuild);
+        if (await GuildRepository.SetGuildSettings(cachedGuild)) return true;
+
+        cachedGuild.Settings = oldSettings;
+        return false;
     }
 
     public static async Task<bool> UpdateRuntimeFieldsFromPanel(
@@ -245,11 +253,15 @@ public static class GuildEngine
             }
         }
 
+        if (!await GuildRepository.SetGuildRuntimeFields(guildId, defaultRole, logChannel, farmChannel))
+        {
+            return false;
+        }
+
         cachedGuild.DefaultRole = defaultRole;
         cachedGuild.LogChannel = logChannel;
         cachedGuild.FarmChannel = farmChannel;
-
-        return await GuildRepository.SetGuildRuntimeFields(guildId, defaultRole, logChannel, farmChannel);
+        return true;
     }
 
     public static IEnumerable<Guild> GetActiveGuilds()
@@ -389,13 +401,18 @@ public class Guild
         return value == '1';
     }
 
-    public void ToggleSetting(int id)
+    public async Task<bool> ToggleSetting(int id)
     {
+        string oldSettings = Settings;
         var mutableSettings = Settings.ToCharArray();
         var newSetting = mutableSettings[id] == '0' ? '1' : '0';
         mutableSettings[id] = newSetting;
         Settings = new string(mutableSettings);
-        _ = GuildRepository.SetGuildSettings(this);
+
+        if (await GuildRepository.SetGuildSettings(this)) return true;
+
+        Settings = oldSettings;
+        return false;
     }
 
     public async Task SetRoleForEveryone(ulong roleid)

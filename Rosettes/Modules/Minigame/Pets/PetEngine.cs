@@ -342,19 +342,11 @@ public static class PetEngine
             return;
         }
 
-        int foodAvailable = await FarmEngine.GetItem(dbUser, foodItem);
+        int canFeed = pet.CanFeed(foodItem);
 
-        if (foodAvailable <= 0)
+        if (canFeed < 0)
         {
-            await component.RespondAsync($"You don't have any {FarmEngine.GetItemName(foodItem)}.", ephemeral: true);
-            return;
-        }
-
-        int happinessGained = pet.DoFeed(foodItem);
-
-        if (happinessGained < 0)
-        {
-            switch (happinessGained)
+            switch (canFeed)
             {
                 case -1:
                     await component.RespondAsync("Pets may only be fed fish of any type, shrimps or carrots", ephemeral: true);
@@ -367,7 +359,15 @@ public static class PetEngine
             return;
         }
 
-        await FarmEngine.ModifyItem(dbUser, foodItem, -1);
+        if (!await FarmRepository.TryConsumeInventoryItem(dbUser, foodItem, 1))
+        {
+            await component.RespondAsync(
+                $"You don't have any {FarmEngine.GetItemName(foodItem)}, or your inventory could not be updated.",
+                ephemeral: true);
+            return;
+        }
+
+        int happinessGained = pet.DoFeed(foodItem);
 
         ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, $"### {pet.GetName()} has been fed.");
@@ -503,7 +503,11 @@ public static class PetEngine
             return;
         }
 
-        await FarmEngine.ModifyItem(dbUser, "dabloons", -25);
+        if (!await FarmRepository.TryConsumeInventoryItem(dbUser, "dabloons", 25))
+        {
+            await modal.RespondAsync("Your balance changed or could not be updated. Please try again.", ephemeral: true);
+            return;
+        }
 
         pet.SetName(newName);
 

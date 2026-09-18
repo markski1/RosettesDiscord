@@ -94,6 +94,53 @@ public static class FarmRepository
         }
     }
 
+    public static async Task<bool> ApplyWateringResults(IReadOnlyCollection<Crop> wateredCrops)
+    {
+        if (wateredCrops.Count == 0) return true;
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        if (db.State == System.Data.ConnectionState.Closed)
+        {
+            await db.OpenAsync();
+        }
+
+        await using var transaction = await db.BeginTransactionAsync();
+        const string sql = """
+                           UPDATE users_crops
+                           SET unix_growth=@UnixGrowth, unix_next_water=@UnixNextWater
+                           WHERE plot_id=@PlotId AND user_id=@UserId
+                           """;
+
+        try
+        {
+            var parameters = wateredCrops.Select(crop => new
+            {
+                crop.UnixGrowth,
+                crop.UnixNextWater,
+                crop.PlotId,
+                crop.UserId
+            });
+            int updated = await db.ExecuteAsync(sql, parameters, transaction);
+
+            if (updated != wateredCrops.Count)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            try { await transaction.RollbackAsync(); } catch { }
+            Global.GenerateErrorMessage("sql-applywatering", $"Transaction failed: {ex.Message}");
+            return false;
+        }
+    }
+
     public static async Task<bool> ApplyPlantingResults(User user, IReadOnlyCollection<Crop> plantedCrops, int seedsUsed, int toolDamage)
     {
         using var getConn = DatabasePool.GetConnection();
@@ -229,22 +276,52 @@ public static class FarmRepository
         }
     }
 
-    public static async Task<bool> ModifyInventoryItem(User user, string item, int amount)
+    public static async Task<bool> TryConsumeInventoryItem(User user, string item, int amount)
     {
-        if (!FarmEngine.IsValidItem(item)) return false;
+        if (!FarmEngine.IsValidItem(item) || amount <= 0) return false;
 
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
-        var sql = $"UPDATE users_inventory SET {item} = {item} + @amount WHERE id=@id";
+        string sql = $"""
+                     UPDATE users_inventory
+                     SET `{item}` = `{item}` - @amount
+                     WHERE id=@id AND `{item}` >= @amount
+                     """;
 
         try
         {
-            return await db.ExecuteAsync(sql, new { amount, id = user.Id }) > 0;
+            return await db.ExecuteAsync(sql, new { amount, id = user.Id }) == 1;
         }
         catch (Exception ex)
         {
-            Global.GenerateErrorMessage("sql-modifyinventory", $"sqlException code {ex.Message}");
+            Global.GenerateErrorMessage("sql-consumeinventory", $"sqlException code {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> ApplyFishingResults(User user, string caughtItem, int toolDamage)
+    {
+        if (!FarmEngine.IsValidItem(caughtItem) || caughtItem == "dabloons" || toolDamage <= 0)
+            return false;
+
+        using var getConn = DatabasePool.GetConnection();
+        var db = getConn.Db;
+
+        string sql = $"""
+                     UPDATE users_inventory
+                     SET `{caughtItem}` = `{caughtItem}` + 1,
+                         fishpole = fishpole - @toolDamage
+                     WHERE id=@id AND fishpole > 0
+                     """;
+
+        try
+        {
+            return await db.ExecuteAsync(sql, new { toolDamage, id = user.Id }) == 1;
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-applyfishing", $"sqlException code {ex.Message}");
             return false;
         }
     }

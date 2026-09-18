@@ -160,22 +160,27 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+            return;
         }
 
         var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
+        bool enable = disable == "false";
+        ulong logChannel = enable ? Context.Channel.Id : 0;
 
-        if (disable == "false")
+        if (!await GuildEngine.UpdateRuntimeFieldsFromPanel(
+                dbGuild.Id,
+                dbGuild.DefaultRole,
+                logChannel,
+                dbGuild.FarmChannel))
         {
-            dbGuild.LogChannel = Context.Channel.Id;
-
-            await RespondAsync("Got it, Rosettes will now report joins and leaves in this channel.");
+            await RespondAsync("Sorry, that setting could not be saved.", ephemeral: true);
+            return;
         }
-        else
-        {
-            dbGuild.LogChannel = 0;
 
-            await RespondAsync("Got it, Rosettes will no longer report joins and leaves.");
-        }
+        string response = enable
+            ? "Got it, Rosettes will now report joins and leaves in this channel."
+            : "Got it, Rosettes will no longer report joins and leaves.";
+        await RespondAsync(response);
     }
 
     [SlashCommand("setfarmchan", "Sets or unset the channel where Farm/Fishing commands may be used. Use 'disable' to disable.")]
@@ -184,20 +189,27 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+            return;
         }
 
         var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
+        bool restrictToCurrentChannel = dbGuild.FarmChannel != Context.Channel.Id;
+        ulong farmChannel = restrictToCurrentChannel ? Context.Channel.Id : 0;
 
-        if (dbGuild.FarmChannel != Context.Channel.Id)
+        if (!await GuildEngine.UpdateRuntimeFieldsFromPanel(
+                dbGuild.Id,
+                dbGuild.DefaultRole,
+                dbGuild.LogChannel,
+                farmChannel))
         {
-            dbGuild.FarmChannel = Context.Channel.Id;
-            await RespondAsync("Got it, Rosettes will now only allow Farm/Fishing commands in this channel.");
+            await RespondAsync("Sorry, that setting could not be saved.", ephemeral: true);
+            return;
         }
-        else
-        {
-            dbGuild.FarmChannel = 0;
-            await RespondAsync("Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless globally disabled).");
-        }
+
+        string response = restrictToCurrentChannel
+            ? "Got it, Rosettes will now only allow Farm/Fishing commands in this channel."
+            : "Got it, Rosettes will now allow Farm/Fishing commands anywhere in the guild (unless globally disabled).";
+        await RespondAsync(response);
     }
 
     [SlashCommand("settings", "Change guild settings")]
@@ -206,6 +218,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         if (Context.Guild.OwnerId != Context.User.Id)
         {
             await RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+            return;
         }
 
         if (!Global.CanSendMessage(Context))
@@ -266,25 +279,34 @@ public static class AdminHelper
         if (component.GuildId is { } guildId)
         {
             var dbGuild = GuildEngine.GetDbGuildById(guildId);
-            var guildRef = dbGuild.GetDiscordSocketReference();
-            if (guildRef != null && guildRef.OwnerId != component.User.Id)
+            if (dbGuild.OwnerId != component.User.Id)
             {
                 await component.RespondAsync("This command may only be used by the server owner or a Rosettes developer.", ephemeral: true);
+                return;
             }
 
             string action = component.Data.CustomId;
+            bool saved;
 
             switch (action)
             {
                 case "toggle_msg":
-                    dbGuild.ToggleSetting(0);
+                    saved = await dbGuild.ToggleSetting(0);
                     break;
                 case "toggle_farm":
-                    dbGuild.ToggleSetting(4);
+                    saved = await dbGuild.ToggleSetting(4);
                     break;
                 case "toggle_monitorvc":
-                    dbGuild.ToggleSetting(5);
+                    saved = await dbGuild.ToggleSetting(5);
                     break;
+                default:
+                    return;
+            }
+
+            if (!saved)
+            {
+                await component.RespondAsync("Sorry, that setting could not be saved.", ephemeral: true);
+                return;
             }
 
             var buttonComponent = GetGuildSettingsButtons(dbGuild);

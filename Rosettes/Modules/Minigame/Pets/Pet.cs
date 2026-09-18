@@ -94,6 +94,15 @@ public class Pet
         }
     }
 
+    public int CanFeed(string foodItem)
+    {
+        lock (_interactionLock)
+        {
+            if (!PetEngine.AcceptablePetMeal(foodItem)) return -1;
+            return Global.CurrentUnix() <= LastFed ? -2 : 1;
+        }
+    }
+
     public void ModifyHappiness(int modify)
     {
         _happiness += modify;

@@ -369,13 +369,14 @@ public static class Farm
         List<Crop> cropsToList = (await FarmRepository.GetUserCrops(dbUser)).ToList();
 
         List<string> plotTexts = [];
+        List<Crop> wateredCrops = [];
 
         foreach (var crop in cropsToList.Where(crop => crop.UnixNextWater < now))
         {
             crop.UnixNextWater = now + WaterBaseSeconds + (WaterRandomChunkSeconds * Global.Randomize(WaterRandomChunks));
             crop.UnixGrowth -= GrowthWateringReductionSeconds;
 
-            await FarmRepository.UpdateCrop(crop);
+            wateredCrops.Add(crop);
 
             string text;
             if (crop.UnixGrowth < now)
@@ -404,6 +405,20 @@ public static class Farm
             errorComps.WithContainer(errorContainer);
 
             await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            return;
+        }
+
+        if (!await FarmRepository.ApplyWateringResults(wateredCrops))
+        {
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
+            errorContainer.WithTextDisplay("Sorry, there was an error saving the watered crops. Please try again.");
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(
+                components: errorComps.Build(),
+                flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 

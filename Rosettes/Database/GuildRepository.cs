@@ -42,7 +42,7 @@ public class GuildRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-checkguildexists", $"sqlException code {ex.Message}");
-            return false;
+            throw;
         }
     }
 

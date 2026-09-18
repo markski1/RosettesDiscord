@@ -111,12 +111,6 @@ public static class FarmEngine
         return InventoryItems.ContainsKey(choice);
     }
 
-    public static Task ModifyItem(User dbUser, string choice, int amount) =>
-        FarmRepository.ModifyInventoryItem(dbUser, choice, amount);
-
-    private static Task SetItem(User dbUser, string choice, int newValue) =>
-        FarmRepository.SetInventoryItem(dbUser, choice, newValue);
-
     public static async Task<int> GetItem(User dbUser, string name)
     {
         return await FarmRepository.FetchInventoryItem(dbUser, name);
@@ -470,16 +464,29 @@ public static class FarmEngine
                 break;
         }
 
-        await ModifyItem(dbUser, fishingCatch, +1);
+        int damage = 3 + Global.Randomize(4);
+        poleStatus -= damage;
+
+        if (!await FarmRepository.ApplyFishingResults(dbUser, fishingCatch, damage))
+        {
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(ErrorColor);
+            errorContainer.WithTextDisplay("Sorry, there was an error saving that fishing result. Please try again.");
+
+            ComponentBuilderV2 errorComps = new();
+            errorComps.WithContainer(errorContainer);
+
+            await interaction.RespondAsync(
+                components: errorComps.Build(),
+                flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            return;
+        }
+
+        dbUser.StartFishingCooldown();
 
         int foundPet = await PetEngine.RollForPet(dbUser);
 
         if (foundPet > 0)
             expIncrease = (expIncrease * 5) / 2;
-
-        int damage = 3 + Global.Randomize(4);
-        poleStatus -= damage;
-        await ModifyItem(dbUser, "fishpole", -damage);
 
         ContainerBuilder container = Global.MakeRosettesContainer(FishColor);
         Global.AddTitle(container, "### 🎣 Fishing!");
@@ -820,7 +827,7 @@ public static class FarmEngine
         int mask = await GetItem(dbUser, "plots_degraded");
         int newMask = mask | (1 << (plotId - 1));
         if (newMask == mask) return;
-        await SetItem(dbUser, "plots_degraded", newMask);
+        await FarmRepository.SetInventoryItem(dbUser, "plots_degraded", newMask);
     }
 
     public static async Task<bool> RestoreAllPlots(User dbUser)
