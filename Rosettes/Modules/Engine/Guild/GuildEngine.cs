@@ -12,7 +12,7 @@ public static class GuildEngine
     private static List<Guild> _guildCache = [];
     private static readonly Lock CacheLock = new();
 
-    public static async void SyncWithDatabase()
+    public static async Task SyncWithDatabase()
     {
         List<Guild> snapshot;
         lock (CacheLock)
@@ -410,8 +410,7 @@ public class Guild
         }
     }
 
-    // returns either a SocketGuildUser or a RestGuildUser, depending on wether cached or not.
-    private async Task<dynamic?> GetGuildUser(ulong userid)
+    private async Task<IGuildUser?> GetGuildUser(ulong userid)
     {
         var dref = GetDiscordSocketReference();
         var user = dref?.GetUser(userid);

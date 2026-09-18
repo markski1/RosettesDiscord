@@ -11,7 +11,6 @@ namespace Rosettes.Core;
 public class RosettesMain
 {
     private readonly DiscordSocketClient _client;
-    private readonly System.Timers.Timer _syncTimer = new();
 
     public RosettesMain()
     {
@@ -52,30 +51,22 @@ public class RosettesMain
         await EventManager.SetupAsync();
         TelemetryEngine.Setup();
 
-        // SyncThings(); defined below, runs every 20 minutes, or 1200 seconds
-        _syncTimer.Elapsed += SyncThings;
-        _syncTimer.Interval = 1200000;
-        _syncTimer.AutoReset = true;
-        _syncTimer.Enabled = true;
+        Global.FireAndForget(SyncPeriodically());
 
         Global.HttpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0");
 
         await Task.Delay(-1);
     }
 
-    private static void SyncThings(object? source, System.Timers.ElapsedEventArgs e)
+    private static async Task SyncPeriodically()
     {
-        Thread timedThread = new(TimedActions);
-        timedThread.Start();
-    }
-
-    private static void TimedActions()
-    {
-        // GetAwaiter().GetResult() is safe here: this runs on a dedicated Thread with
-        // no SynchronizationContext, so there is no risk of deadlock.
-        UserEngine.SyncWithDatabase().GetAwaiter().GetResult();
-        GuildEngine.SyncWithDatabase();
-        PetEngine.TimedThings();
-        PetEngine.SyncWithDatabase().GetAwaiter().GetResult();
+        using PeriodicTimer timer = new(TimeSpan.FromMinutes(20));
+        while (await timer.WaitForNextTickAsync())
+        {
+            await UserEngine.SyncWithDatabase();
+            await GuildEngine.SyncWithDatabase();
+            PetEngine.TimedThings();
+            await PetEngine.SyncWithDatabase();
+        }
     }
 }

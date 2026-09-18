@@ -34,7 +34,7 @@ public static class Farm
         Great
     }
 
-    private static Task<CropQuality> RollCropQuality(User dbUser)
+    private static CropQuality RollCropQuality()
     {
         // Target odds:
         // Great: 15%
@@ -42,10 +42,10 @@ public static class Farm
         // Good:  65%
         int roll = Global.Randomize(100); // 0..99
 
-        if (roll < 15) return Task.FromResult(CropQuality.Great);
-        if (roll < 35) return Task.FromResult(CropQuality.Bad);
+        if (roll < 15) return CropQuality.Great;
+        if (roll < 35) return CropQuality.Bad;
 
-        return Task.FromResult(CropQuality.Good);
+        return CropQuality.Good;
     }
 
     private static int ApplyQualityMultiplier(int baseAmount, CropQuality quality)
@@ -97,7 +97,7 @@ public static class Farm
     public static async Task ShowFarm(SocketInteraction interaction, IUser user)
     {
         User dbUser = await UserEngine.GetDbUser(user);
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FarmEngine.FarmColor);
 
         Global.AddTitle(container, "### 🌾 Your Farm");
 
@@ -204,7 +204,7 @@ public static class Farm
 
         if (toolStatus <= 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay($"🧰 {FarmEngine.GetItemName("farmtools")} broken");
             errorContainer.WithTextDisplay($"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.");
 
@@ -227,7 +227,7 @@ public static class Farm
 
         if (seeds <= 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("🌱 Out of seeds");
             errorContainer.WithTextDisplay("You have no seed bags. Pick some up at the shop.");
 
@@ -251,7 +251,7 @@ public static class Farm
 
         if (occupiedPlots.Count >= plots)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("🌿 No space to plant");
             errorContainer.WithTextDisplay("All your plots are currently occupied.");
 
@@ -314,7 +314,7 @@ public static class Farm
             bool success = await FarmRepository.ApplyPlantingResults(dbUser, plantedCrops, plantedCrops.Count, totalToolDamage);
             if (!success)
             {
-                ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+                ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
                 errorContainer.WithTextDisplay("Sorry, there was an error in this operation. Not planted.");
 
                 ComponentBuilderV2 errorComps = new();
@@ -325,7 +325,7 @@ public static class Farm
             }
         }
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FarmEngine.FarmColor);
         Global.AddTitle(container, "### 🌱 Planting seeds");
 
         foreach (var plot in plantedCrops)
@@ -396,7 +396,7 @@ public static class Farm
 
         if (count == 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("💧 Nothing to water");
             errorContainer.WithTextDisplay("None of your plots are thirsty right now.");
 
@@ -413,7 +413,7 @@ public static class Farm
         if (foundPet > 0)
             expIncrease = (expIncrease * 5) / 2;
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.WaterColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FarmEngine.WaterColor);
         Global.AddTitle(container, "### 💧 Watering crops");
 
         foreach (var text in plotTexts)
@@ -452,7 +452,7 @@ public static class Farm
         var toolStatus = await FarmEngine.GetItem(dbUser, "farmtools");
         if (toolStatus <= 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay($"🧰 {FarmEngine.GetItemName("farmtools")} broken");
             errorContainer.WithTextDisplay($"Your {FarmEngine.GetItemName("farmtools")} are broken. Visit the shop for a new set.");
 
@@ -488,7 +488,7 @@ public static class Farm
 
             int baseEarnings = 9 + Global.Randomize(4) * 3 + Global.Randomize(4) * 3;
 
-            var quality = await RollCropQuality(dbUser);
+            var quality = RollCropQuality();
             int earnings = ApplyQualityMultiplier(baseEarnings, quality);
 
             rewards[harvest] = rewards.GetValueOrDefault(harvest) + earnings;
@@ -512,7 +512,7 @@ public static class Farm
 
         if (count == 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("🌾 Nothing to harvest");
             errorContainer.WithTextDisplay("None of your crops are ready yet.");
 
@@ -529,7 +529,7 @@ public static class Farm
         bool harvestApplied = await FarmRepository.ApplyHarvestResults(dbUser, cropsToHarvest, rewards, damage, degradedPlotMask);
         if (!harvestApplied)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, FarmEngine.ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(FarmEngine.ErrorColor);
             errorContainer.WithTextDisplay("Sorry, there was an error in this operation. Not harvested.");
 
             ComponentBuilderV2 errorComps = new();
@@ -543,7 +543,7 @@ public static class Farm
         if (foundPet > 0)
             expIncrease = (expIncrease * 5) / 2;
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.HarvestColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FarmEngine.HarvestColor);
         Global.AddTitle(container, "### 🌾 Harvesting crops");
 
         foreach (var text in harvestTexts)
@@ -596,7 +596,7 @@ public static class Farm
             return;
         }
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FarmEngine.FarmColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FarmEngine.FarmColor);
         Global.AddTitle(container, "### 🔧 Plots restored");
         container.WithTextDisplay($"Restored **{degradedPlots.Count}** withered {Pluralize(degradedPlots.Count, "plot", "plots")}.");
         Global.AddFooter(container, $"Cost: 100 {FarmEngine.GetItemName("dabloons")}");

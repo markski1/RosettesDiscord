@@ -147,7 +147,7 @@ public static class PetEngine
             petString = "None. You can randomly find pets during activities such as fishing.";
         }
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, "### Pets");
         container.WithTextDisplay($"**Pets in ownership:**\n{petString}");
 
@@ -237,7 +237,7 @@ public static class PetEngine
         else
             description = $"{userGuildRef.Mention} has pet their own {receivingPet.GetName()}.";
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, "### *pets!\\*");
         container.WithTextDisplay(description);
         Global.AddFooter(container, $"Pet has gained {happinessGained} happiness.");
@@ -292,7 +292,7 @@ public static class PetEngine
 
         int petRequested = int.Parse(component.Data.Values.Last());
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, "### Pet settings");
 
         if (petRequested < 1 || petRequested > PetChart.Count)
@@ -369,7 +369,7 @@ public static class PetEngine
 
         await FarmEngine.ModifyItem(dbUser, foodItem, -1);
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, $"### {pet.GetName()} has been fed.");
         container.WithTextDisplay($"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!");
         Global.AddFooter(container, $"Pet has gained {happinessGained} happiness.");
@@ -409,7 +409,7 @@ public static class PetEngine
             return;
         }
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, $"**{pet.GetEmoji()} {pet.GetBareName()}**");
 
         container.WithTextDisplay(
@@ -507,7 +507,7 @@ public static class PetEngine
 
         pet.SetName(newName);
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, "**Name changed!**");
         container.WithTextDisplay($"You have changed your pet's name to {pet.GetName()}");
         Global.AddFooter(container, $"Cost: 25 {FarmEngine.GetItemName("dabloons")}");

@@ -43,8 +43,7 @@ public static class EventManager
         return Task.CompletedTask;
     }
 
-    // fired when booting
-    private static async Task<Task> OnReady()
+    private static async Task OnReady()
     {
         if (_booting)
         {
@@ -52,7 +51,7 @@ public static class EventManager
         }
         else
         {
-            return Task.CompletedTask;
+            return;
         }
 
 
@@ -87,7 +86,6 @@ public static class EventManager
             Global.GenerateErrorMessage("startup", "Service provider has not initialized in time????");
         }
 
-        return Task.CompletedTask;
     }
 
     // fired when a message is received
@@ -121,7 +119,7 @@ public static class EventManager
         return Task.CompletedTask;
     }
 
-    private static async Task<Task> OnJoinGuild(SocketGuild guild)
+    private static async Task OnJoinGuild(SocketGuild guild)
     {
         await GuildEngine.GetDbGuild(guild);
 
@@ -139,7 +137,6 @@ public static class EventManager
             }
         }
 
-        return Task.CompletedTask;
     }
 
     private static Task OnLeftGuild(SocketGuild guild)
@@ -160,9 +157,9 @@ public static class EventManager
         await guild.UpdateRoles();
     }
 
-    private static async Task<Task> OnUserJoin(SocketGuildUser user)
+    private static async Task OnUserJoin(SocketGuildUser user)
     {
-        if (user.Guild is null) return Task.CompletedTask;
+        if (user.Guild is null) return;
 
         var dbGuild = await GuildEngine.GetDbGuild(user.Guild);
 
@@ -173,7 +170,7 @@ public static class EventManager
             await user.AddRoleAsync(defRole);
         }
 
-        if (dbGuild.LogChannel <= 0) return Task.CompletedTask;
+        if (dbGuild.LogChannel <= 0) return;
         
         EmbedBuilder embed = await MakeEmbedForUser(user);
         embed.Title = "User joined the server.";
@@ -181,28 +178,23 @@ public static class EventManager
 
         await dbGuild.SendLogMessage(embed);
 
-        return Task.CompletedTask;
     }
 
-    private static async Task<Task> OnUserLeft(SocketGuild guild, SocketUser user)
+    private static async Task OnUserLeft(SocketGuild guild, SocketUser user)
     {
         var dbGuild = await GuildEngine.GetDbGuild(guild);
 
-        if (dbGuild.LogChannel <= 0) return Task.CompletedTask;
+        if (dbGuild.LogChannel <= 0) return;
         
         EmbedBuilder embed = await MakeEmbedForUser(user);
         embed.Title = "User left the server.";
 
         await dbGuild.SendLogMessage(embed);
 
-        return Task.CompletedTask;
     }
 
-    // ONLY used for Join and Quit notifications. NOT interchangeable with Global's MakeRosettesEmbed.
-    private static async Task<EmbedBuilder> MakeEmbedForUser(dynamic user)
+    private static async Task<EmbedBuilder> MakeEmbedForUser(IUser user)
     {
-        if (user is not (SocketUser or SocketGuildUser)) return await Global.MakeRosettesEmbed();
-        
         EmbedBuilder embed = await Global.MakeRosettesEmbed();
         embed.Description = $"[{user.Username}]";
 
@@ -215,49 +207,47 @@ public static class EventManager
 
     }
 
-    private static async Task<Task> OnReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
+    private static async Task OnReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
         if (reaction.User.IsSpecified)
         {
-            if (reaction.User.Value.IsBot) return Task.CompletedTask;
+            if (reaction.User.Value.IsBot) return;
         }
 
         // ensure guild is cached and their data can be accessed
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
-        if (guildid == 0) return Task.CompletedTask;
+        if (guildid == 0) return;
         var guild = GuildEngine.GetDbGuildById(guildid);
 
         // If the message is AutoRoles, apply the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
         var success = await guild.SetUserRole(reaction.UserId, roles);
         
-        if (success) return Task.CompletedTask;
+        if (success) return;
         
         var cacheChannel = await channel.DownloadAsync();
         await cacheChannel.SendMessageAsync("There was an error assigning a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-        return Task.CompletedTask;
     }
 
-    private static async Task<Task> OnReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
+    private static async Task OnReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
         if (reaction.User.IsSpecified)
         {
-            if (reaction.User.Value.IsBot) return Task.CompletedTask;
+            if (reaction.User.Value.IsBot) return;
         }
 
         // ensure guild is cached and their data can be accessed
         ulong guildid = AutoRolesEngine.GetGuildIdFromMessage(reaction.MessageId);
-        if (guildid == 0) return Task.CompletedTask;
+        if (guildid == 0) return;
         var guild = GuildEngine.GetDbGuildById(guildid);
 
         // If the message is AutoRoles, remove the relevant role.
         var roles = AutoRolesEngine.GetMessageRolesForEmote(reaction.MessageId, reaction.Emote.Name);
 
         var success = await guild.RemoveUserRole(reaction.UserId, roles);
-        if (success) return Task.CompletedTask;
+        if (success) return;
         
         var cacheChannel = await channel.DownloadAsync();
         await cacheChannel.SendMessageAsync("There was an error removing a role. Check if I have permissions, and make sure my role is higher in the role list than the options.");
-        return Task.CompletedTask;
     }
 }

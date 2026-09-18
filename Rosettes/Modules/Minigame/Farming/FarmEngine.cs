@@ -274,7 +274,7 @@ public static class FarmEngine
 
         bool success = text.StartsWith("You have purchased") || text.StartsWith("You have sold");
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, success ? ShopColor : ErrorColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(success ? ShopColor : ErrorColor);
         Global.AddTitle(container, success ? "### 🛒 Transaction complete" : "### 🛒 Shop");
         container.WithTextDisplay(text);
 
@@ -288,7 +288,7 @@ public static class FarmEngine
         {
             int dabloons = await GetItem(dbUser, "dabloons");
 
-            ContainerBuilder resetContainer = await Global.MakeRosettesContainer(dbUser, ShopColor);
+            ContainerBuilder resetContainer = Global.MakeRosettesContainer(ShopColor);
             Global.AddTitle(resetContainer, "### 🛒 Shop");
             resetContainer.WithTextDisplay("Use the menus below to buy or sell items.");
             Global.AddFooter(resetContainer, $"🐾 {dabloons} dabloons");
@@ -409,7 +409,7 @@ public static class FarmEngine
 
         if (poleStatus <= 0)
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(ErrorColor);
             errorContainer.WithTextDisplay($"🎣 {GetItemName("fishpole")} broken");
             errorContainer.WithTextDisplay($"Your {GetItemName("fishpole")} is broken. Pick up a new one at the shop.");
 
@@ -426,7 +426,7 @@ public static class FarmEngine
 
         if (!dbUser.CanFish())
         {
-            ContainerBuilder errorContainer = await Global.MakeRosettesContainer(dbUser, ErrorColor);
+            ContainerBuilder errorContainer = Global.MakeRosettesContainer(ErrorColor);
             errorContainer.WithTextDisplay("🎣 Can't fish yet");
             errorContainer.WithTextDisplay($"You may fish again <t:{dbUser.GetFishTime()}:R>.");
 
@@ -481,7 +481,7 @@ public static class FarmEngine
         poleStatus -= damage;
         await ModifyItem(dbUser, "fishpole", -damage);
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, FishColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(FishColor);
         Global.AddTitle(container, "### 🎣 Fishing!");
         container.WithTextDisplay($"**You caught**\n{GetItemName(fishingCatch)}");
         container.WithTextDisplay($"**Rod durability**\n{DurabilityBar(poleStatus)} {poleStatus}%");
@@ -517,7 +517,7 @@ public static class FarmEngine
         int dabloons = await GetItem(dbUser, "dabloons");
         int seeds = await GetItem(dbUser, "seedbag");
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser);
+        ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, "### 🎒 Inventory");
 
         string tools = await ListItems(dbUser, ["fishpole", "farmtools"]);
@@ -571,7 +571,7 @@ public static class FarmEngine
 
         int dabloons = await GetItem(dbUser, "dabloons");
 
-        ContainerBuilder container = await Global.MakeRosettesContainer(dbUser, ShopColor);
+        ContainerBuilder container = Global.MakeRosettesContainer(ShopColor);
         Global.AddTitle(container, "### 🛒 Shop");
         container.WithTextDisplay("Use the menus below to buy or sell items.");
 

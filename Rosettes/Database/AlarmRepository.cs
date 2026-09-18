@@ -24,26 +24,33 @@ public static class AlarmRepository
         }
     }
 
-    public static async Task<bool> InsertAlarm(Alarm alarm)
+    public static async Task<int?> InsertAlarm(Alarm alarm)
     {
         using var getConn = DatabasePool.GetConnection();
         var db = getConn.Db;
 
         const string sql = """
                            INSERT INTO alarms (datetime, user, channel, message)
-                           VALUES(@DateTime, @User, @Channel, @Message)
+                           VALUES(@DateTime, @User, @Channel, @Message);
+                           SELECT LAST_INSERT_ID();
                            """;
 
-        if (alarm.Channel is null) return false;
+        if (alarm.Channel is null) return null;
 
         try
         {
-            return await db.ExecuteAsync(sql, new { alarm.DateTime, User = alarm.User.Id, Channel = alarm.Channel.Id, Message = alarm.Message }) > 0;
+            return await db.ExecuteScalarAsync<int>(sql, new
+            {
+                alarm.DateTime,
+                User = alarm.User.Id,
+                Channel = alarm.Channel.Id,
+                alarm.Message
+            });
         }
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-insertalarm", $"sqlException code {ex.Message}");
-            return false;
+            return null;
         }
     }
 

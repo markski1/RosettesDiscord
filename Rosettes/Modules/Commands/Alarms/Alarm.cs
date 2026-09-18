@@ -22,8 +22,16 @@ public static class AlarmManager
         try
         {
             Alarm newAlarm = new(dateTime, user, channel, minutes, message);
-            await AlarmRepository.InsertAlarm(newAlarm);
+            int? alarmId = await AlarmRepository.InsertAlarm(newAlarm);
+            if (alarmId is null)
+            {
+                newAlarm.Timer.Dispose();
+                return false;
+            }
+
+            newAlarm.Id = alarmId.Value;
             _activeAlarms.Add(newAlarm);
+            newAlarm.Timer.Start();
 
             return true;
         }
@@ -67,7 +75,6 @@ public class Alarm
         Timer = new(minutes * 60 * 1000);
         Timer.Elapsed += AlarmRing;
         Timer.AutoReset = false;
-        Timer.Enabled = true;
         Channel = channel;
         Id = 0;
         Message = message;

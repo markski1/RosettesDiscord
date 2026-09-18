@@ -73,7 +73,7 @@ public static class Global
         return embed;
     }
 
-    public static async Task<ContainerBuilder> MakeRosettesContainer(User? dbUser = null, Color? accentColor = null)
+    public static ContainerBuilder MakeRosettesContainer(Color? accentColor = null)
     {
         ContainerBuilder container = new();
         container.WithAccentColor(accentColor ?? Color.DarkPurple);
