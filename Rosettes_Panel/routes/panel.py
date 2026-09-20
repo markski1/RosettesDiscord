@@ -39,7 +39,7 @@ def settings(server_id):
 
     channels = get_guild_channels(server_id)
     roles = get_guild_roles_live(server_id)
-    bot_reachable = bool(channels) or bool(roles)
+    bot_reachable = bool(channels or roles)
 
     return render_template(
         "settings.jinja2",

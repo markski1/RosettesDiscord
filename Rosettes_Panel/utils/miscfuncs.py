@@ -1,18 +1,9 @@
-import string
 from functools import wraps
-import secrets
 
 from flask_login import current_user
 
 from utils.db_helpers import get_server_data
 from utils.page_helpers import render_error
-
-
-def generate_random_string(length):
-    length = int(length)
-    alphanumeric_characters = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphanumeric_characters) for _ in range(length))
-
 
 def ownership_required(func):
     @wraps(func)

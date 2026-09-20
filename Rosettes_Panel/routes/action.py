@@ -38,10 +38,6 @@ def post_settings(server_id):
     if not server:
         return render_error("Server not found.")
 
-    raw = server["settings"]
-    if len(raw) < 10:
-        raw = (raw + "1111111111")[:10]
-
     try:
         default_role = int(request.form.get("defaultrole", 0))
         log_channel = int(request.form.get("logchannel", 0))
@@ -50,7 +46,7 @@ def post_settings(server_id):
         return render_error("Invalid channel or role ID.")
 
     try:
-        ok, message = update_guild_settings(
+        ok, _ = update_guild_settings(
             server_id,
             message_parsing=bool(msgparse),
             random_commands=bool(random_cmds),
@@ -100,7 +96,7 @@ def post_new_autoroles(server_id):
         entries.append({"emote": emote, "roleId": int(role_id_raw)})
 
     try:
-        group_id, message = create_autorole_group(server_id, role_name, entries)
+        group_id, _ = create_autorole_group(server_id, role_name, entries)
     except BotApiError:
         return jsonify(ok=False, message="Autorole group could not be created right now. Please try again later."), 502
 
@@ -117,7 +113,7 @@ def post_new_autoroles(server_id):
 @ownership_required
 def post_delete_autoroles(server_id, group_id):
     try:
-        ok, message = delete_autorole_group(server_id, group_id)
+        ok, _ = delete_autorole_group(server_id, group_id)
     except BotApiError:
         return render_error("Autorole group could not be deleted right now. Please try again later.")
 
@@ -138,7 +134,7 @@ def post_delete_app(app_id):
         return render_error("You don't own this application.")
 
     try:
-        ok, message = delete_application_remote(app_id, int(current_user.id))
+        ok, _ = delete_application_remote(app_id, int(current_user.id))
     except BotApiError:
         return render_error("Application could not be deleted right now. Please try again later.")
 
@@ -160,7 +156,7 @@ def post_revoke_app_user(app_id, user_id):
         return render_error("You don't own this application.")
 
     try:
-        ok, message = revoke_application_user(app_id, int(current_user.id), user_id)
+        ok, _ = revoke_application_user(app_id, int(current_user.id), user_id)
     except BotApiError:
         return render_error("User authorization could not be revoked right now. Please try again later.")
 
@@ -187,7 +183,7 @@ def post_new_app():
         return render_error("Name must be between 3 and 50 characters long.")
 
     try:
-        app_id, token, message = create_application(name, int(current_user.id))
+        app_id, token, _ = create_application(name, int(current_user.id))
     except BotApiError:
         return render_error("Application could not be created right now. Please try again later.")
 

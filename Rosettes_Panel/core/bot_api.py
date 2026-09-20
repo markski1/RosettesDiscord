@@ -95,16 +95,6 @@ def validate_panel_login_key(key: str) -> tuple[int | None, str | None]:
     return int(cast(int | str, user_id)), None
 
 
-def reload_guild(server_id: int) -> tuple[bool, str]:
-    response = _request_json("POST", f"/rosapi/internal/guild/{int(server_id)}/reload")
-    return bool(response.get("success")), str(response.get("message") or "guild_reload_failed")
-
-
-def reload_autoroles(server_id: int) -> tuple[bool, str]:
-    response = _request_json("POST", f"/rosapi/internal/autoroles/{int(server_id)}/reload")
-    return bool(response.get("success")), str(response.get("message") or "autoroles_reload_failed")
-
-
 def update_guild_settings(
     server_id: int,
     message_parsing: bool,

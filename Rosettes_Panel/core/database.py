@@ -71,15 +71,6 @@ def get_db_conn() -> Database:
     return Database()
 
 
-def db_execute(query: str, *params) -> Optional[int]:
-    db = get_db_conn()
-    try:
-        db.get_cursor().execute(query, params)
-        return db.cursor.lastrowid
-    finally:
-        db.pool()
-
-
 def db_fetch_one(query: str, *params) -> Optional[dict]:
     db = get_db_conn()
     try:

@@ -4,7 +4,7 @@ from flask_login import (
 )
 
 from core.bot_api import validate_panel_login_key, BotApiError
-from core.database import get_db_conn
+from core.database import db_fetch_one
 import os
 from dotenv import load_dotenv
 
@@ -27,10 +27,7 @@ def init_app(app):
 
     @login_manager.user_loader
     def user_loader(load_id):
-        db = get_db_conn()
-        db.execute("SELECT * FROM users WHERE id = %s", load_id)
-        result = db.fetch_one()
-        db.pool()
+        result = db_fetch_one("SELECT * FROM users WHERE id = %s", load_id)
 
         if result:
             user_model = Session()

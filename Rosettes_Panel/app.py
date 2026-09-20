@@ -9,10 +9,10 @@ from routes.action import action_bp
 from routes.session import session_bp
 
 app = Flask(
-        __name__,
-        static_folder="static",
-        template_folder="templates"
-    )
+    __name__,
+    static_folder="static",
+    template_folder="templates",
+)
 
 app.register_blueprint(home_bp)
 app.register_blueprint(session_bp)
