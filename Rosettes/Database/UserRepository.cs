@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using Dapper;
 using Discord;
@@ -11,8 +11,7 @@ public class UserRepository
 {
     public static async Task<IEnumerable<User>> GetAllUsersAsync()
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT id, username, namecache, exp, mainpet FROM users";
 
@@ -29,8 +28,7 @@ public class UserRepository
 
     public static async Task<bool> CheckUserExists(IUser user)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT count(1) FROM users WHERE id=@Id";
 
@@ -47,8 +45,7 @@ public class UserRepository
 
     public static async Task<User> GetUserData(IUser user)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT id, username, namecache, exp, mainpet FROM users WHERE id=@id";
 
@@ -65,8 +62,7 @@ public class UserRepository
 
     public static async Task<bool> InsertUser(User user)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            INSERT INTO users (id, username, namecache, mainpet)
@@ -109,8 +105,7 @@ public class UserRepository
 
     public static async Task<bool> UpdateUser(User user)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE users
@@ -137,8 +132,7 @@ public class UserRepository
 
     public static async Task<ulong?> GetUserByRosettesKey(string rosettesKey)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            SELECT id

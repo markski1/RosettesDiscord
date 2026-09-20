@@ -25,7 +25,7 @@ public static class Settings
     public static readonly string SystemPrompt = LoadTextFile("system_prompt.txt");
     public static readonly MySqlConnectionStringBuilder Database = new();
 
-    public static bool LoadDatabaseObj()
+    public static void LoadDatabaseObj()
     {
         Database.Server = GetEnv("MYSQL_SERVER");
         Database.UserID = GetEnv("MYSQL_USERID");
@@ -35,7 +35,6 @@ public static class Settings
         Database.MinimumPoolSize = 2;
         Database.MaximumPoolSize = 15;
         Database.ConnectionIdleTimeout = 300;
-        return true;
     }
 
     private static string GetEnv(string key)

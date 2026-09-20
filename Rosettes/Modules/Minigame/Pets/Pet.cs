@@ -7,6 +7,13 @@ namespace Rosettes.Modules.Minigame.Pets;
 
 public class Pet
 {
+    public enum FeedStatus
+    {
+        Allowed,
+        InvalidFood,
+        Cooldown
+    }
+
     private readonly object _interactionLock = new();
     public int Id;
     public int Index;
@@ -57,11 +64,11 @@ public class Pet
 
     // If the animal can be pet, apply the appropiate effects and return the gained happiness.
     // Otherwise, return a negative.
-    public int DoPet()
+    public int? DoPet()
     {
         lock (_interactionLock)
         {
-            if (Global.CurrentUnix() <= LastPet) return -1;
+            if (Global.CurrentUnix() <= LastPet) return null;
 
             LastPet = Global.CurrentUnix() + 30;
             int happiness = Global.Randomize(10) + 8;
@@ -73,33 +80,31 @@ public class Pet
         }
     }
 
-    public int DoFeed(string foodItem)
+    public (FeedStatus Status, int HappinessGained) DoFeed(string foodItem)
     {
         lock (_interactionLock)
         {
             if (!PetEngine.AcceptablePetMeal(foodItem))
-            {
-                return -1; // Error: Pets may only be fed fish of any type, shrimps or carrots
-            }
+                return (FeedStatus.InvalidFood, 0);
 
             if (Global.CurrentUnix() <= LastFed)
-                return -2; // Error: Pets may only be fed once in a 5-minute window.
+                return (FeedStatus.Cooldown, 0);
 
             LastFed = Global.CurrentUnix() + 300;
             int happinessMod = Global.Randomize(10) + 5;
             ModifyHappiness(+happinessMod); // add anywhere from 5 to 14% happiness
             AddExp(1);
             SyncUpToDate = false;
-            return happinessMod;
+            return (FeedStatus.Allowed, happinessMod);
         }
     }
 
-    public int CanFeed(string foodItem)
+    public FeedStatus CanFeed(string foodItem)
     {
         lock (_interactionLock)
         {
-            if (!PetEngine.AcceptablePetMeal(foodItem)) return -1;
-            return Global.CurrentUnix() <= LastFed ? -2 : 1;
+            if (!PetEngine.AcceptablePetMeal(foodItem)) return FeedStatus.InvalidFood;
+            return Global.CurrentUnix() <= LastFed ? FeedStatus.Cooldown : FeedStatus.Allowed;
         }
     }
 

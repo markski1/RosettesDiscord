@@ -17,7 +17,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("SauceNAO Search")]
     public async Task SauceNaoCtx(IMessage message)
     {
-        string getUri = Global.GrabUriFromText(message.Content);
+        string? getUri = Global.GrabUriFromText(message.Content);
 
         // first try to find any image attached
         if (message.Attachments.Count != 0)
@@ -30,7 +30,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         // if still no luck, try to grab an emote.
-        if (getUri == "0")
+        if (getUri is null)
         {
             try
             {
@@ -151,7 +151,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Add speech bubble")]
     public async Task CtxAddBubble(IMessage message)
     {
-        string getUri = Global.GrabUriFromText(message.Content);
+        string? getUri = Global.GrabUriFromText(message.Content);
         string cntType = "invalid";
         
         // try to find any image attached
@@ -165,7 +165,7 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
-        if (getUri == "0")
+        if (getUri is null)
         {
             await RespondAsync("No images found in this message.", ephemeral: true);
             return;

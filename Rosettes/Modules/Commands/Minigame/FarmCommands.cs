@@ -9,15 +9,19 @@ namespace Rosettes.Modules.Commands.Minigame;
 [Group("farm", "Farming system commands")]
 public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    private async Task<bool> CanRunFarmCommand()
+    {
+        string? error = await FarmEngine.GetFarmCommandError(Context);
+        if (error is null) return true;
+
+        await RespondAsync(error, ephemeral: true);
+        return false;
+    }
+
     [SlashCommand("view", "View your farm")]
     public async Task ViewFarm()
     {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
+        if (!await CanRunFarmCommand()) return;
 
         await Farm.ShowFarm(Context.Interaction, Context.User);
     }
@@ -25,12 +29,8 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("fish", "Try to catch a fish")]
     public async Task CatchFish()
     {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
+        if (!await CanRunFarmCommand()) return;
+
         await FarmEngine.RunUserActionAsync(
             Context.Interaction,
             () => FarmEngine.CatchFishFunc(Context.Interaction, Context.User));
@@ -39,12 +39,7 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("inventory", "Check your inventory")]
     public async Task FarmInventory()
     {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
+        if (!await CanRunFarmCommand()) return;
 
         await FarmEngine.ShowInventoryFunc(Context.Interaction, Context.User);
     }
@@ -52,12 +47,7 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("shop", "See items available in the shop, or provide an option to buy.")]
     public async Task FarmShop()
     {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
+        if (!await CanRunFarmCommand()) return;
 
         await FarmEngine.ShowShopFunc(Context.Interaction, Context.User);
     }
@@ -65,12 +55,8 @@ public class FarmCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("top", "Leaderbord by experience.")]
     public async Task FoodLeaderboard()
     {
-        string isAllowed = await FarmEngine.CanUseFarmCommand(Context);
-        if (isAllowed != "yes")
-        {
-            await RespondAsync(isAllowed, ephemeral: true);
-            return;
-        }
+        if (!await CanRunFarmCommand()) return;
+
         var users = await UserEngine.GetAllUsersFromGuild(Context.Guild);
 
         if (users.Count == 0)

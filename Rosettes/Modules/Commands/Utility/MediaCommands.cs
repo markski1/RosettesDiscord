@@ -101,8 +101,8 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
     [MessageCommand("Extract video")]
     public async Task GetVideoMsg(IMessage message)
     {
-        string uri = Global.GrabUriFromText(message.Content);
-        if (uri != "0")
+        string? uri = Global.GrabUriFromText(message.Content);
+        if (uri is not null)
         {
             await DeferAsync();
             await FetchMedia(uri);

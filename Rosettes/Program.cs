@@ -1,6 +1,4 @@
 ﻿using Rosettes.Core;
-using Rosettes.WebServer;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -23,7 +21,4 @@ app.UseCors(x => x
             .SetIsOriginAllowed(_ => true)
             .AllowCredentials());
 
-WebServer.Initialize(app);
-
-// Initialize bot
-await Global.RosettesMain.MainAsync();
+await Task.WhenAll(app.RunAsync(), Global.RosettesMain.MainAsync());

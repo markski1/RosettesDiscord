@@ -93,7 +93,8 @@ public static class MessageManager
         if (message is null) return;
 
 
-        string uri = Global.GrabUriFromText(message);
+        string? uri = Global.GrabUriFromText(message);
+        if (uri is null) return;
 
         // Infer the format from the filename
         // TODO: Infer the format from the downloaded data instead.
@@ -128,7 +129,8 @@ public static class MessageManager
     private static async Task GetProfileInfo(SocketCommandContext context)
     {
         //extract steamID from uri
-        string extractId = Global.GrabUriFromText(context.Message.Content);
+        string? extractId = Global.GrabUriFromText(context.Message.Content);
+        if (extractId is null) return;
         ulong steamId;
         // easy mode: if it's a "profiles" uri, just extract the number off the uri
         if (extractId.Contains("/profiles/"))

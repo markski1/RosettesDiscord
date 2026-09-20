@@ -264,14 +264,6 @@ public static class GuildEngine
         return true;
     }
 
-    public static IEnumerable<Guild> GetActiveGuilds()
-    {
-        var client = ServiceManager.GetService<DiscordSocketClient>();
-        lock (CacheLock)
-        {
-            return _guildCache.Where(guild => client.Guilds.Any(x => x.Id == guild.Id)).ToList();
-        }
-    }
 }
 
 
@@ -413,18 +405,6 @@ public class Guild
 
         Settings = oldSettings;
         return false;
-    }
-
-    public async Task SetRoleForEveryone(ulong roleid)
-    {
-        var socketRef = GetDiscordSocketReference();
-        if (socketRef is null) return;
-        
-        await socketRef.DownloadUsersAsync();
-        foreach (var user in socketRef.Users)
-        {
-            await user.AddRoleAsync(roleid);
-        }
     }
 
     private async Task<IGuildUser?> GetGuildUser(ulong userid)

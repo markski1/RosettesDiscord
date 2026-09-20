@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Minigame.Farming;
@@ -9,97 +9,18 @@ public static class FarmRepository
 {
     public static async Task<IEnumerable<Crop>> GetUserCrops(User user)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT plot_id, user_id, unix_growth, unix_next_water, crop_type FROM users_crops WHERE user_id=@Id";
 
         return await db.QueryAsync<Crop>(sql, new { id = user.Id });
     }
 
-    public static async Task<bool> InsertCrop(Crop crop)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = """
-                           INSERT INTO users_crops (plot_id, user_id, unix_growth, unix_next_water, crop_type)
-                           VALUES(@plotId, @userId, @unixGrowth, @unixNextWater, @cropType)
-                           """;
-
-        try
-        {
-            return await db.ExecuteAsync(sql, new
-            {
-                plotId = crop.PlotId,
-                userId = crop.UserId,
-                unixGrowth = crop.UnixGrowth,
-                unixNextWater = crop.UnixNextWater,
-                cropType = crop.CropType
-            }) > 0;
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-insertcrop", $"sqlException code {ex.Message}");
-            return false;
-        }
-    }
-
-    public static async Task<bool> UpdateCrop(Crop crop)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = """
-                           UPDATE users_crops
-                           SET plot_id=@plotId, user_id=@userId, unix_growth=@unixGrowth, unix_next_water=@unixNextWater, crop_type=@cropType
-                           WHERE plot_id = @plotId AND user_id = @userId
-                           """;
-
-        try
-        {
-            return await db.ExecuteAsync(sql, new
-            {
-                plotId = crop.PlotId,
-                userId = crop.UserId,
-                unixGrowth = crop.UnixGrowth,
-                unixNextWater = crop.UnixNextWater,
-                cropType = crop.CropType
-            }) > 0;
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-updatecrop", $"sqlException code {ex.Message}");
-            return false;
-        }
-    }
-
-    public static async Task<bool> DeleteCrop(Crop crop)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = """
-                           DELETE FROM users_crops
-                           WHERE user_id = @userId AND plot_id = @plotId
-                           """;
-        try
-        {
-            return await db.ExecuteAsync(sql, new { userId = crop.UserId, plotId = crop.PlotId }) > 0;
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-deletecrop", $"sqlException code {ex.Message}");
-            return false;
-        }
-    }
-
     public static async Task<bool> ApplyWateringResults(IReadOnlyCollection<Crop> wateredCrops)
     {
         if (wateredCrops.Count == 0) return true;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         if (db.State == System.Data.ConnectionState.Closed)
         {
@@ -143,8 +64,7 @@ public static class FarmRepository
 
     public static async Task<bool> ApplyPlantingResults(User user, IReadOnlyCollection<Crop> plantedCrops, int seedsUsed, int toolDamage)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         if (db.State == System.Data.ConnectionState.Closed)
         {
@@ -200,8 +120,7 @@ public static class FarmRepository
             if (!FarmEngine.IsValidItem(reward.Key)) return false;
         }
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         if (db.State == System.Data.ConnectionState.Closed)
         {
@@ -258,10 +177,10 @@ public static class FarmRepository
 
     public static async Task<int> FetchInventoryItem(User user, string item)
     {
-        if (!FarmEngine.IsValidItem(item)) return -1;
+        if (!FarmEngine.IsValidItem(item))
+            throw new ArgumentException($"Unknown inventory item: {item}", nameof(item));
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         var sql = $"SELECT `{item}` FROM users_inventory WHERE id=@id";
 
@@ -272,7 +191,7 @@ public static class FarmRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-getinventoryitem", $"sqlException code {ex.Message}");
-            return -1;
+            throw;
         }
     }
 
@@ -280,8 +199,7 @@ public static class FarmRepository
     {
         if (!FarmEngine.IsValidItem(item) || amount <= 0) return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         string sql = $"""
                      UPDATE users_inventory
@@ -305,8 +223,7 @@ public static class FarmRepository
         if (!FarmEngine.IsValidItem(caughtItem) || caughtItem == "dabloons" || toolDamage <= 0)
             return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         string sql = $"""
                      UPDATE users_inventory
@@ -337,8 +254,7 @@ public static class FarmRepository
         if (!FarmEngine.IsValidItem(item) || item == "dabloons" || amount <= 0 || cost <= 0)
             return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         string itemUpdate = replaceItem
             ? $"`{item}` = @amount"
@@ -374,8 +290,7 @@ public static class FarmRepository
         if (!FarmEngine.IsValidItem(item) || item == "dabloons" || amount <= 0 || proceeds <= 0)
             return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         string sql = $"""
                      UPDATE users_inventory
@@ -398,8 +313,7 @@ public static class FarmRepository
     {
         if (cost <= 0) return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE users_inventory
@@ -422,8 +336,7 @@ public static class FarmRepository
     {
         if (!FarmEngine.IsValidItem(item)) return false;
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         var sql = $"UPDATE users_inventory SET {item} = @newValue WHERE id=@id";
 

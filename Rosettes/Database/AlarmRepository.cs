@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Rosettes.Core;
 using Rosettes.Modules.Commands.Alarms;
 
@@ -8,8 +8,7 @@ public static class AlarmRepository
 {
     public static async Task<IEnumerable<Alarm>> GetAllAlarmsAsync()
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT id, datetime, user, channel, message FROM alarms";
 
@@ -26,8 +25,7 @@ public static class AlarmRepository
 
     public static async Task<int?> InsertAlarm(Alarm alarm)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            INSERT INTO alarms (datetime, user, channel, message)
@@ -56,8 +54,7 @@ public static class AlarmRepository
 
     public static async Task<bool> DeleteAlarm(Alarm alarm)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            DELETE FROM alarms

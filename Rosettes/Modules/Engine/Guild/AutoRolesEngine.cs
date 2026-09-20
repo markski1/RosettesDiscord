@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Rosettes.Database;
 
 namespace Rosettes.Modules.Engine.Guild;
@@ -53,8 +53,7 @@ public static class AutoRolesEngine
 
     public static async Task<bool> SyncWithDatabase()
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         var sql = "SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries";
 
@@ -75,8 +74,7 @@ public static class AutoRolesEngine
 
     public static async Task<bool> ReloadGuildFromDatabase(ulong guildId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string entriesSql = "SELECT guildid, emote, roleid, rolegroupid FROM autorole_entries WHERE guildid=@GuildId";
         const string groupsSql = "SELECT id, guildid, messageid, name FROM autorole_groups WHERE guildid=@GuildId";
@@ -98,8 +96,7 @@ public static class AutoRolesEngine
 
     public static async Task<uint?> CreateGroupTransactional(ulong guildId, string name, IReadOnlyList<(string emote, ulong roleId)> entries)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         if (db.State == System.Data.ConnectionState.Closed)
         {
@@ -154,8 +151,7 @@ public static class AutoRolesEngine
 
     public static async Task<bool> DeleteGroupTransactional(ulong guildId, uint groupId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         if (db.State == System.Data.ConnectionState.Closed)
         {
@@ -196,8 +192,7 @@ public static class AutoRolesEngine
             group.MessageId = messageId;
         }
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE autorole_groups

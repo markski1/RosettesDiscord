@@ -48,11 +48,8 @@ public static class AlarmManager
         _activeAlarms.Remove(alarm);
     }
 
-    public static List<Alarm> GetUserAlarms(IUser user)
-    {
-        List<Alarm> findAlarm = _activeAlarms.Where(item => item.User.Id == user.Id).ToList();
-        return findAlarm;
-    }
+    public static List<Alarm> GetUserAlarms(IUser user) =>
+        _activeAlarms.Where(item => item.User.Id == user.Id).ToList();
 }
 
 public class Alarm

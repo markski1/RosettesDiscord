@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 using Dapper;
 using Discord.WebSocket;
@@ -12,8 +12,7 @@ public class GuildRepository
     private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> RoleSyncLocks = []; 
     public static async Task<IEnumerable<Guild>> GetAllGuildsAsync()
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds";
 
@@ -30,8 +29,7 @@ public class GuildRepository
 
     public static async Task<bool> CheckGuildExists(ulong guildId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT count(1) FROM guilds WHERE id=@guildId";
 
@@ -48,8 +46,7 @@ public class GuildRepository
 
     public static async Task<Guild> GetGuildData(SocketGuild guild)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT id, namecache, members, settings, ownerid, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
@@ -64,28 +61,9 @@ public class GuildRepository
         }
     }
 
-    public static async Task<string> GetGuildSettings(Guild guild)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = "SELECT settings FROM guilds WHERE id=@id";
-
-        try
-        {
-            return await db.QueryFirstOrDefaultAsync<string>(sql, new { id = guild.Id }) ?? "1111111111";
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
-            return "1111111111";
-        }
-    }
-
     public static async Task<bool> SetGuildSettings(Guild guild)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE guilds
@@ -106,8 +84,7 @@ public class GuildRepository
 
     public static async Task<bool> SetGuildRuntimeFields(ulong guildId, ulong defaultRole, ulong logChannel, ulong farmChannel)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE guilds
@@ -126,28 +103,9 @@ public class GuildRepository
         }
     }
 
-    public static async Task<ulong> GetGuildDefaultRole(Guild guild)
-    {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
-
-        const string sql = "SELECT defaultrole FROM guilds WHERE id=@id";
-
-        try
-        {
-            return await db.QueryFirstOrDefaultAsync<ulong>(sql, new { id = guild.Id });
-        }
-        catch (Exception ex)
-        {
-            Global.GenerateErrorMessage("sql-getguildsettings", $"sqlException code {ex.Message}");
-            return 0;
-        }
-    }
-
     public static async Task<(string settings, ulong defaultRole, ulong logChannel, ulong farmChannel)?> GetGuildRuntimeFields(ulong guildId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT settings, defaultrole, logchan, rpgchan FROM guilds WHERE id=@id";
 
@@ -166,8 +124,7 @@ public class GuildRepository
 
     public static async Task<bool> InsertGuild(Guild guild)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            INSERT INTO guilds (id, namecache, members, settings, ownerid)
@@ -187,8 +144,7 @@ public class GuildRepository
 
     public static async Task<bool> UpdateGuild(Guild guild)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE guilds
@@ -215,8 +171,7 @@ public class GuildRepository
         await roleSyncLock.WaitAsync();
         try
         {
-            using var getConn = DatabasePool.GetConnection();
-            var db = getConn.Db;
+            using var db = DatabasePool.GetConnection();
             var roles = discordGuild.Roles.Where(r => !r.IsEveryone && !r.IsManaged).ToList();
 
             if (db.State == System.Data.ConnectionState.Closed)

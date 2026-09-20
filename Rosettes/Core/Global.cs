@@ -131,16 +131,15 @@ public static class Global
         return (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
     }
 
-    public static string GrabUriFromText(string text)
+    public static string? GrabUriFromText(string text)
     {
         // try to grab the first URL from the received text.
         // Start by finding the first instance of http and end as soon as we find a space or a control character.
-        // return "0" if we can't find a url.
         var begin = text.IndexOf("https:/", StringComparison.Ordinal);
         if (begin == -1)
         {
             begin = text.IndexOf("http:/", StringComparison.Ordinal);
-            if (begin == -1) return "0";
+            if (begin == -1) return null;
         }
 
         var end = text

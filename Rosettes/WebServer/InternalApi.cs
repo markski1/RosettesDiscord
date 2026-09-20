@@ -22,8 +22,6 @@ public static class InternalApi
         return string.Equals(providedSecret.ToString(), Settings.PanelApiSecret, StringComparison.Ordinal);
     }
 
-    public static UnauthorizedObjectResult UnauthorizedResult()
-    {
-        return new UnauthorizedObjectResult(ApiResponse.Error("unauthorized"));
-    }
+    public static UnauthorizedObjectResult UnauthorizedResult() =>
+        new(ApiResponse.Error("unauthorized"));
 }

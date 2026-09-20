@@ -115,10 +115,10 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
 
             if (IsFarmComponent(action))
             {
-                string isAllowed = await FarmEngine.CanUseFarmComponent(component);
-                if (isAllowed != "yes")
+                string? error = await FarmEngine.GetFarmComponentError(component);
+                if (error is not null)
                 {
-                    await component.RespondAsync(isAllowed, ephemeral: true);
+                    await component.RespondAsync(error, ephemeral: true);
                     return;
                 }
             }
@@ -234,10 +234,10 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             switch (component.Data.CustomId)
             {
                 case "buy" or "sell" or "sell_e":
-                    string isAllowed = await FarmEngine.CanUseFarmComponent(component);
-                    if (isAllowed != "yes")
+                    string? error = await FarmEngine.GetFarmComponentError(component);
+                    if (error is not null)
                     {
-                        await component.RespondAsync(isAllowed, ephemeral: true);
+                        await component.RespondAsync(error, ephemeral: true);
                         return;
                     }
                     await FarmEngine.RunUserActionAsync(component, () => FarmEngine.ShopAction(component));

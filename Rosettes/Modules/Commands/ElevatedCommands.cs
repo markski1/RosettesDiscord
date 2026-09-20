@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -59,8 +59,7 @@ public class ElevatedCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string countSql = "SELECT count(*) FROM login_keys WHERE id=@Id";
 

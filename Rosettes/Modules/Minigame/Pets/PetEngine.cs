@@ -88,8 +88,9 @@ public static class PetEngine
             if (pet is not null) return pet;
 
             pet = new(index, ownerId, "[not named]");
-            pet.Id = await PetRepository.InsertPet(pet);
-            if (pet.Id <= 0) return null;
+            int? petId = await PetRepository.InsertPet(pet);
+            if (petId is null) return null;
+            pet.Id = petId.Value;
 
             lock (PetCacheLock)
             {
@@ -216,9 +217,9 @@ public static class PetEngine
             return;
         }
 
-        int happinessGained = receivingPet.DoPet();
+        int? happinessGained = receivingPet.DoPet();
 
-        if (happinessGained < 0)
+        if (happinessGained is null)
         {
             await component.RespondAsync("Sorry, animals can only be pet once every 30 seconds.", ephemeral: true);
             return;
@@ -342,16 +343,15 @@ public static class PetEngine
             return;
         }
 
-        int canFeed = pet.CanFeed(foodItem);
-
-        if (canFeed < 0)
+        Pet.FeedStatus feedStatus = pet.CanFeed(foodItem);
+        if (feedStatus is not Pet.FeedStatus.Allowed)
         {
-            switch (canFeed)
+            switch (feedStatus)
             {
-                case -1:
+                case Pet.FeedStatus.InvalidFood:
                     await component.RespondAsync("Pets may only be fed fish of any type, shrimps or carrots", ephemeral: true);
                     break;
-                case -2:
+                case Pet.FeedStatus.Cooldown:
                     await component.RespondAsync("Pets may only be fed once in a 5 minute window.", ephemeral: true);
                     break;
             }
@@ -367,12 +367,17 @@ public static class PetEngine
             return;
         }
 
-        int happinessGained = pet.DoFeed(foodItem);
+        var feedResult = pet.DoFeed(foodItem);
+        if (feedResult.Status is not Pet.FeedStatus.Allowed)
+        {
+            await component.RespondAsync("The pet's feeding state changed. Please try again.", ephemeral: true);
+            return;
+        }
 
         ContainerBuilder container = Global.MakeRosettesContainer();
         Global.AddTitle(container, $"### {pet.GetName()} has been fed.");
         container.WithTextDisplay($"Pet has eaten {FarmEngine.GetItemName(foodItem)}. Yum!");
-        Global.AddFooter(container, $"Pet has gained {happinessGained} happiness.");
+        Global.AddFooter(container, $"Pet has gained {feedResult.HappinessGained} happiness.");
 
         ActionRowBuilder buttonRow = new();
         FarmEngine.AddStandardButtons(ref buttonRow, "shop");

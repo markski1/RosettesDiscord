@@ -111,12 +111,10 @@ public static class FarmEngine
         return InventoryItems.ContainsKey(choice);
     }
 
-    public static async Task<int> GetItem(User dbUser, string name)
-    {
-        return await FarmRepository.FetchInventoryItem(dbUser, name);
-    }
+    public static Task<int> GetItem(User dbUser, string name) =>
+        FarmRepository.FetchInventoryItem(dbUser, name);
 
-    public static async Task<string> CanUseFarmCommand(SocketInteractionContext context)
+    public static async Task<string?> GetFarmCommandError(SocketInteractionContext context)
     {
         if (context.Guild is null)
         {
@@ -135,10 +133,10 @@ public static class FarmEngine
         {
             return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
         }
-        return "yes";
+        return null;
     }
 
-    public static async Task<string> CanUseFarmComponent(SocketMessageComponent component)
+    public static async Task<string?> GetFarmComponentError(SocketMessageComponent component)
     {
         if (component.User is not SocketGuildUser guildUser || component.Channel is not IGuildChannel guildChannel)
             return "Farming/Fishing Commands do not work in direct messages.";
@@ -151,7 +149,7 @@ public static class FarmEngine
         if (dbGuild.FarmChannel != 0 && dbGuild.FarmChannel != component.Channel.Id)
             return "Farming/Fishing commands are not allowed in this channel, please use the Game/Bot channel.";
 
-        return "yes";
+        return null;
     }
 
     public static async Task ShopAction(SocketMessageComponent component)
@@ -594,101 +592,6 @@ public static class FarmEngine
         await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
     }
 
-    private static ComponentBuilder GetShopComponents(bool empty = false)
-    {
-        SelectMenuBuilder buyMenu = new()
-        {
-            Placeholder = "Buy...",
-            CustomId = "buy",
-            MinValues = 1,
-            MaxValues = 1
-        };
-        if (!empty)
-        {
-            buyMenu.AddOption(
-                label: $"1 {GetItemName("seedbag")}", value: "seedbag:1",
-                description: $"{ItemBuyChart["seedbag"]} {GetItemName("dabloons")}");
-            buyMenu.AddOption(
-                label: $"5 {GetItemName("seedbag")}", value: "seedbag:5",
-                description: $"{ItemBuyChart["seedbag"] * 5} {GetItemName("dabloons")}");
-            buyMenu.AddOption(
-                label: $"10 {GetItemName("seedbag")}", value: "seedbag:10",
-                description: $"{ItemBuyChart["seedbag"] * 10} {GetItemName("dabloons")}");
-            buyMenu.AddOption(
-                label: $"1 {GetItemName("fishpole")}", value: "fishpole:1",
-                description: $"{ItemBuyChart["fishpole"]} {GetItemName("dabloons")}");
-            buyMenu.AddOption(
-                label: $"1 {GetItemName("farmtools")}", value: "farmtools:1",
-                description: $"{ItemBuyChart["farmtools"]} {GetItemName("dabloons")}");
-            buyMenu.AddOption(
-                label: $"1 {GetItemName("plots")}", value: "plots:1",
-                description: $"{ItemBuyChart["plots"]} {GetItemName("dabloons")}");
-        }
-        else
-        {
-            buyMenu.AddOption(label: "Please wait...", value: "NULL");
-        }
-        buyMenu.MaxValues = 1;
-
-        SelectMenuBuilder sellMenu = new()
-        {
-            Placeholder = "Sell...",
-            CustomId = "sell",
-            MinValues = 1,
-            MaxValues = 1
-        };
-        if (!empty)
-        {
-            foreach (var item in ItemSaleChart.Keys)
-            {
-                sellMenu.AddOption(
-                    label: $"{ItemSaleChart[item].amount} {GetItemName(item)}",
-                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")}",
-                    value: item
-                );
-            }
-        }
-        else
-        {
-            sellMenu.AddOption(label: "Please wait...", value: "NULL");
-        }
-        sellMenu.MaxValues = 1;
-
-        SelectMenuBuilder sellAllMenu = new()
-        {
-            Placeholder = "Sell everything of...",
-            CustomId = "sell_e",
-            MinValues = 1,
-            MaxValues = 1
-        };
-        if (!empty)
-        {
-            foreach (var item in ItemSaleChart.Keys)
-            {
-                sellAllMenu.AddOption(
-                    label: GetItemName(item),
-                    description: $"{ItemSaleChart[item].cost} {GetItemName("dabloons")} per every {ItemSaleChart[item].amount}",
-                    value: item
-                );
-            }
-        }
-        else
-        {
-            sellAllMenu.AddOption(label: "Please wait...", value: "NULL");
-        }
-        sellAllMenu.MaxValues = 1;
-        ActionRowBuilder buttonRow = new();
-
-        AddStandardButtons(ref buttonRow, except: "shop");
-
-        return
-            new ComponentBuilder()
-                .WithSelectMenu(buyMenu)
-                .WithSelectMenu(sellMenu)
-                .WithSelectMenu(sellAllMenu)
-                .AddRow(buttonRow);
-    }
-
     private static void GetShopComponentsV2(ContainerBuilder container, bool empty = false)
     {
         SelectMenuBuilder buyMenu = new()
@@ -790,7 +693,7 @@ public static class FarmEngine
         container.WithActionRow(buttonRow);
     }
 
-    public static void AddStandardButtons(ref ActionRowBuilder buttonRow, string except = "none")
+    public static void AddStandardButtons(ref ActionRowBuilder buttonRow, string? except = null)
     {
         if (except != "fish")
             buttonRow.WithButton(label: "Fish", customId: "fish", style: ButtonStyle.Primary, emote: new Emoji("🎣"));
@@ -830,9 +733,7 @@ public static class FarmEngine
         await FarmRepository.SetInventoryItem(dbUser, "plots_degraded", newMask);
     }
 
-    public static async Task<bool> RestoreAllPlots(User dbUser)
-    {
-        return await FarmRepository.TryRestorePlots(dbUser, 100);
-    }
+    public static Task<bool> RestoreAllPlots(User dbUser) =>
+        FarmRepository.TryRestorePlots(dbUser, 100);
 
 }

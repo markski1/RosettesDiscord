@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using Dapper;
 using Rosettes.Modules.Engine;
@@ -15,8 +15,7 @@ public static class AuthRepository
 
     public static async Task<ApplicationAuth?> GetApplicationAuth(string applicationKey)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
             SELECT
@@ -52,8 +51,7 @@ public static class AuthRepository
 
     public static async Task<int?> CreateApplication(string name, ulong ownerId, string token)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
             INSERT INTO app_auth (name, owner_id, token_key, token_hash, created_at)
@@ -79,8 +77,7 @@ public static class AuthRepository
 
     public static async Task<bool> DeleteApplication(int appId, ulong ownerId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
         using var tx = await db.BeginTransactionAsync();
 
         try
@@ -113,8 +110,7 @@ public static class AuthRepository
 
     public static async Task<bool> RevokeApplicationUser(int appId, ulong ownerId, ulong userId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
             DELETE r
@@ -135,8 +131,7 @@ public static class AuthRepository
 
     public static async Task<bool> AuthUser(int appId, ulong userId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "INSERT INTO app_auth_rel (user_id, app_id) VALUES(@UserId, @AppId)";
 
@@ -152,8 +147,7 @@ public static class AuthRepository
 
     public static async Task<ApplicationRelation?> GetApplicationRelation(string applicationKey, ulong userId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         var appAuth = await GetApplicationAuth(applicationKey);
 

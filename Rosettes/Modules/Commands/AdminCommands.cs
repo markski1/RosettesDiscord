@@ -155,7 +155,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("setlogchan", "Sets the channel where user join/left is sent. Use 'disable: true' to disable.")]
-    public async Task SetLogChan(string disable = "false")
+    public async Task SetLogChan(bool disable = false)
     {
         if (Context.Guild.OwnerId != Context.User.Id)
         {
@@ -164,7 +164,7 @@ public class AdminCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         var dbGuild = await GuildEngine.GetDbGuild(Context.Guild);
-        bool enable = disable == "false";
+        bool enable = !disable;
         ulong logChannel = enable ? Context.Channel.Id : 0;
 
         if (!await GuildEngine.UpdateRuntimeFieldsFromPanel(

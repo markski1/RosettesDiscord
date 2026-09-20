@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Anonimous Telemetry
  * 
  * The purpose of this is to see which commands are actually used.
@@ -44,8 +44,7 @@ public static class TelemetryEngine
 
     private static async void SyncTelemetry(object? source, System.Timers.ElapsedEventArgs e)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            INSERT INTO telemetry (cmd_count, interaction_count, message_count, count_by_command)

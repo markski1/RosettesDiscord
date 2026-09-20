@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Rosettes.Core;
 using Rosettes.Modules.Minigame.Pets;
 
@@ -8,8 +8,7 @@ public abstract class PetRepository
 {
     public static async Task<IEnumerable<Pet>> GetAllPetsAsync()
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = "SELECT pet_id, pet_index, owner_id, pet_name, exp, times_pet, found_date, happiness FROM pets";
 
@@ -26,8 +25,7 @@ public abstract class PetRepository
 
     public static async Task<bool> CheckHasPet(ulong userId, int petSpeciesId)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
         
         const string sql = "SELECT count(1) FROM pets WHERE owner_id=@userId AND pet_index=@petSpeciesId";
 
@@ -42,10 +40,9 @@ public abstract class PetRepository
         }
     }
 
-    public static async Task<int> InsertPet(Pet pet)
+    public static async Task<int?> InsertPet(Pet pet)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         var sql = """
                   INSERT INTO pets (pet_index, owner_id, pet_name, found_date)
@@ -64,14 +61,13 @@ public abstract class PetRepository
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("sql-insertpet", $"sqlException code {ex.Message}");
-            return -1;
+            return null;
         }
     }
 
     public static async Task<bool> UpdatePet(Pet pet)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            UPDATE pets

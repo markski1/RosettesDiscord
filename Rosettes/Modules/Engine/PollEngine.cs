@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
@@ -10,8 +10,7 @@ public static class PollEngine
 {
     public static async Task<bool> AddPoll(ulong id, string question, string option1, string option2, string option3, string option4)
     {
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
 
         const string sql = """
                            INSERT INTO polls (id, question, option1, option2, option3, option4)
@@ -47,8 +46,7 @@ public static class PollEngine
 
         string columnName = $"count{optionNumber}";
 
-        using var getConn = DatabasePool.GetConnection();
-        var db = getConn.Db;
+        using var db = DatabasePool.GetConnection();
         
         const string checkVoteSql = "SELECT 1 FROM poll_votes WHERE user_id = @userId AND poll_id = @pollId";
         if (await db.ExecuteScalarAsync<bool>(checkVoteSql, new { userId, pollId = pollMessage.Id }))

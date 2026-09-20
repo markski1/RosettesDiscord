@@ -55,21 +55,15 @@ public static class EventManager
         }
 
 
-        if (Settings.LoadDatabaseObj())
+        Settings.LoadDatabaseObj();
+        await UserEngine.LoadAllUsersFromDatabase();
+        _ = Task.Run(async () =>
         {
-            await UserEngine.LoadAllUsersFromDatabase();
-            _ = Task.Run(async () =>
-            {
-                await PetEngine.LoadAllPetsFromDatabase();
-                await GuildEngine.LoadAllGuildsFromDatabase();
-                await AlarmManager.LoadAllAlarmsFromDatabase();
-                await AutoRolesEngine.SyncWithDatabase();
-            });
-        }
-        else
-        {
-            Global.GenerateErrorMessage("OnReady", "Failed to connect to database.");
-        }
+            await PetEngine.LoadAllPetsFromDatabase();
+            await GuildEngine.LoadAllGuildsFromDatabase();
+            await AlarmManager.LoadAllAlarmsFromDatabase();
+            await AutoRolesEngine.SyncWithDatabase();
+        });
 
         Game game = new("Homph", type: ActivityType.Playing, flags: ActivityProperties.Join, details: "mew wew");
         await Client.SetActivityAsync(game);

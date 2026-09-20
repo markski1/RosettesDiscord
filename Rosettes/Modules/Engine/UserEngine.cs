@@ -134,12 +134,6 @@ public static class UserEngine
         return userList;
     }
 
-    public static async Task<User> GetUserByRosettesKey(string rosettesKey)
-    {
-        ulong? result = await UserRepository.GetUserByRosettesKey(rosettesKey);
-
-        return result is null ? new User(null) : await GetDbUserById((ulong)result);
-    }
 }
 
 public class User
@@ -192,25 +186,7 @@ public class User
         return Id != 0;
     }
 
-    public async Task<IUser?> GetDiscordReference()
-    {
-        return await UserEngine.GetUserReferenceById(Id);
-    }
-
-    public async Task<bool> SendDirectMessage(string message)
-    {
-        var userRef = await UserEngine.GetUserReferenceById(Id);
-
-        try
-        {
-            await userRef.SendMessageAsync(message);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    public Task<IUser?> GetDiscordReference() => UserEngine.GetUserReferenceById(Id);
 
     public async Task<string> GetName()
     {
@@ -220,23 +196,6 @@ public class User
         var nameGot = userReference.GlobalName ?? userReference.Username;
         NameCache = nameGot;
         return NameCache;
-    }
-
-    public async Task<string> GetUsername()
-    {
-        var userReference = await GetDiscordReference();
-        if (userReference is null) return Username;
-
-        string nameGot = "invalid";
-        if (userReference.Username is not null)
-        {
-            nameGot = userReference.Username;
-        }
-        if (nameGot != Username)
-        {
-            Username = nameGot;
-        }
-        return Username;
     }
 
     // farm stuff
