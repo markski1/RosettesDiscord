@@ -111,10 +111,12 @@ public static class AutoRolesEngine
                 VALUES(@GuildId, 0, @Name)
             """;
 
-            uint groupId = (uint)await db.ExecuteScalarAsync<ulong>(
+            int inserted = await db.ExecuteAsync(
                 insertGroupSql,
                 new { GuildId = guildId, Name = name },
                 transaction);
+            if (inserted != 1) throw new InvalidOperationException("Failed to insert autorole group.");
+            uint groupId = await db.ExecuteScalarAsync<uint>("SELECT LAST_INSERT_ID()", transaction: transaction);
 
             if (entries.Count > 0)
             {

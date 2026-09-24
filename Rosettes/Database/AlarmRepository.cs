@@ -62,7 +62,8 @@ public static class AlarmRepository
                            """;
         try
         {
-            return await db.ExecuteAsync(sql, new { Id = alarm.Id }) > 0;
+            await db.ExecuteAsync(sql, new { Id = alarm.Id });
+            return true;
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Rosettes.Core;
@@ -109,17 +109,18 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
     {
         unit = unit.ToLower();
 
+        long minutes;
         if (unit.Contains("minute"))
         {
-            // do nothing, since the function receives minutes
+            minutes = amount;
         }
         else if (unit.Contains("hour"))
         {
-            amount *= 60;
+            minutes = (long)amount * 60;
         }
         else if (unit.Contains("days"))
         {
-            amount = amount * 60 * 24;
+            minutes = (long)amount * 60 * 24;
         }
         else
         {
@@ -127,7 +128,7 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (amount <= 0)
+        if (minutes <= 0)
         {
             await component.RespondAsync("Time don't go in that direction.", ephemeral: true);
             return;
@@ -139,17 +140,28 @@ public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
+        DateTime dueAt;
+        try
+        {
+            dueAt = DateTime.Now.AddMinutes(minutes);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            await component.RespondAsync("That reminder is too far in the future.", ephemeral: true);
+            return;
+        }
+
         var dbUser = await UserEngine.GetDbUser(component.User);
-        bool success = await AlarmManager.CreateAlarm(DateTime.Now + TimeSpan.FromMinutes(amount), dbUser, component.Channel, amount, message);
+        bool success = await AlarmManager.CreateAlarm(dueAt, dbUser, component.Channel, message);
 
         if (success)
         {
             EmbedBuilder embed = await Global.MakeRosettesEmbed(dbUser);
 
             embed.Title = "Reminder set.";
-            embed.Description = $"A reminder has been set. You will be tagged <t:{((DateTimeOffset)(DateTime.Now + TimeSpan.FromMinutes(amount))).ToUnixTimeSeconds()}:R>";
+            embed.Description = $"A reminder has been set. You will be tagged <t:{((DateTimeOffset)dueAt).ToUnixTimeSeconds()}:R>";
 
-            embed.AddField("Date and time of alert", $"{(DateTime.Now + TimeSpan.FromMinutes(amount)).ToUniversalTime()} (UTC)");
+            embed.AddField("Date and time of alert", $"{dueAt.ToUniversalTime()} (UTC)");
 
             await component.RespondAsync(embed: embed.Build());
         }

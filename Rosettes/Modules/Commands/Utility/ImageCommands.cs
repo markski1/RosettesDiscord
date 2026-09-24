@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Newtonsoft.Json;
 using Rosettes.Core;
@@ -205,12 +205,11 @@ public static class BubbleImage
         await ctx.Interaction.DeferAsync();
         try
         {
-            var httpClient = new HttpClient();
-            var baseImage = SixLabors.ImageSharp.Image.Load(await httpClient.GetByteArrayAsync(imageUri));
+            using var baseImage = SixLabors.ImageSharp.Image.Load(await Global.HttpClient.GetByteArrayAsync(imageUri));
             bool gif = cntType.Equals("image/gif", StringComparison.OrdinalIgnoreCase);
             
             string bubblePath = Path.Combine("Assets", "speech-bubble.png");
-            var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
+            using var bubbleOverlay = await SixLabors.ImageSharp.Image.LoadAsync(bubblePath);
             
             // make width 100% and height 17.5% of the image being overlaid onto.
             int bubbleWidth = baseImage.Width;

@@ -1,7 +1,8 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Rosettes.Core;
+using Rosettes.Database;
 using Rosettes.Modules.Commands.Alarms;
 using Rosettes.Modules.Engine;
 using Rosettes.Modules.Engine.Guild;
@@ -28,9 +29,9 @@ public static class EventManager
         Client.JoinedGuild += OnJoinGuild;
         Client.LeftGuild += OnLeftGuild;
 
-        Client.RoleCreated += OnRoleChange;
-        Client.RoleDeleted += OnRoleChange;
-        Client.RoleUpdated += OnRoleChange;
+        Client.RoleCreated += OnRoleCreated;
+        Client.RoleDeleted += OnRoleDeleted;
+        Client.RoleUpdated += OnRoleUpdated;
 
         Client.ReactionAdded += OnReactionAdded;
         Client.ReactionRemoved += OnReactionRemoved;
@@ -139,16 +140,19 @@ public static class EventManager
         return Task.CompletedTask;
     }
 
-    private static async Task OnRoleChange(SocketRole role)
+    private static Task OnRoleCreated(SocketRole role)
     {
-        Guild guild = await GuildEngine.GetDbGuild(role.Guild);
-        await guild.UpdateRoles();
+        return GuildRepository.UpsertGuildRole(role);
     }
 
-    private static async Task OnRoleChange(SocketRole role, SocketRole role1)
+    private static Task OnRoleDeleted(SocketRole role)
     {
-        Guild guild = await GuildEngine.GetDbGuild(role.Guild);
-        await guild.UpdateRoles();
+        return GuildRepository.DeleteGuildRole(role);
+    }
+
+    private static Task OnRoleUpdated(SocketRole _, SocketRole currentRole)
+    {
+        return GuildRepository.UpsertGuildRole(currentRole);
     }
 
     private static async Task OnUserJoin(SocketGuildUser user)

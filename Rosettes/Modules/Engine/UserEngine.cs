@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
@@ -9,15 +9,16 @@ namespace Rosettes.Modules.Engine;
 
 public static class UserEngine
 {
-    private static List<User> _userCache = [];
+    private static Dictionary<ulong, User> _userCache = [];
     private static readonly Lock CacheLock = new();
+    private static readonly SemaphoreSlim CacheMissLock = new(1, 1);
 
     public static async Task SyncWithDatabase()
     {
         List<User> snapshot;
         lock (CacheLock)
         {
-            snapshot = [.._userCache];
+            snapshot = [.._userCache.Values];
         }
 
         try
@@ -60,7 +61,7 @@ public static class UserEngine
         {
             lock (CacheLock)
             {
-                _userCache.Add(getUser);
+                _userCache[getUser.Id] = getUser;
             }
         }
         return getUser;
@@ -68,7 +69,7 @@ public static class UserEngine
 
     public static async Task LoadAllUsersFromDatabase()
     {
-        var loaded = (await UserRepository.GetAllUsersAsync()).ToList();
+        var loaded = (await UserRepository.GetAllUsersAsync()).ToDictionary(user => user.Id);
         lock (CacheLock)
         {
             _userCache = loaded;
@@ -77,41 +78,69 @@ public static class UserEngine
 
     public static async Task<User> GetDbUser(IUser user)
     {
-        var cached = _userCache.FirstOrDefault(item => item.Id == user.Id);
-        if (cached is not null)
+        lock (CacheLock)
         {
-            // We already have the live Discord reference. Refresh the name cache for free,
-            // with no extra API call. Any change will be written on the next sync cycle.
-            var newName = user.GlobalName ?? user.Username;
-            if (cached.NameCache != newName)
+            if (_userCache.TryGetValue(user.Id, out var cached))
             {
-                cached.NameCache = newName;
-                cached.Dirty = true;
+                RefreshCachedName(cached, user);
+                return cached;
             }
-            if (user.Username is not null && cached.Username != user.Username)
-            {
-                cached.Username = user.Username;
-                cached.Dirty = true;
-            }
-            return cached;
         }
-        return await LoadUserFromDatabase(user);
+
+        await CacheMissLock.WaitAsync();
+        try
+        {
+            lock (CacheLock)
+            {
+                if (_userCache.TryGetValue(user.Id, out var cached))
+                {
+                    RefreshCachedName(cached, user);
+                    return cached;
+                }
+            }
+
+            return await LoadUserFromDatabase(user);
+        }
+        finally
+        {
+            CacheMissLock.Release();
+        }
     }
 
     public static async Task<User> GetDbUserById(ulong userId)
     {
-        var cached = _userCache.FirstOrDefault(item => item.Id == userId);
-        if (cached is not null) return cached;
+        lock (CacheLock)
+        {
+            if (_userCache.TryGetValue(userId, out var cached)) return cached;
+        }
 
         var user = await GetUserReferenceById(userId);
         if (user is null) return new User(null);
-        return await LoadUserFromDatabase(user);
+        return await GetDbUser(user);
     }
 
     // assumes user is cached! to be used in constructors, where async tasks cannot be awaited.
     public static User GetCachedDbUserById(ulong userId)
     {
-        return _userCache.FirstOrDefault(item => item.Id == userId) ?? new User(null);
+        lock (CacheLock)
+        {
+            return _userCache.TryGetValue(userId, out var cached) ? cached : new User(null);
+        }
+    }
+
+    private static void RefreshCachedName(User cached, IUser user)
+    {
+        var newName = user.GlobalName ?? user.Username;
+        if (cached.NameCache != newName)
+        {
+            cached.NameCache = newName;
+            cached.Dirty = true;
+        }
+        if (cached.Username != user.Username)
+        {
+            cached.Username = user.Username;
+            cached.Dirty = true;
+        }
     }
 
     public static async Task<IUser?> GetUserReferenceById(ulong id)

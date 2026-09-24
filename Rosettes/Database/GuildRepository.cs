@@ -217,4 +217,60 @@ public class GuildRepository
             roleSyncLock.Release();
         }
     }
+
+    public static async Task UpsertGuildRole(SocketRole role)
+    {
+        if (role.IsEveryone || role.IsManaged)
+        {
+            await DeleteGuildRole(role);
+            return;
+        }
+
+        var roleSyncLock = RoleSyncLocks.GetOrAdd(role.Guild.Id, _ => new SemaphoreSlim(1, 1));
+        await roleSyncLock.WaitAsync();
+        try
+        {
+            using var db = DatabasePool.GetConnection();
+            const string sql = """
+                INSERT INTO roles (id, rolename, guildid, color)
+                VALUES (@Id, @Name, @GuildId, @Color)
+                ON DUPLICATE KEY UPDATE rolename = @Name, guildid = @GuildId, color = @Color
+                """;
+            await db.ExecuteAsync(sql, new
+            {
+                role.Id,
+                role.Name,
+                GuildId = role.Guild.Id,
+                Color = role.Colors.PrimaryColor.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-upsertguildrole", $"Failed to update role {role.Id}: {ex.Message}");
+        }
+        finally
+        {
+            roleSyncLock.Release();
+        }
+    }
+
+    public static async Task DeleteGuildRole(SocketRole role)
+    {
+        var roleSyncLock = RoleSyncLocks.GetOrAdd(role.Guild.Id, _ => new SemaphoreSlim(1, 1));
+        await roleSyncLock.WaitAsync();
+        try
+        {
+            using var db = DatabasePool.GetConnection();
+            await db.ExecuteAsync("DELETE FROM roles WHERE id = @Id AND guildid = @GuildId",
+                new { role.Id, GuildId = role.Guild.Id });
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("sql-deleteguildrole", $"Failed to delete role {role.Id}: {ex.Message}");
+        }
+        finally
+        {
+            roleSyncLock.Release();
+        }
+    }
 }

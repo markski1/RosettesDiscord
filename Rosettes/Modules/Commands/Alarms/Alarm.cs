@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Database;
@@ -10,18 +10,24 @@ namespace Rosettes.Modules.Commands.Alarms;
 public static class AlarmManager
 {
     private static List<Alarm> _activeAlarms = [];
+    private static readonly Lock AlarmsLock = new();
 
     public static async Task LoadAllAlarmsFromDatabase()
     {
         IEnumerable<Alarm> activeAlarms = await AlarmRepository.GetAllAlarmsAsync();
-        _activeAlarms = activeAlarms.ToList();
+        var loaded = activeAlarms.ToList();
+        lock (AlarmsLock)
+        {
+            _activeAlarms = loaded;
+        }
+        foreach (var alarm in loaded) alarm.Start();
     }
 
-    public static async Task<bool> CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes, string message)
+    public static async Task<bool> CreateAlarm(DateTime dateTime, User user, ISocketMessageChannel channel, string message)
     {
         try
         {
-            Alarm newAlarm = new(dateTime, user, channel, minutes, message);
+            Alarm newAlarm = new(dateTime, user, channel, message);
             int? alarmId = await AlarmRepository.InsertAlarm(newAlarm);
             if (alarmId is null)
             {
@@ -30,8 +36,11 @@ public static class AlarmManager
             }
 
             newAlarm.Id = alarmId.Value;
-            _activeAlarms.Add(newAlarm);
-            newAlarm.Timer.Start();
+            lock (AlarmsLock)
+            {
+                _activeAlarms.Add(newAlarm);
+            }
+            newAlarm.Start();
 
             return true;
         }
@@ -41,19 +50,31 @@ public static class AlarmManager
         }
     }
 
-    public static async Task DeleteAlarm(Alarm alarm)
+    public static async Task<bool> DeleteAlarm(Alarm alarm)
     {
+        if (!await AlarmRepository.DeleteAlarm(alarm)) return false;
         alarm.Timer.Stop();
-        await AlarmRepository.DeleteAlarm(alarm);
-        _activeAlarms.Remove(alarm);
+        lock (AlarmsLock)
+        {
+            _activeAlarms.Remove(alarm);
+        }
+        alarm.Timer.Dispose();
+        return true;
     }
 
-    public static List<Alarm> GetUserAlarms(IUser user) =>
-        _activeAlarms.Where(item => item.User.Id == user.Id).ToList();
+    public static List<Alarm> GetUserAlarms(IUser user)
+    {
+        lock (AlarmsLock)
+        {
+            return _activeAlarms.Where(item => item.User.Id == user.Id).ToList();
+        }
+    }
 }
 
 public class Alarm
 {
+    private const double MaxTimerIntervalMilliseconds = 24 * 60 * 60 * 1000;
+    private const double RetryIntervalMilliseconds = 5 * 60 * 1000;
     public int Id;
     public string Message;
     public readonly DateTime DateTime;
@@ -61,22 +82,23 @@ public class Alarm
     public readonly System.Timers.Timer Timer;
     public ISocketMessageChannel? Channel;
 
-    private readonly bool _success;
+    private readonly bool _missedWhileOffline;
+    private bool _delivered;
 
     // constructor used by /reminder
-    public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, int minutes, string message)
+    public Alarm(DateTime dateTime, User user, ISocketMessageChannel channel, string message)
     {
         DateTime = dateTime;
         User = user;
 
-        Timer = new(minutes * 60 * 1000);
+        Timer = new();
         Timer.Elapsed += AlarmRing;
         Timer.AutoReset = false;
         Channel = channel;
         Id = 0;
         Message = message;
 
-        _success = true;
+        _missedWhileOffline = false;
     }
 
     // constructor used when loading from database
@@ -87,72 +109,69 @@ public class Alarm
         Id = (int)id;
         Message = message;
 
-        double amount;
-        // if we are still in time, just restart the alarm as intended.
-        if (dateTime > DateTime.Now)
-        {
-            amount = (dateTime - DateTime.Now).TotalSeconds;
-            _success = true;
-        }
-        // otherwise, wait 5 seconds and let the user know we failed.
-        else
-        {
-            amount = 5;
-            _success = false;
-        }
-
-        Timer = new(amount * 1000);
+        _missedWhileOffline = dateTime <= DateTime.Now;
+        Timer = new();
         Timer.Elapsed += AlarmRing;
         Timer.AutoReset = false;
-        Timer.Enabled = true;
-        using DiscordSocketClient client = ServiceManager.GetService<DiscordSocketClient>();
+        var client = ServiceManager.GetService<DiscordSocketClient>();
         Channel = client.GetChannel(channel) as ISocketMessageChannel;
     }
 
-    public async void AlarmRing(object? source, System.Timers.ElapsedEventArgs e)
+    public void Start()
     {
-        // first remove the alarm off the database.
-        await AlarmManager.DeleteAlarm(this);
-        // if the database constructior failed to load the channel.
-        IUser? discordRef = await User.GetDiscordReference();
-        if (discordRef is null)
+        Timer.Interval = Math.Clamp((DateTime - DateTime.Now).TotalMilliseconds, 1, MaxTimerIntervalMilliseconds);
+        Timer.Start();
+    }
+
+    private void AlarmRing(object? source, System.Timers.ElapsedEventArgs e) => _ = DeliverAsync();
+
+    private async Task DeliverAsync()
+    {
+        try
         {
-            Global.GenerateErrorMessage("reminder", $"Sadly, I have failed to deliver a reminder to {await User.GetName()}. Error 1");
-            return;
-        }
-        if (Channel is null)
-        {
-            // we establish a channel through DM.
-            Channel = await discordRef.CreateDMChannelAsync() as ISocketMessageChannel;
-            // If we can't establish a channel, Rosettes has failed to alert the user.
-            if (Channel is null)
+            if (DateTime > DateTime.Now)
             {
-                Global.GenerateErrorMessage("reminder", $"Sadly, I have failed to deliver a reminder to {await User.GetName()}. Error 2");
+                Start();
                 return;
             }
-        }
 
-        EmbedBuilder embed = await Global.MakeRosettesEmbed(User);
-
-        embed.Title = "Hey!";
-        embed.Description = $"Reminder for {discordRef.Mention}.";
-
-        if (Message.Length > 0)
-        {
-            embed.AddField("Message", Message);
-        }
-
-        if (_success)
-        {
-            await Channel.SendMessageAsync($"{discordRef.Mention}", embed: embed.Build());
-        }
-        else
-        {
-            var findUser = await User.GetDiscordReference();
-            if (findUser is not null)
+            if (!_delivered)
             {
-                await Channel.SendMessageAsync($"I'm sorry, {findUser.Mention} - It seems like I was shut down during the time I was meant to deliver your reminder... ({DateTime:ddd, dd MMM yyy; HH: mm: ss})");   
+                IUser? discordRef = await User.GetDiscordReference();
+                if (discordRef is null)
+                    throw new InvalidOperationException($"Could not find reminder user {User.Id}.");
+
+                if (Channel is null)
+                {
+                    Channel = await discordRef.CreateDMChannelAsync() as ISocketMessageChannel;
+                    if (Channel is null)
+                        throw new InvalidOperationException($"Could not open a channel for reminder {Id}.");
+                }
+
+                if (!_missedWhileOffline)
+                {
+                    EmbedBuilder embed = await Global.MakeRosettesEmbed(User);
+                    embed.Title = "Hey!";
+                    embed.Description = $"Reminder for {discordRef.Mention}.";
+                    if (Message.Length > 0) embed.AddField("Message", Message);
+                    await Channel.SendMessageAsync(discordRef.Mention, embed: embed.Build());
+                }
+                else
+                {
+                    await Channel.SendMessageAsync($"I'm sorry, {discordRef.Mention} - It seems like I was shut down during the time I was meant to deliver your reminder... ({DateTime:ddd, dd MMM yyyy; HH:mm:ss})");
+                }
+
+                _delivered = true;
             }
+
+            if (!await AlarmManager.DeleteAlarm(this))
+                throw new InvalidOperationException($"Could not remove delivered reminder {Id} from the database.");
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("reminder", $"Failed to deliver reminder {Id}: {ex}");
+            Timer.Interval = RetryIntervalMilliseconds;
+            Timer.Start();
         }
     }
 }

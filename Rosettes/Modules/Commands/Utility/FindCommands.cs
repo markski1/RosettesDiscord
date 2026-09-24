@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Genbox.Wikipedia;
 using Newtonsoft.Json;
@@ -212,7 +212,7 @@ public partial class FindCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        if (results.Data.Count > 0)
+        if (results.Data.Count == 0)
         {
             await RespondAsync("Sorry, there were no results for your search.", ephemeral: true);
             return;
