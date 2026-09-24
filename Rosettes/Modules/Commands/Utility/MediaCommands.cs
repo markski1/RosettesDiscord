@@ -45,6 +45,7 @@ public class MediaCommands : InteractionModuleBase<SocketInteractionContext>
 
         var (isNewChat, success, response) = await LanguageEngine.GetResponseAsync(
                 channelId: channelId,
+                userId: Context.User.Id,
                 message: await ResolveUserMentionsAsync(question),
                 userName: Context.User.GlobalName ?? Context.User.Username
             );
