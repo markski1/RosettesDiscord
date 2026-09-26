@@ -9,12 +9,6 @@ namespace Rosettes.Modules.Commands.Utility;
 
 public class MiscCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    [MessageCommand("User Profile")]
-    public async Task Profile(IMessage message)
-    {
-        await Profile(message.Author);
-    }
-
     [SlashCommand("profile", "Information about yourself or provided user.")]
     private async Task Profile(IUser? user = null)
     {

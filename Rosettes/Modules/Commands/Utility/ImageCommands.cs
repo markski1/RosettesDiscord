@@ -5,8 +5,11 @@ using Rosettes.Core;
 using Rosettes.Modules.Engine;
 using System.Text.Encodings.Web;
 using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Formats.Webp;
 using Point = SixLabors.ImageSharp.Point;
 
 namespace Rosettes.Modules.Commands.Utility;
@@ -14,6 +17,10 @@ namespace Rosettes.Modules.Commands.Utility;
 [Group("image", "Image manipulation commands")]
 public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    private const int MaxConversionBytes = 10 * 1024 * 1024;
+    private const long MaxConversionPixels = 25_000_000;
+    private static readonly SemaphoreSlim ConversionSlots = new(2, 2);
+
     [MessageCommand("SauceNAO Search")]
     public async Task SauceNaoCtx(IMessage message)
     {
@@ -189,6 +196,140 @@ public class ImageCommands : InteractionModuleBase<SocketInteractionContext>
     )
     {
         await BubbleImage.CreateBubbleImage(Context, image.Url, image.Filename, image.ContentType, down, left);
+    }
+
+    [IntegrationType(ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall)]
+    [SlashCommand("convert", "Convert an image to PNG, JPEG, or WebP.")]
+    public async Task ConvertImage(
+        [Summary("image", "Image to convert.")] IAttachment image,
+        [Summary("format", "Output image format.")]
+        [Choice("PNG", "png")]
+        [Choice("JPEG", "jpg")]
+        [Choice("WebP", "webp")]
+        string format)
+    {
+        if (format is not ("png" or "jpg" or "webp"))
+        {
+            await RespondAsync("Choose PNG, JPEG, or WebP.", ephemeral: true);
+            return;
+        }
+
+        await DeferAsync();
+
+        if (image.Size > MaxConversionBytes)
+        {
+            await FollowupAsync("Please attach an image smaller than 10 MB.");
+            return;
+        }
+
+        if (!await ConversionSlots.WaitAsync(TimeSpan.FromSeconds(10)))
+        {
+            await FollowupAsync("Image conversion is busy right now. Please try again shortly.");
+            return;
+        }
+
+        string path = Path.Combine(Path.GetTempPath(), $"rosettes-convert-{Guid.NewGuid():N}.{format}");
+        try
+        {
+            using var downloadTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var response = await Global.HttpClient.GetAsync(image.Url, HttpCompletionOption.ResponseHeadersRead, downloadTimeout.Token);
+            response.EnsureSuccessStatusCode();
+            if (response.Content.Headers.ContentLength > MaxConversionBytes)
+            {
+                await FollowupAsync("Please attach an image smaller than 10 MB.");
+                return;
+            }
+
+            await using var input = await response.Content.ReadAsStreamAsync(downloadTimeout.Token);
+            using var bytes = new MemoryStream();
+            byte[] buffer = new byte[81920];
+            int read;
+            while ((read = await input.ReadAsync(buffer, downloadTimeout.Token)) != 0)
+            {
+                if (bytes.Length + read > MaxConversionBytes)
+                {
+                    await FollowupAsync("Please attach an image smaller than 10 MB.");
+                    return;
+                }
+
+                await bytes.WriteAsync(buffer.AsMemory(0, read), downloadTimeout.Token);
+            }
+
+            bytes.Position = 0;
+            var info = SixLabors.ImageSharp.Image.Identify(new DecoderOptions { SkipMetadata = true }, bytes);
+            if (info is null)
+            {
+                await FollowupAsync("I couldn't read that image format.");
+                return;
+            }
+
+            if ((long)info.Width * info.Height > MaxConversionPixels)
+            {
+                await FollowupAsync("That image is too large to convert.");
+                return;
+            }
+
+            bytes.Position = 0;
+            using var conversionTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            using (var decoded = await SixLabors.ImageSharp.Image.LoadAsync(
+                new DecoderOptions { MaxFrames = 1 }, bytes, conversionTimeout.Token))
+            {
+                decoded.Mutate(context => context.AutoOrient());
+                if (format == "jpg")
+                    decoded.Mutate(context => context.BackgroundColor(SixLabors.ImageSharp.Color.White));
+
+                IImageEncoder encoder = format switch
+                {
+                    "png" => new PngEncoder { SkipMetadata = true },
+                    "jpg" => new JpegEncoder { Quality = 85, SkipMetadata = true },
+                    "webp" => new WebpEncoder { Quality = 85, SkipMetadata = true },
+                    _ => throw new ArgumentOutOfRangeException(nameof(format))
+                };
+                await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                await decoded.SaveAsync(output, encoder, conversionTimeout.Token);
+            }
+
+            ulong uploadLimit = (ulong)Context.Interaction.AttachmentSizeLimit;
+            if (uploadLimit == 0) uploadLimit = MaxConversionBytes;
+            if ((ulong)new FileInfo(path).Length > uploadLimit)
+            {
+                await FollowupAsync(format == "png"
+                    ? "The converted image exceeds Discord's upload limit. Try JPEG or WebP for a smaller file."
+                    : "The converted image exceeds Discord's upload limit. Try a smaller source image.");
+                return;
+            }
+
+            await using var converted = File.OpenRead(path);
+            await FollowupWithFileAsync(
+                converted,
+                $"converted.{format}",
+                text: "Animated images are converted using their first frame.");
+        }
+        catch (OperationCanceledException)
+        {
+            await FollowupAsync("Image conversion timed out. Please try a smaller image.");
+        }
+        catch (SixLabors.ImageSharp.UnknownImageFormatException)
+        {
+            await FollowupAsync("I couldn't read that image format.");
+        }
+        catch (Exception ex)
+        {
+            Global.GenerateErrorMessage("image-convert", ex.ToString());
+            await FollowupAsync("Sorry, I couldn't convert that image.");
+        }
+        finally
+        {
+            ConversionSlots.Release();
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Global.GenerateErrorMessage("image-convert", $"Could not delete temporary image: {ex.Message}");
+            }
+        }
     }
 }
 
