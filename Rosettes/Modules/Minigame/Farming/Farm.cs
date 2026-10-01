@@ -184,7 +184,7 @@ public static class Farm
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await FarmEngine.SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     private static string CropEmoji(int cropType) =>
@@ -215,7 +215,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -239,7 +239,7 @@ public static class Farm
             ComponentBuilderV2 failComps = new();
             failComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: failComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: failComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -258,7 +258,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -320,7 +320,7 @@ public static class Farm
                 ComponentBuilderV2 errorComps = new();
                 errorComps.WithContainer(errorContainer);
 
-                await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+                await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
                 return;
             }
         }
@@ -354,7 +354,7 @@ public static class Farm
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await FarmEngine.SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task WaterCrops(SocketInteraction interaction, IUser user)
@@ -404,7 +404,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -416,7 +416,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(
+            await FarmEngine.SendResponseAsync(interaction,
                 components: errorComps.Build(),
                 flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
@@ -457,7 +457,7 @@ public static class Farm
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await FarmEngine.SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task HarvestCrops(SocketInteraction interaction, IUser user)
@@ -478,7 +478,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -534,7 +534,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -550,7 +550,7 @@ public static class Farm
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await FarmEngine.SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -590,7 +590,7 @@ public static class Farm
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await FarmEngine.SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task RestorePlots(SocketInteraction interaction, IUser user)
@@ -600,14 +600,14 @@ public static class Farm
         var degradedPlots = await FarmEngine.GetDegradedPlots(dbUser);
         if (degradedPlots.Count == 0)
         {
-            await interaction.RespondAsync("None of your plots need repair.", ephemeral: true);
+            await FarmEngine.SendResponseAsync(interaction, "None of your plots need repair.", ephemeral: true);
             return;
         }
 
         bool success = await FarmEngine.RestoreAllPlots(dbUser);
         if (!success)
         {
-            await interaction.RespondAsync($"You don't have 100 {FarmEngine.GetItemName("dabloons")} to repair your plots.", ephemeral: true);
+            await FarmEngine.SendResponseAsync(interaction, $"You don't have 100 {FarmEngine.GetItemName("dabloons")} to repair your plots.", ephemeral: true);
             return;
         }
 
@@ -625,7 +625,7 @@ public static class Farm
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await FarmEngine.SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 }
 

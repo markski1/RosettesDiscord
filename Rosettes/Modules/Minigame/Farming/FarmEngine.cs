@@ -21,12 +21,25 @@ public static class FarmEngine
     public static readonly Color ErrorColor   = new(220, 80, 80);   // muted red
     private static readonly ConcurrentDictionary<ulong, SemaphoreSlim> UserActionLocks = new();
 
-    public static async Task RunUserActionAsync(SocketInteraction interaction, Func<Task> action)
+    public static async Task SendResponseAsync(
+        IDiscordInteraction interaction,
+        string? text = null,
+        bool ephemeral = false,
+        MessageComponent? components = null,
+        MessageFlags flags = MessageFlags.None)
+    {
+        if (interaction.HasResponded)
+            await interaction.FollowupAsync(text, ephemeral: ephemeral, components: components, flags: flags);
+        else
+            await interaction.RespondAsync(text, ephemeral: ephemeral, components: components, flags: flags);
+    }
+
+    public static async Task RunUserActionAsync(IDiscordInteraction interaction, Func<Task> action)
     {
         var actionLock = UserActionLocks.GetOrAdd(interaction.User.Id, static _ => new SemaphoreSlim(1, 1));
         if (!await actionLock.WaitAsync(0))
         {
-            await interaction.RespondAsync("You already have a minigame action in progress.", ephemeral: true);
+            await SendResponseAsync(interaction, "You already have a minigame action in progress.", ephemeral: true);
             return;
         }
 
@@ -273,7 +286,7 @@ public static class FarmEngine
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await component.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+        await SendResponseAsync(component, components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
 
         // reset the shop component options
         try
@@ -412,7 +425,7 @@ public static class FarmEngine
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -429,7 +442,7 @@ public static class FarmEngine
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+            await SendResponseAsync(interaction, components: errorComps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
         }
 
@@ -473,7 +486,7 @@ public static class FarmEngine
             ComponentBuilderV2 errorComps = new();
             errorComps.WithContainer(errorContainer);
 
-            await interaction.RespondAsync(
+            await SendResponseAsync(interaction,
                 components: errorComps.Build(),
                 flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
             return;
@@ -510,14 +523,15 @@ public static class FarmEngine
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.ComponentsV2);
+        await SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.ComponentsV2);
     }
 
     public static async Task ShowInventoryFunc(SocketInteraction interaction, IUser user)
     {
-        User dbUser = await UserEngine.GetDbUser(user);
+        if (!interaction.HasResponded)
+            await interaction.DeferAsync();
 
-        await interaction.DeferAsync();
+        User dbUser = await UserEngine.GetDbUser(user);
 
         int dabloons = await GetItem(dbUser, "dabloons");
         int seeds = await GetItem(dbUser, "seedbag");
@@ -589,7 +603,7 @@ public static class FarmEngine
         ComponentBuilderV2 comps = new();
         comps.WithContainer(container);
 
-        await interaction.RespondAsync(components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
+        await SendResponseAsync(interaction, components: comps.Build(), flags: MessageFlags.Ephemeral | MessageFlags.ComponentsV2);
     }
 
     private static void GetShopComponentsV2(ContainerBuilder container, bool empty = false)

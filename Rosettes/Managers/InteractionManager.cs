@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.Net;
 using Discord.WebSocket;
 using Rosettes.Core;
 using Rosettes.Modules.Commands;
@@ -39,15 +40,21 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("InteractionManager", $"{ex}");
-                await SendInteractionFailure(inter);
+                await SendInteractionFailure(inter, ex);
             }
         });
         return Task.CompletedTask;
     }
 
-    private static async Task SendInteractionFailure(SocketInteraction interaction)
+    private static async Task SendInteractionFailure(IDiscordInteraction interaction, Exception? failure = null)
     {
         const string message = "Sorry, there was an unknown error executing the command.";
+        var elapsed = DateTimeOffset.UtcNow - interaction.CreatedAt;
+
+        if (failure is HttpException { DiscordCode: DiscordErrorCode.UnknownInteraction } ||
+            elapsed >= TimeSpan.FromMinutes(15) ||
+            (!interaction.HasResponded && elapsed >= TimeSpan.FromSeconds(3)))
+            return;
 
         try
         {
@@ -56,14 +63,35 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             else
                 await interaction.RespondAsync(message, ephemeral: true);
         }
+        catch (HttpException ex) when (ex.DiscordCode == DiscordErrorCode.UnknownInteraction)
+        {
+        }
+        catch (TimeoutException) when (!interaction.HasResponded &&
+            DateTimeOffset.UtcNow - interaction.CreatedAt >= TimeSpan.FromSeconds(3))
+        {
+        }
         catch (Exception ex)
         {
             Global.GenerateErrorMessage("InteractionManager response", $"{ex}");
         }
     }
 
-    private static Task RunInteractionHandler(SocketInteraction interaction, Func<Task> handler)
+    private static async Task RunInteractionHandler(IDiscordInteraction interaction, Func<Task> handler, bool defer = false)
     {
+        if (defer)
+        {
+            try
+            {
+                await interaction.DeferAsync();
+            }
+            catch (Exception ex)
+            {
+                Global.GenerateErrorMessage("InteractionManager", $"{ex}");
+                await SendInteractionFailure(interaction, ex);
+                return;
+            }
+        }
+
         _ = Task.Run(async () =>
         {
             try
@@ -73,10 +101,9 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             catch (Exception ex)
             {
                 Global.GenerateErrorMessage("InteractionManager", $"{ex}");
-                await SendInteractionFailure(interaction);
+                await SendInteractionFailure(interaction, ex);
             }
         });
-        return Task.CompletedTask;
     }
 
     private static bool IsFarmComponent(string action) =>
@@ -118,7 +145,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                 string? error = await FarmEngine.GetFarmComponentError(component);
                 if (error is not null)
                 {
-                    await component.RespondAsync(error, ephemeral: true);
+                    await FarmEngine.SendResponseAsync(component, error, ephemeral: true);
                     return;
                 }
             }
@@ -178,7 +205,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     await component.RespondAsync(await PollEngine.VoteInPoll(component.User.Id, component.Message, component.Data.CustomId), ephemeral: true);
                     break;
             }
-        });
+        }, defer: IsFarmComponent(component.Data.CustomId));
     }
 
     private Task OnModalSubmitted(SocketModal modal)
@@ -237,7 +264,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
                     string? error = await FarmEngine.GetFarmComponentError(component);
                     if (error is not null)
                     {
-                        await component.RespondAsync(error, ephemeral: true);
+                        await FarmEngine.SendResponseAsync(component, error, ephemeral: true);
                         return;
                     }
                     await FarmEngine.RunUserActionAsync(component, () => FarmEngine.ShopAction(component));
@@ -251,7 +278,7 @@ public class InteractionManager(DiscordSocketClient client, InteractionService c
             {
                 await FarmEngine.RunUserActionAsync(component, () => PetEngine.FeedAPet(component));
             }
-        });
+        }, defer: component.Data.CustomId is "buy" or "sell" or "sell_e");
     }
 
     private Task OnGlobalCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)
