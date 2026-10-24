@@ -399,5 +399,6 @@ FodyWeavers.xsd
 
 # Environment secrets
 .env
+sixlabors.lic
 /.idea
 .DS_Store
